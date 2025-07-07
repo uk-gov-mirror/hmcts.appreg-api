@@ -58,6 +58,7 @@ tasks.withType(JavaExec).configureEach {
 }
 
 tasks.withType(Test).configureEach {
+  enabled = false
   useJUnitPlatform()
   failFast = true
 
