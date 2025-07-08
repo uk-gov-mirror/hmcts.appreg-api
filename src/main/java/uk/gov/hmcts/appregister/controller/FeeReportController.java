@@ -1,18 +1,20 @@
 package uk.gov.hmcts.appregister.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.time.LocalDate;
+
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.dto.read.FeeReportFilterDto;
 import uk.gov.hmcts.appregister.service.api.FeeReportService;
-
-import java.io.IOException;
-import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/reports")
@@ -23,16 +25,20 @@ public class FeeReportController {
 
     @GetMapping(value = "/fees", produces = "text/csv")
     public void downloadFeeReport(
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-        @RequestParam(required = false) String standardApplicantCode,
-        @RequestParam(required = false) String applicantSurname,
-        @RequestParam(required = false) String courthouseCode,
-        HttpServletResponse response
-    ) throws IOException {
-        FeeReportFilterDto filter = new FeeReportFilterDto(
-            startDate, endDate, standardApplicantCode, applicantSurname, courthouseCode
-        );
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String standardApplicantCode,
+            @RequestParam(required = false) String applicantSurname,
+            @RequestParam(required = false) String courthouseCode,
+            HttpServletResponse response)
+            throws IOException {
+        FeeReportFilterDto filter =
+                new FeeReportFilterDto(
+                        startDate,
+                        endDate,
+                        standardApplicantCode,
+                        applicantSurname,
+                        courthouseCode);
         feeReportService.generateFeeReportCsv(filter, response);
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fee-report.csv");
     }

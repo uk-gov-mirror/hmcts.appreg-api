@@ -9,7 +9,10 @@ plugins {
     Applies analysis tools including checkstyle and OWASP Dependency checker.
     See https://github.com/hmcts/gradle-java-plugin
  */
-  //id 'uk.gov.hmcts.java' version '0.12.66'
+  id 'uk.gov.hmcts.java' version '0.12.66'
+  id 'com.diffplug.spotless' version '7.0.4'
+  id 'checkstyle'
+  id 'org.openrewrite.rewrite' version 'latest.release'
 }
 
 application {
@@ -22,6 +25,24 @@ java {
   toolchain {
     languageVersion = JavaLanguageVersion.of(21)
   }
+}
+
+
+spotless {
+  java {
+    // files to format
+    target 'src/**/*.java'
+    googleJavaFormat('1.22.0').aosp()
+    trimTrailingWhitespace()
+    endWithNewline()
+  }
+}
+
+rewrite {
+  activeRecipes = [
+    'org.openrewrite.staticanalysis.NeedBraces',
+    'org.openrewrite.java.OrderImports'
+  ]
 }
 
 def configureSourceSet(String name) {
@@ -174,6 +195,8 @@ dependencies {
   // Testing
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
   testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.1'
+
+  rewrite group: 'org.openrewrite.recipe', name: 'rewrite-static-analysis', version: '2.11.0'
 }
 
 bootJar {
