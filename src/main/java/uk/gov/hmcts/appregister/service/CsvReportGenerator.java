@@ -1,15 +1,12 @@
 package uk.gov.hmcts.appregister.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-
 import org.springframework.stereotype.Component;
-
-import jakarta.servlet.http.HttpServletResponse;
 import uk.gov.hmcts.appregister.dto.read.FeeReportRowDto;
 
 @Component

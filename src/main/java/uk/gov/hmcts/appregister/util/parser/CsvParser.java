@@ -6,11 +6,8 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-
-
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
 import uk.gov.hmcts.appregister.dto.read.bulkupload.CsvRowDto;
 
 @Component

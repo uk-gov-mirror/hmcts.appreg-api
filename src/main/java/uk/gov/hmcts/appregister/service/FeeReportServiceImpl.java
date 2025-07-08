@@ -1,13 +1,10 @@
 package uk.gov.hmcts.appregister.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-
-
-import org.springframework.stereotype.Service;
-
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import uk.gov.hmcts.appregister.dto.read.FeeReportFilterDto;
 import uk.gov.hmcts.appregister.dto.read.FeeReportRowDto;
 import uk.gov.hmcts.appregister.repository.FeeReportJdbcRepository;

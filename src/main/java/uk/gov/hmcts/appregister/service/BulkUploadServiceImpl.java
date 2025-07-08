@@ -5,15 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.dto.read.bulkupload.BulkUploadErrorDto;
 import uk.gov.hmcts.appregister.dto.read.bulkupload.BulkUploadResponseDto;
 import uk.gov.hmcts.appregister.dto.read.bulkupload.CsvRowDto;

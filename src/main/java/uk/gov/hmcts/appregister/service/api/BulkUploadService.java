@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.service.api;
 
 import org.springframework.web.multipart.MultipartFile;
-
 import uk.gov.hmcts.appregister.dto.read.bulkupload.BulkUploadResponseDto;
 
 public interface BulkUploadService {

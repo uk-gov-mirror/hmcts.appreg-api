@@ -1,13 +1,10 @@
 package uk.gov.hmcts.appregister.service;
 
 import java.util.List;
-
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.dto.internal.FeePair;
 import uk.gov.hmcts.appregister.dto.read.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.mapper.ApplicationCodeMapper;

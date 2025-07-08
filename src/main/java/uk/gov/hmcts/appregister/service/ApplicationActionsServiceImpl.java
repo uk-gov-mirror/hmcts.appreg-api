@@ -1,14 +1,11 @@
 package uk.gov.hmcts.appregister.service;
 
+import jakarta.transaction.Transactional;
 import java.util.List;
-
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.model.Application;
 import uk.gov.hmcts.appregister.model.ApplicationList;
 import uk.gov.hmcts.appregister.repository.ApplicationListRepository;

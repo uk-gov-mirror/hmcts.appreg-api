@@ -4,15 +4,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
-
-
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.dto.read.FeeReportRowDto;
 
 @RequiredArgsConstructor
@@ -87,7 +84,7 @@ public class FeeReportJdbcRepository {
                 WHERE application_code.fee_due = true
                   AND application.standard_applicant_id IS NULL
                   AND application_list.date BETWEEN :startDate AND :endDate
-                  AND (:applicantSurname IS NULL OR identity_details.surname ILIKE :applicantSurname 
+                  AND (:applicantSurname IS NULL OR identity_details.surname ILIKE :applicantSurname
                       OR identity_details.name ILIKE :applicantSurname)
                   AND (:courthouseCode IS NULL OR courthouse.location_code ILIKE :courthouseCode)
                 """);

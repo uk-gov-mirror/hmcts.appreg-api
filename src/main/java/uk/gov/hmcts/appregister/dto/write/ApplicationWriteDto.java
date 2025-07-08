@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.dto.write;
 
 import java.util.List;
-
 import uk.gov.hmcts.appregister.model.FeeStatusType;
 
 public record ApplicationWriteDto(

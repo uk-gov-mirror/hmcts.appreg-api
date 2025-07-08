@@ -2,10 +2,7 @@ package uk.gov.hmcts.appregister.repository;
 
 import java.util.List;
 import java.util.Optional;
-
-
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import uk.gov.hmcts.appregister.model.ApplicationList;
 
 public interface ApplicationListRepository extends JpaRepository<ApplicationList, Long> {

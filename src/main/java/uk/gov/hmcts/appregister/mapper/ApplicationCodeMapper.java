@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.mapper;
 
 import org.springframework.stereotype.Component;
-
 import uk.gov.hmcts.appregister.dto.internal.FeePair;
 import uk.gov.hmcts.appregister.dto.read.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.model.ApplicationCode;

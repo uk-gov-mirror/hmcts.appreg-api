@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.mapper;
 
 import org.springframework.stereotype.Component;
-
 import uk.gov.hmcts.appregister.dto.read.IdentityDetailsDto;
 import uk.gov.hmcts.appregister.dto.write.IdentityDetailsWriteDto;
 import uk.gov.hmcts.appregister.model.IdentityDetails;

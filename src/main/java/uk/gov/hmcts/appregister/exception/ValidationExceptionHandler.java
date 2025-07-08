@@ -1,8 +1,6 @@
 package uk.gov.hmcts.appregister.exception;
 
 import java.util.function.Supplier;
-
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 

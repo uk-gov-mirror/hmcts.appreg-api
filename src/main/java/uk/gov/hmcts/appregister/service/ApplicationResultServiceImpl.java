@@ -1,14 +1,11 @@
 package uk.gov.hmcts.appregister.service;
 
 import java.time.LocalDate;
-
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.dto.read.ApplicationResultDto;
 import uk.gov.hmcts.appregister.dto.write.ApplicationResultWriteDto;
 import uk.gov.hmcts.appregister.exception.ValidationExceptionHandler;

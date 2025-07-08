@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.service.api;
 
 import java.util.Optional;
-
 import uk.gov.hmcts.appregister.dto.internal.FeePair;
 import uk.gov.hmcts.appregister.model.ApplicationFee;
 

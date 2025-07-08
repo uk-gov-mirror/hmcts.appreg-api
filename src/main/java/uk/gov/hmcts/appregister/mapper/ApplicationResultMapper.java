@@ -1,11 +1,8 @@
 package uk.gov.hmcts.appregister.mapper;
 
 import java.time.LocalDate;
-
-
-import org.springframework.stereotype.Component;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.dto.read.ApplicationResultDto;
 import uk.gov.hmcts.appregister.dto.write.ApplicationResultWriteDto;
 import uk.gov.hmcts.appregister.model.ApplicationResult;

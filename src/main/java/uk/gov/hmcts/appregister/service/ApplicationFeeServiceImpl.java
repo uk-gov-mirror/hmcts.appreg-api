@@ -2,11 +2,8 @@ package uk.gov.hmcts.appregister.service;
 
 import java.util.List;
 import java.util.Optional;
-
-
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import uk.gov.hmcts.appregister.dto.internal.FeePair;
 import uk.gov.hmcts.appregister.model.ApplicationFee;
 import uk.gov.hmcts.appregister.repository.ApplicationFeeRepository;

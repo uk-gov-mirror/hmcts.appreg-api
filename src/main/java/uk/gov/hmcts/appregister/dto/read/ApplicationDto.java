@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.dto.read;
 
 import java.time.LocalDate;
-
 import uk.gov.hmcts.appregister.model.FeeStatusType;
 
 public record ApplicationDto(
