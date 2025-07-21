@@ -21,7 +21,7 @@ springdoc:
 
 spring:
   config:
-    import: "optional:configtree:/mnt/secrets/rpe/"
+    import: "optional:configtree:/mnt/secrets/appreg/"
   application:
     name: Application Registration API
   datasource:
@@ -58,4 +58,4 @@ logging:
 
 azure:
   application-insights:
-    instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
+    instrumentation-key: ${appreg.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
