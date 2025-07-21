@@ -21,12 +21,15 @@ import uk.gov.hmcts.appregister.Application;
  * master should automatically save and upload (if updated) documentation.
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        classes = Application.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class OpenAPIPublisherTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired private MockMvc mvc;
+    @Autowired
+    private MockMvc mvc;
 
     @DisplayName("Generate swagger documentation")
     @Test

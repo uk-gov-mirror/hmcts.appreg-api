@@ -18,7 +18,8 @@ import uk.gov.hmcts.appregister.Application;
 class GetWelcomeTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired private transient MockMvc mockMvc;
+    @Autowired
+    private transient MockMvc mockMvc;
 
     @DisplayName("Should welcome upon root request with 200 response code")
     @Test
