@@ -8,4 +8,4 @@ COPY build/libs/app-register.jar /opt/app/
 WORKDIR /opt/app
 
 EXPOSE 4550
-CMD ["java", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-jar", "app-register.jar"]
+ENTRYPOINT ["java","-Duser.timezone=UTC","-jar","/opt/app/app-register.jar"]
