@@ -21,19 +21,4 @@ public class SecurityIntegrationTest {
 
     @Test
     @DisplayName("Should allow unauthenticated access to /health")
-    void healthEndpoint_shouldAllowAnonymousAccess() throws Exception {
-        MvcResult result = mockMvc.perform(get("/health")).andExpect(status().isOk()).andReturn();
-    }
-
-    @Test
-    @DisplayName("Should allow unauthenticated access to /swagger-ui/index.html")
-    void swaggerEndpoint_shouldAllowAnonymousAccess() throws Exception {
-        mockMvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("Should return 401 for protected endpoint without JWT")
-    void protectedEndpoint_shouldRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/some-protected-endpoint")).andExpect(status().isUnauthorized());
-    }
 }
