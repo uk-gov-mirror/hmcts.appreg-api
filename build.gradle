@@ -141,8 +141,8 @@ tasks.check.dependsOn(integration)
 
 sonarqube {
   properties {
-    property "sonar.projectName", "Appregister :: appreg-api"
-    property "sonar.projectKey", "uk.gov.hmcts.appregister:api"
+    property "sonar.projectName", "AppReg :: appreg-api"
+    property "sonar.projectKey", "uk.gov.hmcts.appreg:appreg-api"
   }
 }
 
