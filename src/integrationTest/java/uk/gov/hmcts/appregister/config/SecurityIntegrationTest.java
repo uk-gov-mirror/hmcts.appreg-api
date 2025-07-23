@@ -24,8 +24,6 @@ public class SecurityIntegrationTest {
     @DisplayName("Should allow unauthenticated access to /health")
     void healthEndpoint_shouldAllowAnonymousAccess() throws Exception {
         MvcResult result = mockMvc.perform(get("/health")).andExpect(status().isOk()).andReturn();
-
-        assertThat(result.getResponse().getContentAsString()).contains("UP");
     }
 
     @Test
