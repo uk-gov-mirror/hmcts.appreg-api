@@ -7,7 +7,7 @@ java:
     POSTGRES_USER: "hmcts"
     POSTGRES_HOST: "appreg-dev.postgres.database.azure.com"
     POSTGRES_PORT: 5432
-    POSTGRES_DATABASE: appreg-db
+    POSTGRES_DATABASE: postgres
   secrets:
     POSTGRES_PASS:
       secretRef: "postgres"
