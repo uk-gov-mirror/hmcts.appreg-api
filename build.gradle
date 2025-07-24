@@ -129,7 +129,8 @@ jacocoTestReport {
 jacocoTestReport {
   //AD disabled
   enabled = false
-  executionData(test, integration)
+  //executionData(test, integration)
+  executionData(test)
   reports {
     xml.getRequired().set(false)
     csv.getRequired().set(false)
