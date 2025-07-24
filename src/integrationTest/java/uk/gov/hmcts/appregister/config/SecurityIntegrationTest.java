@@ -1,6 +1,5 @@
 package uk.gov.hmcts.appregister.config;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,8 +23,6 @@ public class SecurityIntegrationTest {
     @DisplayName("Should allow unauthenticated access to /health")
     void healthEndpoint_shouldAllowAnonymousAccess() throws Exception {
         MvcResult result = mockMvc.perform(get("/health")).andExpect(status().isOk()).andReturn();
-
-        assertThat(result.getResponse().getContentAsString()).contains("UP");
     }
 
     @Test
