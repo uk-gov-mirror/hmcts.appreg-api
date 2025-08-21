@@ -47,7 +47,7 @@ If the file is missing, create a new Run/Debug configuration in IntelliJ:
    ```bash
    ./gradlew bootRun
    ```
-   Or use the IntelliJ *appreg-api-bootRun* configuration.
+   Or use the IntelliJ *appreg-api-bootRun* configuration by clicking the dropdown on the top right.
 
 6. **Expected first-run errors.**
    PostgreSQL, SQL, or JDBC errors are expected until the database is provisioned and reachable. See **Database setup** below.
