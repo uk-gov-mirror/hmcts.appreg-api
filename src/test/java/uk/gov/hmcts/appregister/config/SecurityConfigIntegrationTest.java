@@ -71,8 +71,7 @@ class SecurityConfigIntegrationTest {
 
     @Test
     void unauthenticatedRequest_returns401() throws Exception {
-        mvc.perform(get("/admin/hello"))
-                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/admin/hello")).andExpect(status().isUnauthorized());
     }
 
     // helper to craft a JWT the security chain will accept
@@ -91,8 +90,7 @@ class SecurityConfigIntegrationTest {
                         "aud",
                         List.of("test-aud"),
                         "roles",
-                        roles
-                        ));
+                        roles));
     }
 
     // ---- Test-only controllers registered in this slice ----
