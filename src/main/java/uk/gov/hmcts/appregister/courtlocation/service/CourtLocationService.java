@@ -10,5 +10,5 @@ public interface CourtLocationService {
 
     CourtLocationDto findById(Long id);
 
-    Page<CourtLocationDto> searchCourtLocations(String name, String postcode, String courtType, Pageable pageable);
+    Page<CourtLocationDto> searchCourtLocations(String name, String courtType, Pageable pageable);
 }

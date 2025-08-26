@@ -30,7 +30,6 @@ public class CourtLocationController {
     @GetMapping
     public ResponseEntity<CourtLocationPageResponse> list(
         @RequestParam(required = false) String name,
-        @RequestParam(required = false) String postcode,
         @RequestParam(required = false) String courtType,
         @RequestParam(required = false) Integer page,
         @RequestParam(required = false) Integer pageSize) {
@@ -44,7 +43,7 @@ public class CourtLocationController {
         Pageable pageable = PageRequest.of(p - 1, s, Sort.by("name").ascending());
 
         Page<CourtLocationDto> pageDto =
-            service.searchCourtLocations(name, postcode, courtType, pageable);
+            service.searchCourtLocations(name, courtType, pageable);
 
         CourtLocationPageResponse body = new CourtLocationPageResponse(
             pageDto.getContent(), pageDto.getTotalElements(), p, s);

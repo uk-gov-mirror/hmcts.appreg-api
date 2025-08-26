@@ -41,10 +41,9 @@ public class CourtLocationServiceImpl implements CourtLocationService {
     }
 
     @Override
-    public Page<CourtLocationDto> searchCourtLocations(String name, String postcode, String courtType, Pageable pageable) {
+    public Page<CourtLocationDto> searchCourtLocations(String name, String courtType, Pageable pageable) {
         Specification<CourtLocation> spec = Specification.allOf(
             nameSpec(name),
-            postcodeSpec(postcode),
             courtTypeSpec(courtType)
         );
         return repository.findAll(spec, pageable).map(mapper::toReadDto);
@@ -54,10 +53,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
         if (name == null || name.isBlank()) return null;
         return (root, q, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
     }
-    private Specification<CourtLocation> postcodeSpec(String postcode) {
-        if (postcode == null || postcode.isBlank()) return null;
-        return (root, q, cb) -> cb.equal(root.get("courtLocationCode"), postcode); // adjust if postcode field differs
-    }
+
     private Specification<CourtLocation> courtTypeSpec(String ct) {
         if (ct == null || ct.isBlank()) return null;
         return (root, q, cb) -> cb.equal(root.get("courtType"), ct);
