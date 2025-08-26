@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourtHouse {
+public class CourtLocation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

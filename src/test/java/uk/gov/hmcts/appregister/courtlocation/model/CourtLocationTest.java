@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
-class CourtHouseTest {
+class CourtLocationTest {
 
     @Test
     void settersThenGetters_returnAssignedValues() {
@@ -21,7 +21,7 @@ class CourtHouseTest {
         String welshName = "Llys y Goron Caerdydd";
         Long orgId = 999L;
 
-        CourtHouse ch = new CourtHouse();
+        CourtLocation ch = new CourtLocation();
         ch.setId(id);
         ch.setName(name);
         ch.setCourtType(courtType);
@@ -58,8 +58,8 @@ class CourtHouseTest {
         String welshName = "—";
         Long orgId = 30L;
 
-        CourtHouse ch =
-                new CourtHouse(
+        CourtLocation ch =
+                new CourtLocation(
                         id,
                         name,
                         courtType,
@@ -96,8 +96,8 @@ class CourtHouseTest {
         String welshName = "Manceinion";
         Long orgId = 300L;
 
-        CourtHouse ch =
-                CourtHouse.builder()
+        CourtLocation ch =
+                CourtLocation.builder()
                         .id(id)
                         .name(name)
                         .courtType(courtType)
@@ -124,7 +124,7 @@ class CourtHouseTest {
 
     @Test
     void noArgsConstructor_hasNullDefaults_andSettersUpdate() {
-        CourtHouse ch = new CourtHouse();
+        CourtLocation ch = new CourtLocation();
         assertNull(ch.getId());
         assertNull(ch.getName());
         assertNull(ch.getCourtType());

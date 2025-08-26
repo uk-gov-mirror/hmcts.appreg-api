@@ -12,23 +12,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import uk.gov.hmcts.appregister.courtlocation.dto.CourtHouseDto;
+import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
 import uk.gov.hmcts.appregister.courtlocation.service.CourtLocationService;
 
 @ExtendWith(MockitoExtension.class)
-class CourtHouseControllerTest {
+class CourtLocationControllerTest {
 
     @Mock private CourtLocationService service;
 
-    @InjectMocks private CourtHouseController controller;
+    @InjectMocks private CourtLocationController controller;
 
     @Test
     void getAll_returnsOkWithBody() {
-        CourtHouseDto dto1 = mock(CourtHouseDto.class);
-        CourtHouseDto dto2 = mock(CourtHouseDto.class);
+        CourtLocationDto dto1 = mock(CourtLocationDto.class);
+        CourtLocationDto dto2 = mock(CourtLocationDto.class);
         when(service.findAll()).thenReturn(List.of(dto1, dto2));
 
-        ResponseEntity<List<CourtHouseDto>> resp = controller.getAll();
+        ResponseEntity<List<CourtLocationDto>> resp = controller.getAll();
 
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(resp.getBody()).containsExactly(dto1, dto2);
@@ -37,10 +37,10 @@ class CourtHouseControllerTest {
 
     @Test
     void getById_returnsOkWithBody() {
-        CourtHouseDto dto = mock(CourtHouseDto.class);
+        CourtLocationDto dto = mock(CourtLocationDto.class);
         when(service.findById(123L)).thenReturn(dto);
 
-        ResponseEntity<CourtHouseDto> resp = controller.getById(123L);
+        ResponseEntity<CourtLocationDto> resp = controller.getById(123L);
 
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(resp.getBody()).isSameAs(dto);

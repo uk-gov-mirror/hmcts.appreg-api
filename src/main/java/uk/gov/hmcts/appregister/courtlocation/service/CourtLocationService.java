@@ -1,10 +1,10 @@
 package uk.gov.hmcts.appregister.courtlocation.service;
 
 import java.util.List;
-import uk.gov.hmcts.appregister.courtlocation.dto.CourtHouseDto;
+import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
 
 public interface CourtLocationService {
-    List<CourtHouseDto> findAll();
+    List<CourtLocationDto> findAll();
 
-    CourtHouseDto findById(Long id);
+    CourtLocationDto findById(Long id);
 }

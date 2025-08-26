@@ -17,36 +17,36 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.appregister.courtlocation.dto.CourtHouseDto;
-import uk.gov.hmcts.appregister.courtlocation.mapper.CourtHouseMapper;
-import uk.gov.hmcts.appregister.courtlocation.model.CourtHouse;
-import uk.gov.hmcts.appregister.courtlocation.repository.CourtHouseRepository;
+import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
+import uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper;
+import uk.gov.hmcts.appregister.courtlocation.model.CourtLocation;
+import uk.gov.hmcts.appregister.courtlocation.repository.CourtLocationRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourtLocationServiceImplTest {
 
-    @Mock private CourtHouseRepository repository;
+    @Mock private CourtLocationRepository repository;
 
-    @Mock private CourtHouseMapper mapper;
+    @Mock private CourtLocationMapper mapper;
 
     @InjectMocks private CourtLocationServiceImpl service;
 
     @Test
     void findAll_mapsEachEntityToDto_andReturnsList() {
         // Arrange
-        CourtHouse e1 = new CourtHouse();
+        CourtLocation e1 = new CourtLocation();
         e1.setId(1L);
-        CourtHouse e2 = new CourtHouse();
+        CourtLocation e2 = new CourtLocation();
         e2.setId(2L);
         when(repository.findAll()).thenReturn(List.of(e1, e2));
 
-        CourtHouseDto d1 = mock(CourtHouseDto.class);
-        CourtHouseDto d2 = mock(CourtHouseDto.class);
+        CourtLocationDto d1 = mock(CourtLocationDto.class);
+        CourtLocationDto d2 = mock(CourtLocationDto.class);
         when(mapper.toReadDto(e1)).thenReturn(d1);
         when(mapper.toReadDto(e2)).thenReturn(d2);
 
         // Act
-        List<CourtHouseDto> out = service.findAll();
+        List<CourtLocationDto> out = service.findAll();
 
         // Assert
         assertThat(out).containsExactly(d1, d2);
@@ -60,7 +60,7 @@ class CourtLocationServiceImplTest {
     void findAll_whenRepositoryEmpty_returnsEmptyList_andDoesNotCallMapper() {
         when(repository.findAll()).thenReturn(List.of());
 
-        List<CourtHouseDto> out = service.findAll();
+        List<CourtLocationDto> out = service.findAll();
 
         assertThat(out).isEmpty();
         verify(repository).findAll();
@@ -70,14 +70,14 @@ class CourtLocationServiceImplTest {
     @Test
     void findById_whenFound_mapsAndReturnsDto() {
         Long id = 123L;
-        CourtHouse entity = new CourtHouse();
+        CourtLocation entity = new CourtLocation();
         entity.setId(id);
-        CourtHouseDto dto = mock(CourtHouseDto.class);
+        CourtLocationDto dto = mock(CourtLocationDto.class);
 
         when(repository.findById(id)).thenReturn(Optional.of(entity));
         when(mapper.toReadDto(entity)).thenReturn(dto);
 
-        CourtHouseDto out = service.findById(id);
+        CourtLocationDto out = service.findById(id);
 
         assertThat(out).isSameAs(dto);
         verify(repository).findById(id);

@@ -10,19 +10,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.appregister.courtlocation.dto.CourtHouseDto;
+import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
 import uk.gov.hmcts.appregister.courtlocation.service.CourtLocationService;
 
 @RestController
-@RequestMapping("/courthouses")
+@RequestMapping("/court-locations")
 @RequiredArgsConstructor
-public class CourtHouseController {
+public class CourtLocationController {
     private final CourtLocationService service;
 
     @Operation(summary = "Get all courthouses", operationId = "getAllCourthouses")
     @ApiResponse(responseCode = "200", description = "List of courthouses retrieved successfully")
     @GetMapping
-    public ResponseEntity<List<CourtHouseDto>> getAll() {
+    public ResponseEntity<List<CourtLocationDto>> getAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
@@ -32,7 +32,7 @@ public class CourtHouseController {
         @ApiResponse(responseCode = "404", description = "Courthouse not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<CourtHouseDto> getById(@PathVariable Long id) {
+    public ResponseEntity<CourtLocationDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.findById(id));
     }
 }

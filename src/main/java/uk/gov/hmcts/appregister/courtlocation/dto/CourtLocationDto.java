@@ -2,7 +2,7 @@ package uk.gov.hmcts.appregister.courtlocation.dto;
 
 import java.time.LocalDate;
 
-public record CourtHouseDto(
+public record CourtLocationDto(
         Long id,
         String name,
         String courtType,

@@ -1,18 +1,18 @@
 package uk.gov.hmcts.appregister.courtlocation.mapper;
 
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.courtlocation.dto.CourtHouseDto;
-import uk.gov.hmcts.appregister.courtlocation.model.CourtHouse;
+import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
+import uk.gov.hmcts.appregister.courtlocation.model.CourtLocation;
 
 @Component
-public class CourtHouseMapper {
+public class CourtLocationMapper {
 
-    public CourtHouseDto toReadDto(CourtHouse entity) {
+    public CourtLocationDto toReadDto(CourtLocation entity) {
         if (entity == null) {
             return null;
         }
 
-        return new CourtHouseDto(
+        return new CourtLocationDto(
                 entity.getId(),
                 entity.getName(),
                 entity.getCourtType(),
