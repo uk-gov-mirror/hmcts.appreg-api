@@ -21,17 +21,77 @@ import uk.gov.hmcts.appregister.resultcode.service.ResultCodeService;
 
 import static java.util.Objects.requireNonNullElse;
 
+/**
+ * REST controller exposing read-only endpoints for Result Codes.
+ *
+ * <p>Features:
+ * <ul>
+ *   <li><strong>Paginated, filterable listing</strong> of result codes for Admin and ALE flows.</li>
+ *   <li><strong>Fetch-by-code</strong> endpoint returning full metadata for a single result code.</li>
+ * </ul>
+ *
+ * <p><strong>Pagination model:</strong> The public API is 1-based (i.e., {@code page=1} is the first page),
+ * while Spring Data is 0-based. This controller converts to 0-based internally.
+ *
+ * <p><strong>Validation:</strong> Returns {@code 400 Bad Request} when:
+ * <ul>
+ *   <li>{@code page < 1}</li>
+ *   <li>{@code pageSize < 1} or {@code pageSize > MAX_PAGE_SIZE}</li>
+ *   <li>{@code startDateFrom > startDateTo}</li>
+ *   <li>{@code endDateFrom > endDateTo}</li>
+ * </ul>
+ *
+ * <p><strong>Sorting:</strong> Listing is sorted by {@code title ASC} to provide deterministic UI order.</p>
+ */
 @RestController
 @RequestMapping("/result-codes")
 @RequiredArgsConstructor
 public class ResultCodeController {
 
+    /** Default 1-based page number exposed by the public API. */
     private static final int DEFAULT_PAGE = 1;
+
+    /** Default page size when caller does not specify {@code pageSize}. */
     private static final int DEFAULT_PAGE_SIZE = 10;
+
+    /** Upper bound on page size to protect the service from overly large requests. */
     private static final int MAX_PAGE_SIZE = 100;
 
+    /** Application service that encapsulates search and lookup logic. */
     private final ResultCodeService service;
 
+    /**
+     * Returns a paginated, filterable list of result codes.
+     *
+     * <p><strong>Filters:</strong>
+     * <ul>
+     *   <li>{@code code} – case-insensitive partial match (ILIKE semantics).</li>
+     *   <li>{@code title} – case-insensitive partial match.</li>
+     *   <li>{@code startDateFrom}/{@code startDateTo} – inclusive range on {@code startDate}.</li>
+     *   <li>{@code endDateFrom}/{@code endDateTo} – inclusive range on {@code endDate}.</li>
+     * </ul>
+     *
+     * <p><strong>Dates:</strong> ISO-8601 ({@code yyyy-MM-dd}). When only one end of a range is provided,
+     * only that bound is applied. If both ends are provided, the controller validates {@code from <= to}.</p>
+     *
+     * <p><strong>Sorting:</strong> Fixed to {@code title ASC}.</p>
+     *
+     * <p><strong>Responses:</strong>
+     * <ul>
+     *   <li>{@code 200 OK} with {@link ResultCodePageResponse} on success.</li>
+     *   <li>{@code 400 Bad Request} when validation fails (see rules above).</li>
+     * </ul>
+     *
+     * @param code optional case-insensitive substring filter on result code value
+     * @param title optional case-insensitive substring filter on title
+     * @param startDateFrom optional lower bound (inclusive) for {@code startDate}
+     * @param startDateTo optional upper bound (inclusive) for {@code startDate}
+     * @param endDateFrom optional lower bound (inclusive) for {@code endDate}
+     * @param endDateTo optional upper bound (inclusive) for {@code endDate}
+     * @param page optional 1-based page number (defaults to {@value #DEFAULT_PAGE})
+     * @param pageSize optional page size (defaults to {@value #DEFAULT_PAGE_SIZE}, max {@value #MAX_PAGE_SIZE})
+     * @return {@link ResponseEntity} with {@link ResultCodePageResponse} or {@code 400 Bad Request}
+     */
     @Operation(summary = "Get result codes (paginated, filterable)")
     @ApiResponse(responseCode = "200", description = "List of result codes retrieved successfully")
     @GetMapping
@@ -45,13 +105,15 @@ public class ResultCodeController {
         @RequestParam(required = false) Integer page,
         @RequestParam(required = false) Integer pageSize) {
 
+        // Apply default pagination values (public API is 1-based).
         final int p = requireNonNullElse(page, DEFAULT_PAGE);
         final int s = requireNonNullElse(pageSize, DEFAULT_PAGE_SIZE);
 
-        // Basic input validation
+        // Basic input validation for pagination arguments.
         if (p < 1 || s < 1 || s > MAX_PAGE_SIZE) {
             return ResponseEntity.badRequest().build();
         }
+        // Validate date ranges only when both ends are provided.
         if (startDateFrom != null && startDateTo != null && startDateFrom.isAfter(startDateTo)) {
             return ResponseEntity.badRequest().build();
         }
@@ -59,17 +121,29 @@ public class ResultCodeController {
             return ResponseEntity.badRequest().build();
         }
 
-        Pageable pageable = PageRequest.of(p - 1, s, Sort.by("title").ascending());
+        // Convert to Spring Data's 0-based paging and apply fixed sort by title ASC.
+        final Pageable pageable = PageRequest.of(p - 1, s, Sort.by("title").ascending());
 
-        Page<ResultCodeListItemDto> pageDto = service.search(
+        // Delegate to service: it composes Specifications and performs the search.
+        final Page<ResultCodeListItemDto> pageDto = service.search(
             code, title, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable);
 
-        ResultCodePageResponse body = new ResultCodePageResponse(
+        // Wrap Spring Page into API response model, preserving 1-based page number.
+        final ResultCodePageResponse body = new ResultCodePageResponse(
             pageDto.getContent(), pageDto.getTotalElements(), p, s);
 
         return ResponseEntity.ok(body);
     }
 
+    /**
+     * Retrieves full metadata for a single result code identified by its code value.
+     *
+     * <p>On missing entity, the service is expected to throw
+     * {@code ResponseStatusException(HttpStatus.NOT_FOUND)}, which Spring maps to {@code 404}.</p>
+     *
+     * @param code the unique result code value to look up
+     * @return {@link ResponseEntity} with {@link ResultCodeDto} for {@code 200 OK}
+     */
     @Operation(summary = "Get a result code by code", operationId = "getResultCodeByCode")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Result code found"),
@@ -77,6 +151,7 @@ public class ResultCodeController {
     })
     @GetMapping("/{code}")
     public ResponseEntity<ResultCodeDto> getByCode(@PathVariable String code) {
+        // Delegate to service; exceptions (e.g., 404) are propagated and translated by Spring.
         return ResponseEntity.ok(service.findByCode(code));
     }
 }

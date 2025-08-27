@@ -18,26 +18,60 @@ import uk.gov.hmcts.appregister.resultcode.repository.ResultCodeRepository;
 
 import static java.util.Objects.nonNull;
 
+/**
+ * Service implementation of {@link ResultCodeService}.
+ *
+ * <p>This class acts as the bridge between controllers and the repository layer:
+ * it applies filtering logic, performs entity-to-DTO mapping, and raises appropriate
+ * HTTP-level exceptions when required.</p>
+ *
+ * <p><strong>Responsibilities:</strong>
+ * <ul>
+ *   <li>Fetch all result codes as full DTOs.</li>
+ *   <li>Find a single result code by its business identifier (code).</li>
+ *   <li>Search result codes with optional filters and pagination using {@link Specification}.</li>
+ * </ul>
+ */
 @Service
 @RequiredArgsConstructor
 public class ResultCodeServiceImpl implements ResultCodeService {
 
+    /**
+     * Spring Data repository providing persistence access to {@link ResultCode} entities.
+     */
     private final ResultCodeRepository repository;
+
+    /**
+     * Mapper for converting between {@link ResultCode} entities and API-facing DTOs.
+     */
     private final ResultCodeMapper mapper;
 
+    /**
+     * Fetches all result codes without pagination or filtering.
+     *
+     * @return a list of {@link ResultCodeDto}; may be empty if no records exist
+     */
     @Override
     public List<ResultCodeDto> findAll() {
         final List<ResultCode> resultCodes = repository.findAll();
 
+        // Convert each entity to a DTO for API exposure.
         return resultCodes.stream().map(mapper::toReadDto).toList();
     }
 
+    /**
+     * Finds a result code by its business identifier (code).
+     *
+     * @param code the short code string to search for
+     * @return the corresponding {@link ResultCodeDto}
+     * @throws ResponseStatusException with status 404 (NOT_FOUND) if not present
+     */
     @Override
     public ResultCodeDto findByCode(String code) {
-
         final ResultCode resultCode =
             repository
                 .findByResultCode(code)
+                // Translate missing record into an HTTP 404 for API consistency.
                 .orElseThrow(
                     () ->
                         new ResponseStatusException(
@@ -46,6 +80,26 @@ public class ResultCodeServiceImpl implements ResultCodeService {
         return mapper.toReadDto(resultCode);
     }
 
+    /**
+     * Searches for result codes with optional filters and pagination.
+     *
+     * <p>Filters applied:
+     * <ul>
+     *   <li>{@code code} – case-insensitive substring filter.</li>
+     *   <li>{@code title} – case-insensitive substring filter.</li>
+     *   <li>{@code startDateFrom}/{@code startDateTo} – inclusive range on start date.</li>
+     *   <li>{@code endDateFrom}/{@code endDateTo} – inclusive range on end date.</li>
+     * </ul>
+     *
+     * @param code          optional substring filter for code
+     * @param title         optional substring filter for title
+     * @param startDateFrom optional lower bound for start date
+     * @param startDateTo   optional upper bound for start date
+     * @param endDateFrom   optional lower bound for end date
+     * @param endDateTo     optional upper bound for end date
+     * @param pageable      pagination and sorting information
+     * @return a page of {@link ResultCodeListItemDto} records matching the criteria
+     */
     @Override
     public Page<ResultCodeListItemDto> search(
         String code,
@@ -56,6 +110,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
         LocalDate endDateTo,
         Pageable pageable) {
 
+        // Compose a combined specification of all filters.
         Specification<ResultCode> spec = Specification.allOf(
             codeLikeSpec(code),
             titleLikeSpec(title),
@@ -65,41 +120,57 @@ public class ResultCodeServiceImpl implements ResultCodeService {
             endDateToSpec(endDateTo)
         );
 
+        // Execute repository search and map each entity to a lightweight list item DTO.
         return repository.findAll(spec, pageable).map(mapper::toListItem);
     }
 
-    // code ILIKE %code%
+    // ---------------- Private Specification Builders ----------------
+
+    /**
+     * Builds a case-insensitive LIKE specification for code (ILIKE semantics).
+     */
     private Specification<ResultCode> codeLikeSpec(String code) {
         if (code == null || code.isBlank()) return null;
         final String needle = "%" + code.toLowerCase() + "%";
         return (root, q, cb) -> cb.like(cb.lower(root.get("resultCode")), needle);
     }
 
-    // title ILIKE %title%
+    /**
+     * Builds a case-insensitive LIKE specification for title.
+     */
     private Specification<ResultCode> titleLikeSpec(String title) {
         if (title == null || title.isBlank()) return null;
         final String needle = "%" + title.toLowerCase() + "%";
         return (root, q, cb) -> cb.like(cb.lower(root.get("title")), needle);
     }
 
-    // start_date >= from
+    /**
+     * Builds a specification enforcing {@code startDate >= from}.
+     */
     private Specification<ResultCode> startDateFromSpec(LocalDate from) {
         return nonNull(from) ? (r, q, cb) -> cb.greaterThanOrEqualTo(r.get("startDate"), from) : null;
     }
 
-    // start_date <= to
+    /**
+     * Builds a specification enforcing {@code startDate <= to}.
+     */
     private Specification<ResultCode> startDateToSpec(LocalDate to) {
         return nonNull(to) ? (r, q, cb) -> cb.lessThanOrEqualTo(r.get("startDate"), to) : null;
     }
 
-    // end_date >= from  OR end_date IS NULL (treat open-ended as ongoing)
+    /**
+     * Builds a specification enforcing {@code endDate >= from} or {@code endDate IS NULL}.
+     * <p>This treats null end dates as ongoing (still valid).</p>
+     */
     private Specification<ResultCode> endDateFromSpec(LocalDate from) {
         return nonNull(from)
             ? (r, q, cb) -> cb.or(cb.isNull(r.get("endDate")), cb.greaterThanOrEqualTo(r.get("endDate"), from))
             : null;
     }
 
-    // end_date <= to  (NULLs excluded by default)
+    /**
+     * Builds a specification enforcing {@code endDate <= to} (nulls excluded).
+     */
     private Specification<ResultCode> endDateToSpec(LocalDate to) {
         return nonNull(to) ? (r, q, cb) -> cb.lessThanOrEqualTo(r.get("endDate"), to) : null;
     }
