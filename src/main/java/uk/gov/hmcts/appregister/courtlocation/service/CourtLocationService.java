@@ -2,7 +2,8 @@ package uk.gov.hmcts.appregister.courtlocation.service;
 
 import java.util.List;
 
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
 
 public interface CourtLocationService {

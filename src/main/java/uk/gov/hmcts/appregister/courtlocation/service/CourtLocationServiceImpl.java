@@ -41,21 +41,24 @@ public class CourtLocationServiceImpl implements CourtLocationService {
     }
 
     @Override
-    public Page<CourtLocationDto> searchCourtLocations(String name, String courtType, Pageable pageable) {
-        Specification<CourtLocation> spec = Specification.allOf(
-            nameSpec(name),
-            courtTypeSpec(courtType)
-        );
+    public Page<CourtLocationDto> searchCourtLocations(
+            String name, String courtType, Pageable pageable) {
+        Specification<CourtLocation> spec =
+                Specification.allOf(nameSpec(name), courtTypeSpec(courtType));
         return repository.findAll(spec, pageable).map(mapper::toReadDto);
     }
 
     private Specification<CourtLocation> nameSpec(String name) {
-        if (name == null || name.isBlank()) return null;
+        if (name == null || name.isBlank()) {
+            return null;
+        }
         return (root, q, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
     }
 
     private Specification<CourtLocation> courtTypeSpec(String ct) {
-        if (ct == null || ct.isBlank()) return null;
+        if (ct == null || ct.isBlank()) {
+            return null;
+        }
         return (root, q, cb) -> cb.equal(root.get("courtType"), ct);
     }
 }

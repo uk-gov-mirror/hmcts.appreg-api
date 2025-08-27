@@ -1,18 +1,31 @@
 package uk.gov.hmcts.appregister.courtlocation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
+import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationPageResponse;
 import uk.gov.hmcts.appregister.courtlocation.service.CourtLocationService;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,27 +36,118 @@ class CourtLocationControllerTest {
     @InjectMocks private CourtLocationController controller;
 
     @Test
-    void getAll_returnsOkWithBody() {
-        CourtLocationDto dto1 = mock(CourtLocationDto.class);
-        CourtLocationDto dto2 = mock(CourtLocationDto.class);
-        when(service.findAll()).thenReturn(List.of(dto1, dto2));
+    void list_defaults_applyAndServiceIsCalledWithSortedPageable() {
+        CourtLocationDto d1 = mock(CourtLocationDto.class);
+        CourtLocationDto d2 = mock(CourtLocationDto.class);
+        Page<CourtLocationDto> page = new PageImpl<>(List.of(d1, d2), PageRequest.of(0, 10), 2);
 
-        ResponseEntity<List<CourtLocationDto>> resp = controller.getAll();
+        when(service.searchCourtLocations(isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(page);
+
+        ResponseEntity<CourtLocationPageResponse> resp = controller.list(null, null, null, null);
 
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(resp.getBody()).containsExactly(dto1, dto2);
-        verify(service).findAll();
+        assertThat(resp.getBody()).isNotNull();
+        assertThat(resp.getBody().results()).containsExactly(d1, d2);
+        assertThat(resp.getBody().totalCount()).isEqualTo(2L);
+        assertThat(resp.getBody().page()).isEqualTo(1);
+        assertThat(resp.getBody().pageSize()).isEqualTo(10);
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(service).searchCourtLocations(isNull(), isNull(), captor.capture());
+
+        Pageable used = captor.getValue();
+        assertThat(used.getPageNumber()).isEqualTo(0); // 1-based -> zero-based
+        assertThat(used.getPageSize()).isEqualTo(10);
+        Sort.Order nameOrder = used.getSort().getOrderFor("name");
+        assertThat(nameOrder).isNotNull();
+        assertThat(nameOrder.getDirection()).isEqualTo(Sort.Direction.ASC);
+    }
+
+    @Test
+    void list_withFiltersAndPaging_passedThroughAndReflectedInResponse() {
+        String name = "card";
+        String courtType = "CROWN";
+        Integer pageParam = 2;
+        Integer sizeParam = 5;
+
+        CourtLocationDto d1 = mock(CourtLocationDto.class);
+        Page<CourtLocationDto> page = new PageImpl<>(List.of(d1), PageRequest.of(1, 5), 21);
+
+        when(service.searchCourtLocations(eq(name), eq(courtType), any(Pageable.class)))
+                .thenReturn(page);
+
+        ResponseEntity<CourtLocationPageResponse> resp =
+                controller.list(name, courtType, pageParam, sizeParam);
+
+        assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(resp.getBody()).isNotNull();
+        assertThat(resp.getBody().results()).containsExactly(d1);
+        assertThat(resp.getBody().totalCount()).isEqualTo(21L);
+        assertThat(resp.getBody().page()).isEqualTo(2);
+        assertThat(resp.getBody().pageSize()).isEqualTo(5);
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(service).searchCourtLocations(eq(name), eq(courtType), captor.capture());
+
+        Pageable used = captor.getValue();
+        assertThat(used.getPageNumber()).isEqualTo(1);
+        assertThat(used.getPageSize()).isEqualTo(5);
+        Sort.Order nameOrder = used.getSort().getOrderFor("name");
+        assertThat(nameOrder).isNotNull();
+        assertThat(nameOrder.getDirection()).isEqualTo(Sort.Direction.ASC);
+    }
+
+    @Test
+    void list_whenPageLessThanOne_returnsBadRequest_andDoesNotCallService() {
+        ResponseEntity<CourtLocationPageResponse> resp = controller.list(null, null, 0, 10);
+
+        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void list_whenPageSizeLessThanOne_returnsBadRequest_andDoesNotCallService() {
+        ResponseEntity<CourtLocationPageResponse> resp = controller.list(null, null, 1, 0);
+
+        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void list_whenPageSizeOverMax_returnsBadRequest_andDoesNotCallService() {
+        ResponseEntity<CourtLocationPageResponse> resp = controller.list(null, null, 1, 101);
+
+        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
+        verifyNoInteractions(service);
     }
 
     @Test
     void getById_returnsOkWithBody() {
+        Long id = 123L;
         CourtLocationDto dto = mock(CourtLocationDto.class);
-        when(service.findById(123L)).thenReturn(dto);
+        when(service.findById(id)).thenReturn(dto);
 
-        ResponseEntity<CourtLocationDto> resp = controller.getById(123L);
+        ResponseEntity<CourtLocationDto> resp = controller.getById(id);
 
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(resp.getBody()).isSameAs(dto);
-        verify(service).findById(123L);
+        verify(service).findById(id);
+    }
+
+    @Test
+    void getById_whenServiceThrows_propagatesException() {
+        Long id = 404L;
+        when(service.findById(id))
+                .thenThrow(
+                        new ResponseStatusException(
+                                org.springframework.http.HttpStatus.NOT_FOUND, "not found"));
+
+        ResponseStatusException ex =
+                assertThrows(ResponseStatusException.class, () -> controller.getById(id));
+
+        assertThat(ex.getStatusCode().value()).isEqualTo(404);
+        assertThat(ex.getReason()).isEqualTo("not found");
+        verify(service).findById(id);
     }
 }

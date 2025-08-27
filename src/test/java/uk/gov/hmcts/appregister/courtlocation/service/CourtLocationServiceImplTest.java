@@ -2,6 +2,7 @@ package uk.gov.hmcts.appregister.courtlocation.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -12,10 +13,16 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
 import uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper;
@@ -31,13 +38,12 @@ class CourtLocationServiceImplTest {
 
     @InjectMocks private CourtLocationServiceImpl service;
 
+    // ---------- findAll ----------
+
     @Test
-    void findAll_mapsEachEntityToDto_andReturnsList() {
-        // Arrange
-        CourtLocation e1 = new CourtLocation();
-        e1.setId(1L);
-        CourtLocation e2 = new CourtLocation();
-        e2.setId(2L);
+    void findAll_mapsEntitiesToDtos_andReturnsList() {
+        CourtLocation e1 = mock(CourtLocation.class);
+        CourtLocation e2 = mock(CourtLocation.class);
         when(repository.findAll()).thenReturn(List.of(e1, e2));
 
         CourtLocationDto d1 = mock(CourtLocationDto.class);
@@ -45,10 +51,8 @@ class CourtLocationServiceImplTest {
         when(mapper.toReadDto(e1)).thenReturn(d1);
         when(mapper.toReadDto(e2)).thenReturn(d2);
 
-        // Act
         List<CourtLocationDto> out = service.findAll();
 
-        // Assert
         assertThat(out).containsExactly(d1, d2);
         verify(repository).findAll();
         verify(mapper).toReadDto(e1);
@@ -57,7 +61,7 @@ class CourtLocationServiceImplTest {
     }
 
     @Test
-    void findAll_whenRepositoryEmpty_returnsEmptyList_andDoesNotCallMapper() {
+    void findAll_whenEmpty_returnsEmpty_andDoesNotCallMapper() {
         when(repository.findAll()).thenReturn(List.of());
 
         List<CourtLocationDto> out = service.findAll();
@@ -67,13 +71,13 @@ class CourtLocationServiceImplTest {
         verifyNoInteractions(mapper);
     }
 
+    // ---------- findById ----------
+
     @Test
     void findById_whenFound_mapsAndReturnsDto() {
-        Long id = 123L;
-        CourtLocation entity = new CourtLocation();
-        entity.setId(id);
+        Long id = 42L;
+        CourtLocation entity = mock(CourtLocation.class);
         CourtLocationDto dto = mock(CourtLocationDto.class);
-
         when(repository.findById(id)).thenReturn(Optional.of(entity));
         when(mapper.toReadDto(entity)).thenReturn(dto);
 
@@ -86,17 +90,114 @@ class CourtLocationServiceImplTest {
     }
 
     @Test
-    void findById_whenMissing_throws404WithMessage_andDoesNotCallMapper() {
-        Long id = 999L;
+    void findById_whenMissing_throws404_andDoesNotCallMapper() {
+        Long id = 404L;
         when(repository.findById(id)).thenReturn(Optional.empty());
 
         ResponseStatusException ex =
                 assertThrows(ResponseStatusException.class, () -> service.findById(id));
 
-        assertThat(ex.getStatusCode().value()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(ex.getReason()).isEqualTo("Courthouse not found");
-
+        assertThat(ex.getStatusCode().value()).isEqualTo(404);
+        assertThat(ex.getReason()).isEqualTo("CourtLocation not found");
         verify(repository).findById(id);
+        verifyNoInteractions(mapper);
+    }
+
+    // ---------- searchCourtLocations ----------
+
+    @Test
+    void search_withBothFilters_buildsNonNullSpec_andMapsPage() {
+        String name = "man";
+        String courtType = "CROWN";
+        Pageable pageable = PageRequest.of(1, 5);
+
+        CourtLocation entity = mock(CourtLocation.class);
+        CourtLocationDto dto = mock(CourtLocationDto.class);
+        Page<CourtLocation> repoPage = new PageImpl<>(List.of(entity), pageable, 17);
+        when(repository.findAll(ArgumentMatchers.<Specification<CourtLocation>>any(), eq(pageable)))
+                .thenReturn(repoPage);
+        when(mapper.toReadDto(entity)).thenReturn(dto);
+
+        Page<CourtLocationDto> out = service.searchCourtLocations(name, courtType, pageable);
+
+        assertThat(out.getContent()).containsExactly(dto);
+        assertThat(out.getTotalElements()).isEqualTo(17);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Specification<CourtLocation>> specCaptor =
+                ArgumentCaptor.forClass((Class) Specification.class);
+        verify(repository).findAll(specCaptor.capture(), eq(pageable));
+        Specification<CourtLocation> used = specCaptor.getValue();
+        assertThat(used).isNotNull();
+    }
+
+    @Test
+    void search_withNameOnly_buildsNonNullSpec_andRespectsPageable() {
+        String name = "card";
+        String courtType = null;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        CourtLocation entity = mock(CourtLocation.class);
+        CourtLocationDto dto = mock(CourtLocationDto.class);
+        Page<CourtLocation> repoPage = new PageImpl<>(List.of(entity), pageable, 1);
+        when(repository.findAll(ArgumentMatchers.<Specification<CourtLocation>>any(), eq(pageable)))
+                .thenReturn(repoPage);
+        when(mapper.toReadDto(entity)).thenReturn(dto);
+
+        Page<CourtLocationDto> out = service.searchCourtLocations(name, courtType, pageable);
+
+        assertThat(out.getContent()).containsExactly(dto);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Specification<CourtLocation>> specCaptor =
+                ArgumentCaptor.forClass((Class) Specification.class);
+        verify(repository).findAll(specCaptor.capture(), eq(pageable));
+        Specification<CourtLocation> used = specCaptor.getValue();
+        assertThat(used).isNotNull();
+    }
+
+    @Test
+    void search_withCourtTypeOnly_buildsNonNullSpec() {
+        String name = null;
+        String courtType = "MAGISTRATES";
+        Pageable pageable = PageRequest.of(2, 3);
+
+        CourtLocation entity = mock(CourtLocation.class);
+        CourtLocationDto dto = mock(CourtLocationDto.class);
+        Page<CourtLocation> repoPage = new PageImpl<>(List.of(entity), pageable, 9);
+        when(repository.findAll(ArgumentMatchers.<Specification<CourtLocation>>any(), eq(pageable)))
+                .thenReturn(repoPage);
+        when(mapper.toReadDto(entity)).thenReturn(dto);
+
+        Page<CourtLocationDto> out = service.searchCourtLocations(name, courtType, pageable);
+
+        assertThat(out.getContent()).containsExactly(dto);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Specification<CourtLocation>> specCaptor =
+                ArgumentCaptor.forClass((Class) Specification.class);
+        verify(repository).findAll(specCaptor.capture(), eq(pageable));
+        Specification<CourtLocation> used = specCaptor.getValue();
+        assertThat(used).isNotNull();
+    }
+
+    @Test
+    void search_withNoFilters_usesMatchAllSpec_andReturnsEmptyMappedPage() {
+        String name = null;
+        String courtType = "   ";
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<CourtLocation> repoPage = new PageImpl<>(List.of(), pageable, 0);
+        when(repository.findAll(ArgumentMatchers.<Specification<CourtLocation>>any(), eq(pageable)))
+                .thenReturn(repoPage);
+
+        Page<CourtLocationDto> out = service.searchCourtLocations(name, courtType, pageable);
+
+        assertThat(out.getContent()).isEmpty();
+        assertThat(out.getTotalElements()).isEqualTo(0);
+
+        verify(repository)
+                .findAll(ArgumentMatchers.<Specification<CourtLocation>>any(), eq(pageable));
         verifyNoInteractions(mapper);
     }
 }
