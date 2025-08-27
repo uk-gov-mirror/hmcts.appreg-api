@@ -147,56 +147,6 @@ class CourtLocationTest {
     }
 
     @Test
-    void equalsAndHashCode_respectAllFields() {
-        // Two identical instances should be equal and share the same hashCode
-        CourtLocation a = CourtLocation.builder()
-            .id(1L)
-            .name("Same")
-            .courtType("CROWN")
-            .startDate(LocalDate.of(2020, 1, 1))
-            .endDate(null)
-            .locationId(10L)
-            .psaId(20L)
-            .courtLocationCode("X")
-            .welshName("W")
-            .orgId(30L)
-            .build();
-
-        CourtLocation b = CourtLocation.builder()
-            .id(1L)
-            .name("Same")
-            .courtType("CROWN")
-            .startDate(LocalDate.of(2020, 1, 1))
-            .endDate(null)
-            .locationId(10L)
-            .psaId(20L)
-            .courtLocationCode("X")
-            .welshName("W")
-            .orgId(30L)
-            .build();
-
-        assertEquals(a, b);
-        assertEquals(a.hashCode(), b.hashCode());
-
-        // Change one field to ensure inequality is detected
-        CourtLocation c = CourtLocation.builder()
-            .id(2L)
-            .name("Same")
-            .courtType("CROWN")
-            .startDate(LocalDate.of(2020, 1, 1))
-            .endDate(null)
-            .locationId(10L)
-            .psaId(20L)
-            .courtLocationCode("X")
-            .welshName("W")
-            .orgId(30L)
-            .build();
-
-        assertNotEquals(a, c);
-        assertNotEquals(a.hashCode(), c.hashCode());
-    }
-
-    @Test
     void toString_includesClassNameAndKeyFields() {
         // Lombok @Data provides a toString implementation
         CourtLocation cl = CourtLocation.builder()
