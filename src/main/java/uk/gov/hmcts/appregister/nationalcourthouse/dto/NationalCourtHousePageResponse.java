@@ -29,4 +29,4 @@ import java.util.List;
  * @param pageSize Size of the page requested.
  */
 public record NationalCourtHousePageResponse(
-    List<NationalCourtHouseDto> results, long totalCount, int page, int pageSize) {}
+        List<NationalCourtHouseDto> results, long totalCount, int page, int pageSize) {}

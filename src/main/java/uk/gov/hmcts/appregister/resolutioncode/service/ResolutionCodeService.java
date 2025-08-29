@@ -9,8 +9,7 @@ import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeListItemDto;
 import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
 
 /**
- * Service layer contract for interacting with {@link
- * ResolutionCode} data.
+ * Service layer contract for interacting with {@link ResolutionCode} data.
  *
  * <p>This interface defines operations available for reading and searching result codes, providing
  * an abstraction between controllers and the persistence layer. Implementations are responsible
@@ -72,8 +71,8 @@ public interface ResolutionCodeService {
      * @param endDateFrom optional lower bound (inclusive) for {@code endDate}
      * @param endDateTo optional upper bound (inclusive) for {@code endDate}
      * @param pageable pagination and sorting information
-     * @return a {@link Page} of {@link ResolutionCodeListItemDto} records matching the criteria; will
-     *     include total count and pagination metadata
+     * @return a {@link Page} of {@link ResolutionCodeListItemDto} records matching the criteria;
+     *     will include total count and pagination metadata
      */
     Page<ResolutionCodeListItemDto> search(
             String code,

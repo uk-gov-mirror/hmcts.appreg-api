@@ -30,8 +30,7 @@ import uk.gov.hmcts.appregister.nationalcourthouse.mapper.NationalCourtHouseMapp
  *       and may not be fully documented.
  * </ul>
  *
- * <p>This class is typically mapped into a {@link
- * NationalCourtHouseDto} by the {@link
+ * <p>This class is typically mapped into a {@link NationalCourtHouseDto} by the {@link
  * NationalCourtHouseMapper} for API exposure.
  */
 @Entity

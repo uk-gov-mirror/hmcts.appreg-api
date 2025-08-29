@@ -19,8 +19,7 @@ import uk.gov.hmcts.appregister.nationalcourthouse.repository.NationalCourtHouse
  *
  * <ul>
  *   <li>Controllers depend on this interface rather than directly on repositories.
- *   <li>Implementations typically use {@link
- *       NationalCourtHouseRepository} and {@link
+ *   <li>Implementations typically use {@link NationalCourtHouseRepository} and {@link
  *       NationalCourtHouseMapper}.
  * </ul>
  */

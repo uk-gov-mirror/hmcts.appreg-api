@@ -103,7 +103,8 @@ class ResolutionCodeControllerTest {
         Integer sizeParam = 5;
 
         ResolutionCodeListItemDto item = org.mockito.Mockito.mock(ResolutionCodeListItemDto.class);
-        Page<ResolutionCodeListItemDto> page = new PageImpl<>(List.of(item), PageRequest.of(1, 5), 42);
+        Page<ResolutionCodeListItemDto> page =
+                new PageImpl<>(List.of(item), PageRequest.of(1, 5), 42);
 
         when(service.search(
                         eq(code),

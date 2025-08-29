@@ -98,7 +98,8 @@ public class NationalCourtHouseController {
      * @param startDateTo optional upper bound for {@code start_date} (inclusive)
      * @param endDateFrom optional lower bound for {@code end_date} (inclusive)
      * @param endDateTo optional upper bound for {@code end_date} (inclusive)
-     * @return {@link ResponseEntity} containing {@link NationalCourtHousePageResponse} or {@code 400}
+     * @return {@link ResponseEntity} containing {@link NationalCourtHousePageResponse} or {@code
+     *     400}
      */
     @Operation(
             summary = "Get court locations (paginated, filterable)",

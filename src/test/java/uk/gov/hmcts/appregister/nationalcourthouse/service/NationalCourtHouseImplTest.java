@@ -116,7 +116,8 @@ class NationalCourtHouseImplTest {
         NationalCourtHouseDto dto = mock(NationalCourtHouseDto.class);
         Page<NationalCourtHouse> repoPage = new PageImpl<>(List.of(entity), pageable, 17);
 
-        when(repository.findAll(ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
+        when(repository.findAll(
+                        ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
                 .thenReturn(repoPage);
         when(mapper.toReadDto(entity)).thenReturn(dto);
 
@@ -143,7 +144,8 @@ class NationalCourtHouseImplTest {
         NationalCourtHouseDto dto = mock(NationalCourtHouseDto.class);
         Page<NationalCourtHouse> repoPage = new PageImpl<>(List.of(entity), pageable, 1);
 
-        when(repository.findAll(ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
+        when(repository.findAll(
+                        ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
                 .thenReturn(repoPage);
         when(mapper.toReadDto(entity)).thenReturn(dto);
 
@@ -169,7 +171,8 @@ class NationalCourtHouseImplTest {
         NationalCourtHouseDto dto = mock(NationalCourtHouseDto.class);
         Page<NationalCourtHouse> repoPage = new PageImpl<>(List.of(entity), pageable, 9);
 
-        when(repository.findAll(ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
+        when(repository.findAll(
+                        ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
                 .thenReturn(repoPage);
         when(mapper.toReadDto(entity)).thenReturn(dto);
 
@@ -192,7 +195,8 @@ class NationalCourtHouseImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         Page<NationalCourtHouse> repoPage = new PageImpl<>(List.of(), pageable, 0);
-        when(repository.findAll(ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
+        when(repository.findAll(
+                        ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
                 .thenReturn(repoPage);
 
         Page<NationalCourtHouseDto> out =
@@ -222,7 +226,8 @@ class NationalCourtHouseImplTest {
         NationalCourtHouseDto dto = mock(NationalCourtHouseDto.class);
         Page<NationalCourtHouse> repoPage = new PageImpl<>(List.of(entity), pageable, 3);
 
-        when(repository.findAll(ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
+        when(repository.findAll(
+                        ArgumentMatchers.<Specification<NationalCourtHouse>>any(), eq(pageable)))
                 .thenReturn(repoPage);
         when(mapper.toReadDto(entity)).thenReturn(dto);
 

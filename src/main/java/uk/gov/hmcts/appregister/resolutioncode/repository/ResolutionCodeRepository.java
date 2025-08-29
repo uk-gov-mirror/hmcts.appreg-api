@@ -37,8 +37,8 @@ public interface ResolutionCodeRepository
      *
      * @param code the result code string to search for (must match the {@code resolution_code}
      *     column)
-     * @return an {@link Optional} containing the matching {@link ResolutionCode} if found, otherwise
-     *     empty
+     * @return an {@link Optional} containing the matching {@link ResolutionCode} if found,
+     *     otherwise empty
      */
     Optional<ResolutionCode> findByResultCode(String code);
 }

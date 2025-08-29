@@ -29,6 +29,7 @@ import uk.gov.hmcts.appregister.nationalcourthouse.model.NationalCourtHouse;
  * </pre>
  */
 public interface NationalCourtHouseRepository
-        extends JpaRepository<NationalCourtHouse, Long>, JpaSpecificationExecutor<NationalCourtHouse> {
+        extends JpaRepository<NationalCourtHouse, Long>,
+                JpaSpecificationExecutor<NationalCourtHouse> {
     // No additional methods required yet – Spring Data generates CRUD and spec-based methods.
 }

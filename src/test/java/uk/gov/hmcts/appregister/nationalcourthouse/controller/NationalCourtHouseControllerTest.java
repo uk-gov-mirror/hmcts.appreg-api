@@ -41,7 +41,8 @@ class NationalCourtHouseControllerTest {
         // Arrange: service returns a simple page of 2 DTOs when no filters are present
         NationalCourtHouseDto d1 = mock(NationalCourtHouseDto.class);
         NationalCourtHouseDto d2 = mock(NationalCourtHouseDto.class);
-        Page<NationalCourtHouseDto> page = new PageImpl<>(List.of(d1, d2), PageRequest.of(0, 10), 2);
+        Page<NationalCourtHouseDto> page =
+                new PageImpl<>(List.of(d1, d2), PageRequest.of(0, 10), 2);
 
         when(service.searchCourtLocations(
                         isNull(), // name

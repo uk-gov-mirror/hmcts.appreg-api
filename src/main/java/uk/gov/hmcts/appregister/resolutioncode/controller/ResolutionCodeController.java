@@ -99,7 +99,8 @@ public class ResolutionCodeController {
      * @param page optional 1-based page number (defaults to {@value #DEFAULT_PAGE})
      * @param pageSize optional page size (defaults to {@value #DEFAULT_PAGE_SIZE}, max {@value
      *     #MAX_PAGE_SIZE})
-     * @return {@link ResponseEntity} with {@link ResolutionCodePageResponse} or {@code 400 Bad Request}
+     * @return {@link ResponseEntity} with {@link ResolutionCodePageResponse} or {@code 400 Bad
+     *     Request}
      */
     @Operation(summary = "Get result codes (paginated, filterable)")
     @ApiResponse(responseCode = "200", description = "List of result codes retrieved successfully")
@@ -144,7 +145,8 @@ public class ResolutionCodeController {
 
         // Wrap Spring Page into API response model, preserving 1-based page number.
         final ResolutionCodePageResponse body =
-                new ResolutionCodePageResponse(pageDto.getContent(), pageDto.getTotalElements(), p, s);
+                new ResolutionCodePageResponse(
+                        pageDto.getContent(), pageDto.getTotalElements(), p, s);
 
         return ResponseEntity.ok(body);
     }

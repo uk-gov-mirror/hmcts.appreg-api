@@ -42,7 +42,7 @@ class ResolutionCodeServiceImplTest {
 
     // Helper: build a Page with a specific totalElements so assertions match exactly
     private static Page<ResolutionCode> pageWithTotal(
-        List<ResolutionCode> content, Pageable pageable, long total) {
+            List<ResolutionCode> content, Pageable pageable, long total) {
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -105,7 +105,8 @@ class ResolutionCodeServiceImplTest {
     @Test
     void findByCode_whenFound_mapsAndReturnsDto() {
         String code = "RC99";
-        ResolutionCode entity = ResolutionCode.builder().id(99L).resultCode(code).title("X").build();
+        ResolutionCode entity =
+                ResolutionCode.builder().id(99L).resultCode(code).title("X").build();
         ResolutionCodeDto dto =
                 new ResolutionCodeDto(
                         99L, code, "X", "W", null, null, null, LocalDate.parse("2022-01-01"), null);
@@ -140,12 +141,13 @@ class ResolutionCodeServiceImplTest {
         String code = "RC1";
         Pageable pageable = PageRequest.of(0, 5);
 
-        ResolutionCode e = ResolutionCode.builder().id(1L).resultCode("RC123").title("Alpha").build();
+        ResolutionCode e =
+                ResolutionCode.builder().id(1L).resultCode("RC123").title("Alpha").build();
         ResolutionCodeListItemDto dto = new ResolutionCodeListItemDto(1L, "RC123", "Alpha");
 
         Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 1);
         when(repository.findAll(
-            ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
+                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
                 .thenReturn(repoPage);
         when(mapper.toListItem(e)).thenReturn(dto);
 
@@ -166,13 +168,14 @@ class ResolutionCodeServiceImplTest {
         String title = "Dismiss";
         Pageable pageable = PageRequest.of(0, 10);
 
-        ResolutionCode e = ResolutionCode.builder().id(2L).resultCode("RC2").title("Dismissed").build();
+        ResolutionCode e =
+                ResolutionCode.builder().id(2L).resultCode("RC2").title("Dismissed").build();
         ResolutionCodeListItemDto dto = new ResolutionCodeListItemDto(2L, "RC2", "Dismissed");
 
         // Set totalElements to exactly 4 to satisfy the assertion
         Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 4);
         when(repository.findAll(
-            ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
+                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
                 .thenReturn(repoPage);
         when(mapper.toListItem(e)).thenReturn(dto);
 
@@ -203,12 +206,13 @@ class ResolutionCodeServiceImplTest {
 
         ResolutionCode e =
                 ResolutionCode.builder().id(11L).resultCode("RC11").title("Appeal Granted").build();
-        ResolutionCodeListItemDto dto = new ResolutionCodeListItemDto(11L, "RC11", "Appeal Granted");
+        ResolutionCodeListItemDto dto =
+                new ResolutionCodeListItemDto(11L, "RC11", "Appeal Granted");
 
         // Set totalElements to exactly 9 (your expected value)
         Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 9);
         when(repository.findAll(
-            ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
+                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
                 .thenReturn(repoPage);
         when(mapper.toListItem(e)).thenReturn(dto);
 
@@ -240,7 +244,7 @@ class ResolutionCodeServiceImplTest {
         // Set totalElements to exactly 3 (your expected value)
         Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 3);
         when(repository.findAll(
-            ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
+                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
                 .thenReturn(repoPage);
         when(mapper.toListItem(e)).thenReturn(dto);
 
@@ -263,7 +267,7 @@ class ResolutionCodeServiceImplTest {
         Page<ResolutionCode> repoPage = pageWithTotal(List.of(), pageable, 0);
 
         when(repository.findAll(
-            ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
+                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
                 .thenReturn(repoPage);
 
         Page<ResolutionCodeListItemDto> out =
@@ -272,7 +276,8 @@ class ResolutionCodeServiceImplTest {
         assertThat(out.getContent()).isEmpty();
         assertThat(out.getTotalElements()).isEqualTo(0);
         verify(repository)
-                .findAll(ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class));
+                .findAll(
+                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class));
         verifyNoInteractions(mapper);
     }
 }

@@ -19,8 +19,8 @@ import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
  *   <li>Map a full {@link ResolutionCode} entity into a complete {@link ResolutionCodeDto}.
  *   <li>Reconstruct a {@link ResolutionCode} entity from a {@link ResolutionCodeDto}, e.g. for
  *       creating/updating in service or test code.
- *   <li>Map a {@link ResolutionCode} entity into a lightweight {@link ResolutionCodeListItemDto} containing
- *       only fields relevant for list views.
+ *   <li>Map a {@link ResolutionCode} entity into a lightweight {@link ResolutionCodeListItemDto}
+ *       containing only fields relevant for list views.
  * </ul>
  */
 @Component
@@ -58,8 +58,8 @@ public class ResolutionCodeMapper {
      * database via the repository.
      *
      * @param dto the DTO to map; may be {@code null}
-     * @return a new {@link ResolutionCode} entity built from the DTO fields, or {@code null} if input
-     *     was null
+     * @return a new {@link ResolutionCode} entity built from the DTO fields, or {@code null} if
+     *     input was null
      */
     public ResolutionCode toEntityFromReadDto(ResolutionCodeDto dto) {
         if (dto == null) {
@@ -82,14 +82,15 @@ public class ResolutionCodeMapper {
     }
 
     /**
-     * Converts a {@link ResolutionCode} entity into a lightweight {@link ResolutionCodeListItemDto}.
+     * Converts a {@link ResolutionCode} entity into a lightweight {@link
+     * ResolutionCodeListItemDto}.
      *
      * <p>This variant is intended for paginated list/search responses, where only ID, code, and
      * title are required.
      *
      * @param entity the entity to map; may be {@code null}
-     * @return a {@link ResolutionCodeListItemDto} containing only ID, code, and title, or {@code null}
-     *     if input was null
+     * @return a {@link ResolutionCodeListItemDto} containing only ID, code, and title, or {@code
+     *     null} if input was null
      */
     public ResolutionCodeListItemDto toListItem(ResolutionCode entity) {
         if (entity == null) {
@@ -98,6 +99,7 @@ public class ResolutionCodeMapper {
         }
 
         // Map only a subset of fields.
-        return new ResolutionCodeListItemDto(entity.getId(), entity.getResultCode(), entity.getTitle());
+        return new ResolutionCodeListItemDto(
+                entity.getId(), entity.getResultCode(), entity.getTitle());
     }
 }
