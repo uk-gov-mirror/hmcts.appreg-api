@@ -11,14 +11,12 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -26,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
-
 import uk.gov.hmcts.appregister.resultcode.dto.ResultCodeDto;
 import uk.gov.hmcts.appregister.resultcode.dto.ResultCodeListItemDto;
 import uk.gov.hmcts.appregister.resultcode.dto.ResultCodePageResponse;
@@ -45,19 +42,22 @@ class ResultCodeControllerTest {
         ResultCodeListItemDto i1 = org.mockito.Mockito.mock(ResultCodeListItemDto.class);
         ResultCodeListItemDto i2 = org.mockito.Mockito.mock(ResultCodeListItemDto.class);
         Page<ResultCodeListItemDto> page =
-            new PageImpl<>(List.of(i1, i2), PageRequest.of(0, 10), 2);
+                new PageImpl<>(List.of(i1, i2), PageRequest.of(0, 10), 2);
 
         // When no filters/page params are provided, controller should pass nulls and a pageable
         when(service.search(
-            isNull(), isNull(),
-            isNull(), isNull(),
-            isNull(), isNull(),
-            any(Pageable.class)))
-            .thenReturn(page);
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        any(Pageable.class)))
+                .thenReturn(page);
 
         // Act: call with all nulls (defaults should kick in: page=1, size=10)
         ResponseEntity<ResultCodePageResponse> resp =
-            controller.list(null, null, null, null, null, null, null, null);
+                controller.list(null, null, null, null, null, null, null, null);
 
         // Assert: 200 OK + body present + defaults reflected in returned metadata
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
@@ -69,11 +69,15 @@ class ResultCodeControllerTest {
 
         // Capture the Pageable passed to the service and verify sort/page
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(service).search(
-            isNull(), isNull(),
-            isNull(), isNull(),
-            isNull(), isNull(),
-            captor.capture());
+        verify(service)
+                .search(
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        captor.capture());
 
         Pageable used = captor.getValue();
         // Controller translates 1-based page to 0-based for Spring Data
@@ -92,26 +96,28 @@ class ResultCodeControllerTest {
         String code = "ABC";
         String title = "Appeal";
         LocalDate sdFrom = LocalDate.of(2024, 1, 1);
-        LocalDate sdTo   = LocalDate.of(2024, 12, 31);
+        LocalDate sdTo = LocalDate.of(2024, 12, 31);
         LocalDate edFrom = LocalDate.of(2025, 1, 1);
-        LocalDate edTo   = LocalDate.of(2025, 12, 31);
+        LocalDate edTo = LocalDate.of(2025, 12, 31);
         Integer pageParam = 2; // 1-based from client
         Integer sizeParam = 5;
 
         ResultCodeListItemDto item = org.mockito.Mockito.mock(ResultCodeListItemDto.class);
-        Page<ResultCodeListItemDto> page =
-            new PageImpl<>(List.of(item), PageRequest.of(1, 5), 42);
+        Page<ResultCodeListItemDto> page = new PageImpl<>(List.of(item), PageRequest.of(1, 5), 42);
 
         when(service.search(
-            eq(code), eq(title),
-            eq(sdFrom), eq(sdTo),
-            eq(edFrom), eq(edTo),
-            any(Pageable.class)))
-            .thenReturn(page);
+                        eq(code),
+                        eq(title),
+                        eq(sdFrom),
+                        eq(sdTo),
+                        eq(edFrom),
+                        eq(edTo),
+                        any(Pageable.class)))
+                .thenReturn(page);
 
         // Act
         ResponseEntity<ResultCodePageResponse> resp =
-            controller.list(code, title, sdFrom, sdTo, edFrom, edTo, pageParam, sizeParam);
+                controller.list(code, title, sdFrom, sdTo, edFrom, edTo, pageParam, sizeParam);
 
         // Assert response metadata & content
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
@@ -123,11 +129,15 @@ class ResultCodeControllerTest {
 
         // Verify pageable details (converted to 0-based & sorted by title ASC)
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(service).search(
-            eq(code), eq(title),
-            eq(sdFrom), eq(sdTo),
-            eq(edFrom), eq(edTo),
-            captor.capture());
+        verify(service)
+                .search(
+                        eq(code),
+                        eq(title),
+                        eq(sdFrom),
+                        eq(sdTo),
+                        eq(edFrom),
+                        eq(edTo),
+                        captor.capture());
 
         Pageable used = captor.getValue();
         assertThat(used.getPageNumber()).isEqualTo(1);
@@ -141,17 +151,17 @@ class ResultCodeControllerTest {
     void list_whenInvalidPageOrSize_returns400_andDoesNotCallService() {
         // page < 1
         ResponseEntity<ResultCodePageResponse> r1 =
-            controller.list(null, null, null, null, null, null, 0, 10);
+                controller.list(null, null, null, null, null, null, 0, 10);
         assertThat(r1.getStatusCodeValue()).isEqualTo(400);
 
         // size < 1
         ResponseEntity<ResultCodePageResponse> r2 =
-            controller.list(null, null, null, null, null, null, 1, 0);
+                controller.list(null, null, null, null, null, null, 1, 0);
         assertThat(r2.getStatusCodeValue()).isEqualTo(400);
 
         // size > MAX_PAGE_SIZE (100)
         ResponseEntity<ResultCodePageResponse> r3 =
-            controller.list(null, null, null, null, null, null, 1, 101);
+                controller.list(null, null, null, null, null, null, 1, 101);
         assertThat(r3.getStatusCodeValue()).isEqualTo(400);
 
         // No service calls should occur for invalid inputs
@@ -162,10 +172,10 @@ class ResultCodeControllerTest {
     void list_whenStartDateRangeInvalid_returns400_andNoServiceCall() {
         // startDateFrom after startDateTo should 400
         LocalDate from = LocalDate.of(2024, 12, 31);
-        LocalDate to   = LocalDate.of(2024, 1, 1);
+        LocalDate to = LocalDate.of(2024, 1, 1);
 
         ResponseEntity<ResultCodePageResponse> r =
-            controller.list(null, null, from, to, null, null, 1, 10);
+                controller.list(null, null, from, to, null, null, 1, 10);
 
         assertThat(r.getStatusCodeValue()).isEqualTo(400);
         verifyNoInteractions(service);
@@ -175,10 +185,10 @@ class ResultCodeControllerTest {
     void list_whenEndDateRangeInvalid_returns400_andNoServiceCall() {
         // endDateFrom after endDateTo should 400
         LocalDate from = LocalDate.of(2026, 1, 1);
-        LocalDate to   = LocalDate.of(2025, 1, 1);
+        LocalDate to = LocalDate.of(2025, 1, 1);
 
         ResponseEntity<ResultCodePageResponse> r =
-            controller.list(null, null, null, null, from, to, 1, 10);
+                controller.list(null, null, null, null, from, to, 1, 10);
 
         assertThat(r.getStatusCodeValue()).isEqualTo(400);
         verifyNoInteractions(service);
@@ -205,8 +215,9 @@ class ResultCodeControllerTest {
         // Arrange
         String code = "MISSING";
         when(service.findByCode(code))
-            .thenThrow(new ResponseStatusException(
-                org.springframework.http.HttpStatus.NOT_FOUND, "not found"));
+                .thenThrow(
+                        new ResponseStatusException(
+                                org.springframework.http.HttpStatus.NOT_FOUND, "not found"));
 
         // Act + Assert: controller should propagate the exception (Spring maps it to 404)
         assertThrows(ResponseStatusException.class, () -> controller.getByCode(code));

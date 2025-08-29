@@ -39,18 +39,18 @@ class CourtLocationMapperTest {
         Long orgId = 999L;
 
         CourtLocation entity =
-            CourtLocation.builder()
-                .id(id)
-                .name(name)
-                .courtType(courtType)
-                .startDate(startDate)
-                .endDate(endDate)
-                .locationId(locationId)
-                .psaId(psaId)
-                .courtLocationCode(courtLocationCode)
-                .welshName(welshName)
-                .orgId(orgId)
-                .build();
+                CourtLocation.builder()
+                        .id(id)
+                        .name(name)
+                        .courtType(courtType)
+                        .startDate(startDate)
+                        .endDate(endDate)
+                        .locationId(locationId)
+                        .psaId(psaId)
+                        .courtLocationCode(courtLocationCode)
+                        .welshName(welshName)
+                        .orgId(orgId)
+                        .build();
 
         // Act
         CourtLocationDto dto = mapper.toReadDto(entity);
@@ -74,18 +74,18 @@ class CourtLocationMapperTest {
         // Arrange: entity with nullable/optional fields left null
         // (endDate and welshName are typical nullables)
         CourtLocation entity =
-            CourtLocation.builder()
-                .id(7L)
-                .name("Bristol Magistrates")
-                .courtType("MAGISTRATES")
-                .startDate(LocalDate.of(2021, 5, 10))
-                .endDate(null)                 // intentionally null
-                .locationId(10L)
-                .psaId(20L)
-                .courtLocationCode("5678")
-                .welshName(null)               // intentionally null
-                .orgId(30L)
-                .build();
+                CourtLocation.builder()
+                        .id(7L)
+                        .name("Bristol Magistrates")
+                        .courtType("MAGISTRATES")
+                        .startDate(LocalDate.of(2021, 5, 10))
+                        .endDate(null) // intentionally null
+                        .locationId(10L)
+                        .psaId(20L)
+                        .courtLocationCode("5678")
+                        .welshName(null) // intentionally null
+                        .orgId(30L)
+                        .build();
 
         // Act
         CourtLocationDto dto = mapper.toReadDto(entity);

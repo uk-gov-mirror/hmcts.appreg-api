@@ -3,15 +3,13 @@ package uk.gov.hmcts.appregister.resultcode.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.time.LocalDate;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 class ResultCodeTest {
@@ -55,17 +53,17 @@ class ResultCodeTest {
     @Test
     void allArgsConstructor_setsAllFields() {
         // Arrange + Act: construct using generated all-args constructor
-        ResultCode rc = new ResultCode(
-            7L,
-            "RC777",
-            "Conviction Recorded",
-            "A conviction is recorded.",
-            "CJA 2003",
-            "dest1@hmcts.net",
-            "dest2@hmcts.net",
-            LocalDate.of(2020, 2, 2),
-            LocalDate.of(2021, 3, 3)
-        );
+        ResultCode rc =
+                new ResultCode(
+                        7L,
+                        "RC777",
+                        "Conviction Recorded",
+                        "A conviction is recorded.",
+                        "CJA 2003",
+                        "dest1@hmcts.net",
+                        "dest2@hmcts.net",
+                        LocalDate.of(2020, 2, 2),
+                        LocalDate.of(2021, 3, 3));
 
         // Assert: each field was set as expected
         assertThat(rc.getId()).isEqualTo(7L);
@@ -82,17 +80,18 @@ class ResultCodeTest {
     @Test
     void builder_setsAllFields() {
         // Act: use Lombok builder for a fluent construction
-        ResultCode rc = ResultCode.builder()
-            .id(42L)
-            .resultCode("RC042")
-            .title("Appeal Successful")
-            .wording("The appeal is successful.")
-            .legislation("Appeals Act 2010")
-            .destinationEmail1("a@hmcts.net")
-            .destinationEmail2("b@hmcts.net")
-            .startDate(LocalDate.of(2022, 5, 1))
-            .endDate(null) // open-ended
-            .build();
+        ResultCode rc =
+                ResultCode.builder()
+                        .id(42L)
+                        .resultCode("RC042")
+                        .title("Appeal Successful")
+                        .wording("The appeal is successful.")
+                        .legislation("Appeals Act 2010")
+                        .destinationEmail1("a@hmcts.net")
+                        .destinationEmail2("b@hmcts.net")
+                        .startDate(LocalDate.of(2022, 5, 1))
+                        .endDate(null) // open-ended
+                        .build();
 
         // Assert: builder populated all fields
         assertThat(rc.getId()).isEqualTo(42L);
@@ -130,12 +129,13 @@ class ResultCodeTest {
     @Test
     void toString_includesKeyFields() {
         // Arrange
-        ResultCode rc = ResultCode.builder()
-            .id(5L)
-            .resultCode("RC005")
-            .title("Some Title")
-            .startDate(LocalDate.of(2024, 1, 1))
-            .build();
+        ResultCode rc =
+                ResultCode.builder()
+                        .id(5L)
+                        .resultCode("RC005")
+                        .title("Some Title")
+                        .startDate(LocalDate.of(2024, 1, 1))
+                        .build();
 
         // Act
         String s = rc.toString();
@@ -177,8 +177,12 @@ class ResultCodeTest {
         assertColumn("endDate", "resolution_code_end_date", true, -1);
     }
 
-    private static void assertColumn(String fieldName, String expectedColName, boolean expectPresent, int expectedLengthOrMinus1)
-        throws NoSuchFieldException {
+    private static void assertColumn(
+            String fieldName,
+            String expectedColName,
+            boolean expectPresent,
+            int expectedLengthOrMinus1)
+            throws NoSuchFieldException {
         Field f = ResultCode.class.getDeclaredField(fieldName);
         Column col = f.getAnnotation(Column.class);
         if (expectPresent) {

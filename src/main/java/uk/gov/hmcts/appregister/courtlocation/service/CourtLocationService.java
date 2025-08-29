@@ -14,11 +14,12 @@ import uk.gov.hmcts.appregister.courtlocation.dto.CourtLocationDto;
  * rules, mapping JPA entities to DTOs, and delegating persistence operations to a repository.
  *
  * <p><b>Usage pattern:</b>
+ *
  * <ul>
- *   <li>Controllers depend on this interface rather than directly on repositories.</li>
- *   <li>Implementations typically use
- *   {@link uk.gov.hmcts.appregister.courtlocation.repository.CourtLocationRepository} and
- *   {@link uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper}.</li>
+ *   <li>Controllers depend on this interface rather than directly on repositories.
+ *   <li>Implementations typically use {@link
+ *       uk.gov.hmcts.appregister.courtlocation.repository.CourtLocationRepository} and {@link
+ *       uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper}.
  * </ul>
  */
 public interface CourtLocationService {
@@ -45,14 +46,15 @@ public interface CourtLocationService {
      * Search for court locations using optional filters and pagination.
      *
      * <p><b>Filters:</b>
+     *
      * <ul>
-     *   <li>{@code name} – optional case-insensitive substring filter on the courthouse name.</li>
-     *   <li>{@code courtType} – optional exact match on the {@code courtType} field.</li>
-     *   <li>{@code startDateFrom}/{@code startDateTo} – optional inclusive range on
-     *       {@code startDate}.</li>
+     *   <li>{@code name} – optional case-insensitive substring filter on the courthouse name.
+     *   <li>{@code courtType} – optional exact match on the {@code courtType} field.
+     *   <li>{@code startDateFrom}/{@code startDateTo} – optional inclusive range on {@code
+     *       startDate}.
      *   <li>{@code endDateFrom}/{@code endDateTo} – optional inclusive range on {@code endDate}.
      *       Implementations should define semantics for {@code NULL endDate} (e.g., treat as
-     *       “ongoing” when applying {@code endDateFrom}).</li>
+     *       “ongoing” when applying {@code endDateFrom}).
      * </ul>
      *
      * <p><b>Paging/Sorting:</b> Provided via the {@link Pageable} argument. Controllers typically
@@ -68,11 +70,12 @@ public interface CourtLocationService {
      * @return a {@link Page} of {@link CourtLocationDto} results matching the criteria
      */
     Page<CourtLocationDto> searchCourtLocations(
-        String name,
-        String courtType,
-        LocalDate startDateFrom,
-        LocalDate startDateTo,
-        LocalDate endDateFrom,
-        LocalDate endDateTo,
-        Pageable pageable); // controller provides 0-based paging + sort; service composes filters
+            String name,
+            String courtType,
+            LocalDate startDateFrom,
+            LocalDate startDateTo,
+            LocalDate endDateFrom,
+            LocalDate endDateTo,
+            Pageable pageable); // controller provides 0-based paging + sort; service composes
+    // filters
 }

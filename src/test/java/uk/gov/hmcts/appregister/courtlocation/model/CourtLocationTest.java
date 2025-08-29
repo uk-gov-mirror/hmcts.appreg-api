@@ -1,5 +1,11 @@
 package uk.gov.hmcts.appregister.courtlocation.model;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,8 +15,6 @@ import jakarta.persistence.Table;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class CourtLocationTest {
 
@@ -91,18 +95,9 @@ class CourtLocationTest {
         String welsh = "Caerdydd"; // just a placeholder text
         Long orgId = 300L;
 
-        CourtLocation cl = new CourtLocation(
-            id,
-            name,
-            courtType,
-            start,
-            end,
-            locationId,
-            psaId,
-            code,
-            welsh,
-            orgId
-        );
+        CourtLocation cl =
+                new CourtLocation(
+                        id, name, courtType, start, end, locationId, psaId, code, welsh, orgId);
 
         // Validate each field is set as provided
         assertEquals(id, cl.getId());
@@ -120,18 +115,19 @@ class CourtLocationTest {
     @Test
     void builder_setsAllFields() {
         // Use Lombok @Builder for a fluent construction
-        CourtLocation cl = CourtLocation.builder()
-            .id(42L)
-            .name("Manchester Crown Court")
-            .courtType("CROWN")
-            .startDate(LocalDate.of(2018, 1, 1))
-            .endDate(LocalDate.of(2026, 1, 1))
-            .locationId(500L)
-            .psaId(600L)
-            .courtLocationCode("MAN01")
-            .welshName("Manceinion")
-            .orgId(700L)
-            .build();
+        CourtLocation cl =
+                CourtLocation.builder()
+                        .id(42L)
+                        .name("Manchester Crown Court")
+                        .courtType("CROWN")
+                        .startDate(LocalDate.of(2018, 1, 1))
+                        .endDate(LocalDate.of(2026, 1, 1))
+                        .locationId(500L)
+                        .psaId(600L)
+                        .courtLocationCode("MAN01")
+                        .welshName("Manceinion")
+                        .orgId(700L)
+                        .build();
 
         // Validate every field was set through the builder
         assertEquals(42L, cl.getId());
@@ -149,18 +145,19 @@ class CourtLocationTest {
     @Test
     void toString_includesClassNameAndKeyFields() {
         // Lombok @Data provides a toString implementation
-        CourtLocation cl = CourtLocation.builder()
-            .id(99L)
-            .name("York")
-            .courtType("MAGISTRATES")
-            .startDate(LocalDate.of(2017, 6, 1))
-            .endDate(null)
-            .locationId(111L)
-            .psaId(222L)
-            .courtLocationCode("YRK1")
-            .welshName("Llwybr")
-            .orgId(333L)
-            .build();
+        CourtLocation cl =
+                CourtLocation.builder()
+                        .id(99L)
+                        .name("York")
+                        .courtType("MAGISTRATES")
+                        .startDate(LocalDate.of(2017, 6, 1))
+                        .endDate(null)
+                        .locationId(111L)
+                        .psaId(222L)
+                        .courtLocationCode("YRK1")
+                        .welshName("Llwybr")
+                        .orgId(333L)
+                        .build();
 
         String s = cl.toString();
 
