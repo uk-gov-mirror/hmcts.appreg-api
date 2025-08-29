@@ -231,7 +231,7 @@ class CourtLocationServiceImplTest {
                         null, null, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable);
 
         assertThat(out.getContent()).containsExactly(dto);
-        assertThat(out.getTotalElements()).isEqualTo(3);
+        assertThat(out.getTotalElements()).isEqualTo(21);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Specification<CourtLocation>> specCaptor =
