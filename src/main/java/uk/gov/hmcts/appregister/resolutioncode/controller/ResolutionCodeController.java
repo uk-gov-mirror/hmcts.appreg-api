@@ -1,14 +1,11 @@
 package uk.gov.hmcts.appregister.resolutioncode.controller;
 
-import static java.util.Objects.requireNonNullElse;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeListItemDto;
-import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodePageResponse;
 import uk.gov.hmcts.appregister.resolutioncode.service.ResolutionCodeService;
 
 /**
@@ -86,7 +82,7 @@ public class ResolutionCodeController {
      * <p><strong>Responses:</strong>
      *
      * <ul>
-     *   <li>{@code 200 OK} with {@link ResolutionCodePageResponse} on success.
+     *   <li>{@code 200 OK} with {@link ResolutionCodeListItemDto} on success.
      *   <li>{@code 400 Bad Request} when validation fails (see rules above).
      * </ul>
      *
@@ -96,38 +92,23 @@ public class ResolutionCodeController {
      * @param startDateTo optional upper bound (inclusive) for {@code startDate}
      * @param endDateFrom optional lower bound (inclusive) for {@code endDate}
      * @param endDateTo optional upper bound (inclusive) for {@code endDate}
-     * @param page optional 1-based page number (defaults to {@value #DEFAULT_PAGE})
-     * @param pageSize optional page size (defaults to {@value #DEFAULT_PAGE_SIZE}, max {@value
-     *     #MAX_PAGE_SIZE})
-     * @return {@link ResponseEntity} with {@link ResolutionCodePageResponse} or {@code 400 Bad
+     * @return {@link ResponseEntity} with {@link ResolutionCodeListItemDto} or {@code 400 Bad
      *     Request}
      */
     @Operation(summary = "Get result codes (paginated, filterable)")
     @ApiResponse(responseCode = "200", description = "List of result codes retrieved successfully")
     @GetMapping
-    public ResponseEntity<ResolutionCodePageResponse> list(
-            @RequestParam(required = false) String code,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                    LocalDate startDateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                    LocalDate startDateTo,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                    LocalDate endDateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                    LocalDate endDateTo,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer pageSize) {
-
-        // Apply default pagination values (public API is 1-based).
-        final int p = requireNonNullElse(page, DEFAULT_PAGE);
-        final int s = requireNonNullElse(pageSize, DEFAULT_PAGE_SIZE);
-
-        // Basic input validation for pagination arguments.
-        if (p < 1 || s < 1 || s > MAX_PAGE_SIZE) {
-            return ResponseEntity.badRequest().build();
-        }
-        // Validate date ranges only when both ends are provided.
+    public ResponseEntity<Page<ResolutionCodeListItemDto>> list(
+        @RequestParam(required = false) String code,
+        @RequestParam(required = false) String title,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateFrom,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateTo,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateFrom,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateTo,
+        @org.springframework.data.web.PageableDefault(size = 10, sort = "title",
+            direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        // Optional: validate date ranges
         if (startDateFrom != null && startDateTo != null && startDateFrom.isAfter(startDateTo)) {
             return ResponseEntity.badRequest().build();
         }
@@ -135,20 +116,10 @@ public class ResolutionCodeController {
             return ResponseEntity.badRequest().build();
         }
 
-        // Convert to Spring Data's 0-based paging and apply fixed sort by title ASC.
-        final Pageable pageable = PageRequest.of(p - 1, s, Sort.by("title").ascending());
+        Page<ResolutionCodeListItemDto> page =
+            service.search(code, title, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable);
 
-        // Delegate to service: it composes Specifications and performs the search.
-        final Page<ResolutionCodeListItemDto> pageDto =
-                service.search(
-                        code, title, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable);
-
-        // Wrap Spring Page into API response model, preserving 1-based page number.
-        final ResolutionCodePageResponse body =
-                new ResolutionCodePageResponse(
-                        pageDto.getContent(), pageDto.getTotalElements(), p, s);
-
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(page);
     }
 
     /**

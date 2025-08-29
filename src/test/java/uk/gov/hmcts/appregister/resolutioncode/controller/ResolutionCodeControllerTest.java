@@ -26,7 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeListItemDto;
-import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodePageResponse;
 import uk.gov.hmcts.appregister.resolutioncode.service.ResolutionCodeService;
 
 @ExtendWith(MockitoExtension.class)
