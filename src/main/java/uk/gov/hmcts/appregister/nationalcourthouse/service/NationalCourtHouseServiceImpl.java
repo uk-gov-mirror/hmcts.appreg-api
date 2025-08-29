@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -98,90 +97,8 @@ public class NationalCourtHouseServiceImpl implements NationalCourtHouseService 
         LocalDate endDateTo,
         Pageable pageable) {
 
-        // Combine all optional specifications into one
-        Specification<NationalCourtHouse> spec =
-            Specification.allOf(
-                nameSpec(name),
-                courtTypeSpec(courtType),
-                startDateFromSpec(startDateFrom),
-                startDateToSpec(startDateTo),
-                endDateFromSpec(endDateFrom),
-                endDateToSpec(endDateTo)
-            );
-
-        return repository.findAll(spec, pageable).map(mapper::toReadDto);
-    }
-
-    /**
-     * Build specification: start_date >= from.
-     */
-    private Specification<NationalCourtHouse> startDateFromSpec(LocalDate from) {
-        if (from == null) {
-            return null;
-        }
-        return (root, q, cb) -> cb.greaterThanOrEqualTo(root.get("startDate"), from);
-    }
-
-    /**
-     * Build specification: start_date <= to.
-     */
-    private Specification<NationalCourtHouse> startDateToSpec(LocalDate to) {
-        if (to == null) {
-            return null;
-        }
-        return (root, q, cb) -> cb.lessThanOrEqualTo(root.get("startDate"), to);
-    }
-
-    /**
-     * Build specification: end_date >= from OR end_date IS NULL.
-     *
-     * <p>Treats {@code null end_date} as "ongoing" and therefore included in queries constrained by
-     * a lower bound.
-     */
-    private Specification<NationalCourtHouse> endDateFromSpec(LocalDate from) {
-        if (from == null) {
-            return null;
-        }
-        return (root, q, cb) ->
-            cb.or(
-                cb.isNull(root.get("endDate")),
-                cb.greaterThanOrEqualTo(root.get("endDate"), from)
-            );
-    }
-
-    /**
-     * Build specification: end_date <= to (NULLs excluded by default).
-     */
-    private Specification<NationalCourtHouse> endDateToSpec(LocalDate to) {
-        if (to == null) {
-            return null;
-        }
-        return (root, q, cb) -> cb.lessThanOrEqualTo(root.get("endDate"), to);
-    }
-
-    /**
-     * Build a case-insensitive {@code LIKE} specification for the name filter.
-     *
-     * @param name filter value, may be null/blank
-     * @return {@link Specification} for the filter, or null if not applied
-     */
-    private Specification<NationalCourtHouse> nameSpec(String name) {
-        if (name == null || name.isBlank()) {
-            return null;
-        }
-        return (root, q, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
-    }
-
-    /**
-     * Build an exact-match specification for court type.
-     *
-     * @param ct court type filter, may be null/blank
-     * @return {@link Specification} for the filter, or null if not applied
-     */
-    private Specification<NationalCourtHouse> courtTypeSpec(String ct) {
-        if (ct == null || ct.isBlank()) {
-            return null;
-        }
-        return (root, q, cb) -> cb.equal(root.get("courtType"), ct);
+        return repository.search(
+                name, courtType, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable)
+            .map(mapper::toReadDto);
     }
 }
