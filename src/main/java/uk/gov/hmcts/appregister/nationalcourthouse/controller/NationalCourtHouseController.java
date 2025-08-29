@@ -117,7 +117,7 @@ public class NationalCourtHouseController {
         }
 
         // Delegate – service returns a Page<NationalCourtHouseDto>
-        Page<NationalCourtHouseDto> page = service.searchCourtLocations(
+        Page<NationalCourtHouseDto> page = service.search(
             name, courtType, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable
         );
 

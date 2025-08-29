@@ -70,13 +70,12 @@ public interface NationalCourtHouseService {
      * @param pageable paging information including page number, size, and sort
      * @return a {@link Page} of {@link NationalCourtHouseDto} results matching the criteria
      */
-    Page<NationalCourtHouseDto> searchCourtLocations(
+    Page<NationalCourtHouseDto> search(
             String name,
             String courtType,
             LocalDate startDateFrom,
             LocalDate startDateTo,
             LocalDate endDateFrom,
             LocalDate endDateTo,
-            Pageable pageable); // controller provides 0-based paging + sort; service composes
-    // filters
+            Pageable pageable);
 }
