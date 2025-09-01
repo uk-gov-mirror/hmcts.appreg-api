@@ -3,44 +3,53 @@ package uk.gov.hmcts.appregister.resolutioncode.dto;
 import java.time.LocalDate;
 
 /**
- * API-facing Data Transfer Object (DTO) representing a Result Code record.
+ * Immutable Data Transfer Object (DTO) representing a Resolution (Result) Code.
  *
- * <p>This is the "read model" returned to clients when fetching a result code (via GET endpoints).
- * It deliberately decouples the REST API contract from the JPA entity so that:
- *
+ * <p>This record is the API-facing representation of a resolution code, decoupled from
+ * the JPA entity model. It exposes only the fields required by frontend clients and
+ * integration consumers, ensuring:
  * <ul>
- *   <li>Internal persistence details are hidden from consumers.
- *   <li>The contract remains stable even if the database schema changes.
- *   <li>Only relevant fields are exposed to frontend clients.
+ *   <li>Persistence details (table/column names, JPA annotations) remain hidden.</li>
+ *   <li>The API contract is stable, even if the database schema evolves.</li>
+ *   <li>All fields are immutable, since this is defined as a Java {@code record}.</li>
  * </ul>
  *
- * <p>All fields are immutable, as this is declared as a Java {@code record}.
+ * <p><strong>Usage:</strong> Returned directly in responses for:
+ * <ul>
+ *   <li>Fetching a single resolution code by its unique code value.</li>
+ *   <li>Admin and ALE workflows where full metadata is required.</li>
+ * </ul>
+ *
+ * <p><strong>Mapping:</strong> Typically created by a {@code ResolutionCodeMapper} that
+ * converts from {@code ResolutionCode} JPA entities.</p>
  */
 public record ResolutionCodeDto(
 
-        /** Primary key identifier of the result code (maps to {@code rc_id}). */
-        Long id,
+    /** Primary key identifier of the resolution code (maps to {@code rc_id} in the database). */
+    Long id,
 
-        /** Short code value (e.g. "RC123"), used in application logic and UI. */
-        String resultCode,
+    /** Business code string (e.g., "RC123") used for identification in logic and UI. */
+    String resultCode,
 
-        /** Human-readable title of the result code. */
-        String title,
+    /** Human-readable title of the resolution code. */
+    String title,
 
-        /** Full textual wording or description of the result code. */
-        String wording,
+    /** Full descriptive wording or explanation of the resolution code. */
+    String wording,
 
-        /** Legislation reference associated with this result code (nullable). */
-        String legislation,
+    /** Optional legislation reference associated with the code. */
+    String legislation,
 
-        /** First destination email address linked to this result code (nullable). */
-        String destinationEmail1,
+    /** First destination email address for notifications linked to this code, if defined. */
+    String destinationEmail1,
 
-        /** Second destination email address linked to this result code (nullable). */
-        String destinationEmail2,
+    /** Second destination email address for notifications linked to this code, if defined. */
+    String destinationEmail2,
 
-        /** Start date from which this result code is valid (inclusive). */
-        LocalDate startDate,
+    /** Start date (inclusive) from which this code is valid. */
+    LocalDate startDate,
 
-        /** Optional end date until which this result code is valid (inclusive). */
-        LocalDate endDate) {}
+    /** End date (inclusive) until which this code is valid, or {@code null} if ongoing. */
+    LocalDate endDate
+) {
+}

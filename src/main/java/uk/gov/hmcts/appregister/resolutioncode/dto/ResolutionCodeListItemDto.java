@@ -1,28 +1,37 @@
 package uk.gov.hmcts.appregister.resolutioncode.dto;
 
 /**
- * Lightweight projection DTO for listing result codes.
+ * Lightweight Data Transfer Object (DTO) for listing resolution codes.
  *
- * <p>This is used in paginated search/list endpoints where only a subset of fields is needed (ID,
- * code, title) rather than the full metadata exposed by {@link ResolutionCodeDto}.
+ * <p>This record is designed for use in paginated search/list endpoints where
+ * only a subset of fields is required, avoiding the overhead of returning the
+ * full {@link ResolutionCodeDto} metadata.</p>
  *
- * <p>Benefits of a list item DTO:
- *
+ * <p><strong>Why a list item DTO?</strong>
  * <ul>
- *   <li>Smaller payloads for list views in Admin or ALE workflows.
- *   <li>Reduced coupling — clients only rely on the fields relevant to selection/search screens.
- *   <li>Stable contract independent of internal database entity structure.
+ *   <li>Minimises payload size for list views in Admin and ALE workflows.</li>
+ *   <li>Reduces coupling by exposing only the fields relevant for selection/search screens.</li>
+ *   <li>Provides a stable API contract that remains unaffected by changes in
+ *       the underlying entity or full DTO model.</li>
  * </ul>
  *
- * <p>All fields are immutable since this is declared as a Java {@code record}.
+ * <p>Because this is a Java {@code record}, all fields are immutable, making it
+ * safe to share in API responses.</p>
+ *
+ * <p><strong>Usage:</strong>
+ * Returned directly in paginated {@link org.springframework.data.domain.Page}
+ * responses from search endpoints. Typically constructed via a mapper converting
+ * from {@code ResolutionCode} JPA entities.</p>
  */
 public record ResolutionCodeListItemDto(
 
-        /** Primary key identifier of the result code (maps to {@code rc_id}). */
-        Long id,
+    /** Database identifier of the resolution code (maps to {@code rc_id}). */
+    Long id,
 
-        /** Short code value (e.g., "RC123") uniquely identifying the result code. */
-        String code,
+    /** Short business code (e.g., "RC123") uniquely identifying the resolution code. */
+    String code,
 
-        /** Human-readable title/description shown in list screens. */
-        String title) {}
+    /** Human-readable title of the resolution code, shown in list screens. */
+    String title
+) {
+}

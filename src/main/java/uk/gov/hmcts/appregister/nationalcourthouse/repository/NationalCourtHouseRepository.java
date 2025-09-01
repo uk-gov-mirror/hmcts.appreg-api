@@ -2,10 +2,9 @@ package uk.gov.hmcts.appregister.nationalcourthouse.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.appregister.nationalcourthouse.model.NationalCourtHouse;
 
@@ -13,31 +12,73 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 /**
- * Repository interface for accessing {@link NationalCourtHouse} entities.
+ * Spring Data repository for {@link NationalCourtHouse} entities.
  *
- * <p>This interface combines:
- *
+ * <p><strong>Base interfaces:</strong>
  * <ul>
- *   <li>{@link JpaRepository} – provides basic CRUD operations and pagination methods for {@code
- *       CourtLocation} entities using their {@code Long} ID.
- *   <li>{@link JpaSpecificationExecutor} – enables execution of dynamic JPA {@link
- *       org.springframework.data.jpa.domain.Specification} queries, allowing advanced filtering
- *       (e.g. by name, type, date ranges).
+ *   <li>{@link PagingAndSortingRepository} – provides basic CRUD operations, plus
+ *       {@code findAll(Pageable)} and {@code findAll(Sort)} for pagination and sorting.</li>
+ *   <li>{@link JpaSpecificationExecutor} – enables execution of dynamic JPA
+ *       {@link org.springframework.data.jpa.domain.Specification}-based queries
+ *       for advanced filtering scenarios.</li>
  * </ul>
  *
- * <p>Because it extends Spring Data interfaces, no implementation is required: Spring generates a
- * proxy at runtime. You can add custom query methods here if more complex lookups are needed (e.g.
- * {@code findByNameContainingIgnoreCase}).
+ * <p><strong>Runtime behavior:</strong>
+ * Spring generates the implementation automatically at runtime, so you only
+ * define the contract here. Typical usage is from the service layer, which
+ * delegates persistence and filtering logic to this repository.</p>
  *
- * <p>Typical usage:
+ * <p><strong>Custom queries:</strong>
+ * <ul>
+ *   <li>{@link #search(String, String, LocalDate, LocalDate, LocalDate, LocalDate, Pageable)} –
+ *       a JPQL query that applies multiple optional filters (name, court type,
+ *       start date range, end date range) in one go. Each filter is ignored if
+ *       the corresponding parameter is {@code null}.</li>
+ *   <li>{@link #findById(Long)} – overridden here explicitly for clarity, but already
+ *       inherited from {@code CrudRepository}. Returns an {@link Optional} so that
+ *       callers handle the “not found” case explicitly.</li>
+ * </ul>
  *
- * <pre>
- *   List&lt;CourtLocation&gt; results = courtLocationRepository.findAll();
- *   Page&lt;CourtLocation&gt; page = courtLocationRepository.findAll(spec, pageable);
- * </pre>
+ * <p><strong>Example usage:</strong></p>
+ * <pre>{@code
+ * Page<NationalCourtHouse> page = repository.search(
+ *     "cardiff", "CROWN",
+ *     LocalDate.of(2020, 1, 1),
+ *     null,
+ *     null,
+ *     null,
+ *     PageRequest.of(0, 10, Sort.by("name").ascending())
+ * );
+ *
+ * Optional<NationalCourtHouse> maybeCourt = repository.findById(123L);
+ * }</pre>
  */
-public interface NationalCourtHouseRepository extends PagingAndSortingRepository<NationalCourtHouse, Long>, JpaSpecificationExecutor<NationalCourtHouse> {
+public interface NationalCourtHouseRepository
+    extends PagingAndSortingRepository<NationalCourtHouse, Long>,
+    JpaSpecificationExecutor<NationalCourtHouse> {
 
+    /**
+     * Search for court houses with optional filters and paging.
+     *
+     * <p>Filters:
+     * <ul>
+     *   <li>{@code name} – case-insensitive substring match.</li>
+     *   <li>{@code courtType} – exact match.</li>
+     *   <li>{@code startFrom}/{@code startTo} – inclusive range filter on {@code startDate}.</li>
+     *   <li>{@code endFrom}/{@code endTo} – inclusive range filter on {@code endDate}.
+     *       Records with {@code endDate IS NULL} are treated as ongoing and match
+     *       when an {@code endFrom} bound is supplied.</li>
+     * </ul>
+     *
+     * @param name      optional case-insensitive substring filter
+     * @param courtType optional exact-match court type filter
+     * @param startFrom optional lower bound for start date (inclusive)
+     * @param startTo   optional upper bound for start date (inclusive)
+     * @param endFrom   optional lower bound for end date (inclusive)
+     * @param endTo     optional upper bound for end date (inclusive)
+     * @param pageable  Spring Data {@link Pageable} for pagination and sorting
+     * @return a page of matching {@link NationalCourtHouse} entities
+     */
     @Query("""
         select n
           from NationalCourtHouse n
@@ -58,5 +99,11 @@ public interface NationalCourtHouseRepository extends PagingAndSortingRepository
         Pageable pageable
     );
 
+    /**
+     * Find a single courthouse by its ID.
+     *
+     * @param id the primary key identifier
+     * @return an {@link Optional} containing the entity if found, otherwise empty
+     */
     Optional<NationalCourtHouse> findById(Long id);
 }

@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -15,22 +14,19 @@ import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
 /**
  * Repository interface for {@link ResolutionCode} entities.
  *
- * <p>This repository abstracts the persistence layer, leveraging Spring Data JPA to:
- *
+ * <p>This repository abstracts the persistence layer using Spring Data:
  * <ul>
- *   <li>Provide standard CRUD operations and pagination via {@link JpaRepository}.
- *   <li>Enable dynamic filtering queries through {@link JpaSpecificationExecutor}.
+ *   <li>{@link PagingAndSortingRepository} – provides CRUD plus paging and sorting
+ *       (e.g. {@code findAll(Pageable)}, {@code findAll(Sort)}).</li>
+ *   <li>{@link JpaSpecificationExecutor} – enables dynamic, typesafe filtering with JPA
+ *       Specifications.</li>
  * </ul>
  *
- * <p>It also defines custom finder methods for application-specific queries.
- *
- * <p><strong>Notes:</strong>
- *
+ * <p>No implementation is required—Spring Data generates a proxy at runtime. You can mix:
  * <ul>
- *   <li>Extending {@code JpaRepository<ResultCode, Long>} indicates that the entity primary key is
- *       a {@link Long}.
- *   <li>Extending {@code JpaSpecificationExecutor<ResultCode>} allows use of JPA Criteria API
- *       specifications for advanced searching and filtering.
+ *   <li>Derived query methods (e.g. {@code findByResultCode}).</li>
+ *   <li>Annotated JPQL queries (see {@link #search(String, String, LocalDate, LocalDate, LocalDate, LocalDate, Pageable)}).</li>
+ *   <li>Specification-based queries via {@link JpaSpecificationExecutor}.</li>
  * </ul>
  */
 public interface ResolutionCodeRepository
@@ -38,27 +34,46 @@ public interface ResolutionCodeRepository
     JpaSpecificationExecutor<ResolutionCode> {
 
     /**
-     * Finds a {@link ResolutionCode} by its short code value.
+     * Find a single record by its business code (e.g., "RC123").
      *
-     * <p>This is commonly used by controllers/services to retrieve a single result code record
-     * given its business identifier (e.g., "RC123").
-     *
-     * @param code the result code string to search for (must match the {@code resolution_code}
-     *             column)
-     * @return an {@link Optional} containing the matching {@link ResolutionCode} if found,
-     * otherwise empty
+     * @param code the exact code to look up (column {@code resolution_code})
+     * @return an {@link Optional} containing the entity when found, otherwise empty
      */
     Optional<ResolutionCode> findByResultCode(String code);
 
+    /**
+     * Search for result codes using optional, case-insensitive filters with pagination.
+     *
+     * <p>Semantics:
+     * <ul>
+     *   <li>{@code code}: partial, case-insensitive match on {@code resolution_code} (ILIKE).</li>
+     *   <li>{@code title}: partial, case-insensitive match on {@code resolution_code_title} (ILIKE).</li>
+     *   <li>{@code startFrom}/{@code startTo}: inclusive bounds on {@code resolution_code_start_date}.</li>
+     *   <li>{@code endFrom}: include records where {@code resolution_code_end_date} is
+     *       <em>null</em> (treated as ongoing) <strong>or</strong> {@code >= endFrom}.</li>
+     *   <li>{@code endTo}: inclusive upper bound on {@code resolution_code_end_date}
+     *       (nulls do not match this predicate).</li>
+     *   <li>Any null parameter disables that particular filter.</li>
+     * </ul>
+     *
+     * @param code      optional partial code filter (case-insensitive)
+     * @param title     optional partial title filter (case-insensitive)
+     * @param startFrom optional lower bound (inclusive) for start date
+     * @param startTo   optional upper bound (inclusive) for start date
+     * @param endFrom   optional lower bound (inclusive) for end date; also includes null end dates
+     * @param endTo     optional upper bound (inclusive) for end date
+     * @param pageable  standard Spring Data pagination/sorting descriptor
+     * @return paginated result set matching the applied filters
+     */
     @Query("""
         SELECT r
-        FROM ResolutionCode r
-        WHERE (:code IS NULL OR LOWER(r.resultCode) LIKE LOWER(CONCAT('%', :code, '%')))
-          AND (:title IS NULL OR LOWER(r.title) LIKE LOWER(CONCAT('%', :title, '%')))
-          AND (:startFrom IS NULL OR r.startDate >= :startFrom)
-          AND (:startTo   IS NULL OR r.startDate <= :startTo)
-          AND (:endFrom   IS NULL OR (r.endDate IS NULL OR r.endDate >= :endFrom))
-          AND (:endTo     IS NULL OR r.endDate <= :endTo)
+          FROM ResolutionCode r
+         WHERE (:code IS NULL OR LOWER(r.resultCode) LIKE LOWER(CONCAT('%', :code, '%')))
+           AND (:title IS NULL OR LOWER(r.title) LIKE LOWER(CONCAT('%', :title, '%')))
+           AND (:startFrom IS NULL OR r.startDate >= :startFrom)
+           AND (:startTo   IS NULL OR r.startDate <= :startTo)
+           AND (:endFrom   IS NULL OR (r.endDate IS NULL OR r.endDate >= :endFrom))
+           AND (:endTo     IS NULL OR r.endDate <= :endTo)
         """)
     Page<ResolutionCode> search(
         @Param("code") String code,

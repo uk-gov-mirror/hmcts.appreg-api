@@ -18,80 +18,71 @@ import uk.gov.hmcts.appregister.nationalcourthouse.service.NationalCourtHouseSer
 import uk.gov.hmcts.appregister.shared.validation.DateRangeValidator;
 
 /**
- * REST controller exposing read-only endpoints for Court Locations.
+ * Read-only REST controller for National Court Houses.
  *
- * <p>Features:
- *
+ * <p><strong>What this exposes</strong>
  * <ul>
- *   <li><b>Paginated listing</b> with optional filters (name, courtType, start/end date ranges).
- *   <li><b>Fetch-by-id</b> endpoint for a single record.
+ *   <li>A paginated, filterable listing endpoint that returns a Spring {@link Page} of
+ *       {@link NationalCourtHouseDto} (no custom wrapper object).</li>
+ *   <li>A fetch-by-ID endpoint.</li>
  * </ul>
  *
- * <p><b>Pagination model:</b> The public API is 1-based (i.e., {@code page=1} is the first page),
- * while Spring Data is 0-based. The controller converts to 0-based internally.
- *
- * <p><b>Validation:</b> Returns {@code 400 Bad Request} when:
- *
+ * <p><strong>Pagination &amp; sorting</strong>
  * <ul>
- *   <li>{@code page < 1}
- *   <li>{@code pageSize < 1} or {@code pageSize > MAX_PAGE_SIZE}
- *   <li>{@code startDateFrom > startDateTo}
- *   <li>{@code endDateFrom > endDateTo}
+ *   <li>Pagination is handled by Spring via {@link Pageable} query parameters
+ *       (e.g. {@code page}, {@code size}, {@code sort}).</li>
+ *   <li>A default sort of {@code name,ASC} is provided via {@code @PageableDefault}, and callers
+ *       may override it using the standard {@code sort} query parameter.</li>
+ *   <li>Note: by Spring convention, {@code page} is <em>zero-based</em> (i.e., {@code page=0}
+ *       is the first page).</li>
  * </ul>
  *
- * <p>All list results are sorted by {@code name ASC} for deterministic UI ordering.
+ * <p><strong>Filtering</strong>
+ * <ul>
+ *   <li>{@code name} – case-insensitive substring match.</li>
+ *   <li>{@code courtType} – exact match.</li>
+ *   <li>{@code startDateFrom}/{@code startDateTo} – inclusive range filter on start date.</li>
+ *   <li>{@code endDateFrom}/{@code endDateTo} – inclusive range filter on end date.</li>
+ * </ul>
+ *
+ * <p><strong>Validation</strong>
+ * <ul>
+ *   <li>Date-range validation (ensuring {@code from &le; to} when both bounds provided) is
+ *       delegated to {@link DateRangeValidator}. Invalid ranges result in {@code 400 Bad Request}.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/national-court-house")
 @RequiredArgsConstructor
 public class NationalCourtHouseController {
 
-    /** Application service used to query court locations. */
+    /** Application service used to retrieve National Court House data. */
     private final NationalCourtHouseService service;
 
+    /** Shared validator for simple date range checks (throws 400 on invalid ranges). */
     private final DateRangeValidator dateRangeValidator;
 
     /**
-     * Returns a paginated list of court locations with optional filters.
+     * List National Court Houses with optional filters and pageable response.
      *
-     * <p><b>Filters:</b>
+     * <p>Returns a Spring {@link Page} of {@link NationalCourtHouseDto}. Clients control pagination
+     * and sorting using standard Spring Data parameters (e.g., {@code ?page=0&size=10&sort=name,asc}).
      *
-     * <ul>
-     *   <li>{@code name} – case-insensitive substring match on the court location name.
-     *   <li>{@code courtType} – exact match.
-     *   <li>{@code startDateFrom}/{@code startDateTo} – constrain the {@code start_date}
-     *       (inclusive).
-     *   <li>{@code endDateFrom}/{@code endDateTo} – constrain the {@code end_date} (inclusive).
-     * </ul>
-     *
-     * <p><b>Date format:</b> All dates are ISO-8601 ({@code yyyy-MM-dd}). When a given end of a
-     * range is omitted, only the other bound is applied. If both ends are supplied, the controller
-     * validates that {@code from <= to}.
-     *
-     * <p><b>Sorting:</b> Fixed to {@code name ASC}.
-     *
-     * <p><b>Responses:</b>
-     *
-     * <ul>
-     *   <li>{@code 200 OK} with {@link NationalCourtHouseDto} on success.
-     *   <li>{@code 400 Bad Request} when input validation fails (see class-level notes).
-     * </ul>
-     *
-     * @param name optional case-insensitive substring filter on court location name
-     * @param courtType optional exact-match court type filter
-     * @param startDateFrom optional lower bound for {@code start_date} (inclusive)
-     * @param startDateTo optional upper bound for {@code start_date} (inclusive)
-     * @param endDateFrom optional lower bound for {@code end_date} (inclusive)
-     * @param endDateTo optional upper bound for {@code end_date} (inclusive)
-     * @return {@link ResponseEntity} containing {@link NationalCourtHouseDto} or {@code
-     *     400}
+     * @param name optional case-insensitive substring filter on the court house name
+     * @param courtType optional exact-match filter on the court type
+     * @param startDateFrom optional lower bound for start date (inclusive)
+     * @param startDateTo optional upper bound for start date (inclusive)
+     * @param endDateFrom optional lower bound for end date (inclusive)
+     * @param endDateTo optional upper bound for end date (inclusive)
+     * @param pageable standard Spring pageable (zero-based page index), defaulting to {@code name,ASC}
+     * @return {@code 200 OK} with a {@link Page} of results; {@code 400 Bad Request} if date ranges are invalid
      */
     @Operation(
-            summary = "Get court locations (paginated, filterable)",
-            operationId = "getCourtLocations")
+        summary = "Get court locations (paginated, filterable)",
+        operationId = "getCourtLocations")
     @ApiResponse(
-            responseCode = "200",
-            description = "List of court locations retrieved successfully")
+        responseCode = "200",
+        description = "List of court locations retrieved successfully")
     @GetMapping
     public ResponseEntity<Page<NationalCourtHouseDto>> list(
         @RequestParam(required = false) String name,
@@ -104,39 +95,42 @@ public class NationalCourtHouseController {
         @RequestParam(required = false) java.time.LocalDate endDateFrom,
         @org.springframework.format.annotation.DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false) java.time.LocalDate endDateTo,
-        @org.springframework.data.web.PageableDefault(sort = "name",
-            direction = org.springframework.data.domain.Sort.Direction.ASC)
-        Pageable pageable
+        @org.springframework.data.web.PageableDefault(
+            sort = "name",
+            direction = org.springframework.data.domain.Sort.Direction.ASC
+        ) Pageable pageable
     ) {
+        // Delegate date-range validity checks; throws ResponseStatusException(400) on failure.
         dateRangeValidator.validate(startDateFrom, startDateTo, endDateFrom, endDateTo);
 
+        // Delegate to service: applies specs/filters and returns a Page<DTO>.
         Page<NationalCourtHouseDto> page = service.search(
             name, courtType, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable
         );
 
+        // Return the Page directly; Spring serialises content + pagination metadata.
         return ResponseEntity.ok(page);
     }
 
     /**
-     * Fetches a single court location by its identifier.
+     * Retrieve a single National Court House by its ID.
      *
-     * <p>On missing entity the service is expected to throw a {@code
-     * ResponseStatusException(HttpStatus.NOT_FOUND)} which Spring maps to a {@code 404}.
+     * <p>If the ID does not exist, the service raises a {@code ResponseStatusException(404)} which
+     * Spring maps to {@code 404 Not Found}.
      *
-     * @param id the identifier of the court location
-     * @return {@link ResponseEntity} with a {@link NationalCourtHouseDto} for {@code 200 OK}
-     * @see NationalCourtHouseService#findById(Long)
+     * @param id database identifier of the court house
+     * @return {@code 200 OK} with the court house DTO; {@code 404 Not Found} if missing
      */
     @Operation(
-            summary = "Get a specific court location by ID",
-            operationId = "getCourtLocationById")
+        summary = "Get a specific court location by ID",
+        operationId = "getCourtLocationById")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Court location found"),
         @ApiResponse(responseCode = "404", description = "Court location not found")
     })
     @GetMapping("/{id}")
     public ResponseEntity<NationalCourtHouseDto> getById(@PathVariable Long id) {
-        // Delegate to service; exceptions are propagated and translated by Spring.
+        // Service throws 404 if not found; we simply return 200 with the DTO on success.
         return ResponseEntity.ok(service.findById(id));
     }
 }

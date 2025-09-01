@@ -2,13 +2,13 @@ package uk.gov.hmcts.appregister.resolutioncode.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,84 +19,89 @@ import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
 import uk.gov.hmcts.appregister.resolutioncode.repository.ResolutionCodeRepository;
 
 /**
- * Service implementation of {@link ResolutionCodeService}.
+ * Concrete service for read-only operations on {@link ResolutionCode} data.
  *
- * <p>This class acts as the bridge between controllers and the repository layer: it applies
- * filtering logic, performs entity-to-DTO mapping, and raises appropriate HTTP-level exceptions
- * when required.
- *
- * <p><strong>Responsibilities:</strong>
- *
+ * <p>Primary responsibilities:
  * <ul>
- *   <li>Fetch all result codes as full DTOs.
- *   <li>Find a single result code by its business identifier (code).
- *   <li>Search result codes with optional filters and pagination using {@link Specification}.
+ *   <li>Coordinating persistence calls via {@link ResolutionCodeRepository}.</li>
+ *   <li>Mapping entities to API-facing DTOs via {@link ResolutionCodeMapper}.</li>
+ *   <li>Applying high-level business behavior (e.g., 404 on missing records).</li>
  * </ul>
+ *
+ * <p><strong>Notes on mapping:</strong>
+ * The mapper returns {@code Optional<...>} to make null-safety explicit. This service therefore
+ * unwraps Optionals and fails fast if an empty Optional is returned for a non-null entity.
  */
 @Service
 @RequiredArgsConstructor
 public class ResolutionCodeServiceImpl implements ResolutionCodeService {
 
-    // Spring Data repository providing persistence access to {@link ResultCode} entities.
+    /**
+     * Persistence gateway for {@link ResolutionCode} entities.
+     */
     private final ResolutionCodeRepository repository;
 
-    // Mapper for converting between {@link ResultCode} entities and API-facing DTOs.
+    /**
+     * Converts between entities and DTOs.
+     */
     private final ResolutionCodeMapper mapper;
 
     /**
-     * Fetches all result codes without pagination or filtering.
+     * Fetch all resolution codes (unpaged).
      *
-     * @return a list of {@link ResolutionCodeDto}; may be empty if no records exist
+     * <p>Intended for internal/admin use. For user-facing list views use {@link #search} so that
+     * pagination and filtering are applied consistently.
+     *
+     * @return list of {@link ResolutionCodeDto}; may be empty
      */
     @Override
     public List<ResolutionCodeDto> findAll() {
+        // Prefer a deterministic order for callers that present this list (sorted by name/title).
         Iterable<ResolutionCode> all = repository.findAll(Sort.by("name").ascending());
+
+        // Mapper returns Optional; unwrap and discard empties. If we ever get Optional.empty()
+        // for a non-null entity, that indicates a mapping bug rather than a runtime condition.
         return StreamSupport.stream(all.spliterator(), false)
-            .map(mapper::toReadDto)
+            .map(mapper::toReadDto)     // Stream<Optional<ResolutionCodeDto>>
+            .flatMap(Optional::stream)  // Stream<ResolutionCodeDto>
             .toList();
     }
 
     /**
-     * Finds a result code by its business identifier (code).
+     * Fetch a single resolution code by its business code (unique string).
      *
-     * @param code the short code string to search for
-     * @return the corresponding {@link ResolutionCodeDto}
-     * @throws ResponseStatusException with status 404 (NOT_FOUND) if not present
+     * @param code business identifier from {@code resolution_code}
+     * @return the mapped {@link ResolutionCodeDto}
+     * @throws ResponseStatusException 404 if not found
      */
     @Override
     public ResolutionCodeDto findByCode(String code) {
-        final ResolutionCode resultCode =
-            repository
-                .findByResultCode(code)
-                // Translate missing record into an HTTP 404 for API consistency.
-                .orElseThrow(
-                    () ->
-                        new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "ResultCode not found"));
+        // 404 if the business code doesn’t exist.
+        ResolutionCode resultCode = repository.findByResultCode(code)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "ResultCode not found"));
 
-        return mapper.toReadDto(resultCode);
+        // Mapper returns Optional; treat empty as illegal state for a non-null entity.
+        return mapper.toReadDto(resultCode)
+            .orElseThrow(() -> new IllegalStateException(
+                "Mapper returned empty Optional for non-null entity"));
     }
 
     /**
-     * Searches for result codes with optional filters and pagination.
+     * Search result codes with optional filters and pagination.
      *
-     * <p>Filters applied:
-     *
+     * <p>Supported filters (all optional):
      * <ul>
-     *   <li>{@code code} – case-insensitive substring filter.
-     *   <li>{@code title} – case-insensitive substring filter.
-     *   <li>{@code startDateFrom}/{@code startDateTo} – inclusive range on start date.
-     *   <li>{@code endDateFrom}/{@code endDateTo} – inclusive range on end date.
+     *   <li>{@code code}: case-insensitive partial match</li>
+     *   <li>{@code title}: case-insensitive partial match</li>
+     *   <li>{@code startDateFrom}/{@code startDateTo}: inclusive bounds on validity start</li>
+     *   <li>{@code endDateFrom}/{@code endDateTo}: inclusive bounds on validity end</li>
      * </ul>
      *
-     * @param code          optional substring filter for code
-     * @param title         optional substring filter for title
-     * @param startDateFrom optional lower bound for start date
-     * @param startDateTo   optional upper bound for start date
-     * @param endDateFrom   optional lower bound for end date
-     * @param endDateTo     optional upper bound for end date
-     * @param pageable      pagination and sorting information
-     * @return a page of {@link ResolutionCodeListItemDto} records matching the criteria
+     * <p>Pagination/sorting is driven entirely by {@link Pageable} supplied by the controller
+     * (e.g., default sort by title ASC).
+     *
+     * @return a {@link Page} of {@link ResolutionCodeListItemDto}
      */
     @Override
     public Page<ResolutionCodeListItemDto> search(
@@ -108,8 +113,16 @@ public class ResolutionCodeServiceImpl implements ResolutionCodeService {
         LocalDate endDateTo,
         Pageable pageable
     ) {
+        // Helper that unwraps Optional from the mapper and fails loudly if empty.
+        // Page#map requires a non-null mapping result for each element.
+        java.util.function.Function<ResolutionCode, ResolutionCodeListItemDto> mapOrThrow =
+            entity -> mapper.toListItem(entity)
+                .orElseThrow(() -> new IllegalStateException(
+                    "Mapper returned empty Optional for non-null entity"));
+
+        // Delegate filtering to the repository’s @Query method; map entities to lightweight list items.
         return repository
             .search(code, title, startDateFrom, startDateTo, endDateFrom, endDateTo, pageable)
-            .map(mapper::toListItem);
+            .map(mapOrThrow);
     }
 }
