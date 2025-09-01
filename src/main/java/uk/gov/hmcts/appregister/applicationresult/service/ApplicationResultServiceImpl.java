@@ -26,7 +26,7 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
     private final WordingTemplateParser parser;
     private final ApplicationResultRepository resultRepository;
     private final ApplicationRepository applicationRepository;
-    private final ResolutionCodeRepository resultCodeRepository;
+    private final ResolutionCodeRepository resolutionCodeRepository;
     private final ApplicationResultMapper mapper;
     private final VersionManager versionManager;
 
@@ -52,7 +52,7 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
                                                 HttpStatus.NOT_FOUND, "Application not found"));
 
         ResolutionCode resultCode =
-                resultCodeRepository
+            resolutionCodeRepository
                         .findById(dto.resultCodeId())
                         .orElseThrow(
                                 () ->
@@ -82,7 +82,7 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
         ApplicationResult existing = findOrThrow(resultId, applicationId, listId, userId);
 
         ResolutionCode resultCode =
-                resultCodeRepository
+            resolutionCodeRepository
                         .findById(dto.resultCodeId())
                         .orElseThrow(
                                 () ->

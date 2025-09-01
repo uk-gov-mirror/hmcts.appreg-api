@@ -84,4 +84,23 @@ public interface ResolutionCodeRepository
         @Param("endTo") LocalDate endTo,
         Pageable pageable
     );
+
+    /**
+     * Find a single record by its primary key identifier.
+     *
+     * <p>This method is inherited from {@link org.springframework.data.repository.CrudRepository},
+     * but is redeclared here for clarity and to provide documentation alongside other custom queries.
+     * Returns an {@link Optional} so that callers must handle the "not found" case explicitly.</p>
+     *
+     * <p><strong>Usage example:</strong></p>
+     * <pre>{@code
+     * Optional<ResolutionCode> maybeCode = resolutionCodeRepository.findById(123L);
+     * ResolutionCode code = maybeCode.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+     * }</pre>
+     *
+     * @param id the {@code rc_id} primary key value
+     * @return an {@link Optional} containing the entity if found, or empty if not
+     */
+    Optional<ResolutionCode> findById(Long id);
+
 }
