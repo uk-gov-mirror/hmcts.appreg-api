@@ -1,29 +1,11 @@
 package uk.gov.hmcts.appregister.resolutioncode.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
@@ -32,252 +14,168 @@ import uk.gov.hmcts.appregister.resolutioncode.mapper.ResolutionCodeMapper;
 import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
 import uk.gov.hmcts.appregister.resolutioncode.repository.ResolutionCodeRepository;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class ResolutionCodeServiceImplTest {
 
     @Mock private ResolutionCodeRepository repository;
     @Mock private ResolutionCodeMapper mapper;
 
-    @InjectMocks private ResolutionCodeServiceImpl service;
+    private ResolutionCodeServiceImpl service;
 
-    // Helper: build a Page with a specific totalElements so assertions match exactly
-    private static Page<ResolutionCode> pageWithTotal(
-            List<ResolutionCode> content, Pageable pageable, long total) {
-        return new PageImpl<>(content, pageable, total);
+    @BeforeEach
+    void setUp() {
+        service = new ResolutionCodeServiceImpl(repository, mapper);
     }
 
-    // ---------------- findAll ----------------
+    // ---------- findAll ----------
 
     @Test
-    void findAll_mapsEntitiesToDtos_andReturnsList() {
-        ResolutionCode e1 = ResolutionCode.builder().id(1L).build();
-        ResolutionCode e2 = ResolutionCode.builder().id(2L).build();
-        when(repository.findAll()).thenReturn(List.of(e1, e2));
+    void findAll_sortsByNameAsc_andMapsAll() {
+        ResolutionCode e1 = ResolutionCode.builder().id(1L).resultCode("RC-1").title("A").build();
+        ResolutionCode e2 = ResolutionCode.builder().id(2L).resultCode("RC-2").title("B").build();
 
-        ResolutionCodeDto d1 =
-                new ResolutionCodeDto(
-                        1L,
-                        "RC1",
-                        "Title1",
-                        "Wording1",
-                        "Leg1",
-                        "a@b.com",
-                        null,
-                        LocalDate.parse("2020-01-01"),
-                        null);
-        ResolutionCodeDto d2 =
-                new ResolutionCodeDto(
-                        2L,
-                        "RC2",
-                        "Title2",
-                        "Wording2",
-                        null,
-                        null,
-                        "c@d.com",
-                        LocalDate.parse("2020-02-02"),
-                        LocalDate.parse("2020-12-31"));
-
-        when(mapper.toReadDto(e1)).thenReturn(d1);
-        when(mapper.toReadDto(e2)).thenReturn(d2);
+        when(repository.findAll(any(Sort.class))).thenReturn(List.of(e1, e2));
+        when(mapper.toReadDto(e1)).thenReturn(Optional.of(dto(1L, "RC-1", "A")));
+        when(mapper.toReadDto(e2)).thenReturn(Optional.of(dto(2L, "RC-2", "B")));
 
         List<ResolutionCodeDto> out = service.findAll();
 
-        assertThat(out).containsExactly(d1, d2);
-        verify(repository).findAll();
-        verify(mapper).toReadDto(e1);
-        verify(mapper).toReadDto(e2);
-        verifyNoMoreInteractions(repository, mapper);
+        assertThat(out).extracting(ResolutionCodeDto::id).containsExactly(1L, 2L);
+
+        ArgumentCaptor<Sort> sortCaptor = ArgumentCaptor.forClass(Sort.class);
+        verify(repository).findAll(sortCaptor.capture());
+        Sort sort = sortCaptor.getValue();
+        assertThat(sort.getOrderFor("name")).isNotNull();
+        assertThat(sort.getOrderFor("name").getDirection()).isEqualTo(Sort.Direction.ASC);
     }
 
     @Test
-    void findAll_whenNone_returnsEmpty_andDoesNotMap() {
-        when(repository.findAll()).thenReturn(List.of());
+    void findAll_filtersOutEmptyOptionals_fromMapper() {
+        ResolutionCode e1 = ResolutionCode.builder().id(1L).resultCode("RC-1").title("A").build();
+        ResolutionCode e2 = ResolutionCode.builder().id(2L).resultCode("RC-2").title("B").build();
+
+        when(repository.findAll(any(Sort.class))).thenReturn(List.of(e1, e2));
+        when(mapper.toReadDto(e1)).thenReturn(Optional.empty()); // simulate a mapping gap
+        when(mapper.toReadDto(e2)).thenReturn(Optional.of(dto(2L, "RC-2", "B")));
 
         List<ResolutionCodeDto> out = service.findAll();
 
-        assertThat(out).isEmpty();
-        verify(repository).findAll();
-        verifyNoInteractions(mapper);
+        assertThat(out).singleElement().extracting(ResolutionCodeDto::id).isEqualTo(2L);
     }
 
-    // ---------------- findByCode ----------------
+    // ---------- findByCode ----------
 
     @Test
-    void findByCode_whenFound_mapsAndReturnsDto() {
-        String code = "RC99";
-        ResolutionCode entity =
-                ResolutionCode.builder().id(99L).resultCode(code).title("X").build();
-        ResolutionCodeDto dto =
-                new ResolutionCodeDto(
-                        99L, code, "X", "W", null, null, null, LocalDate.parse("2022-01-01"), null);
+    void findByCode_404_whenRepositoryEmpty() {
+        when(repository.findByResultCode("RC-X")).thenReturn(Optional.empty());
 
-        when(repository.findByResultCode(code)).thenReturn(Optional.of(entity));
-        when(mapper.toReadDto(entity)).thenReturn(dto);
+        assertThatThrownBy(() -> service.findByCode("RC-X"))
+            .isInstanceOf(ResponseStatusException.class)
+            .extracting(e -> ((ResponseStatusException)e).getStatusCode())
+            .isEqualTo(HttpStatus.NOT_FOUND);
+    }
 
-        ResolutionCodeDto out = service.findByCode(code);
+    @Test
+    void findByCode_ok_whenMapperReturnsDto() {
+        ResolutionCode entity = ResolutionCode.builder().id(9L).resultCode("RC-9").title("Nine").build();
+        ResolutionCodeDto dto = dto(9L, "RC-9", "Nine");
+
+        when(repository.findByResultCode("RC-9")).thenReturn(Optional.of(entity));
+        when(mapper.toReadDto(entity)).thenReturn(Optional.of(dto));
+
+        ResolutionCodeDto out = service.findByCode("RC-9");
 
         assertThat(out).isEqualTo(dto);
-        verify(repository).findByResultCode(code);
+        verify(repository).findByResultCode("RC-9");
         verify(mapper).toReadDto(entity);
-        verifyNoMoreInteractions(repository, mapper);
     }
 
     @Test
-    void findByCode_whenMissing_throws404_andDoesNotMap() {
-        when(repository.findByResultCode(anyString())).thenReturn(Optional.empty());
+    void findByCode_throwsIllegalState_whenMapperReturnsEmptyForEntity() {
+        ResolutionCode entity = ResolutionCode.builder().id(7L).resultCode("RC-7").title("Seven").build();
 
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, () -> service.findByCode("NOPE"));
+        when(repository.findByResultCode("RC-7")).thenReturn(Optional.of(entity));
+        when(mapper.toReadDto(entity)).thenReturn(Optional.empty());
 
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        verify(repository).findByResultCode("NOPE");
-        verifyNoInteractions(mapper);
+        assertThatThrownBy(() -> service.findByCode("RC-7"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Mapper returned empty Optional for non-null entity");
     }
 
-    // ---------------- search ----------------
+    // ---------- search ----------
 
     @Test
-    void search_withCodeOnly_buildsSpec_andMapsListItems() {
-        String code = "RC1";
-        Pageable pageable = PageRequest.of(0, 5);
+    void search_passesThroughFiltersAndPageable_andMapsContent() {
+        // Inputs:
+        String code = "rc";
+        String title = "app";
+        LocalDate sFrom = LocalDate.of(2024, 1, 1);
+        LocalDate sTo   = LocalDate.of(2024, 12, 31);
+        LocalDate eFrom = LocalDate.of(2025, 1, 1);
+        LocalDate eTo   = LocalDate.of(2025, 12, 31);
+        Pageable pageable = PageRequest.of(1, 3, Sort.by("title").descending());
 
-        ResolutionCode e =
-                ResolutionCode.builder().id(1L).resultCode("RC123").title("Alpha").build();
-        ResolutionCodeListItemDto dto = new ResolutionCodeListItemDto(1L, "RC123", "Alpha");
+        // Repository returns entities:
+        ResolutionCode e1 = ResolutionCode.builder().id(1L).resultCode("RC-1").title("A").build();
+        ResolutionCode e2 = ResolutionCode.builder().id(2L).resultCode("RC-2").title("B").build();
+        Page<ResolutionCode> repoPage = new PageImpl<>(List.of(e1, e2), pageable, 5);
 
-        Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 1);
-        when(repository.findAll(
-                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
-                .thenReturn(repoPage);
-        when(mapper.toListItem(e)).thenReturn(dto);
+        when(repository.search(eq(code), eq(title),
+                               eq(sFrom), eq(sTo), eq(eFrom), eq(eTo), eq(pageable)))
+            .thenReturn(repoPage);
 
-        Page<ResolutionCodeListItemDto> out =
-                service.search(code, null, null, null, null, null, pageable);
+        // Mapper for list items:
+        ResolutionCodeListItemDto i1 = new ResolutionCodeListItemDto(1L, "RC-1", "A");
+        ResolutionCodeListItemDto i2 = new ResolutionCodeListItemDto(2L, "RC-2", "B");
+        when(mapper.toListItem(e1)).thenReturn(Optional.of(i1));
+        when(mapper.toListItem(e2)).thenReturn(Optional.of(i2));
 
-        assertThat(out.getContent()).containsExactly(dto);
+        Page<ResolutionCodeListItemDto> out = service.search(
+            code, title, sFrom, sTo, eFrom, eTo, pageable);
 
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Specification<ResolutionCode>> specCaptor =
-                ArgumentCaptor.forClass((Class) Specification.class);
-        verify(repository).findAll(specCaptor.capture(), any(Pageable.class));
-        assertThat(specCaptor.getValue()).isNotNull();
-    }
+        assertThat(out.getContent()).containsExactly(i1, i2);
+        assertThat(out.getNumber()).isEqualTo(1);
+        assertThat(out.getSize()).isEqualTo(3);
+        assertThat(out.getTotalElements()).isEqualTo(5);
 
-    @Test
-    void search_withTitleOnly_buildsSpec_andMapsListItems() {
-        String title = "Dismiss";
-        Pageable pageable = PageRequest.of(0, 10);
-
-        ResolutionCode e =
-                ResolutionCode.builder().id(2L).resultCode("RC2").title("Dismissed").build();
-        ResolutionCodeListItemDto dto = new ResolutionCodeListItemDto(2L, "RC2", "Dismissed");
-
-        // Set totalElements to exactly 4 to satisfy the assertion
-        Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 4);
-        when(repository.findAll(
-                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
-                .thenReturn(repoPage);
-        when(mapper.toListItem(e)).thenReturn(dto);
-
-        Page<ResolutionCodeListItemDto> out =
-                service.search(null, title, null, null, null, null, pageable);
-
-        assertThat(out.getContent()).containsExactly(dto);
-        assertThat(out.getTotalElements()).isEqualTo(1);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Specification<ResolutionCode>> specCaptor =
-                ArgumentCaptor.forClass((Class) Specification.class);
-        verify(repository).findAll(specCaptor.capture(), any(Pageable.class));
-        assertThat(specCaptor.getValue()).isNotNull();
+        verify(repository).search(eq(code), eq(title),
+                                  eq(sFrom), eq(sTo), eq(eFrom), eq(eTo), eq(pageable));
+        verify(mapper).toListItem(e1);
+        verify(mapper).toListItem(e2);
     }
 
     @Test
-    void search_withAllFilters_buildsSpec_andMapsListItems() {
-        String code = "RC";
-        String title = "Appeal";
+    void search_throwsIllegalState_whenMapperReturnsEmptyForAnyEntity() {
+        Pageable pageable = PageRequest.of(0, 2);
+        ResolutionCode e1 = ResolutionCode.builder().id(1L).resultCode("RC-1").title("A").build();
 
-        LocalDate startFrom = LocalDate.parse("2020-01-01");
-        LocalDate startTo = LocalDate.parse("2021-12-31");
-        LocalDate endFrom = LocalDate.parse("2022-01-01");
-        LocalDate endTo = LocalDate.parse("2024-01-01");
+        when(repository.search(any(), any(), any(), any(), any(), any(), eq(pageable)))
+            .thenReturn(new PageImpl<>(List.of(e1), pageable, 1));
+        when(mapper.toListItem(e1)).thenReturn(Optional.empty()); // should explode
 
-        Pageable pageable = PageRequest.of(1, 5);
-
-        ResolutionCode e =
-                ResolutionCode.builder().id(11L).resultCode("RC11").title("Appeal Granted").build();
-        ResolutionCodeListItemDto dto =
-                new ResolutionCodeListItemDto(11L, "RC11", "Appeal Granted");
-
-        // Set totalElements to exactly 9 (your expected value)
-        Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 9);
-        when(repository.findAll(
-                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
-                .thenReturn(repoPage);
-        when(mapper.toListItem(e)).thenReturn(dto);
-
-        Page<ResolutionCodeListItemDto> out =
-                service.search(code, title, startFrom, startTo, endFrom, endTo, pageable);
-
-        assertThat(out.getContent()).containsExactly(dto);
-        assertThat(out.getTotalElements()).isEqualTo(6);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Specification<ResolutionCode>> specCaptor =
-                ArgumentCaptor.forClass((Class) Specification.class);
-        verify(repository).findAll(specCaptor.capture(), any(Pageable.class));
-        assertThat(specCaptor.getValue()).isNotNull();
+        assertThatThrownBy(() ->
+                               service.search(null, null, null, null, null, null, pageable)
+        )
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Mapper returned empty Optional for non-null entity");
     }
 
-    @Test
-    void search_withDateBounds_buildsCompositeSpec_andMaps() {
-        LocalDate startFrom = LocalDate.parse("2020-01-01");
-        LocalDate startTo = LocalDate.parse("2020-12-31");
-        LocalDate endFrom = LocalDate.parse("2021-01-01");
-        LocalDate endTo = LocalDate.parse("2023-01-01");
+    // ---------- helpers ----------
 
-        Pageable pageable = PageRequest.of(0, 10);
-
-        ResolutionCode e = ResolutionCode.builder().id(3L).resultCode("RC3").title("T").build();
-        ResolutionCodeListItemDto dto = new ResolutionCodeListItemDto(3L, "RC3", "T");
-
-        // Set totalElements to exactly 3 (your expected value)
-        Page<ResolutionCode> repoPage = pageWithTotal(List.of(e), pageable, 3);
-        when(repository.findAll(
-                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
-                .thenReturn(repoPage);
-        when(mapper.toListItem(e)).thenReturn(dto);
-
-        Page<ResolutionCodeListItemDto> out =
-                service.search(null, null, startFrom, startTo, endFrom, endTo, pageable);
-
-        assertThat(out.getContent()).containsExactly(dto);
-        assertThat(out.getTotalElements()).isEqualTo(1);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Specification<ResolutionCode>> specCaptor =
-                ArgumentCaptor.forClass((Class) Specification.class);
-        verify(repository).findAll(specCaptor.capture(), any(Pageable.class));
-        assertThat(specCaptor.getValue()).isNotNull();
-    }
-
-    @Test
-    void search_withNoFilters_returnsEmptyPage_andSkipsMapper() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<ResolutionCode> repoPage = pageWithTotal(List.of(), pageable, 0);
-
-        when(repository.findAll(
-                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class)))
-                .thenReturn(repoPage);
-
-        Page<ResolutionCodeListItemDto> out =
-                service.search(null, null, null, null, null, null, pageable);
-
-        assertThat(out.getContent()).isEmpty();
-        assertThat(out.getTotalElements()).isEqualTo(0);
-        verify(repository)
-                .findAll(
-                        ArgumentMatchers.<Specification<ResolutionCode>>any(), any(Pageable.class));
-        verifyNoInteractions(mapper);
+    private static ResolutionCodeDto dto(Long id, String code, String title) {
+        return new ResolutionCodeDto(
+            id, code, title,
+            "wording", "legislation",
+            "dest1@example.com", "dest2@example.com",
+            LocalDate.of(2024, 1, 1), LocalDate.of(2025, 1, 1)
+        );
     }
 }

@@ -1,108 +1,86 @@
 package uk.gov.hmcts.appregister.nationalcourthouse.mapper;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
 import uk.gov.hmcts.appregister.nationalcourthouse.model.NationalCourtHouse;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class NationalCourtHouseMapperTest {
 
     private final NationalCourtHouseMapper mapper = new NationalCourtHouseMapper();
 
     @Test
-    void toReadDto_whenEntityIsNull_returnsNull() {
-        // Arrange
-        NationalCourtHouse entity = null;
-
+    void toReadDto_shouldReturnEmptyOptional_whenEntityIsNull() {
         // Act
-        NationalCourtHouseDto dto = mapper.toReadDto(entity);
+        Optional<NationalCourtHouseDto> result = mapper.toReadDto(null);
 
         // Assert
-        // Defensive behaviour: null in -> null out (no exception)
-        assertThat(dto).isNull();
+        // When the input entity is null, the mapper should return Optional.empty()
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void toReadDto_mapsAllFields_fromEntityToDto() {
-        // Arrange: build a fully-populated entity
-        Long id = 42L;
-        String name = "Cardiff Crown Court";
-        String courtType = "CROWN";
-        LocalDate startDate = LocalDate.of(2020, 1, 1);
-        LocalDate endDate = LocalDate.of(2024, 12, 31);
-        Long locationId = 77L;
-        Long psaId = 88L;
-        String courtLocationCode = "1234";
-        String welshName = "Llys y Goron Caerdydd";
-        Long orgId = 999L;
-
-        NationalCourtHouse entity =
-                NationalCourtHouse.builder()
-                        .id(id)
-                        .name(name)
-                        .courtType(courtType)
-                        .startDate(startDate)
-                        .endDate(endDate)
-                        .locationId(locationId)
-                        .psaId(psaId)
-                        .courtLocationCode(courtLocationCode)
-                        .welshName(welshName)
-                        .orgId(orgId)
-                        .build();
+    void toReadDto_shouldMapEntityToDto_whenEntityIsValid() {
+        // Arrange
+        NationalCourtHouse entity = NationalCourtHouse.builder()
+            .id(1L)
+            .name("Cardiff Crown Court")
+            .courtType("CROWN")
+            .startDate(LocalDate.of(2020, 1, 1))
+            .endDate(LocalDate.of(2025, 12, 31))
+            .locationId(100L)
+            .psaId(200L)
+            .courtLocationCode("CCC01")
+            .welshName("Llys y Goron Caerdydd")
+            .orgId(300L)
+            .build();
 
         // Act
-        NationalCourtHouseDto dto = mapper.toReadDto(entity);
+        Optional<NationalCourtHouseDto> result = mapper.toReadDto(entity);
 
-        // Assert: field-for-field mapping is preserved
-        assertThat(dto).isNotNull();
-        assertThat(dto.id()).isEqualTo(id);
-        assertThat(dto.name()).isEqualTo(name);
-        assertThat(dto.courtType()).isEqualTo(courtType);
-        assertThat(dto.startDate()).isEqualTo(startDate);
-        assertThat(dto.endDate()).isEqualTo(endDate);
-        assertThat(dto.locationId()).isEqualTo(locationId);
-        assertThat(dto.psaId()).isEqualTo(psaId);
-        assertThat(dto.courtLocationCode()).isEqualTo(courtLocationCode);
-        assertThat(dto.welshName()).isEqualTo(welshName);
-        assertThat(dto.orgId()).isEqualTo(orgId);
+        // Assert
+        // The mapper should produce a DTO with all the same field values as the entity
+        assertThat(result).isPresent();
+        NationalCourtHouseDto dto = result.get();
+        assertThat(dto.id()).isEqualTo(entity.getId());
+        assertThat(dto.name()).isEqualTo(entity.getName());
+        assertThat(dto.courtType()).isEqualTo(entity.getCourtType());
+        assertThat(dto.startDate()).isEqualTo(entity.getStartDate());
+        assertThat(dto.endDate()).isEqualTo(entity.getEndDate());
+        assertThat(dto.locationId()).isEqualTo(entity.getLocationId());
+        assertThat(dto.psaId()).isEqualTo(entity.getPsaId());
+        assertThat(dto.courtLocationCode()).isEqualTo(entity.getCourtLocationCode());
+        assertThat(dto.welshName()).isEqualTo(entity.getWelshName());
+        assertThat(dto.orgId()).isEqualTo(entity.getOrgId());
     }
 
     @Test
-    void toReadDto_whenOptionalFieldsAreNull_propagatesNulls() {
-        // Arrange: entity with nullable/optional fields left null
-        // (endDate and welshName are typical nullables)
-        NationalCourtHouse entity =
-                NationalCourtHouse.builder()
-                        .id(7L)
-                        .name("Bristol Magistrates")
-                        .courtType("MAGISTRATES")
-                        .startDate(LocalDate.of(2021, 5, 10))
-                        .endDate(null) // intentionally null
-                        .locationId(10L)
-                        .psaId(20L)
-                        .courtLocationCode("5678")
-                        .welshName(null) // intentionally null
-                        .orgId(30L)
-                        .build();
+    void toReadDto_shouldHandleEntityWithNullOptionalFields() {
+        // Arrange
+        NationalCourtHouse entity = NationalCourtHouse.builder()
+            .id(2L)
+            .name("Bristol Magistrates Court")
+            .courtType("MAGISTRATES")
+            .startDate(LocalDate.of(2019, 6, 1))
+            // End date and other fields left null intentionally
+            .build();
 
         // Act
-        NationalCourtHouseDto dto = mapper.toReadDto(entity);
+        Optional<NationalCourtHouseDto> result = mapper.toReadDto(entity);
 
-        // Assert: nulls are passed through as-is, no surprises
-        assertThat(dto).isNotNull();
+        // Assert
+        // Null fields should remain null in the DTO
+        assertThat(result).isPresent();
+        NationalCourtHouseDto dto = result.get();
         assertThat(dto.endDate()).isNull();
+        assertThat(dto.locationId()).isNull();
+        assertThat(dto.psaId()).isNull();
+        assertThat(dto.courtLocationCode()).isNull();
         assertThat(dto.welshName()).isNull();
-
-        // And non-null values are still mapped
-        assertThat(dto.id()).isEqualTo(7L);
-        assertThat(dto.name()).isEqualTo("Bristol Magistrates");
-        assertThat(dto.courtType()).isEqualTo("MAGISTRATES");
-        assertThat(dto.startDate()).isEqualTo(LocalDate.of(2021, 5, 10));
-        assertThat(dto.locationId()).isEqualTo(10L);
-        assertThat(dto.psaId()).isEqualTo(20L);
-        assertThat(dto.courtLocationCode()).isEqualTo("5678");
-        assertThat(dto.orgId()).isEqualTo(30L);
+        assertThat(dto.orgId()).isNull();
     }
 }

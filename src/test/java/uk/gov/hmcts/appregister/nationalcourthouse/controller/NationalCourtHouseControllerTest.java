@@ -2,16 +2,12 @@ package uk.gov.hmcts.appregister.nationalcourthouse.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,214 +18,124 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
 import uk.gov.hmcts.appregister.nationalcourthouse.service.NationalCourtHouseService;
+import uk.gov.hmcts.appregister.shared.validation.DateRangeValidator;
 
 @ExtendWith(MockitoExtension.class)
 class NationalCourtHouseControllerTest {
 
-    @Mock private NationalCourtHouseService service;
+    @Mock
+    private NationalCourtHouseService service;
 
-    @InjectMocks private NationalCourtHouseController controller;
+    @Mock
+    private DateRangeValidator dateRangeValidator;
 
-    @Test
-    void list_defaults_applyAndServiceIsCalledWithSortedPageable() {
-        // Arrange: service returns a simple page of 2 DTOs when no filters are present
-        NationalCourtHouseDto d1 = mock(NationalCourtHouseDto.class);
-        NationalCourtHouseDto d2 = mock(NationalCourtHouseDto.class);
-        Page<NationalCourtHouseDto> page =
-                new PageImpl<>(List.of(d1, d2), PageRequest.of(0, 10), 2);
-
-        when(service.searchCourtLocations(
-                        isNull(), // name
-                        isNull(), // courtType
-                        isNull(), // startDateFrom
-                        isNull(), // startDateTo
-                        isNull(), // endDateFrom
-                        isNull(), // endDateTo
-                        any(Pageable.class) // pageable
-                        ))
-                .thenReturn(page);
-
-        // Act: call with all query params omitted -> defaults should kick in
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(null, null, null, null, null, null, null, null);
-
-        // Assert: response basics
-        assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(resp.getBody()).isNotNull();
-        assertThat(resp.getBody().results()).containsExactly(d1, d2);
-        assertThat(resp.getBody().totalCount()).isEqualTo(2L);
-        assertThat(resp.getBody().page()).isEqualTo(1);
-        assertThat(resp.getBody().pageSize()).isEqualTo(10);
-
-        // Capture the Pageable the controller passed down and assert pagination/sort semantics
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(service)
-                .searchCourtLocations(
-                        isNull(),
-                        isNull(),
-                        isNull(),
-                        isNull(),
-                        isNull(),
-                        isNull(),
-                        pageableCaptor.capture());
-
-        Pageable used = pageableCaptor.getValue();
-        assertThat(used.getPageNumber()).isEqualTo(0); // controller converts 1 -> 0
-        assertThat(used.getPageSize()).isEqualTo(10);
-        Sort.Order nameOrder = used.getSort().getOrderFor("name");
-        assertThat(nameOrder).isNotNull();
-        assertThat(nameOrder.getDirection()).isEqualTo(Sort.Direction.ASC);
-    }
+    @InjectMocks
+    private NationalCourtHouseController controller;
 
     @Test
-    void list_withFiltersAndPaging_passedThroughAndReflectedInResponse() {
-        // Arrange: set up filters & paging (note: page is 1-based in API)
+    void list_happyPath_callsValidatorAndService_returnsOkPage() {
+        // Arrange: filters + pageable we pass into the controller
         String name = "card";
         String courtType = "CROWN";
-        Integer pageParam = 2;
-        Integer sizeParam = 5;
+        LocalDate startFrom = LocalDate.of(2020, 1, 1);
+        LocalDate startTo = LocalDate.of(2020, 12, 31);
+        LocalDate endFrom = LocalDate.of(2021, 1, 1);
+        LocalDate endTo = LocalDate.of(2022, 1, 1);
+        Pageable pageable = PageRequest.of(1, 5); // zero-based page index
 
-        // Date filters
-        LocalDate startDateFrom = LocalDate.of(2020, 1, 1);
-        LocalDate startDateTo = LocalDate.of(2021, 12, 31);
-        LocalDate endDateFrom = LocalDate.of(2022, 1, 1);
-        LocalDate endDateTo = LocalDate.of(2024, 12, 31);
+        // Fake page returned by the service
+        NationalCourtHouseDto dto1 = new NationalCourtHouseDto(1L, "Cardiff", "CROWN",
+                                                               LocalDate.of(2019, 1, 1), null, null, null, null, null, null);
+        Page<NationalCourtHouseDto> page = new PageImpl<>(List.of(dto1), pageable, 7);
 
-        NationalCourtHouseDto d1 = mock(NationalCourtHouseDto.class);
-        Page<NationalCourtHouseDto> page = new PageImpl<>(List.of(d1), PageRequest.of(1, 5), 21);
-
-        when(service.searchCourtLocations(
-                        eq(name),
-                        eq(courtType),
-                        eq(startDateFrom),
-                        eq(startDateTo),
-                        eq(endDateFrom),
-                        eq(endDateTo),
-                        any(Pageable.class)))
-                .thenReturn(page);
+        when(service.search(eq(name), eq(courtType), eq(startFrom), eq(startTo), eq(endFrom), eq(endTo), any(Pageable.class)))
+            .thenReturn(page);
 
         // Act
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(
-                        name,
-                        courtType,
-                        pageParam,
-                        sizeParam,
-                        startDateFrom,
-                        startDateTo,
-                        endDateFrom,
-                        endDateTo);
+        var response = controller.list(
+            name, courtType, startFrom, startTo, endFrom, endTo, pageable
+        );
 
-        // Assert: response payload mirrors the Page plus requested page metadata
-        assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(resp.getBody()).isNotNull();
-        assertThat(resp.getBody().results()).containsExactly(d1);
-        assertThat(resp.getBody().totalCount()).isEqualTo(21L);
-        assertThat(resp.getBody().page()).isEqualTo(2);
-        assertThat(resp.getBody().pageSize()).isEqualTo(5);
+        // Assert: 200 OK with body, validator called once with the ranges
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isSameAs(page);
+        verify(dateRangeValidator).validate(startFrom, startTo, endFrom, endTo);
 
-        // Verify pageable was translated correctly (1-based -> 0-based) and sorted by name ASC
+        // Also assert that the pageable we passed is forwarded to the service
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(service)
-                .searchCourtLocations(
-                        eq(name),
-                        eq(courtType),
-                        eq(startDateFrom),
-                        eq(startDateTo),
-                        eq(endDateFrom),
-                        eq(endDateTo),
-                        pageableCaptor.capture());
-
-        Pageable used = pageableCaptor.getValue();
-        assertThat(used.getPageNumber()).isEqualTo(1);
-        assertThat(used.getPageSize()).isEqualTo(5);
-        Sort.Order nameOrder = used.getSort().getOrderFor("name");
-        assertThat(nameOrder).isNotNull();
-        assertThat(nameOrder.getDirection()).isEqualTo(Sort.Direction.ASC);
+        verify(service).search(eq(name), eq(courtType), eq(startFrom), eq(startTo), eq(endFrom), eq(endTo), pageableCaptor.capture());
+        Pageable usedPageable = pageableCaptor.getValue();
+        assertThat(usedPageable.getPageNumber()).isEqualTo(1);
+        assertThat(usedPageable.getPageSize()).isEqualTo(5);
     }
 
     @Test
-    void list_whenPageLessThanOne_returnsBadRequest_andDoesNotCallService() {
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(null, null, 0, 10, null, null, null, null);
+    void list_whenValidatorRejectsDateRange_throws400() {
+        // Arrange: have the validator throw a 400 ResponseStatusException
+        LocalDate startFrom = LocalDate.of(2024, 2, 1);
+        LocalDate startTo = LocalDate.of(2024, 1, 1); // invalid range: from > to
+        doThrow(new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "bad range"))
+            .when(dateRangeValidator).validate(eq(startFrom), eq(startTo), isNull(), isNull());
 
-        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
+        // Act + Assert: calling list should propagate the exception (controller does not catch it)
+        assertThrows(ResponseStatusException.class, () ->
+            controller.list(null, null, startFrom, startTo, null, null, PageRequest.of(0, 10))
+        );
+
+        // Service must not be called when validation fails
         verifyNoInteractions(service);
     }
 
     @Test
-    void list_whenPageSizeLessThanOne_returnsBadRequest_andDoesNotCallService() {
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(null, null, 1, 0, null, null, null, null);
+    void list_whenNoFilters_usesPageableAndReturnsPage() {
+        // Arrange: no filters, just a pageable
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<NationalCourtHouseDto> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+        when(service.search(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+            .thenReturn(emptyPage);
 
-        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
-        verifyNoInteractions(service);
+        // Act
+        var response = controller.list(
+            null, null, null, null, null, null, pageable
+        );
+
+        // Assert: OK + empty page + proper delegation
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isSameAs(emptyPage);
+        verify(dateRangeValidator).validate(null, null, null, null);
+        verify(service).search(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(pageable));
     }
 
     @Test
-    void list_whenPageSizeOverMax_returnsBadRequest_andDoesNotCallService() {
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(null, null, 1, 101, null, null, null, null);
-
-        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
-        verifyNoInteractions(service);
-    }
-
-    @Test
-    void list_whenInvalidStartRange_returnsBadRequest() {
-        // startDateFrom is after startDateTo -> 400
-        LocalDate startDateFrom = LocalDate.of(2024, 2, 1);
-        LocalDate startDateTo = LocalDate.of(2024, 1, 1);
-
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(null, null, 1, 10, startDateFrom, startDateTo, null, null);
-
-        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
-        verifyNoInteractions(service);
-    }
-
-    @Test
-    void list_whenInvalidEndRange_returnsBadRequest() {
-        // endDateFrom is after endDateTo -> 400
-        LocalDate endDateFrom = LocalDate.of(2025, 1, 2);
-        LocalDate endDateTo = LocalDate.of(2025, 1, 1);
-
-        ResponseEntity<NationalCourtHousePageResponse> resp =
-                controller.list(null, null, 1, 10, null, null, endDateFrom, endDateTo);
-
-        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
-        verifyNoInteractions(service);
-    }
-
-    @Test
-    void getById_returnsOkWithBody() {
-        Long id = 123L;
-        NationalCourtHouseDto dto = mock(NationalCourtHouseDto.class);
+    void getById_whenFound_returnsOkWithBody() {
+        // Arrange
+        Long id = 99L;
+        NationalCourtHouseDto dto = new NationalCourtHouseDto(
+            id, "Leeds", "CROWN", LocalDate.of(2018, 1, 1), null, null, null, null, null, null
+        );
         when(service.findById(id)).thenReturn(dto);
 
-        ResponseEntity<NationalCourtHouseDto> resp = controller.getById(id);
+        // Act
+        var response = controller.getById(id);
 
-        assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(resp.getBody()).isSameAs(dto);
+        // Assert: simply returns 200 with the DTO, service invoked once
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isSameAs(dto);
         verify(service).findById(id);
     }
 
     @Test
-    void getById_whenServiceThrows_propagatesException() {
+    void getById_whenMissing_propagates404() {
+        // Arrange: service throws a 404 ResponseStatusException
         Long id = 404L;
         when(service.findById(id))
-                .thenThrow(
-                        new ResponseStatusException(
-                                org.springframework.http.HttpStatus.NOT_FOUND, "not found"));
+            .thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "not found"));
 
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, () -> controller.getById(id));
-
+        // Act + Assert: controller propagates the exception; it will be translated by Spring MVC
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> controller.getById(id));
         assertThat(ex.getStatusCode().value()).isEqualTo(404);
         assertThat(ex.getReason()).isEqualTo("not found");
         verify(service).findById(id);
