@@ -1,34 +1,18 @@
 package uk.gov.hmcts.appregister.applicationentry.service;
 
 import jakarta.transaction.Transactional;
-import java.time.LocalDate;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.appregister.applicationcode.model.ApplicationCode;
-import uk.gov.hmcts.appregister.applicationcode.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationWriteDto;
-import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationFeeRecordMapper;
-import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationMapper;
-import uk.gov.hmcts.appregister.applicationentry.model.Application;
-import uk.gov.hmcts.appregister.applicationentry.repository.ApplicationRepository;
-import uk.gov.hmcts.appregister.applicationentry.util.WordingTemplateParser;
-import uk.gov.hmcts.appregister.applicationfee.model.FeePair;
-import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
-import uk.gov.hmcts.appregister.applicationlist.model.ApplicationList;
-import uk.gov.hmcts.appregister.applicationlist.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.exception.ValidationExceptionHandler;
-import uk.gov.hmcts.appregister.standardapplicant.model.StandardApplicant;
-import uk.gov.hmcts.appregister.standardapplicant.repository.StandardApplicantRepository;
 
 @Service
 @RequiredArgsConstructor
 public class ApplicationServiceImpl implements ApplicationService {
 
-    private final WordingTemplateParser parser;
+  /*  private final WordingTemplateParser parser;
     private final ApplicationMapper applicationMapper;
     private final ApplicationFeeRecordMapper feeRecordMapper;
     private final ApplicationRepository applicationRepository;
@@ -36,30 +20,37 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final StandardApplicantRepository standardApplicantRepository;
     private final ApplicationCodeRepository applicationCodeRepository;
     private final ApplicationFeeService feeService;
-
+*/
     @Override
     public List<ApplicationDto> getAllByListId(Long listId, String userId) {
-        ensureUserOwnsList(listId, userId);
+        //ensureUserOwnsList(listId, userId);
 
-        List<Application> applications =
-                applicationRepository.findByApplicationListIdWithJoins(listId);
-        return applications.stream().map(this::toDtoWithFees).toList();
+        //TODO: Fix me
+        //List<Application> applications =
+               // applicationRepository.findByApplicationListIdWithJoins(listId);
+        //return applications.stream().map(this::toDtoWithFees).toList();
+        return List.of();
     }
 
     @Override
     public ApplicationDto getByIdForUser(Long listId, Long appId, String userId) {
-        return toDtoWithFees(getApplicationForUserOrThrow(listId, appId, userId));
+        //TODO: Fix me
+        //return toDtoWithFees(getApplicationForUserOrThrow(listId, appId, userId));
+
+        return null;
     }
 
     @Override
     @Transactional
     public ApplicationDto create(Long listId, ApplicationWriteDto dto, String userId) {
-        ApplicationList list = findListOrThrow(listId, userId);
+   /*     ApplicationList list = findListOrThrow(listId, userId);
         StandardApplicant applicant = resolveStandardApplicant(dto.standardApplicantId());
         ApplicationCode code = findApplicationCodeOrThrow(dto.applicationCodeId());
         String wording = generateWording(code, dto);
         LocalDate changedDate = LocalDate.now();
-
+*/
+        //TODO: Fix me
+        /*
         Application app =
                 applicationMapper.createFromWriteDto(
                         dto, applicant, wording, code, userId, changedDate);
@@ -70,12 +61,17 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application saved = applicationRepository.save(app);
         return applicationMapper.toReadDto(
                 saved, feeService.resolveFeePair(code.getFeeReference()));
+    */
+
+      return null;
     }
+
 
     @Override
     @Transactional
     public ApplicationDto update(Long listId, Long appId, ApplicationWriteDto dto, String userId) {
-        Application existing = getApplicationForUserOrThrow(listId, appId, userId);
+        //TODO: Fix me
+        /* Application existing = getApplicationForUserOrThrow(listId, appId, userId);
         StandardApplicant applicant = resolveStandardApplicant(dto.standardApplicantId());
         ApplicationCode code = findApplicationCodeOrThrow(dto.applicationCodeId());
         String wording = generateWording(code, dto);
@@ -89,16 +85,18 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application saved = applicationRepository.save(existing);
         return applicationMapper.toReadDto(
-                saved, feeService.resolveFeePair(code.getFeeReference()));
+                saved, feeService.resolveFeePair(code.getFeeReference()));*/
+
+        return null;
     }
 
     @Override
     public void delete(Long listId, Long appId, String userId) {
-        Application app = getApplicationForUserOrThrow(listId, appId, userId);
-        applicationRepository.delete(app);
+/*        Application app = getApplicationForUserOrThrow(listId, appId, userId);
+        applicationRepository.delete(app);*/
     }
 
-    private void attachFeeRecords(
+    /*private void attachFeeRecords(
             Application app,
             ApplicationCode code,
             ApplicationWriteDto dto,
@@ -178,5 +176,5 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationDto toDtoWithFees(Application app) {
         FeePair fees = feeService.resolveFeePair(app.getApplicationCode().getFeeReference());
         return applicationMapper.toReadDto(app, fees);
-    }
+    }*/
 }

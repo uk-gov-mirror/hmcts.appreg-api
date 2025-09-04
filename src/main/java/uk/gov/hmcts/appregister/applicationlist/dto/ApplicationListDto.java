@@ -1,15 +1,17 @@
 package uk.gov.hmcts.appregister.applicationlist.dto;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+
 import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
 
 public record ApplicationListDto(
         Long id,
         String status,
-        LocalDate date,
+        OffsetDateTime date,
         String time,
         String description,
         NationalCourtHouseDto courthouse,
         String changedBy,
-        LocalDate changedDate,
+        OffsetDateTime changedDate,
         Integer version) {}

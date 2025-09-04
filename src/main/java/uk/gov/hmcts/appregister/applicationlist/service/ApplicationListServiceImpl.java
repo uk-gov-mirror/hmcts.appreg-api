@@ -1,7 +1,7 @@
 package uk.gov.hmcts.appregister.applicationlist.service;
 
 import jakarta.transaction.Transactional;
-import java.time.LocalDate;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,10 +10,11 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListDto;
 import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListWriteDto;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
-import uk.gov.hmcts.appregister.applicationlist.model.ApplicationList;
-import uk.gov.hmcts.appregister.applicationlist.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.nationalcourthouse.model.NationalCourtHouse;
-import uk.gov.hmcts.appregister.nationalcourthouse.repository.NationalCourtHouseRepository;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
+import uk.gov.hmcts.appregister.common.entity.security.AuthenticatedUser;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.util.VersionManager;
 
 @RequiredArgsConstructor
@@ -24,16 +25,17 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     private final ApplicationListMapper mapper;
     private final VersionManager versionManager;
     private final NationalCourtHouseRepository courtHouseRepository;
+    private final AuthenticatedUser appRegUser;
 
     @Override
-    public List<ApplicationListDto> getAllForUser(String userId) {
-        return repository.findAllByUserId(userId).stream().map(mapper::toReadDto).toList();
+    public List<ApplicationListDto> getAllForUser() {
+        return repository.findAllByUserName(appRegUser.getUser()).stream().map(mapper::toReadDto).toList();
     }
 
     @Override
-    public ApplicationListDto getByIdForUser(Long id, String userId) {
+    public ApplicationListDto getByIdForUser(Long id) {
         return repository
-                .findByIdAndUserId(id, userId)
+            .findByIdAndUserName(id, appRegUser.getUser())
                 .map(mapper::toReadDto)
                 .orElseThrow(
                         () ->
@@ -43,7 +45,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
 
     @Override
     @Transactional
-    public ApplicationListDto create(ApplicationListWriteDto dto, String userId) {
+    public ApplicationListDto create(ApplicationListWriteDto dto) {
         NationalCourtHouse courthouse =
                 courtHouseRepository
                         .findById(dto.courthouseId())
@@ -53,18 +55,17 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                                 HttpStatus.BAD_REQUEST, "Courthouse not found"));
 
         ApplicationList entity =
-                mapper.createEntityFromWriteDto(dto, userId, LocalDate.now(), courthouse);
-        entity.setVersion(versionManager.increment(entity.getVersion()));
+                mapper.createEntityFromWriteDto(dto, courthouse);
 
         return mapper.toReadDto(repository.save(entity));
     }
 
     @Override
     @Transactional
-    public ApplicationListDto update(Long id, ApplicationListWriteDto dto, String userId) {
+    public ApplicationListDto update(Long id, ApplicationListWriteDto dto) {
         ApplicationList existing =
                 repository
-                        .findByIdAndUserId(id, userId)
+                        .findByIdAndUserName(id, appRegUser.getUser())
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(
@@ -79,18 +80,17 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                         new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST, "Courthouse not found"));
 
-        mapper.updateEntityFromWriteDto(dto, existing, userId, LocalDate.now(), courthouse);
-        existing.setVersion(versionManager.increment(existing.getVersion()));
+        mapper.updateEntityFromWriteDto(dto, existing, courthouse);
 
         return mapper.toReadDto(repository.save(existing));
     }
 
     @Override
     @Transactional
-    public void delete(Long id, String userId) {
+    public void delete(Long id) {
         ApplicationList list =
                 repository
-                        .findByIdAndUserId(id, userId)
+                        .findByIdAndUserName(id, appRegUser.getUser())
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(

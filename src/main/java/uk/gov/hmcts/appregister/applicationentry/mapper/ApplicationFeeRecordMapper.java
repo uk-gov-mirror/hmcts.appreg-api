@@ -1,3 +1,4 @@
+/*
 package uk.gov.hmcts.appregister.applicationentry.mapper;
 
 import java.time.LocalDate;
@@ -5,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationFeeRecordDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationWriteDto;
-import uk.gov.hmcts.appregister.applicationentry.model.Application;
-import uk.gov.hmcts.appregister.applicationentry.model.ApplicationFeeRecord;
+import uk.gov.hmcts.appregister.common.entity.Application;
+import uk.gov.hmcts.appregister.common.entity.ApplicationFeeRecord;
 import uk.gov.hmcts.appregister.applicationfee.model.ApplicationFee;
 import uk.gov.hmcts.appregister.util.VersionManager;
 
@@ -46,3 +47,4 @@ public class ApplicationFeeRecordMapper {
                 .build();
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package uk.gov.hmcts.appregister.applicationentry.mapper;
 
 import java.time.LocalDate;
@@ -8,8 +9,8 @@ import uk.gov.hmcts.appregister.applicationcode.model.ApplicationCode;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationWriteDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.IdentityDetailsWriteDto;
-import uk.gov.hmcts.appregister.applicationentry.model.Application;
-import uk.gov.hmcts.appregister.applicationentry.model.ApplicationFeeRecord;
+import uk.gov.hmcts.appregister.common.entity.Application;
+import uk.gov.hmcts.appregister.common.entity.ApplicationFeeRecord;
 import uk.gov.hmcts.appregister.applicationentry.model.IdentityDetails;
 import uk.gov.hmcts.appregister.applicationfee.model.FeePair;
 import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
@@ -132,3 +133,4 @@ public class ApplicationMapper {
         return current;
     }
 }
+*/

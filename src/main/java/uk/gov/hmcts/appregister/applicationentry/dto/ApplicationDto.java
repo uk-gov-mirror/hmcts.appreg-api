@@ -2,7 +2,7 @@ package uk.gov.hmcts.appregister.applicationentry.dto;
 
 import java.time.LocalDate;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
-import uk.gov.hmcts.appregister.applicationentry.model.FeeStatusType;
+import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
 
 public record ApplicationDto(

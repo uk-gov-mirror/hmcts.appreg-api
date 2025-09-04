@@ -39,7 +39,7 @@ public class ApplicationListController {
     public ResponseEntity<List<ApplicationListDto>> getAll(@AuthenticationPrincipal Jwt jwt) {
         log.info("Getting all application lists for user: {}", jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        return ResponseEntity.ok(listService.getAllForUser(userId));
+        return ResponseEntity.ok(listService.getAllForUser());
     }
 
     @Operation(
@@ -57,7 +57,7 @@ public class ApplicationListController {
                 id,
                 jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        return ResponseEntity.ok(listService.getByIdForUser(id, userId));
+        return ResponseEntity.ok(listService.getByIdForUser(id));
     }
 
     @Operation(
@@ -72,7 +72,7 @@ public class ApplicationListController {
             @RequestBody ApplicationListWriteDto listDto, @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getClaimAsString("oid");
         log.info("Creating new application list for user: {}", jwt.getClaimAsString("sub"));
-        ApplicationListDto created = listService.create(listDto, userId);
+        ApplicationListDto created = listService.create(listDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -94,7 +94,7 @@ public class ApplicationListController {
                 id,
                 jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        ApplicationListDto updated = listService.update(id, listDto, userId);
+        ApplicationListDto updated = listService.update(id, listDto);
         return ResponseEntity.ok(updated);
     }
 
@@ -110,7 +110,7 @@ public class ApplicationListController {
                 id,
                 jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        listService.delete(id, userId);
+        listService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,6 +1,7 @@
 package uk.gov.hmcts.appregister.resolutioncode.dto;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 /**
  * Immutable Data Transfer Object (DTO) representing a Resolution (Result) Code.
@@ -51,7 +52,7 @@ public record ResolutionCodeDto(
         String destinationEmail2,
 
         /** Start date (inclusive) from which this code is valid. */
-        LocalDate startDate,
+        OffsetDateTime startDate,
 
         /** End date (inclusive) until which this code is valid, or {@code null} if ongoing. */
-        LocalDate endDate) {}
+        OffsetDateTime endDate) {}

@@ -1,3 +1,4 @@
+/*
 package uk.gov.hmcts.appregister.applicationresult.mapper;
 
 import java.time.LocalDate;
@@ -5,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationresult.dto.ApplicationResultDto;
 import uk.gov.hmcts.appregister.applicationresult.dto.ApplicationResultWriteDto;
-import uk.gov.hmcts.appregister.applicationresult.model.ApplicationResult;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 import uk.gov.hmcts.appregister.resolutioncode.mapper.ResolutionCodeMapper;
 import uk.gov.hmcts.appregister.util.VersionManager;
@@ -59,3 +59,4 @@ public class ApplicationResultMapper {
         entity.setVersion(versionManager.increment(0));
     }
 }
+*/

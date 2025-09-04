@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
 import uk.gov.hmcts.appregister.nationalcourthouse.mapper.NationalCourtHouseMapper;
-import uk.gov.hmcts.appregister.nationalcourthouse.repository.NationalCourtHouseRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 
 /**
  * Read-only service contract for National Court House data.

@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeListItemDto;
-import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 
 /**
  * Service-layer contract for interacting with {@link ResolutionCode} data.

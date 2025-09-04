@@ -6,17 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.appregister.applicationentry.model.Application;
-import uk.gov.hmcts.appregister.applicationentry.repository.ApplicationRepository;
 import uk.gov.hmcts.appregister.applicationentry.util.WordingTemplateParser;
 import uk.gov.hmcts.appregister.applicationresult.dto.ApplicationResultDto;
 import uk.gov.hmcts.appregister.applicationresult.dto.ApplicationResultWriteDto;
-import uk.gov.hmcts.appregister.applicationresult.mapper.ApplicationResultMapper;
-import uk.gov.hmcts.appregister.applicationresult.model.ApplicationResult;
-import uk.gov.hmcts.appregister.applicationresult.repository.ApplicationResultRepository;
+//import uk.gov.hmcts.appregister.applicationresult.mapper.ApplicationResultMapper;
+//import uk.gov.hmcts.appregister.applicationresult.repository.ApplicationResultRepository;
 import uk.gov.hmcts.appregister.exception.ValidationExceptionHandler;
-import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
-import uk.gov.hmcts.appregister.resolutioncode.repository.ResolutionCodeRepository;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
+import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
 import uk.gov.hmcts.appregister.util.VersionManager;
 
 @Service
@@ -24,25 +21,27 @@ import uk.gov.hmcts.appregister.util.VersionManager;
 public class ApplicationResultServiceImpl implements ApplicationResultService {
 
     private final WordingTemplateParser parser;
-    private final ApplicationResultRepository resultRepository;
+  /*  private final ApplicationResultRepository resultRepository;
     private final ApplicationRepository applicationRepository;
     private final ResolutionCodeRepository resolutionCodeRepository;
     private final ApplicationResultMapper mapper;
     private final VersionManager versionManager;
-
+*/
     @Override
     @Transactional(readOnly = true)
     public ApplicationResultDto getResultForApplication(
             Long listId, Long applicationId, String userId) {
-        ApplicationResult result = findOrThrow(null, applicationId, listId, userId);
-        return mapper.toReadDto(result);
+        //TODO: Fix me
+        /*   ApplicationResult result = findOrThrow(null, applicationId, listId, userId);
+        return mapper.toReadDto(result);*/
+        return null;
     }
 
     @Override
     @Transactional
     public ApplicationResultDto create(
             Long listId, Long applicationId, ApplicationResultWriteDto dto, String userId) {
-        Application app =
+       /* Application app =
                 applicationRepository
                         .findByIdAndApplicationListIdAndApplicationListUserId(
                                 applicationId, listId, userId)
@@ -68,7 +67,8 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
         result.setResultCode(resultCode);
         result.setApplication(app);
 
-        return mapper.toReadDto(resultRepository.save(result));
+        return mapper.toReadDto(resultRepository.save(result));*/
+        return null;
     }
 
     @Override
@@ -79,7 +79,7 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
             Long resultId,
             ApplicationResultWriteDto dto,
             String userId) {
-        ApplicationResult existing = findOrThrow(resultId, applicationId, listId, userId);
+     /*   ApplicationResult existing = findOrThrow(resultId, applicationId, listId, userId);
 
         ResolutionCode resultCode =
                 resolutionCodeRepository
@@ -97,17 +97,21 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
         existing.setResultCode(resultCode);
         existing.setVersion(versionManager.increment(existing.getVersion()));
 
-        return mapper.toReadDto(resultRepository.save(existing));
+        return mapper.toReadDto(resultRepository.save(existing));*/
+
+        return null;
     }
 
     @Override
     @Transactional
     public void delete(Long listId, Long applicationId, Long resultId, String userId) {
-        ApplicationResult result = findOrThrow(resultId, applicationId, listId, userId);
-        resultRepository.delete(result);
+/*        ApplicationResult result = findOrThrow(resultId, applicationId, listId, userId);
+        resultRepository.delete(result);*/
+
     }
 
-    private ApplicationResult findOrThrow(Long resultId, Long appId, Long listId, String userId) {
+    //TODO: Fix me
+    /*private ApplicationResult findOrThrow(Long resultId, Long appId, Long listId, String userId) {
         if (resultId != null) {
             return resultRepository
                     .findByIdWithApplicationAndListAndUser(resultId, appId, listId, userId)
@@ -125,5 +129,5 @@ public class ApplicationResultServiceImpl implements ApplicationResultService {
                         () ->
                                 new ResponseStatusException(
                                         HttpStatus.NOT_FOUND, "Result not found"));
-    }
+    }*/
 }

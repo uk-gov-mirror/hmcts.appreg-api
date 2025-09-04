@@ -1,10 +1,7 @@
 package uk.gov.hmcts.appregister.applicationentry.service;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,18 +9,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.appregister.applicationcode.model.ApplicationCode;
-import uk.gov.hmcts.appregister.applicationcode.repository.ApplicationCodeRepository;
-import uk.gov.hmcts.appregister.applicationentry.dto.BulkUploadErrorDto;
+import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.applicationentry.dto.BulkUploadResponseDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.CsvRowDto;
-import uk.gov.hmcts.appregister.applicationentry.model.Application;
-import uk.gov.hmcts.appregister.applicationentry.model.IdentityDetails;
 import uk.gov.hmcts.appregister.applicationentry.util.Parser;
-import uk.gov.hmcts.appregister.applicationlist.model.ApplicationList;
-import uk.gov.hmcts.appregister.applicationlist.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.standardapplicant.model.StandardApplicant;
-import uk.gov.hmcts.appregister.standardapplicant.repository.StandardApplicantRepository;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.NameAddress;
+import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
+import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -35,11 +30,11 @@ public class BulkUploadServiceImpl implements BulkUploadService {
     private final ApplicationListRepository listRepository;
     private final StandardApplicantRepository standardApplicantRepository;
     private final ApplicationCodeRepository applicationCodeRepository;
-    private final ApplicationSaveService saveService;
+    //private final ApplicationSaveService saveService;
 
     @Override
     public BulkUploadResponseDto uploadCsv(Long listId, MultipartFile file, String userId) {
-        log.info("Bulk upload started for listId={} by user={}", listId, userId);
+        /*log.info("Bulk upload started for listId={} by user={}", listId, userId);
         ApplicationList list = findList(listId, userId);
 
         List<CsvRowDto> rows = csvParser.parse(file);
@@ -70,12 +65,13 @@ public class BulkUploadServiceImpl implements BulkUploadService {
             }
         }
 
-        return new BulkUploadResponseDto(validEntries, errors);
+        return new BulkUploadResponseDto(validEntries, errors);*/
+        return new BulkUploadResponseDto(1, List.of());
     }
 
     private ApplicationList findList(Long listId, String userId) {
         return listRepository
-                .findByIdAndUserId(listId, userId)
+            .findByIdAndUserName(listId, userId)
                 .orElseThrow(
                         () ->
                                 new ResponseStatusException(
@@ -101,7 +97,7 @@ public class BulkUploadServiceImpl implements BulkUploadService {
                                         HttpStatus.NOT_FOUND, "Application code not found"));
     }
 
-    private Application mapToEntity(
+   /* private Application mapToEntity(
             CsvRowDto row,
             ApplicationList list,
             StandardApplicant applicant,
@@ -125,25 +121,25 @@ public class BulkUploadServiceImpl implements BulkUploadService {
         entry.setVersion(1);
 
         return entry;
-    }
+    }*/
 
-    private IdentityDetails buildIdentityDetails(CsvRowDto row) {
-        IdentityDetails identity = new IdentityDetails();
+    private NameAddress buildIdentityDetails(CsvRowDto row) {
+        NameAddress identity = new NameAddress();
         identity.setTitle(row.respondentTitle());
         identity.setName(row.respondentOrganisationName());
-        identity.setForename1(row.respondentForename1());
-        identity.setForename2(row.respondentForename2());
-        identity.setForename3(row.respondentForename3());
+        identity.setForename_1(row.respondentForename1());
+        identity.setForename_2(row.respondentForename2());
+        identity.setForename_3(row.respondentForename3());
         identity.setSurname(row.respondentSurname());
-        identity.setAddressLine1(row.respondentAddressLine1());
-        identity.setAddressLine2(row.respondentAddressLine2());
-        identity.setAddressLine3(row.respondentAddressLine3());
-        identity.setAddressLine4(row.respondentAddressLine4());
-        identity.setAddressLine5(row.respondentAddressLine5());
+        identity.setAddress_l1(row.respondentAddressLine1());
+        identity.setAddress_l2(row.respondentAddressLine2());
+        identity.setAddress_l3(row.respondentAddressLine3());
+        identity.setAddress_l4(row.respondentAddressLine4());
+        identity.setAddress_l5(row.respondentAddressLine5());
         identity.setPostcode(row.respondentPostcode());
-        identity.setEmailAddress(row.respondentEmail());
-        identity.setTelephoneNumber(row.respondentTelephone());
-        identity.setMobileNumber(row.respondentMobile());
+        identity.setEmail_address(row.respondentEmail());
+        identity.setTelephone_number(row.respondentTelephone());
+        identity.setMobile_number(row.respondentMobile());
         return identity;
     }
 }

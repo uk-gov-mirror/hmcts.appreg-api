@@ -2,20 +2,22 @@ package uk.gov.hmcts.appregister.applicationcode.mapper;
 
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
-import uk.gov.hmcts.appregister.applicationcode.model.ApplicationCode;
-import uk.gov.hmcts.appregister.applicationfee.model.ApplicationFee;
-import uk.gov.hmcts.appregister.applicationfee.model.FeePair;
+import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.FeePair;
 
 @Component
 public class ApplicationCodeMapper {
+
+    private static final String TRUE_VALUE = "1";
 
     public ApplicationCodeDto toReadDto(ApplicationCode entity, FeePair fees) {
         if (entity == null) {
             return null;
         }
 
-        ApplicationFee mainFee = fees != null ? fees.mainFee() : null;
-        ApplicationFee offsetFee = fees != null ? fees.offsetFee() : null;
+        Fee mainFee = fees != null ? fees.mainFee() : null;
+        Fee offsetFee = fees != null ? fees.offsetFee() : null;
 
         return new ApplicationCodeDto(
                 entity.getId(),
@@ -23,13 +25,13 @@ public class ApplicationCodeMapper {
                 entity.getTitle(),
                 entity.getWording(),
                 entity.getLegislation(),
-                entity.getFeeDue(),
-                entity.getRequiresRespondent(),
+                (entity.getFeeDue().equals(TRUE_VALUE)),
+                entity.getRequiresRespondent().equals(TRUE_VALUE),
                 entity.getDestinationEmail1(),
                 entity.getDestinationEmail2(),
                 entity.getStartDate(),
                 entity.getEndDate(),
-                entity.getBulkRespondentAllowed(),
+                entity.getBulkRespondentAllowed().equals("1"),
                 entity.getFeeReference(),
                 mainFee != null ? mainFee.getDescription() : null,
                 mainFee != null ? mainFee.getAmount() : null,
@@ -48,13 +50,13 @@ public class ApplicationCodeMapper {
                 .title(dto.title())
                 .wording(dto.wording())
                 .legislation(dto.legislation())
-                .feeDue(dto.feeDue())
-                .requiresRespondent(dto.requiresRespondent())
+                .feeDue(dto.feeDue().toString())
+                .requiresRespondent(dto.requiresRespondent().toString())
                 .destinationEmail1(dto.destinationEmail1())
                 .destinationEmail2(dto.destinationEmail2())
                 .startDate(dto.startDate())
                 .endDate(dto.endDate())
-                .bulkRespondentAllowed(dto.bulkRespondentAllowed())
+                .bulkRespondentAllowed(dto.bulkRespondentAllowed().toString())
                 .feeReference(dto.feeReference())
                 .build();
     }

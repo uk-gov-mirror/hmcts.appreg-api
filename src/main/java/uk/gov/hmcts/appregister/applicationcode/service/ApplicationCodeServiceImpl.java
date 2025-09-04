@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
-import uk.gov.hmcts.appregister.applicationcode.model.ApplicationCode;
-import uk.gov.hmcts.appregister.applicationcode.repository.ApplicationCodeRepository;
-import uk.gov.hmcts.appregister.applicationfee.model.FeePair;
+import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
+import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
 
 @Service

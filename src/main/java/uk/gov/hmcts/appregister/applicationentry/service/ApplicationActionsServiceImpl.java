@@ -3,25 +3,20 @@ package uk.gov.hmcts.appregister.applicationentry.service;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.appregister.applicationentry.model.Application;
-import uk.gov.hmcts.appregister.applicationentry.repository.ApplicationRepository;
-import uk.gov.hmcts.appregister.applicationlist.model.ApplicationList;
-import uk.gov.hmcts.appregister.applicationlist.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 
 @Service
 @RequiredArgsConstructor
 public class ApplicationActionsServiceImpl implements ApplicationActionsService {
 
-    private final ApplicationRepository applicationRepository;
+    //private final ApplicationRepository applicationRepository;
     private final ApplicationListRepository applicationListRepository;
 
     @Override
     @Transactional
     public void moveApplications(List<Long> applicationIds, Long targetListId, String userId) {
-        List<Application> applications =
+        /*List<Application> applications =
                 applicationRepository.findByIdInAndApplicationListUserId(applicationIds, userId);
 
         if (applications.size() != applicationIds.size()) {
@@ -41,6 +36,6 @@ public class ApplicationActionsServiceImpl implements ApplicationActionsService 
                                                 "Target application list not found"));
 
         applications.forEach(app -> app.setApplicationList(targetList));
-        applicationRepository.saveAll(applications);
+        applicationRepository.saveAll(applications);*/
     }
 }

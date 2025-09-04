@@ -1,7 +1,7 @@
 package uk.gov.hmcts.appregister.applicationentry.dto;
 
 import java.util.List;
-import uk.gov.hmcts.appregister.applicationentry.model.FeeStatusType;
+import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 
 public record ApplicationWriteDto(
         Long standardApplicantId,

@@ -4,7 +4,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeListItemDto;
-import uk.gov.hmcts.appregister.resolutioncode.model.ResolutionCode;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 
 /**
  * Mapper for converting between {@link ResolutionCode} entities and API-facing DTOs.
