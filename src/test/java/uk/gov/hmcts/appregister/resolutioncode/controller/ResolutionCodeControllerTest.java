@@ -28,19 +28,6 @@ import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeListItemDto;
 import uk.gov.hmcts.appregister.resolutioncode.service.ResolutionCodeService;
 import uk.gov.hmcts.appregister.shared.validation.DateRangeValidator;
 
-/**
- * Unit tests for {@link ResolutionCodeController} using Mockito (no web layer).
- *
- * <p>Covers:
- *
- * <ul>
- *   <li>list(...) happy path & validator interaction
- *   <li>list(...) propagates BAD_REQUEST from DateRangeValidator
- *   <li>list(...) with no filters
- *   <li>getById(...) returns DTO when found
- *   <li>getById(...) propagates NOT_FOUND
- * </ul>
- */
 @ExtendWith(MockitoExtension.class)
 class ResolutionCodeControllerTest {
 
