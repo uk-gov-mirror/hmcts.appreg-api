@@ -1,17 +1,16 @@
 package uk.gov.hmcts.appregister.testutils.docker;
 
+import java.io.IOException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 
-import java.io.IOException;
-
 public interface Command {
-    void cleanupResources();
+  void cleanupResources();
 
-    void start(DynamicPropertyRegistry dynamicPropertyRegistry) throws IOException;
+  void start(DynamicPropertyRegistry dynamicPropertyRegistry) throws IOException;
 
-    boolean isSuccess();
+  boolean isSuccess();
 
-    Integer getPortForContainer();
+  Integer getPortForContainer();
 
-    boolean isRunning();
+  boolean isRunning();
 }

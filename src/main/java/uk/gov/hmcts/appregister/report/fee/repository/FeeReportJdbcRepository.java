@@ -16,28 +16,28 @@ import uk.gov.hmcts.appregister.report.fee.dto.FeeReportRowDto;
 @Repository
 public class FeeReportJdbcRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(FeeReportJdbcRepository.class);
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+  private static final Logger log = LoggerFactory.getLogger(FeeReportJdbcRepository.class);
+  private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    public List<FeeReportRowDto> generateFeeReport(
-            LocalDate startDate,
-            LocalDate endDate,
-            String standardApplicantCode,
-            String applicantSurname,
-            String courthouseCode) {
+  public List<FeeReportRowDto> generateFeeReport(
+      LocalDate startDate,
+      LocalDate endDate,
+      String standardApplicantCode,
+      String applicantSurname,
+      String courthouseCode) {
 
-        log.info("Searching fee report with the following criteria:");
-        log.info("startDate = {}", startDate);
-        log.info("endDate = {}", endDate);
-        log.info("standardApplicantCode = {}", standardApplicantCode);
-        log.info("applicantSurname = {}", applicantSurname);
-        log.info("courthouseCode = {}", courthouseCode);
+    log.info("Searching fee report with the following criteria:");
+    log.info("startDate = {}", startDate);
+    log.info("endDate = {}", endDate);
+    log.info("standardApplicantCode = {}", standardApplicantCode);
+    log.info("applicantSurname = {}", applicantSurname);
+    log.info("courthouseCode = {}", courthouseCode);
 
-        // TODO: Fine for POC, should probably externalise the query rather than hardcoding it as a
-        // String.
-        StringBuilder sql =
-                new StringBuilder(
-                        """
+    // TODO: Fine for POC, should probably externalise the query rather than hardcoding it as a
+    // String.
+    StringBuilder sql =
+        new StringBuilder(
+            """
             -- Standard Applicants
             SELECT
                 application_list.date AS listDate,
@@ -54,17 +54,17 @@ public class FeeReportJdbcRepository {
             JOIN standard_applicant ON application.standard_applicant_id = standard_applicant.id
             WHERE application_code.fee_due = true
               AND application_list.date BETWEEN :startDate AND :endDate
-              AND (:standardApplicantCode IS NULL OR standard_applicant.code ILIKE :standardApplicantCode)
+              AND (:standardApplicantCode IS NULL OR standard_applicant.code 
+              ILIKE :standardApplicantCode)
               AND (:applicantSurname IS NULL OR standard_applicant.surname ILIKE :applicantSurname)
               AND (:courthouseCode IS NULL OR courthouse.location_code ILIKE :courthouseCode)
             """);
 
-        boolean includeNonStandard =
-                (standardApplicantCode == null || standardApplicantCode.isBlank());
+    boolean includeNonStandard = (standardApplicantCode == null || standardApplicantCode.isBlank());
 
-        if (includeNonStandard) {
-            sql.append(
-                    """
+    if (includeNonStandard) {
+      sql.append(
+          """
                 UNION ALL
 
                 -- Non-Standard Applicants
@@ -73,7 +73,8 @@ public class FeeReportJdbcRepository {
                     courthouse.name AS courthouseName,
                     NULL AS otherCourthouse,
                     NULL AS standardApplicantCode,
-                    COALESCE(identity_details.surname, identity_details.name) AS applicantNameOrSurname,
+                    COALESCE(identity_details.surname, identity_details.name) 
+                    AS applicantNameOrSurname,
                     application_code.application_code AS applicationCode,
                     application_code.title AS applicationCodeTitle
                 FROM application
@@ -88,40 +89,38 @@ public class FeeReportJdbcRepository {
                       OR identity_details.name ILIKE :applicantSurname)
                   AND (:courthouseCode IS NULL OR courthouse.location_code ILIKE :courthouseCode)
                 """);
-        }
-
-        sql.append(" ORDER BY listDate DESC");
-
-        var params =
-                new MapSqlParameterSource()
-                        .addValue("startDate", startDate)
-                        .addValue("endDate", endDate)
-                        .addValue(
-                                "standardApplicantCode",
-                                standardApplicantCode == null
-                                        ? null
-                                        : "%" + standardApplicantCode + "%",
-                                java.sql.Types.VARCHAR)
-                        .addValue(
-                                "applicantSurname",
-                                applicantSurname == null ? null : "%" + applicantSurname + "%",
-                                java.sql.Types.VARCHAR)
-                        .addValue(
-                                "courthouseCode",
-                                courthouseCode == null ? null : "%" + courthouseCode + "%",
-                                java.sql.Types.VARCHAR);
-
-        return jdbcTemplate.query(sql.toString(), params, this::mapRow);
     }
 
-    private FeeReportRowDto mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new FeeReportRowDto(
-                rs.getDate("listDate").toLocalDate(),
-                rs.getString("courthouseName"),
-                rs.getString("otherCourthouse"),
-                rs.getString("standardApplicantCode"),
-                rs.getString("applicantNameOrSurname"),
-                rs.getString("applicationCode"),
-                rs.getString("applicationCodeTitle"));
-    }
+    sql.append(" ORDER BY listDate DESC");
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("startDate", startDate)
+            .addValue("endDate", endDate)
+            .addValue(
+                "standardApplicantCode",
+                standardApplicantCode == null ? null : "%" + standardApplicantCode + "%",
+                java.sql.Types.VARCHAR)
+            .addValue(
+                "applicantSurname",
+                applicantSurname == null ? null : "%" + applicantSurname + "%",
+                java.sql.Types.VARCHAR)
+            .addValue(
+                "courthouseCode",
+                courthouseCode == null ? null : "%" + courthouseCode + "%",
+                java.sql.Types.VARCHAR);
+
+    return jdbcTemplate.query(sql.toString(), params, this::mapRow);
+  }
+
+  private FeeReportRowDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+    return new FeeReportRowDto(
+        rs.getDate("listDate").toLocalDate(),
+        rs.getString("courthouseName"),
+        rs.getString("otherCourthouse"),
+        rs.getString("standardApplicantCode"),
+        rs.getString("applicantNameOrSurname"),
+        rs.getString("applicationCode"),
+        rs.getString("applicationCodeTitle"));
+  }
 }

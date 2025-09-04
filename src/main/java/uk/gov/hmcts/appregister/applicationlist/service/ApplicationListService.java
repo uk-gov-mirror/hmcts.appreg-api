@@ -5,13 +5,13 @@ import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListDto;
 import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListWriteDto;
 
 public interface ApplicationListService {
-    List<ApplicationListDto> getAllForUser();
+  List<ApplicationListDto> getAllForUser();
 
-    ApplicationListDto getByIdForUser(Long id);
+  ApplicationListDto getByIdForUser(Long id);
 
-    ApplicationListDto create(ApplicationListWriteDto dto);
+  ApplicationListDto create(ApplicationListWriteDto dto);
 
-    ApplicationListDto update(Long id, ApplicationListWriteDto dto);
+  ApplicationListDto update(Long id, ApplicationListWriteDto dto);
 
-    void delete(Long id);
+  void delete(Long id);
 }

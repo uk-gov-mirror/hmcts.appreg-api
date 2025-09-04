@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.applicationfee.service;
 
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.appregister.common.entity.Fee;
@@ -11,15 +10,15 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationFeeRepositor
 @Service
 @RequiredArgsConstructor
 public class ApplicationFeeServiceImpl implements ApplicationFeeService {
-    private final ApplicationFeeRepository feeRepository;
+  private final ApplicationFeeRepository feeRepository;
 
-    public FeePair resolveFeePair(String feeReference) {
-        List<Fee> fees = feeRepository.findByReference(feeReference);
+  public FeePair resolveFeePair(String feeReference) {
+    List<Fee> fees = feeRepository.findByReference(feeReference);
 
-        Fee mainFee = fees.stream().findFirst().orElse(null);
+    Fee mainFee = fees.stream().findFirst().orElse(null);
 
-        //TODO: No offset fee in the DB yet so second fee will always be offset
-        Fee offsetFee = fees.size() > 1 ? fees.get(1) : null;
-        return new FeePair(mainFee, offsetFee);
-    }
+    // TODO: No offset fee in the DB yet so second fee will always be offset
+    Fee offsetFee = fees.size() > 1 ? fees.get(1) : null;
+    return new FeePair(mainFee, offsetFee);
+  }
 }

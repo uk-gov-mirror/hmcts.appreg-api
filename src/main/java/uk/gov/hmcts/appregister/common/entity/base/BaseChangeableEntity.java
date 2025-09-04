@@ -3,18 +3,16 @@ package uk.gov.hmcts.appregister.common.entity.base;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
-import lombok.Data;
+import java.time.OffsetDateTime;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 
-import java.time.OffsetDateTime;
-
-
 /**
- * Define a standard class for the changed columns
+ * Define a standard class for the changed state. Simple extend
+ * this class if you need to apply these columns to an entity
  */
 @MappedSuperclass
 @Getter
@@ -22,11 +20,11 @@ import java.time.OffsetDateTime;
 @EntityListeners(PreCreateUpdateEntityListener.class)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class BaseChangeableEntity implements Changeable {
-    @Column(name = "changed_by", nullable = false)
-    private Long changedBy;
+  @Column(name = "changed_by", nullable = false)
+  private Long changedBy;
 
-    @CreatedBy
-    @UpdateTimestamp
-    @Column(name = "changed_date", nullable = false)
-    private OffsetDateTime changedDate;
+  @CreatedBy
+  @UpdateTimestamp
+  @Column(name = "changed_date", nullable = false)
+  private OffsetDateTime changedDate;
 }

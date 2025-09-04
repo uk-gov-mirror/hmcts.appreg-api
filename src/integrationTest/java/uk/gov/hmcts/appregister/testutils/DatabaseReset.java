@@ -4,66 +4,57 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 
-import java.util.List;
-
+/**
+ * A global persistence class that knows how to persist objects. Specifically ones that have
+ * been created using the {@link uk.gov.hmcts.appregister.testutils.data.Persistable}
+ */
 @Component
 @RequiredArgsConstructor
 public class DatabaseReset {
-    private final EntityManagerFactory entityManagerFactory;
+  private final EntityManagerFactory entityManagerFactory;
 
-    @Autowired
-    ApplicationCodeRepository applicationCodeRepository;
+  @Autowired ApplicationCodeRepository applicationCodeRepository;
 
-    /** A bit crude but sits beyond all of the baseline data sequence numbers so can target any additional data added by the tests */
-    private static final int SEQUENCE_START_VALUE = 321364044;
+  @Value("${spring.sql.init.schema-locations}")
+  private String sqlInitSchema;
 
-    /** The sequences confrom to the seuqences that reside in the flyway scripts */
-    private static final List<String> SEQUENCES_RESET_FROM = List.of(
-        "ac_seq",
-        "adr_seq",
-        "alefs_seq",
-        "aleo_seq",
-        "aleo_seq",
-        "aler_seq",
-        "al_seq",
-        "ar_seq",
-        "cja_seq",
-        "fee_seq",
-        "la_seq",
-        "lcm_seq",
-        "na_seq",
-        "psa_seq",
-        "rc_seq",
-        "sa_seq",
-        "ale_seq",
-        "nch_seq"
-    );
+  /**
+   * A bit crude but a sequence number that manages the data beyond
+   * all the baseline data sequence numbers. This means we can
+   * manage data targeted around specific tests.
+   */
+  private static final int SEQUENCE_START_VALUE = 321364044;
 
-    @Transactional
-    public void resetDbData() {
-        resetSequences();
-        applicationCodeRepository.deleteAll(
-            applicationCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE)
-        );
+  @Transactional
+  public void resetDbData() {
+    resetSequences();
+    applicationCodeRepository.deleteAll(
+        applicationCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+  }
+
+  @Transactional
+  public void resetSequences() {
+    try (EntityManager em = entityManagerFactory.createEntityManager()) {
+      em.getTransaction().begin();
+      final Query query =
+          em.createNativeQuery(
+              "SELECT sequence_name FROM information_schema.sequences "
+                  + "WHERE sequence_schema = " + sqlInitSchema);
+      final List sequences = query.getResultList();
+      for (Object seqName : sequences) {
+        em.createNativeQuery(
+                "ALTER SEQUENCE " + sqlInitSchema + "."
+                    + seqName + " RESTART WITH " + SEQUENCE_START_VALUE)
+            .executeUpdate();
+      }
+      em.getTransaction().commit();
     }
-
-    @Transactional
-    public void resetSequences() {
-        try (EntityManager em = entityManagerFactory.createEntityManager()) {
-            em.getTransaction().begin();
-            final Query query = em.createNativeQuery("SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'darts'");
-            final List sequences = query.getResultList();
-            for (Object seqName : sequences) {
-                em.createNativeQuery("ALTER SEQUENCE darts." + seqName + " RESTART WITH " + SEQUENCE_START_VALUE).executeUpdate();
-
-            }
-            em.getTransaction().commit();
-        }
-    }
-
+  }
 }

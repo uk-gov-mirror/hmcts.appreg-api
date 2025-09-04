@@ -1,8 +1,18 @@
 package uk.gov.hmcts.appregister.common.entity;
 
-
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "criminal_justice_area")
@@ -13,16 +23,16 @@ import lombok.*;
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CriminalJusticeArea {
-    @Id
-    @Column(name = "cja_id", nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cja_gen")
-    @SequenceGenerator(name = "cja_gen", sequenceName = "cja_seq", allocationSize = 1)
-    @EqualsAndHashCode.Include
-    private Long id;
+  @Id
+  @Column(name = "cja_id", nullable = false, updatable = false)
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cja_gen")
+  @SequenceGenerator(name = "cja_gen", sequenceName = "cja_seq", allocationSize = 1)
+  @EqualsAndHashCode.Include
+  private Long id;
 
-    @Column(name = "cja_code", nullable = false)
-    private String cjaCode;
+  @Column(name = "cja_code", nullable = false)
+  private String cjaCode;
 
-    @Column(name = "cja_description", nullable = false)
-    private String cjaDescription;
+  @Column(name = "cja_description", nullable = false)
+  private String cjaDescription;
 }

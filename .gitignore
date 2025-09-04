@@ -26,3 +26,4 @@ applicationinsights-agent-*.jar
 
 .vscode
 .env
+!.idea/codeStyles/

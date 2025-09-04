@@ -7,12 +7,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
+import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 
 /**
  * JPA entity representing a row in the {@code resolution_code} table.
@@ -50,62 +55,52 @@ import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-public class ResolutionCode extends BaseChangeableEntity implements Accountable {
+public class ResolutionCode extends BaseChangeableEntity implements Accountable, Versionable {
 
-    // Primary key identifier (maps to {@code rc_id}).
-    @Id
-    @Column(name = "rc_id", nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "rc_gen")
-    @SequenceGenerator(name = "rc_gen", sequenceName = "rc_seq", allocationSize = 1)
-    @EqualsAndHashCode.Include
-    private Long id;
+  // Primary key identifier (maps to {@code rc_id}).
+  @Id
+  @Column(name = "rc_id", nullable = false, updatable = false)
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "rc_gen")
+  @SequenceGenerator(name = "rc_gen", sequenceName = "rc_seq", allocationSize = 1)
+  @EqualsAndHashCode.Include
+  private Long id;
 
-    // Short alphanumeric resolution code value (max length 10, e.g. "RC123").
-    @Column(name = "resolution_code", nullable = false, length = 10)
-    private String resultCode;
+  // Short alphanumeric resolution code value (max length 10, e.g. "RC123").
+  @Column(name = "resolution_code", nullable = false, length = 10)
+  private String resultCode;
 
-    // Human-readable title for the resolution code (max length 500).
-    @Column(name = "resolution_code_title", nullable = false, length = 500)
-    private String title;
+  // Human-readable title for the resolution code (max length 500).
+  @Column(name = "resolution_code_title", nullable = false, length = 500)
+  private String title;
 
-    // Full descriptive wording of the resolution code, displayed in UIs and reports.
-    @Column(name = "resolution_code_wording", nullable = false)
-    private String wording;
+  // Full descriptive wording of the resolution code, displayed in UIs and reports.
+  @Column(name = "resolution_code_wording", nullable = false)
+  private String wording;
 
-    // Optional legislation reference associated with this resolution code.
-    @Column(name = "resolution_legislation")
-    private String legislation;
+  // Optional legislation reference associated with this resolution code.
+  @Column(name = "resolution_legislation")
+  private String legislation;
 
-    /** Optional primary destination email address tied to this resolution code. */
-    @Column(name = "rc_destination_email_address_1")
-    private String destinationEmail1;
+  /** Optional primary destination email address tied to this resolution code. */
+  @Column(name = "rc_destination_email_address_1", length = 253)
+  private String destinationEmail1;
 
-    // Optional secondary destination email address tied to this resolution code.
-    @Column(name = "rc_destination_email_address_2")
-    private String destinationEmail2;
+  // Optional secondary destination email address tied to this resolution code.
+  @Column(name = "rc_destination_email_address_2", length = 253)
+  private String destinationEmail2;
 
-    // Start date (inclusive) from which this resolution code is valid.
-    @Column(name = "resolution_code_start_date", nullable = false)
-    private OffsetDateTime startDate;
+  // Start date (inclusive) from which this resolution code is valid.
+  @Column(name = "resolution_code_start_date", nullable = false)
+  private OffsetDateTime startDate;
 
-    // End date (inclusive) until which this resolution code remains valid, or {@code null} if
-    // ongoing.
-    @Column(name = "resolution_code_end_date")
-    private OffsetDateTime endDate;
+  // End date (inclusive) until which this resolution code remains valid, or {@code null} if
+  // ongoing.
+  @Column(name = "resolution_code_end_date")
+  private OffsetDateTime endDate;
 
-    @Column(name = "version")
-    private Integer version;
+  @Column(name = "version")
+  private Long version;
 
-    @Column(name = "user_name")
-    private String userName;
-
-    @Override
-    public String getCreatedUser() {
-        return userName;
-    }
-
-    @Override
-    public void setCreatedUser(String user) {
-        this.userName = user;
-    }
+  @Column(name = "user_name")
+  private String createdUser;
 }

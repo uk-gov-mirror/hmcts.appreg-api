@@ -5,6 +5,6 @@ import java.io.IOException;
 import uk.gov.hmcts.appregister.report.fee.dto.FeeReportFilterDto;
 
 public interface FeeReportService {
-    void generateFeeReportCsv(FeeReportFilterDto filter, HttpServletResponse response)
-            throws IOException;
+  void generateFeeReportCsv(FeeReportFilterDto filter, HttpServletResponse response)
+      throws IOException;
 }

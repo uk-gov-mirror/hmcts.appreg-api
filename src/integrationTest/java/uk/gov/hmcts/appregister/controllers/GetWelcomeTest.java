@@ -17,15 +17,15 @@ import uk.gov.hmcts.appregister.Application;
 @ContextConfiguration(classes = Application.class)
 class GetWelcomeTest {
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired
-    private transient MockMvc mockMvc;
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+  @Autowired
+  private transient MockMvc mockMvc;
 
-    @DisplayName("Should welcome upon root request with 200 response code")
-    @Test
-    void welcomeRootEndpoint() throws Exception {
-        MvcResult response = mockMvc.perform(get("/")).andExpect(status().isOk()).andReturn();
+  @DisplayName("Should welcome upon root request with 200 response code")
+  @Test
+  void welcomeRootEndpoint() throws Exception {
+    MvcResult response = mockMvc.perform(get("/")).andExpect(status().isOk()).andReturn();
 
-        assertThat(response.getResponse().getContentAsString()).startsWith("Welcome");
-    }
+    assertThat(response.getResponse().getContentAsString()).startsWith("Welcome");
+  }
 }

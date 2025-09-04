@@ -1,12 +1,28 @@
 package uk.gov.hmcts.appregister.common.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
+import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 
+/**
+ * Represents a Petty Sessional Area entity mapped to the "petty_sessional_areas" table in the
+ * database.
+ */
 @Entity
 @Table(name = "petty_sessional_areas")
 @NoArgsConstructor
@@ -15,65 +31,68 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-public class PettySessionalArea extends BaseChangeableEntity {
-    @Id
-    @Column(name = "psa_id", nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "psa_gen")
-    @SequenceGenerator(name = "psa_gen", sequenceName = "psa_seq", allocationSize = 1)
-    @EqualsAndHashCode.Include
-    private Long id;
+public class PettySessionalArea extends BaseChangeableEntity implements Versionable {
+  @Id
+  @Column(name = "psa_id", nullable = false, updatable = false)
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "psa_gen")
+  @SequenceGenerator(name = "psa_gen", sequenceName = "psa_seq", allocationSize = 1)
+  @EqualsAndHashCode.Include
+  private Long id;
 
-    @Column(name = "psa_name")
-    private String name;
+  @Column(name = "psa_name")
+  @Size(max = 100)
+  private String name;
 
-    @Column(name = "short_name")
-    private String short_name;
+  @Column(name = "short_name")
+  @Size(max = 10)
+  private String shortName;
 
-    @Column(name = "version_number", nullable = false)
-    private BigDecimal version;
+  @Column(name = "version_number", nullable = false)
+  @Size(max = 38)
+  private Long version;
 
-    @Column(name = "cma_cma_id")
-    private Long cma_cma_id;
+  @Column(name = "cma_cma_id")
+  private Long cmaId;
 
-    @Column(name = "psa_code", nullable = false)
-    private String psa_code;
+  @Column(name = "psa_code", nullable = false)
+  @Size(max = 4)
+  private String psaCode;
 
+  @Column(name = "start_date")
+  private OffsetDateTime startDate;
 
-    @Column(name = "start_date")
-    private OffsetDateTime start_date;
+  @Column(name = "end_date")
+  private OffsetDateTime endDate;
 
-    @Column(name = "end_date")
-    private OffsetDateTime end_date;
+  @Column(name = "jc_name")
+  @Size(max = 200)
+  private String jcName;
 
-    @Column(name = "jc_name")
-    private String jc_name;
+  @Column(name = "court_type", nullable = false)
+  @Size(max = 10)
+  private String courtType;
 
-    @Column(name = "court_type", nullable = false)
-    private String court_type;
+  @Column(name = "crime_cases_loc_id")
+  private Long crimeCasesLocId;
 
-    @Column(name = "crime_cases_loc_id")
-    private Long crime_cases_loc_id;
+  @Column(name = "fine_accounts_loc_id")
+  private Long fineAccountsLocId;
 
-    @Column(name = "fine_accounts_loc_id")
-    private Long fine_accounts_loc_id;
+  @Column(name = "maintenance_enforcement_loc_id")
+  private Long enforcedLocId;
 
-    @Column(name = "maintenance_enforcement_loc_id")
-    private Long maintenance_enforcement_loc_id;
+  @Column(name = "family_cases_loc_id")
+  private Long familyCasesLocId;
 
-    @Column(name = "family_cases_loc_id")
-    private Long family_cases_loc_id;
+  @Column(name = "court_location_code")
+  private String courtLocationCode;
 
+  @Column(name = "central_finance_loc_id")
+  private Long centralFinanceLocId;
 
-    @Column(name = "court_location_code")
-    private String court_location_code;
+  @Column(name = "sl_psa_name")
+  private String psaName;
 
-    @Column(name = "central_finance_loc_id")
-    private Long central_finance_loc_id;
-
-    @Column(name = "sl_psa_name")
-    private String sl_psa_name;
-
-    @Column(name = "norg_id")
-    private Long norg_id;
-
+  @Column(name = "norg_id")
+  private Long orgId;
 }

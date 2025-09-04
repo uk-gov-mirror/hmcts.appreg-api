@@ -8,58 +8,60 @@ import org.springframework.stereotype.Component;
 /**
  * Represents the logged in user
  *
- * This class can be injecting anywhere that needs to find out the current user and their roles. This
- * class assumes that we authenticated using a JWT token and that the token contains a suitable claim
+ * <p>This class can be injecting anywhere that needs to find out the current user and their roles.
+ * This class assumes that we authenticated using a JWT token and that the token contains a suitable
+ * claim
  *
- * This class is simply a parser it does not validate the integrity of the token this is
- * assumed to have already taken place
+ * <p>This class is simply a parser it does not validate the integrity of the token this is assumed
+ * to have already taken place
  */
 @Component
 public class AuthenticatedUser {
 
-    private final static String ROLES_CLAIM = "roles";
-    private final static String USER_UNKNOWN = "roles";
+  private static final String ROLES_CLAIM = "roles";
+  private static final String USER_UNKNOWN = "roles";
 
-    public String[] getRoles() {
-        if (getJwt() == null) {
-            return new String[0];
-        }
-
-        return getJwt().getClaimAsStringList(ROLES_CLAIM).toArray(new String[0]);
+  public String[] getRoles() {
+    if (getJwt() == null) {
+      return new String[0];
     }
 
-    /**
-     * Gets the user from the subject claim
-     * @return The user
-     */
-    public String getUser() {
-        if (getJwt() == null) {
-            return "unknown";
-        }
-        return getJwt().getClaimAsString(JWTClaimNames.SUBJECT);
-    }
+    return getJwt().getClaimAsStringList(ROLES_CLAIM).toArray(new String[0]);
+  }
 
-    /**
-     * Returns a number that uniquely identifies the user.
-     * @return The user number
-     */
-    // TODO: We need a number to insert into the database. Not sure where we get the number from
-    public Long getUserNumber() {
-        if (getJwt() == null) {
-            return 0L;
-        }
-        // TODO: What is the users number
-        return 0L;
+  /**
+   * Gets the user from the subject claim.
+   *
+   * @return The user
+   */
+  public String getUser() {
+    if (getJwt() == null) {
+      return "unknown";
     }
+    return getJwt().getClaimAsString(JWTClaimNames.SUBJECT);
+  }
 
-    /**
-     * gets the token from thread local using {@link} SecurityContextHolder}
-     */
-    private Jwt getJwt() {
-        if (SecurityContextHolder.getContext().getAuthentication() != null
-            && SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof Jwt jwt) {
-            return jwt;
-        }
-        return null;
+  /**
+   * Returns a number that uniquely identifies the user.
+   *
+   * @return The user number
+   */
+  // TODO: We need a number to insert into the database. Not sure where we get the number from
+  public Long getUserNumber() {
+    if (getJwt() == null) {
+      return 0L;
     }
+    // TODO: What is the users number
+    return 0L;
+  }
+
+  /** gets the token from thread local using {@link} SecurityContextHolder}. */
+  private Jwt getJwt() {
+    if (SecurityContextHolder.getContext().getAuthentication() != null
+        && SecurityContextHolder.getContext().getAuthentication().getPrincipal()
+            instanceof Jwt jwt) {
+      return jwt;
+    }
+    return null;
+  }
 }

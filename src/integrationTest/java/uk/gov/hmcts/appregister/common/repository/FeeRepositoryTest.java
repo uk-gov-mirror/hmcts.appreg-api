@@ -1,5 +1,10 @@
 package uk.gov.hmcts.appregister.common.repository;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,42 +15,33 @@ import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
 import uk.gov.hmcts.appregister.testutils.DateUtil;
 import uk.gov.hmcts.appregister.testutils.data.FeeTestData;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @Slf4j
 public class FeeRepositoryTest extends BasePostgresIntegrationTest {
 
-    @Autowired
-    private ApplicationFeeRepository applicationFeeRepository;
+  @Autowired private ApplicationFeeRepository applicationFeeRepository;
 
+  @Autowired private AuthenticatedUser loggedInUser;
 
-    @Autowired
-    private AuthenticatedUser loggedInUser;
+  @Test
+  public void testBasicInsertionUpdate() throws Exception {
+    // test save
+    Fee fee = persistance.saveFee(new FeeTestData().someMinimal().build());
 
-    @Test
-    public void testBasicInsertionUpdate() throws Exception{
-        // test save
-        Fee fee = persistance.saveFee(new FeeTestData().someMinimal().build());
+    // assert that the save has occurred
+    long count = applicationFeeRepository.count();
+    log.info("ApplicationCode count: {}", 42, count);
 
-        // assert that the save has occurred
-        long count = applicationFeeRepository.count();
-        log.info("ApplicationCode count: {}", 42, count);
+    // test get
+    Optional<Fee> applicationCodeToAssertAgainst = applicationFeeRepository.findById(fee.getId());
 
-        // test get
-        Optional<Fee> applicationCodeToAssertAgainst = applicationFeeRepository.findById(fee.getId());
-
-        // assert that the data that has been retrieved aligns with the data that we have stored
-        expectAllCommonEntityFields(fee, applicationFeeRepository);
-        assertNotNull(applicationCodeToAssertAgainst.get());
-        assertEquals(fee.getAmount(), applicationCodeToAssertAgainst.get().getAmount());
-        assertEquals(fee.getReference(), applicationCodeToAssertAgainst.get().getReference());
-        assertEquals(fee.getDescription(), applicationCodeToAssertAgainst.get().getDescription());
-        assertTrue(DateUtil.equalsIgnoreMillis(fee.getStartDate(), applicationCodeToAssertAgainst.get().getStartDate()));
-    }
+    // assert that the data that has been retrieved aligns with the data that we have stored
+    expectAllCommonEntityFields(fee, applicationFeeRepository);
+    assertNotNull(applicationCodeToAssertAgainst.get());
+    assertEquals(fee.getAmount(), applicationCodeToAssertAgainst.get().getAmount());
+    assertEquals(fee.getReference(), applicationCodeToAssertAgainst.get().getReference());
+    assertEquals(fee.getDescription(), applicationCodeToAssertAgainst.get().getDescription());
+    assertTrue(
+        DateUtil.equalsIgnoreMillis(
+            fee.getStartDate(), applicationCodeToAssertAgainst.get().getStartDate()));
+  }
 }
-

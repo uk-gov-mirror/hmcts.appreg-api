@@ -1,12 +1,28 @@
 package uk.gov.hmcts.appregister.common.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
-import uk.gov.hmcts.appregister.common.entity.compositeId.AppListEntryFeeCompositeId;
+import uk.gov.hmcts.appregister.common.entity.base.Versionable;
+import uk.gov.hmcts.appregister.common.entity.compositeid.AppListEntryFeeCompositeId;
 
-import java.math.BigDecimal;
-
+/**
+ * Represents the association between an application list entry and a fee, mapped
+ * to the "app_list_entry_fee_id" table in the database.
+ */
 @Entity
 @Table(name = "app_list_entry_fee_id")
 @NoArgsConstructor
@@ -14,28 +30,31 @@ import java.math.BigDecimal;
 @Builder
 @IdClass(AppListEntryFeeCompositeId.class)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-public class AppListEntryFeeId extends BaseChangeableEntity {
-    @Id
-    @Column(name = "ale_ale_id", nullable = false)
-    @EqualsAndHashCode.Include
-    private Long ale_ale_id;
+@Getter
+@Setter
+public class AppListEntryFeeId extends BaseChangeableEntity implements Accountable, Versionable {
+  @Id
+  @Column(name = "ale_ale_id", nullable = false)
+  @EqualsAndHashCode.Include
+  private Long appListId;
 
-    @Id
-    @Column(name = "fee_fee_id", nullable = false)
-    @EqualsAndHashCode.Include
-    private Long fee_fee_id;
+  @Id
+  @Column(name = "fee_fee_id", nullable = false)
+  @EqualsAndHashCode.Include
+  private Long feeId;
 
-    @ManyToOne()
-    @JoinColumn(name = "ale_ale_id", nullable = false)
-    private ApplicationListEntry entry;
+  @ManyToOne()
+  @JoinColumn(name = "ale_ale_id", nullable = false)
+  private ApplicationListEntry entry;
 
-    @ManyToOne()
-    @JoinColumn(name = "fee_fee_id", nullable = false)
-    private Fee fee;
+  @ManyToOne()
+  @JoinColumn(name = "fee_fee_id", nullable = false)
+  private Fee fee;
 
-    @Column(name = "version", nullable = false)
-    private BigDecimal version;
+  @Column(name = "version", nullable = false)
+  private Long version;
 
-    @Column(name = "user_name", nullable = false)
-    private String user_name;
+  @Column(name = "user_name", nullable = false)
+  @Size(max = 250)
+  private String createdUser;
 }

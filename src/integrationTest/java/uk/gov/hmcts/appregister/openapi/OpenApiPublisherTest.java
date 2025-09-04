@@ -22,29 +22,28 @@ import uk.gov.hmcts.appregister.Application;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
-        classes = Application.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+    classes = Application.class,
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-class OpenAPIPublisherTest {
+class OpenApiPublisherTest {
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired
-    private MockMvc mvc;
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+  @Autowired
+  private MockMvc mvc;
 
-    @DisplayName("Generate swagger documentation")
-    @Test
-    @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-    void generateDocs() throws Exception {
-        byte[] specs =
-                mvc.perform(get("/v3/api-docs"))
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsByteArray();
+  @DisplayName("Generate swagger documentation")
+  @Test
+  @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
+  void generateDocs() throws Exception {
+    byte[] specs =
+        mvc.perform(get("/v3/api-docs"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsByteArray();
 
-        try (OutputStream outputStream =
-                Files.newOutputStream(Paths.get("/tmp/openapi-specs.json"))) {
-            outputStream.write(specs);
-        }
+    try (OutputStream outputStream = Files.newOutputStream(Paths.get("/tmp/openapi-specs.json"))) {
+      outputStream.write(specs);
     }
+  }
 }

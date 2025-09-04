@@ -6,10 +6,10 @@ import java.time.OffsetDateTime;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 
 public record ApplicationFeeRecordDto(
-        Long id,
-        String paymentReference,
-        FeeStatusType feeStatus,
-        LocalDate statusDate,
-        OffsetDateTime creationDate,
-        BigDecimal amount,
-        String feeDescription) {}
+    Long id,
+    String paymentReference,
+    FeeStatusType feeStatus,
+    LocalDate statusDate,
+    OffsetDateTime creationDate,
+    BigDecimal amount,
+    String feeDescription) {}

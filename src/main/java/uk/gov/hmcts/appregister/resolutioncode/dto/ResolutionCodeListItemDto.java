@@ -25,11 +25,8 @@ package uk.gov.hmcts.appregister.resolutioncode.dto;
  */
 public record ResolutionCodeListItemDto(
 
-        /** Database identifier of the resolution code (maps to {@code rc_id}). */
-        Long id,
+    Long id,
 
-        /** Short business code (e.g., "RC123") uniquely identifying the resolution code. */
-        String code,
+    String code,
 
-        /** Human-readable title of the resolution code, shown in list screens. */
-        String title) {}
+    String title) {}

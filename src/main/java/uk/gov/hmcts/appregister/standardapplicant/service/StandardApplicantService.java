@@ -4,7 +4,7 @@ import java.util.List;
 import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
 
 public interface StandardApplicantService {
-    List<StandardApplicantDto> findAll();
+  List<StandardApplicantDto> findAll();
 
-    StandardApplicantDto findById(Long id);
+  StandardApplicantDto findById(Long id);
 }

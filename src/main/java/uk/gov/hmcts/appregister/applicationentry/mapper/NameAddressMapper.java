@@ -8,67 +8,67 @@ import uk.gov.hmcts.appregister.common.entity.NameAddress;
 @Component
 public class NameAddressMapper {
 
-    public IdentityDetailsDto toReadDto(NameAddress entity) {
-        return new IdentityDetailsDto(
-                entity.getId(),
-                entity.getCode(),
-                entity.getName(),
-                entity.getTitle(),
-                entity.getForename_1(),
-                entity.getForename_2(),
-                entity.getForename_3(),
-                entity.getSurname(),
-                entity.getAddress_l1(),
-                entity.getAddress_l2(),
-                entity.getAddress_l3(),
-                entity.getAddress_l4(),
-                entity.getAddress_l5(),
-                entity.getPostcode(),
-                entity.getEmail_address(),
-                entity.getTelephone_number(),
-                entity.getTelephone_number(),
-                entity.getDate_of_birth());
-    }
+  public IdentityDetailsDto toReadDto(NameAddress entity) {
+    return new IdentityDetailsDto(
+        entity.getId(),
+        entity.getCode(),
+        entity.getName(),
+        entity.getTitle(),
+        entity.getForename1(),
+        entity.getForename2(),
+        entity.getForename3(),
+        entity.getSurname(),
+        entity.getAddress1(),
+        entity.getAddress2(),
+        entity.getAddress3(),
+        entity.getAddress4(),
+        entity.getAddress5(),
+        entity.getPostcode(),
+        entity.getEmailAddress(),
+        entity.getTelephoneNumber(),
+        entity.getTelephoneNumber(),
+        entity.getDateOfBirth());
+  }
 
-    public NameAddress createFromWriteDto(IdentityDetailsWriteDto dto) {
-        return NameAddress.builder()
-                .code(dto.code())
-                .name(dto.name())
-                .title(dto.title())
-                .forename_1(dto.forename1())
-                .forename_2(dto.forename2())
-                .forename_3(dto.forename3())
-                .surname(dto.surname())
-                .address_l1(dto.addressLine1())
-                .address_l2(dto.addressLine2())
-                .address_l3(dto.addressLine3())
-                .address_l4(dto.addressLine4())
-                .address_l5(dto.addressLine5())
-                .postcode(dto.postcode())
-                .email_address(dto.emailAddress())
-                .telephone_number(dto.telephoneNumber())
-                .mobile_number(dto.mobileNumber())
-                .date_of_birth(dto.dateOfBirth())
-                .build();
-    }
+  public NameAddress createFromWriteDto(IdentityDetailsWriteDto dto) {
+    return NameAddress.builder()
+        .code(dto.code())
+        .name(dto.name())
+        .title(dto.title())
+        .forename1(dto.forename1())
+        .forename2(dto.forename2())
+        .forename3(dto.forename3())
+        .surname(dto.surname())
+        .address1(dto.addressLine1())
+        .address2(dto.addressLine2())
+        .address3(dto.addressLine3())
+        .address4(dto.addressLine4())
+        .address5(dto.addressLine5())
+        .postcode(dto.postcode())
+        .emailAddress(dto.emailAddress())
+        .telephoneNumber(dto.telephoneNumber())
+        .mobileNumber(dto.mobileNumber())
+        .dateOfBirth(dto.dateOfBirth())
+        .build();
+  }
 
-    public void updateFromWriteDto(IdentityDetailsWriteDto dto, NameAddress entity) {
-        entity.setCode(dto.code());
-        entity.setName(dto.name());
-        entity.setTitle(dto.title());
-        entity.setForename_1(dto.forename1());
-        entity.setForename_2(dto.forename2());
-        entity.setForename_3(dto.forename3());
-        entity.setSurname(dto.surname());
-        entity.setAddress_l1(dto.addressLine1());
-        entity.setAddress_l2(dto.addressLine2());
-        entity.setAddress_l3(dto.addressLine3());
-        entity.setAddress_l4(dto.addressLine4());
-        entity.setAddress_l5(dto.addressLine5());
-        entity.setPostcode(dto.postcode());
-        entity.setEmail_address(dto.emailAddress());
-        entity.setTelephone_number(dto.telephoneNumber());
-        entity.setMobile_number(dto.mobileNumber());
-        entity.setDate_of_birth(dto.dateOfBirth());
-    }
+  public void updateFromWriteDto(IdentityDetailsWriteDto dto, NameAddress entity) {
+    entity.setCode(dto.code());
+    entity.setName(dto.name());
+    entity.setTitle(dto.title());
+    entity.setForename1(dto.forename1());
+    entity.setForename2(dto.forename2());
+    entity.setForename3(dto.forename3());
+    entity.setSurname(dto.surname());
+    entity.setAddress1(dto.addressLine1());
+    entity.setAddress2(dto.addressLine2());
+    entity.setAddress3(dto.addressLine3());
+    entity.setAddress4(dto.addressLine4());
+    entity.setAddress5(dto.addressLine5());
+    entity.setPostcode(dto.postcode());
+    entity.setEmailAddress(dto.emailAddress());
+    entity.setTelephoneNumber(dto.telephoneNumber());
+    entity.setMobileNumber(dto.mobileNumber());
+    entity.setDateOfBirth(dto.dateOfBirth());
+  }
 }

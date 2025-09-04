@@ -33,7 +33,7 @@ spotless {
   java {
     // files to format
     target 'src/**/*.java'
-    googleJavaFormat('1.22.0').aosp()
+    googleJavaFormat()
     trimTrailingWhitespace()
     endWithNewline()
   }
