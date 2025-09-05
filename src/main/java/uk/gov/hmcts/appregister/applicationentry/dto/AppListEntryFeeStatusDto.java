@@ -1,16 +1,14 @@
 package uk.gov.hmcts.appregister.applicationentry.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 
 /** DTO for application fee record. */
-public record ApplicationFeeRecordDto(
+public record AppListEntryFeeStatusDto(
         Long id,
         String paymentReference,
         FeeStatusType feeStatus,
-        LocalDate statusDate,
+        OffsetDateTime statusDate,
         OffsetDateTime creationDate,
-        BigDecimal amount,
+        Double amount,
         String feeDescription) {}

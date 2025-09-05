@@ -1,11 +1,11 @@
 package uk.gov.hmcts.appregister.applicationentry.dto;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
 
-public record ApplicationDto(
+public record ApplicationListEntryDto(
         Long id,
         StandardApplicantDto standardApplicant,
         ApplicationCodeDto applicationCode,
@@ -13,7 +13,7 @@ public record ApplicationDto(
         String paymentRef,
         IdentityDetailsDto applicant,
         IdentityDetailsDto respondent,
-        Integer numberOfBulkRespondents,
+        Short numberOfBulkRespondents,
         String applicationWording,
         String caseReference,
         String accountNumber,
@@ -21,6 +21,6 @@ public record ApplicationDto(
         String notes,
         String bulkUpload,
         Long resultId,
-        String changedBy,
-        LocalDate changedDate,
-        Integer version) {}
+        Long changedBy,
+        OffsetDateTime changedDate,
+        Long version) {}

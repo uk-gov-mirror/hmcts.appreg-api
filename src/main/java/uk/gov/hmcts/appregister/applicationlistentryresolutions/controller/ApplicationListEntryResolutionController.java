@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.applicationresult.controller;
+package uk.gov.hmcts.appregister.applicationlistentryresolutions.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,18 +18,19 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.appregister.applicationresult.dto.ApplicationResultDto;
-import uk.gov.hmcts.appregister.applicationresult.dto.ApplicationResultWriteDto;
-import uk.gov.hmcts.appregister.applicationresult.service.ApplicationResultService;
+import uk.gov.hmcts.appregister.applicationlistentryresolutions.dto.ApplicationListEntryResolutionDto;
+import uk.gov.hmcts.appregister.applicationlistentryresolutions.dto.ApplicationListEntryResolutionWriteDto;
+import uk.gov.hmcts.appregister.applicationlistentryresolutions.service.ApplicationListEntryResolutionService;
 
 /** REST controller for managing application results. */
 @RestController
 @RequestMapping("/application-lists/{listId}/applications")
 @RequiredArgsConstructor
-public class ApplicationResultController {
+public class ApplicationListEntryResolutionController {
 
-    private final ApplicationResultService resultService;
-    private static final Logger log = LoggerFactory.getLogger(ApplicationResultController.class);
+    private final ApplicationListEntryResolutionService resultService;
+    private static final Logger log =
+            LoggerFactory.getLogger(ApplicationListEntryResolutionController.class);
 
     @Operation(
             summary = "Get the result for a specific application",
@@ -39,7 +40,7 @@ public class ApplicationResultController {
         @ApiResponse(responseCode = "404", description = "Result not found or not accessible")
     })
     @GetMapping("/{applicationId}/results")
-    public ResponseEntity<ApplicationResultDto> getResult(
+    public ResponseEntity<ApplicationListEntryResolutionDto> getResult(
             @PathVariable Long listId,
             @PathVariable Long applicationId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -60,17 +61,18 @@ public class ApplicationResultController {
         @ApiResponse(responseCode = "404", description = "Application or result code not found")
     })
     @PostMapping("/{applicationId}/results")
-    public ResponseEntity<ApplicationResultDto> createResult(
+    public ResponseEntity<ApplicationListEntryResolutionDto> createResult(
             @PathVariable Long listId,
             @PathVariable Long applicationId,
-            @RequestBody ApplicationResultWriteDto dto,
+            @RequestBody ApplicationListEntryResolutionWriteDto dto,
             @AuthenticationPrincipal Jwt jwt) {
         log.info(
                 "Creating result for application: {}, owned by this user: {}",
                 applicationId,
                 jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        ApplicationResultDto created = resultService.create(listId, applicationId, dto, userId);
+        ApplicationListEntryResolutionDto created =
+                resultService.create(listId, applicationId, dto, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -84,19 +86,17 @@ public class ApplicationResultController {
                 description = "Result or result code not found or not accessible")
     })
     @PutMapping("/{applicationId}/results/{resultId}")
-    public ResponseEntity<ApplicationResultDto> updateResult(
+    public ResponseEntity<ApplicationListEntryResolutionDto> updateResult(
             @PathVariable Long listId,
             @PathVariable Long applicationId,
             @PathVariable Long resultId,
-            @RequestBody ApplicationResultWriteDto dto,
+            @RequestBody ApplicationListEntryResolutionWriteDto dto,
             @AuthenticationPrincipal Jwt jwt) {
         log.info(
                 "Updating result for application: {}, owned by this user: {}",
                 applicationId,
                 jwt.getClaimAsString("sub"));
-        String userId = jwt.getClaimAsString("oid");
-        return ResponseEntity.ok(
-                resultService.update(listId, applicationId, resultId, dto, userId));
+        return ResponseEntity.ok(resultService.update(listId, applicationId, resultId, dto));
     }
 
     @Operation(

@@ -85,7 +85,7 @@ public class ApplicationListEntry extends BaseChangeableEntity implements Accoun
 
     @Column(name = "notes")
     @Size(max = 4000)
-    private Boolean notes;
+    private String notes;
 
     @Column(name = "version", nullable = false)
     private Long version;
@@ -94,7 +94,7 @@ public class ApplicationListEntry extends BaseChangeableEntity implements Accoun
     private String bulkUpload;
 
     @Column(name = "user_name")
-    private String userName;
+    private String createdUser;
 
     @Column(name = "sequence_number", nullable = false)
     private Short sequenceNumber;
@@ -110,16 +110,6 @@ public class ApplicationListEntry extends BaseChangeableEntity implements Accoun
 
     @Column(name = "lodgement_date", nullable = false)
     private OffsetDateTime lodgementDate;
-
-    @Override
-    public String getCreatedUser() {
-        return userName;
-    }
-
-    @Override
-    public void setCreatedUser(String user) {
-        this.userName = user;
-    }
 
     @OneToMany(mappedBy = "applicationList")
     private List<AppListEntryResolution> resolutions;

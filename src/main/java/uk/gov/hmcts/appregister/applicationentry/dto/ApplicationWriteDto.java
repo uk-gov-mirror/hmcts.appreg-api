@@ -9,7 +9,7 @@ public record ApplicationWriteDto(
         Long applicationCodeId,
         IdentityDetailsWriteDto applicant,
         IdentityDetailsWriteDto respondent,
-        Integer numberOfBulkRespondents,
+        Short numberOfBulkRespondents,
         List<String> textFields,
         String caseReference,
         String accountNumber,

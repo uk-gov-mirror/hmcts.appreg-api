@@ -27,7 +27,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
 
     @Override
     public List<ApplicationListDto> getAllForUser() {
-        return repository.findAllByUserName(appRegUser.getUser()).stream()
+        return repository.findAllByCreatedUser(appRegUser.getUser()).stream()
                 .map(mapper::toReadDto)
                 .toList();
     }
@@ -35,7 +35,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     public ApplicationListDto getByIdForUser(Long id) {
         return repository
-                .findByIdAndUserName(id, appRegUser.getUser())
+                .findByIdAndCreatedUser(id, appRegUser.getUser())
                 .map(mapper::toReadDto)
                 .orElseThrow(
                         () ->
@@ -64,7 +64,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     public ApplicationListDto update(Long id, ApplicationListWriteDto dto) {
         ApplicationList existing =
                 repository
-                        .findByIdAndUserName(id, appRegUser.getUser())
+                        .findByIdAndCreatedUser(id, appRegUser.getUser())
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(
@@ -89,7 +89,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     public void delete(Long id) {
         ApplicationList list =
                 repository
-                        .findByIdAndUserName(id, appRegUser.getUser())
+                        .findByIdAndCreatedUser(id, appRegUser.getUser())
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(

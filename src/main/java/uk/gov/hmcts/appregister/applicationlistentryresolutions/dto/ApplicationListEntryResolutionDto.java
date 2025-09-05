@@ -1,14 +1,14 @@
-package uk.gov.hmcts.appregister.applicationresult.dto;
+package uk.gov.hmcts.appregister.applicationlistentryresolutions.dto;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 
 /** Application Result Data Transfer Object. */
-public record ApplicationResultDto(
+public record ApplicationListEntryResolutionDto(
         Long id,
         ResolutionCodeDto resultCode,
         String resultWording,
         String resultOfficer,
         String changedBy,
-        LocalDate changedDate,
-        Integer version) {}
+        OffsetDateTime changedDate,
+        Long version) {}

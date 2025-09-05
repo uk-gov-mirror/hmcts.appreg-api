@@ -2,6 +2,7 @@ package uk.gov.hmcts.appregister.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -57,4 +58,8 @@ public class AppListEntryFeeId extends BaseChangeableEntity implements Accountab
     @Column(name = "user_name", nullable = false)
     @Size(max = 250)
     private String createdUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appListEntryId", nullable = false)
+    private ApplicationListEntry le;
 }

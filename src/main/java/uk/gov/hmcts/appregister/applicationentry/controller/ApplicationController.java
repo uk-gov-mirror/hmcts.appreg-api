@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationDto;
+import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationListEntryDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationWriteDto;
-import uk.gov.hmcts.appregister.applicationentry.service.ApplicationService;
+import uk.gov.hmcts.appregister.applicationentry.service.ApplicationListEntryService;
 
 @RestController
 @RequestMapping("/application-lists/{listId}/applications")
@@ -29,14 +29,14 @@ import uk.gov.hmcts.appregister.applicationentry.service.ApplicationService;
 public class ApplicationController {
 
     private static final Logger log = LoggerFactory.getLogger(ApplicationController.class);
-    private final ApplicationService appService;
+    private final ApplicationListEntryService appService;
 
     @Operation(
             summary = "Get all applications for a specific application list",
             operationId = "getAllApplications")
     @ApiResponse(responseCode = "200", description = "Applications retrieved successfully")
     @GetMapping
-    public ResponseEntity<List<ApplicationDto>> getAll(
+    public ResponseEntity<List<ApplicationListEntryDto>> getAll(
             @PathVariable Long listId, @AuthenticationPrincipal Jwt jwt) {
         log.info(
                 "Getting all applications linked to listId: {} and user: {}",
@@ -57,13 +57,13 @@ public class ApplicationController {
         @ApiResponse(responseCode = "404", description = "Application list not found")
     })
     @PostMapping
-    public ResponseEntity<ApplicationDto> create(
+    public ResponseEntity<ApplicationListEntryDto> create(
             @PathVariable Long listId,
             @RequestBody ApplicationWriteDto application,
             @AuthenticationPrincipal Jwt jwt) {
         log.info("Creating new application for user: {}", jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        ApplicationDto created = appService.create(listId, application, userId);
+        ApplicationListEntryDto created = appService.create(listId, application, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -75,7 +75,7 @@ public class ApplicationController {
         @ApiResponse(responseCode = "404", description = "Application not found or not accessible")
     })
     @GetMapping("/{applicationId}")
-    public ResponseEntity<ApplicationDto> getOne(
+    public ResponseEntity<ApplicationListEntryDto> getOne(
             @PathVariable Long listId,
             @PathVariable Long applicationId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -97,7 +97,7 @@ public class ApplicationController {
         @ApiResponse(responseCode = "404", description = "Application not found or not accessible")
     })
     @PutMapping("/{applicationId}")
-    public ResponseEntity<ApplicationDto> update(
+    public ResponseEntity<ApplicationListEntryDto> update(
             @PathVariable Long listId,
             @PathVariable Long applicationId,
             @RequestBody ApplicationWriteDto updatedApplication,
@@ -108,7 +108,7 @@ public class ApplicationController {
                 applicationId,
                 jwt.getClaimAsString("sub"));
         String userId = jwt.getClaimAsString("oid");
-        ApplicationDto updated =
+        ApplicationListEntryDto updated =
                 appService.update(listId, applicationId, updatedApplication, userId);
         return ResponseEntity.ok(updated);
     }

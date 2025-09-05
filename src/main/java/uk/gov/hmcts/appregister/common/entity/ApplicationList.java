@@ -66,7 +66,7 @@ public class ApplicationList extends BaseChangeableEntity implements Accountable
 
     @Column(name = "user_name")
     @Size(max = 250)
-    private String userName;
+    private String createdUser;
 
     @Column(name = "courthouse_name")
     @Size(max = 200)
@@ -87,16 +87,6 @@ public class ApplicationList extends BaseChangeableEntity implements Accountable
 
     @OneToMany(mappedBy = "applicationList")
     private List<ApplicationListEntry> entries;
-
-    @Override
-    public String getCreatedUser() {
-        return userName;
-    }
-
-    @Override
-    public void setCreatedUser(String user) {
-        this.userName = user;
-    }
 
     @OneToMany(mappedBy = "applicationList")
     private List<ApplicationRegister> registers;

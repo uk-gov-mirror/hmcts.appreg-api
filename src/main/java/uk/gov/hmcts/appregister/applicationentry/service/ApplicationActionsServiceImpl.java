@@ -2,8 +2,14 @@ package uk.gov.hmcts.appregister.applicationentry.service;
 
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 
 /** Service for handling application actions such as moving applications between lists. */
@@ -11,14 +17,14 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListReposito
 @RequiredArgsConstructor
 public class ApplicationActionsServiceImpl implements ApplicationActionsService {
 
-    // private final ApplicationRepository applicationRepository;
+    private final ApplicationListEntryRepository applicationListEntryRepository;
     private final ApplicationListRepository applicationListRepository;
 
     @Override
     @Transactional
     public void moveApplications(List<Long> applicationIds, Long targetListId, String userId) {
-        /*List<Application> applications =
-                applicationRepository.findByIdInAndApplicationListUserId(applicationIds, userId);
+        List<ApplicationListEntry> applications =
+                applicationListEntryRepository.findByIdInAndCreatedUser(applicationIds, userId);
 
         if (applications.size() != applicationIds.size()) {
             throw new ResponseStatusException(
@@ -27,16 +33,17 @@ public class ApplicationActionsServiceImpl implements ApplicationActionsService 
         }
 
         // TODO: Should we all user to create a new list if the target list doesn't exist?
-        ApplicationList targetList =
-                applicationListRepository
-                        .findByIdAndUserId(targetListId, userId)
+        ApplicationListEntry targetList =
+                applicationListEntryRepository
+                        .findByIdAndCreatedUser(targetListId, userId)
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND,
                                                 "Target application list not found"));
 
-        applications.forEach(app -> app.setApplicationList(targetList));
-        applicationRepository.saveAll(applications);*/
+        Optional<ApplicationList> list = applicationListRepository.findById(targetListId);
+        applications.forEach(app -> app.setApplicationList(list.get()));
+        applicationListEntryRepository.saveAll(applications);
     }
 }

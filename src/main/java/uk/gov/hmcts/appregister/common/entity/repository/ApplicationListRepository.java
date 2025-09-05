@@ -14,7 +14,7 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * @param userId the ID of the user
      * @return a list of ApplicationList entities
      */
-    List<ApplicationList> findAllByUserName(String userId);
+    List<ApplicationList> findAllByCreatedUser(String userId);
 
     /**
      * Find an ApplicationList entity by its ID and associated user.
@@ -23,5 +23,7 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * @param userId the ID of the user
      * @return an Optional containing the ApplicationList if found, or empty if not found
      */
-    Optional<ApplicationList> findByIdAndUserName(Long id, String userId);
+    Optional<ApplicationList> findByIdAndCreatedUser(Long id, String userId);
+
+    boolean existsByIdAndCreatedUser(Long id, String userId);
 }
