@@ -17,8 +17,11 @@ services:
       - SPRING_DATASOURCE_USERNAME=app_reg_user
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_PROFILES_ACTIVE=local
+      # A debug port for remote debugging of the docker image if need be
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=*:8002,server=y,suspend=n
     ports:
       - "4550:4550"
       - "5005:5005"
+      - "8002:8002"
     depends_on:
       - postgres
