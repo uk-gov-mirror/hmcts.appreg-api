@@ -6,11 +6,6 @@ spring:
     default-schema: ${spring.jpa.properties.hibernate.default_schema}
     mixed: true
     baseline-on-migrate: true
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: http://localhost:${wiremock.server.port}/discovery/v2.0/keys
 logging:
   level:
     org.springframework.security: TRACE

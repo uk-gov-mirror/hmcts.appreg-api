@@ -26,7 +26,7 @@ import uk.gov.hmcts.appregister.testutils.stub.DatabasePersistance;
  * the data is reset before each test.
  */
 // load the local profile that will bootstrap the base line data
-@ActiveProfiles({"local"})
+@ActiveProfiles({"local", "int"})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
 public abstract class BasePostgresIntegrationTest {

@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenClient;
 
 /**
  * Tests a set of negative security scenarios for a specific API controller:-
@@ -29,7 +28,8 @@ public abstract class AbstractSecurityControllerTest extends BaseIntegration {
                                     .expiredDate(
                                             Date.from(
                                                     Instant.now()
-                                                            .minusSeconds(TokenClient.SECONDS)))
+                                                            .minusSeconds(20 * 60L))) // expired 20
+                                    // minutes ago
                                     .build()
                                     .fetchTokenForRole())
                     .then()
