@@ -1,10 +1,7 @@
 package uk.gov.hmcts;
 
 import java.util.logging.Logger;
-
-import groovy.util.logging.Slf4j;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
 
 class JenkinsTest {
 

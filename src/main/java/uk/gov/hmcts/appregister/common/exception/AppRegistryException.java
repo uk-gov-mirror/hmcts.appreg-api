@@ -3,7 +3,7 @@ package uk.gov.hmcts.appregister.common.exception;
 import lombok.Getter;
 
 @Getter
-public class AppRegistryException extends RuntimeException{
+public class AppRegistryException extends RuntimeException {
 
     private ErrorCodeEnum code;
 

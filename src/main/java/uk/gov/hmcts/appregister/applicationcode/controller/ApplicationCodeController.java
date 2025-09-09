@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.service.ApplicationCodeService;
 
+/** REST controller for managing application codes. */
 @RestController
 @RequestMapping("/application-codes")
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class ApplicationCodeController {
             responseCode = "200",
             description = "List of application codes retrieved successfully")
     @GetMapping
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<List<ApplicationCodeDto>> getAll() {
         return ResponseEntity.ok(service.findAll());
     }

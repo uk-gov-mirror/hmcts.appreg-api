@@ -6,8 +6,9 @@ import uk.gov.hmcts.appregister.common.exception.ErrorCode;
 import uk.gov.hmcts.appregister.common.exception.ErrorCodeEnum;
 
 public enum AppCodeError implements ErrorCodeEnum {
-    //TODO: We need to apply an application code here
-    CODE_NOT_FOUND(DefaultErrorCode.create(HttpStatus.NOT_FOUND, "Application Code not found"));
+    // TODO: We need to apply an application code here
+    CODE_NOT_FOUND(
+            DefaultErrorCode.create(HttpStatus.NOT_FOUND, "Application Code not found", "appcode"));
 
     private final DefaultErrorCode defaultErrorCode;
 

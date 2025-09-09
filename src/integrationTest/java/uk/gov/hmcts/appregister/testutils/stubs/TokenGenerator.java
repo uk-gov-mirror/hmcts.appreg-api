@@ -14,16 +14,18 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @Builder
 @Slf4j
+@Getter
 public class TokenGenerator {
 
-    private static final String DEFAULT_AUDIENCE = "audience";
-    private static final String DEFAULT_ISSUER = "issuer";
-    private static final String DEFAULT_USERNAME = "app.registry@hmcts.net";
+    public static final String DEFAULT_AUDIENCE = "audience";
+    public static final String DEFAULT_ISSUER = "issuer";
+    public static final String DEFAULT_USERNAME = "app.registry@hmcts.net";
 
     @Builder.Default private String issuer = DEFAULT_ISSUER;
 
@@ -98,8 +100,7 @@ public class TokenGenerator {
                         .audience(audience)
                         .expirationTime(expiredDate)
                         .claim("emails", List.of(email))
-                        .claim("iat", issuer)
-                        .claim("sub", "subject")
+                        .claim("sub", email)
                         .claim("roles", StringUtils.join(roles, ","))
                         .claim("aud", audience)
                         .build();

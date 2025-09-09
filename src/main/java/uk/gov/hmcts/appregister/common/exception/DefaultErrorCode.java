@@ -6,17 +6,18 @@ import org.springframework.http.HttpStatus;
 
 @RequiredArgsConstructor
 @Getter
-public class DefaultErrorCode implements ErrorCode{
+public class DefaultErrorCode implements ErrorCode {
     private final HttpStatus httpCode;
     private final String message;
     private final String appCode;
 
-    public static DefaultErrorCode createBadRequest(ErrorCodeEnum detail) {
-        return new DefaultErrorCode(HttpStatus.BAD_REQUEST, detail.getCode().getMessage(), detail.getCode().getAppCode());
+    public static DefaultErrorCode createNotFoundRequest(ErrorCodeEnum detail) {
+        return new DefaultErrorCode(
+                HttpStatus.NOT_FOUND, detail.getCode().getMessage(), detail.getCode().getAppCode());
     }
 
-    public static DefaultErrorCode create(HttpStatus status, String message) {
-        return new DefaultErrorCode(HttpStatus.BAD_REQUEST, message, null);
+    public static DefaultErrorCode create(HttpStatus status, String message, String appCode) {
+        return new DefaultErrorCode(status, message, appCode);
     }
 
     public static ErrorCodeEnum getEnumEntry(ErrorCode code) {

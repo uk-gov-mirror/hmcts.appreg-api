@@ -24,10 +24,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
 import uk.gov.hmcts.appregister.nationalcourthouse.mapper.NationalCourtHouseMapper;
-import uk.gov.hmcts.appregister.nationalcourthouse.model.NationalCourtHouse;
-import uk.gov.hmcts.appregister.nationalcourthouse.repository.NationalCourtHouseRepository;
 
 @ExtendWith(MockitoExtension.class)
 class NationalCourtHouseServiceImplTest {
@@ -57,8 +57,8 @@ class NationalCourtHouseServiceImplTest {
                 new NationalCourtHouseDto(
                         1L, "Alpha", "CROWN", LocalDate.now(), null, null, null, null, null, null);
 
-        when(mapper.toReadDto(e1)).thenReturn(Optional.of(d1));
-        when(mapper.toReadDto(e2)).thenReturn(Optional.empty()); // simulate declined mapping
+        when(mapper.toReadDto(eq(e1))).thenReturn(Optional.of(d1));
+        when(mapper.toReadDto(eq(e2))).thenReturn(Optional.empty()); // simulate declined mapping
 
         // Act
         List<NationalCourtHouseDto> out = service.findAll();

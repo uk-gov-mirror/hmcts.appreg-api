@@ -79,12 +79,12 @@ public class TokenClient {
     };
 
     /**
-     * A command line tool to create local tokens in various states
+     * A command line tool to create local tokens in various states.
      *
      * @param args command line args [0] - Role name for token [1] - Valid or not [2] - Incorrect
      *     signature [3] - Expired [4] - Incorrect audience [5] - Authorisation failure
      */
-    public static void main(String args[]) throws Exception {
+    public static void main(String[] args) throws Exception {
 
         // generate a token for a role as well as an invalid token
         if (args.length != 6) {
