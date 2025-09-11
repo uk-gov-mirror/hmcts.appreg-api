@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.common.entity.security.UserProvider;
+import uk.gov.hmcts.appregister.common.security.UserProvider;
 
 /**
  * A database entity listener that updates standard fields when an object is saved or updated

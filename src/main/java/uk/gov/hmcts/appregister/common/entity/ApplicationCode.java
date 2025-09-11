@@ -47,7 +47,7 @@ public class ApplicationCode extends BaseChangeableEntity implements Accountable
 
     @Column(name = "application_code", nullable = false)
     @Size(max = 10)
-    private String applicationCode;
+    private String code;
 
     @Column(name = "application_code_title", nullable = false)
     @Size(max = 500)

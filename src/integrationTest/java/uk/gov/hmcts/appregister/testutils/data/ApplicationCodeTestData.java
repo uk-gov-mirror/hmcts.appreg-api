@@ -14,7 +14,7 @@ public class ApplicationCodeTestData
     public ApplicationCode.ApplicationCodeBuilder someMinimal() {
         UUID uniqueId = UUID.randomUUID();
         ApplicationCode.ApplicationCodeBuilder data = ApplicationCode.builder();
-        data.applicationCode(StringUtil.stripToMax(uniqueId.toString(), 10))
+        data.code(StringUtil.stripToMax(uniqueId.toString(), 10))
                 .title("title" + uniqueId)
                 .wording("wording" + uniqueId)
                 .feeDue("1")

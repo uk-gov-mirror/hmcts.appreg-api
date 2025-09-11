@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
-import uk.gov.hmcts.appregister.common.entity.security.UserProvider;
+import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
 import uk.gov.hmcts.appregister.testutils.data.DataAuditTestData;
 

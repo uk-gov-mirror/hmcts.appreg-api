@@ -13,7 +13,7 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
-import uk.gov.hmcts.appregister.common.entity.security.UserProvider;
+import uk.gov.hmcts.appregister.common.security.UserProvider;
 
 /** Service implementation for managing application lists. */
 @RequiredArgsConstructor

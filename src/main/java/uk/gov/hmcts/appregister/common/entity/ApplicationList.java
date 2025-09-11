@@ -34,6 +34,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@SuppressWarnings("javaarchitecture:S7027")
 public class ApplicationList extends BaseChangeableEntity implements Accountable, Versionable {
     @Id
     @Column(name = "al_id", nullable = false, updatable = false)

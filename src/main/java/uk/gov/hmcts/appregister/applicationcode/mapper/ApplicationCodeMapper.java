@@ -22,7 +22,7 @@ public class ApplicationCodeMapper {
 
         return new ApplicationCodeDto(
                 entity.getId(),
-                entity.getApplicationCode(),
+                entity.getCode(),
                 entity.getTitle(),
                 entity.getWording(),
                 entity.getLegislation(),
@@ -47,7 +47,7 @@ public class ApplicationCodeMapper {
 
         return ApplicationCode.builder()
                 .id(dto.id())
-                .applicationCode(dto.applicationCode())
+                .code(dto.applicationCode())
                 .title(dto.title())
                 .wording(dto.wording())
                 .legislation(dto.legislation())

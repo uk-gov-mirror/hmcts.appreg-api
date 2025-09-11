@@ -6,15 +6,11 @@ import uk.gov.hmcts.appregister.applicationentry.dto.AppListEntryFeeStatusDto;
 import uk.gov.hmcts.appregister.applicationentry.dto.ApplicationWriteDto;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
-import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
-import uk.gov.hmcts.appregister.util.VersionManager;
 
 @RequiredArgsConstructor
 @Component
 public class AppListEntryFeeStatusMapper {
-
-    private final VersionManager versionManager;
 
     public AppListEntryFeeStatusDto toReadDto(AppListEntryFeeStatus entity) {
         return new AppListEntryFeeStatusDto(
@@ -35,10 +31,12 @@ public class AppListEntryFeeStatusMapper {
                         .getDescription());
     }
 
+    @SuppressWarnings("java:S1135")
     public AppListEntryFeeStatus createEntity(
-            ApplicationWriteDto dto, ApplicationListEntry application, Fee fee) {
+            ApplicationWriteDto dto, ApplicationListEntry application) {
         return AppListEntryFeeStatus.builder()
                 .appListEntry(application)
+
                 // TODO: handle multiple fees
                 // applicationFee(fee.getAmount())
                 .alefsFeeStatus(dto.feeTypeStatus().getDisplayName())

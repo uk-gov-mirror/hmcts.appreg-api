@@ -1,11 +1,9 @@
 package uk.gov.hmcts.appregister.common.entity.base;
 
-import jakarta.persistence.EntityListeners;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /** This interface should be implemented by entities that need to track changes. */
-@EntityListeners(PreCreateUpdateEntityListener.class)
 public interface Changeable {
 
     /**
