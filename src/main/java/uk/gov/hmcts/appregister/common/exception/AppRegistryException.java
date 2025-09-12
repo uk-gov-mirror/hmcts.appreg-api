@@ -11,4 +11,9 @@ public class AppRegistryException extends RuntimeException {
         super(detail, cause);
         this.code = code;
     }
+
+    public AppRegistryException(ErrorCodeEnum code, String detail) {
+        super(detail, null);
+        this.code = code;
+    }
 }

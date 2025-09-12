@@ -2,38 +2,57 @@ package uk.gov.hmcts.appregister.applicationfee.service;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import uk.gov.hmcts.appregister.applicationfee.service.exception.ApplicationFeeCode;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
-import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 
 /** Service to handle application fee operations. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationFeeServiceImpl implements ApplicationFeeService {
+    private static final Comparator<Fee> FEE_ID_COMPARATOR = Comparator.comparing(Fee::getId);
     private final FeeRepository feeRepository;
+    private final Clock clock;
 
     @SuppressWarnings("java:S1135")
     public FeePair resolveFeePair(String feeReference) {
-        List<Fee> fee = feeRepository.findByReferenceBetweenDate(feeReference, OffsetDateTime.now(Clock.systemUTC()));
+        List<Fee> fee =
+                feeRepository.findByReferenceBetweenDate(feeReference, OffsetDateTime.now(clock));
+        return resolveFeePair(fee);
+    }
 
-        List<Fee> main = fee.stream().filter(e -> e.isOffsite()).toList();
-        List<Fee> offsite = fee.stream().filter(e -> e.isOffsite()).toList();
+    @SuppressWarnings("java:S1135")
+    private FeePair resolveFeePair(List<Fee> feesForRef) {
+        List<Fee> main = feesForRef.stream().filter(r -> !r.isOffsite()).toList();
+        List<Fee> offsite = feesForRef.stream().filter(Fee::isOffsite).toList();
+
+        // if we do not have a main but have an offset then error
+        if (main.isEmpty() && !offsite.isEmpty()) {
+            // TODO: Do we need to throw an exception? Is this a misconfiguration?
+            // throw new AppRegistryException(ApplicationFeeCode.NO_MAIN_FEE, "Too many fees");
+            log.warn(ApplicationFeeCode.NO_MAIN_FEE.getCode().getMessage());
+        }
 
         // if we have more than one main or offset then we have an issue
         if (main.size() > 1 || offsite.size() > 1) {
-            throw new AppRegistryException(ApplicationFeeCode.AMBIGUOUS_FEE, "Tooo many fees", null);
+            // TODO: Do we need to throw an exception? Is this a misconfiguration?
+            // throw new AppRegistryException(ApplicationFeeCode.AMBIGUOUS_FEE, "Too many fees",
+            // null);
+            log.warn(ApplicationFeeCode.AMBIGUOUS_FEE.getCode().getMessage());
         }
 
-        Fee mainFee = fees.stream().findFirst().orElse(null);
+        // Is this good enough when multiple mains and offsite exists?
+        Optional<Fee> mainFee = main.stream().max(FEE_ID_COMPARATOR);
+        Optional<Fee> offsiteFee = offsite.stream().max(FEE_ID_COMPARATOR);
 
-        // TODO: No offset fee in the DB yet so second fee will always be offset
-        Fee offsetFee = fees.size() > 1 ? fees.get(1) : null;
-        return new FeePair(mainFee, offsetFee);
+        return new FeePair(mainFee.orElse(null), offsiteFee.orElse(null));
     }
 }

@@ -44,7 +44,6 @@ public class Fee implements Accountable, Changeable, Versionable {
     @Column(name = "fee_reference", nullable = false, length = 12)
     private String reference;
 
-
     @Column(name = "fee_description", nullable = false, length = 250)
     private String description;
 
@@ -72,5 +71,4 @@ public class Fee implements Accountable, Changeable, Versionable {
 
     @Column(name = "is_offsite")
     private boolean isOffsite;
-
 }
