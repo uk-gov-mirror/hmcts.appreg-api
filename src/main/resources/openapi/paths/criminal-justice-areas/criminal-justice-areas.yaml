@@ -1,36 +1,21 @@
 get:
-  operationId: getApplicationCodes
-  tags: [ application-codes ]
-  summary: Get application codes (paginated, filterable)
+  operationId: getCriminalJusticeAreas
+  tags: [ criminal-justice-areas ]
+  summary: Get criminal justice areas (paginated, filterable)
   description: |
-    Returns a paginated list of application codes.
+    Returns a paginated list of criminal justice areas.
     - Filters:
       - `code` – case-insensitive partial match
-      - `title` – case-insensitive partial match
-      - `startDateFrom`/`startDateTo`
-      - `endDateFrom`/`endDateTo`
-    - Dates use ISO-8601 (yyyy-MM-dd).
+      - `description` – case-insensitive partial match
   parameters:
     - in: query
       name: code
       schema: { type: string }
       description: Filter by code (contains, case-insensitive).
     - in: query
-      name: title
+      name: description
       schema: { type: string }
-      description: Filter by title (contains, case-insensitive).
-    - in: query
-      name: startDateFrom
-      schema: { type: string, format: date }
-    - in: query
-      name: startDateTo
-      schema: { type: string, format: date }
-    - in: query
-      name: endDateFrom
-      schema: { type: string, format: date }
-    - in: query
-      name: endDateTo
-      schema: { type: string, format: date }
+      description: Filter by description (contains, case-insensitive).
     - in: query
       name: page
       schema: { type: integer, format: int32, minimum: 0, default: 0 }
@@ -43,27 +28,25 @@ get:
       name: sort
       description: >
         Repeatable sort parameter. Format per item: `property,(asc|desc)`.
-        Example: `?sort=title,asc&sort=code,desc`.
+        Example: `?sort=description,asc&sort=code,desc`.
       style: form
       explode: true
       schema:
         type: array
         items: { type: string }
-        example: [ "title,asc", "code,desc" ]
+        example: [ "description,asc", "code,desc" ]
   responses:
     "200":
-      description: Page of application codes
+      description: Page of criminal justice areas
       headers:
         Vary:
           description: Response varies by Accept for media-type versioning.
           schema: { type: string, example: Accept }
       content:
         application/vnd.hmcts.appreg.v1+json:
-          schema: { $ref: "../../components/schemas/application-codes/application-code-list-page.yaml" }
+          schema: { $ref: "../../components/schemas/criminal-justice-areas/criminal-justice-area-list-page.yaml" }
     "400": { $ref: "../../components/responses/bad-request-error.yaml" }
     "401": { $ref: "../../components/responses/unauthorized-error.yaml" }
     "403": { $ref: "../../components/responses/forbidden-error.yaml" }
     "406": { $ref: "../../components/responses/not-acceptable-error.yaml" }
     "500": { $ref: "../../components/responses/internal-server-error.yaml" }
-
-
