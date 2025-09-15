@@ -316,9 +316,16 @@ wrapper {
     distributionType = Wrapper.DistributionType.ALL
 }
 
-processResources {
+import org.apache.tools.ant.filters.ExpandProperties
+
+tasks.named('processResources', Copy) {
+  // Replace "${version}" in OpenAPI specs with the current project.version
+  // We use Ant's ExpandProperties filter here instead of Gradle's expand()
+  // because expand() interprets *all* $tokens (e.g. $ref in OpenAPI),
+  // which causes build failures. ExpandProperties only replaces ${...} and
+  // leaves $ref untouched.
   filesMatching("**/openapi.yaml") {
-    expand(version: project.version)
     filteringCharset = 'UTF-8'
+    filter(ExpandProperties, properties: [version: project.version as String])
   }
 }
