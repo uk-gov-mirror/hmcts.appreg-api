@@ -1,5 +1,5 @@
 type: object
-description: Immutable DTO representing an Application Code.
+description: Immutable DTO representing a detailed Application Code.
 required:
   - id
   - applicationCode

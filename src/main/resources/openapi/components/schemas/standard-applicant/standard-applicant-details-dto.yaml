@@ -29,3 +29,5 @@ properties:
     format: date
     nullable: true
     description: End date until which the code is valid.
+
+# Name, code, title, name (full), forename1, forename2, forename3, surname, emailAd, Tele num, startD, endD, AL1-AL5, PostCode, Mob Num.
