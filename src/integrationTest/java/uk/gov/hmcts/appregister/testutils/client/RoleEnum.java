@@ -2,6 +2,7 @@ package uk.gov.hmcts.appregister.testutils.client;
 
 public enum RoleEnum {
     ADMIN("Admin"),
+    USER("User"),
     NONE("None");
     private final String role;
 

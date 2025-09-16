@@ -25,7 +25,7 @@ public class ApplicationCodeController {
             responseCode = "200",
             description = "List of application codes retrieved successfully")
     @GetMapping
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('Admin') or hasRole('User')")
     public ResponseEntity<List<ApplicationCodeDto>> getAll() {
         return ResponseEntity.ok(service.findAll());
     }
@@ -34,7 +34,7 @@ public class ApplicationCodeController {
     @ApiResponse(responseCode = "200", description = "Application code found")
     @ApiResponse(responseCode = "404", description = "Application code not found")
     @GetMapping("/{code}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('Admin') or hasRole('User')")
     public ResponseEntity<ApplicationCodeDto> getByCode(@PathVariable String code) {
         return ResponseEntity.ok(service.findByCode(code));
     }

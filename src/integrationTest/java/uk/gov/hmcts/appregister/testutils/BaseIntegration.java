@@ -2,6 +2,7 @@ package uk.gov.hmcts.appregister.testutils;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
 import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
 import uk.gov.hmcts.appregister.testutils.stubs.TokenGenerator;
@@ -39,6 +41,8 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
 
     protected static PostgresCommand postgresCommand = new PostgresCommand();
 
+    protected LogCaptor logCaptor;
+
     @BeforeEach
     void setup() {
         try {
@@ -49,6 +53,9 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
         } catch (Exception e) {
             log.error("Error setting up wiremock", e);
         }
+
+        logCaptor = LogCaptor.forClass(AuditOperationSlf4jLogger.class);
+        logCaptor.clearLogs();
     }
 
     @DynamicPropertySource

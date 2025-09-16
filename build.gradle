@@ -15,8 +15,18 @@ plugins {
   id 'org.openrewrite.rewrite' version 'latest.release'
 }
 
+ext {
+  releaseTrainVersion = '2025.0.0' // Example: "2021.0.x" corresponds to Spring Boot 2.6.x or 2.7.x
+}
+
 checkstyle {
   toolVersion = '11.0.1'                // or a version that matches your rules
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "org.springframework.cloud:spring-cloud-dependencies:${releaseTrainVersion}"
+  }
 }
 
 application {
@@ -251,6 +261,10 @@ dependencies {
   implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: log4JVersion
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security'
 
+  // correlation log support
+  implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+  implementation 'io.micrometer:micrometer-tracing'
+
   // get flyway core
   implementation 'org.flywaydb:flyway-core:11.11.2'
   implementation 'org.flywaydb:flyway-database-postgresql:11.11.2'
@@ -277,7 +291,7 @@ dependencies {
     exclude group: 'junit', module: 'junit'
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
-
+  testImplementation 'io.github.hakky54:logcaptor:2.12.1'
 
   testImplementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-contract-stub-runner', version: '4.2.1'
   rewrite group: 'org.openrewrite.recipe', name: 'rewrite-static-analysis', version: '2.16.0'
@@ -320,8 +334,5 @@ wrapper {
 }
 
 processResources {
-  filesMatching("**/openapi.yaml") {
-    expand(version: project.version)
-    filteringCharset = 'UTF-8'
-  }
+
 }
