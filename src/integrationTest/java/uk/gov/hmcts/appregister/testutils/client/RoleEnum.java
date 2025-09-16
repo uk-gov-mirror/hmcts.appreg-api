@@ -4,6 +4,7 @@ import uk.gov.hmcts.appregister.common.security.RoleNames;
 
 public enum RoleEnum {
     ADMIN(RoleNames.ADMIN_ROLE),
+    USER(RoleNames.USER_ROLE),
     NONE("None");
     private final String role;
 

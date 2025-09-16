@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +18,7 @@ import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.service.ApplicationCodeService;
 import uk.gov.hmcts.appregister.applicationcode.validator.ApplicationCodeSortValidator;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode_;
-import uk.gov.hmcts.appregister.common.security.annotation.AdminRestricted;
+import uk.gov.hmcts.appregister.common.security.RoleNames;
 
 /** REST controller for managing application codes. */
 @RestController
@@ -33,7 +34,7 @@ public class ApplicationCodeController {
             responseCode = "200",
             description = "List of application codes retrieved successfully")
     @GetMapping
-    @AdminRestricted
+    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<Page<ApplicationCodeDto>> getAll(
             @RequestParam(required = false) String appCode,
             @org.springframework.format.annotation.DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -56,7 +57,7 @@ public class ApplicationCodeController {
     @ApiResponse(responseCode = "200", description = "Application code found")
     @ApiResponse(responseCode = "404", description = "Application code not found")
     @GetMapping("/{code}")
-    @AdminRestricted
+    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<ApplicationCodeDto> getByCode(@PathVariable String code) {
         return ResponseEntity.ok(service.findByCode(code));
     }

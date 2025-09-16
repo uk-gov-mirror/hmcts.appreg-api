@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.applicationcode.service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,8 +11,9 @@ import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
 import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
-import uk.gov.hmcts.appregister.audit.AuditEnum;
-import uk.gov.hmcts.appregister.audit.service.AuditService;
+import uk.gov.hmcts.appregister.audit.AuditEventEnum;
+import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
+import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
@@ -24,42 +27,47 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     private final ApplicationCodeRepository repository;
     private final ApplicationCodeMapper applicationCodeMapper;
     private final ApplicationFeeService feeService;
-    private final AuditService auditService;
+    private final AuditOperationService auditService;
+    private final List<AuditOperationLifecycleListener> auditLifecycleListeners;
 
     @Override
     public Page<ApplicationCodeDto> findAll(
             String appCode, String appTitle, OffsetDateTime lodgementDate, Pageable pageable) {
         final Page<ApplicationCode> applicationCodeList =
                 repository.search(appCode, appTitle, lodgementDate, pageable);
-        Page<ApplicationCodeDto> applicationCodeDtoList =
-                applicationCodeList.map(
-                        code -> {
-                            FeePair feePair = feeService.resolveFeePair(code.getFeeReference());
-                            return applicationCodeMapper.toReadDto(code, feePair);
-                        });
-
-        /// audit the operation
-        auditService.record(AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT);
-
-        return applicationCodeDtoList;
+        return auditService.processAudit(
+                AuditEventEnum.GET_APPLICATION_CODES_AUDIT_EVENT,
+                (req) -> {
+                    return Optional.of(
+                            applicationCodeList.map(
+                                    code -> {
+                                        FeePair feePair =
+                                                feeService.resolveFeePair(code.getFeeReference());
+                                        return applicationCodeMapper.toReadDto(code, feePair);
+                                    }));
+                },
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
     public ApplicationCodeDto findByCode(String code) {
-        final ApplicationCode applicationCode =
-                repository
-                        .findByCode(code)
-                        .orElseThrow(
-                                () -> {
-                                    throw new AppRegistryException(
-                                            AppCodeError.CODE_NOT_FOUND,
-                                            "No code found for: " + code);
-                                });
+        return auditService.processAudit(
+                AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT,
+                (req) -> {
+                    final ApplicationCode applicationCode =
+                            repository
+                                    .findByCode(code)
+                                    .orElseThrow(
+                                            () -> {
+                                                throw new AppRegistryException(
+                                                        AppCodeError.CODE_NOT_FOUND,
+                                                        "No code found for: " + code);
+                                            });
 
-        FeePair feePair = feeService.resolveFeePair(applicationCode.getFeeReference());
+                    FeePair feePair = feeService.resolveFeePair(applicationCode.getFeeReference());
 
-        // audit the operation
-        auditService.record(AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT);
-        return applicationCodeMapper.toReadDto(applicationCode, feePair);
+                    return Optional.of(applicationCodeMapper.toReadDto(applicationCode, feePair));
+                },
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 }

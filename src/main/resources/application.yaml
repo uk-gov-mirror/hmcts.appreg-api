@@ -73,10 +73,14 @@ spring:
 logging:
   level:
     org.springframework.*: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} %X{traceId} - %msg%n"
+    correlation: "[%X{traceId}/%X{spanId}]"
 
 azure:
   application-insights:
     instrumentation-key: ${AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
+
 
 
 

@@ -11,7 +11,9 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import joptsimple.util.RegexMatcher;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,9 +25,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
-import uk.gov.hmcts.appregister.audit.AuditEnum;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
-import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.testutils.DateUtil;
@@ -92,19 +92,54 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         assertApplicationCode(responseContent[1], applicationCodeDto);
 
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Codes\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+    }
+
+    @Test
+    public void
+            givenValidRequest_whenGetApplicationCodesWithUserRoleAndMultipleFeesForMainAndOffsite_thenReturn200()
+                    throws Exception {
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.USER)).build();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT), tokenGenerator.fetchTokenForRole());
+
+        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, 41);
+        ApplicationCodeDto[] responseContent =
+                PagingUtil.getResponseContentFromPagingResponse(
+                        responseSpec, ApplicationCodeDto[].class);
+
+        // assert
+        ApplicationCodeDto applicationCodeDto =
+                generateDefaultApplicationCodeDtoAssertionPayload(
+                        Optional.of("JP perform function away from court"),
+                        Optional.of(200.0),
+                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(40.0));
+
+        assertApplicationCode(responseContent[1], applicationCodeDto);
+
+        RegexMatcher.regex(".*");
+
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Codes\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
     }
 
     @Test
@@ -140,19 +175,24 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         assertApplicationCode(responseContent[1], applicationCodeDto);
 
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Codes\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion audit \n"
+                                + "-p_requestaction=Get Application Codes\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=10\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
     }
 
     @Test
@@ -186,19 +226,24 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         assertApplicationCode(responseContent[1], applicationCodeDto);
 
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Codes\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion audit \n"
+                                + "-p_requestaction=Get Application Codes\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=10\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
     }
 
     @Test
@@ -227,20 +272,69 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         assertApplicationCode(responseContent, applicationCodeDto);
 
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT + "/" + id));
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT + "/" + id));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=10\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
+    }
+
+    @Test
+    public void
+            givenValidRequest_whenGetApplicationCodesForCodeWithUserRoleAndMultipleFeesForMainAndOffsite_thenReturn200()
+                    throws Exception {
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.USER)).build();
+
+        String id = "AD99002";
+        Response responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + id), tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+        ApplicationCodeDto codeDto = responseSpec.as(ApplicationCodeDto.class);
+
+        // assert the first auth code record
+        ApplicationCodeDto applicationCodeDto =
+                generateDefaultApplicationCodeDtoAssertionPayload(
+                        Optional.of("JP perform function away from court"),
+                        Optional.of(200.0),
+                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(40.0));
+
+        assertApplicationCode(codeDto, applicationCodeDto);
+
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=10\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
     }
 
     @Test
@@ -272,20 +366,24 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         assertApplicationCode(responseContent, applicationCodeDto);
 
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT + "/" + id));
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT + "/" + id));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=10\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
     }
 
     @Test
@@ -318,20 +416,24 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         assertApplicationCode(responseContent, applicationCodeDto);
 
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODE_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT + "/" + id));
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT + "/" + id));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=10\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
     }
 
     @Test
@@ -405,20 +507,6 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 DateUtil.equalsIgnoreMillis(
                         OffsetDateTime.parse("2021-01-01T00:00Z"), secondEntry.lodgementDate()));
         Assertions.assertEquals("John Smith", secondEntry.applicantName());
-
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
     }
 
     @Test
@@ -455,20 +543,6 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         Assertions.assertEquals("AP99001", firstEntry.applicationCode());
         Assertions.assertEquals("SW99009", secondEntry.applicationCode());
-
-        // assert the data audit record has been created
-        DataAudit dataAudit = dataAuditRepository.findAll().get(0);
-        Assertions.assertEquals(1, dataAuditRepository.findAll().size());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName(),
-                dataAudit.getEventName());
-        Assertions.assertEquals(
-                AuditEnum.GET_APPLICATION_CODES_AUDIT_EVENT.getColumnName(),
-                dataAudit.getColumnName());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getCreatedUser());
-        Assertions.assertEquals(tokenGenerator.getEmail(), dataAudit.getUserName());
-        Assertions.assertTrue(dataAudit.getLink().endsWith(WEB_CONTEXT));
-        Assertions.assertEquals(sqlInitSchemaLocations, dataAudit.getSchemaName());
     }
 
     @Test
@@ -774,6 +848,24 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         Assertions.assertEquals(
                 AppCodeError.CODE_NOT_FOUND.getCode().getMessage(), codeDto.getTitle());
         Assertions.assertEquals("/" + WEB_CONTEXT + "/" + id, codeDto.getInstance().toString());
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Start audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=1\n"
+                                + "-p_messagecontent=NULL",
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        "Completion fail audit \n"
+                                + "-p_requestaction=Get Application Code\n"
+                                + "-p_messageuuid=.*\n"
+                                + "-p_messagestatus=-1\n"
+                                + "-p_messagecontent=.*",
+                        logCaptor.getInfoLogs().get(1)));
     }
 
     private ApplicationCodeDto generateDefaultApplicationCodeDtoAssertionPayload(
