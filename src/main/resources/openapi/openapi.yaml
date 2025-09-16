@@ -55,7 +55,7 @@ components:
     sort:                         { $ref: './components/schemas/common/sort.yaml' }
     money-gbp:                    { $ref: './components/schemas/common/money-gbp.yaml' }
     # COURT LOCATIONS
-    court-location-detail-dto:    { $ref: './components/schemas/court-locations/court-location-dto.yaml' }
+    court-location-dto:    { $ref: './components/schemas/court-locations/court-location-dto.yaml' }
     court-location-page:          { $ref: './components/schemas/court-locations/court-location-page.yaml' }
     # CRIMINAL JUSTICE AREAS
     criminal-justice-area-dto:    { $ref: './components/schemas/criminal-justice-areas/criminal-justice-area-dto.yaml'}
