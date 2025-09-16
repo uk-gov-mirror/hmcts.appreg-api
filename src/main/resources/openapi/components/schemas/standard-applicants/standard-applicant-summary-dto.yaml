@@ -1,18 +1,12 @@
-# code, name, AL1, Use From, Use to
 type: object
 description: Lightweight DTO for Standard Applicants, used in list/search views.
 required:
-  - id,
   - code,
   - name,
   - addressLine1
   - startDate
   - endDate
 properties:
-  id:
-    type: integer
-    format: int64
-    description: Unique identifier.
   code:
     type: string
     description: Code that identifies the Standard Applicant.
@@ -21,13 +15,13 @@ properties:
     description: Name of the Standard Applicant.
   addressLine1:
     type: string
-    description: First line of the Standard Applicant's address.
+    description: First line of the applicant's address.
   startDate:
     type: string
     format: date
-    description: Start date from which the Standard Applicant is valid.
+    description: Date the applicant record became active.
   endDate:
     type: string
     format: date
     nullable: true
-    description: End date until which the Standard Applicant is valid.
+    description: Date the applicant record became inactive (if applicable).
