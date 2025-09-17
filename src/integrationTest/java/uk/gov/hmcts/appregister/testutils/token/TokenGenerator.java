@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.testutils.stubs;
+package uk.gov.hmcts.appregister.testutils.token;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;

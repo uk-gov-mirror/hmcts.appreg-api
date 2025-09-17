@@ -1,10 +1,9 @@
-package uk.gov.hmcts.appregister.audit.model;
+package uk.gov.hmcts.appregister.audit.event;
 
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
-import uk.gov.hmcts.appregister.audit.service.OperationStatus;
 
 /** The audit payload base interface. */
-public interface BaseAuditPayload {
+public interface BaseAuditEvent {
     String NO_VALUE = "NULL";
 
     /**

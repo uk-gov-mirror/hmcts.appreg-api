@@ -1,6 +1,6 @@
-package uk.gov.hmcts.appregister.audit.service;
+package uk.gov.hmcts.appregister.audit.event;
 
-/** Describes the status of the underlying operation. */
+/** Describes the audit status of the underlying operation. */
 public enum OperationStatus {
     STARTED(1),
     COMPLETED(10),

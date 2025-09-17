@@ -32,7 +32,7 @@ import uk.gov.hmcts.appregister.testutils.DateUtil;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenGenerator;
+import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 import uk.gov.hmcts.appregister.testutils.util.PagingUtil;
 
 public class ApplicationCodeControllerTest extends AbstractSecurityControllerTest {

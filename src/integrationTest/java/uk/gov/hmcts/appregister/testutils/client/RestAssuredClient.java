@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenAndJwksKey;
+import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
 @Component
 public class RestAssuredClient {

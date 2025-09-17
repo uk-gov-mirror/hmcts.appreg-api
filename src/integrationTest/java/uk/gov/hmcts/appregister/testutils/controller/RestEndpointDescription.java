@@ -9,7 +9,7 @@ import lombok.Getter;
 import org.springframework.http.HttpMethod;
 import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenAndJwksKey;
+import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
 /** A description of a rest endpoints and the data surrounding it. */
 @Builder

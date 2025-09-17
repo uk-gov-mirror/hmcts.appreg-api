@@ -1,17 +1,28 @@
 package uk.gov.hmcts.appregister.audit.event;
 
-import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import uk.gov.hmcts.appregister.audit.model.AuditRequest;
-import uk.gov.hmcts.appregister.audit.model.AuditResponse;
+import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 
 /** Encapsulates the audit request and response. */
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
 @ToString
-public class AuditEvent {
-    private final AuditRequest request;
-    private final Optional<AuditResponse> response;
+public class AuditEvent implements BaseAuditEvent {
+
+    protected AuditEventEnum requestAction;
+
+    protected OperationStatus messageStatus;
+
+    protected String messageContent;
+
+    protected String messageUuid;
+
+    AuditEvent(BaseAuditEvent baseAuditEvent) {
+        requestAction = baseAuditEvent.getRequestAction();
+        messageContent = baseAuditEvent.getMessageContent();
+        messageStatus = baseAuditEvent.getMessageStatus();
+        messageUuid = baseAuditEvent.getMessageUuid();
+    }
 }
