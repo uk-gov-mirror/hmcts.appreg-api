@@ -6,7 +6,7 @@ import io.restassured.response.Response;
 import java.net.URISyntaxException;
 import java.net.URL;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenAndJwksKey;
+import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
 @Component
 public class RestAssuredClient {

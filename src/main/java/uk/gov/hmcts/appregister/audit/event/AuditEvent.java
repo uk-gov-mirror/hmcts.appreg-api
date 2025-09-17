@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.audit.event;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 
 /** Encapsulates the audit request and response. */

@@ -2,7 +2,7 @@
 spring:
   flyway:
     enabled: true
-    locations: classpath:/migrations,/baseline_test
+    locations: classpath:/migrations,/data_population_test
     default-schema: ${spring.jpa.properties.hibernate.default_schema}
     mixed: true
     baseline-on-migrate: true

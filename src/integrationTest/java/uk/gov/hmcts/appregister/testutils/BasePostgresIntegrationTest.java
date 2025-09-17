@@ -16,7 +16,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.Changeable;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
-import uk.gov.hmcts.appregister.testutils.stub.DatabasePersistance;
+import uk.gov.hmcts.appregister.testutils.stubs.wiremock.DatabasePersistance;
 
 /**
  * A base class that loads postgres test container and resets any data inserted before each test

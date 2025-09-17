@@ -2,7 +2,6 @@ package uk.gov.hmcts.appregister.audit.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
-import uk.gov.hmcts.appregister.audit.event.*;
+import uk.gov.hmcts.appregister.audit.event.AuditEvent;
+import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
+import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
+import uk.gov.hmcts.appregister.audit.event.FailEvent;
+import uk.gov.hmcts.appregister.audit.event.StartEvent;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 
 /**
@@ -30,7 +33,8 @@ public class AuditOperationServiceImpl implements AuditOperationService {
     private final ObjectMapper mapper;
 
     @Override
-    public  <T> T processAudit(AuditEventEnum auditType,
+    public <T> T processAudit(
+            AuditEventEnum auditType,
             Function<BaseAuditEvent, Optional<T>> execution,
             AuditOperationLifecycleListener... listener) {
         StartEvent event = new StartEvent(auditType, getTraceId());
@@ -45,25 +49,16 @@ public class AuditOperationServiceImpl implements AuditOperationService {
             if (responsePayload.isPresent()) {
                 // fire after the completed operation
                 fireAuditEvent(
-                        new CompleteEvent(
-                                event,   getBodyAsString(responsePayload.get())),
-                        listener);
+                        new CompleteEvent(event, getBodyAsString(responsePayload.get())), listener);
             } else {
                 // fire after the completed operation
-                fireAuditEvent(
-                        new CompleteEvent(
-                                event,
-                                null),
-                        listener);
+                fireAuditEvent(new CompleteEvent(event, null), listener);
             }
 
             log.debug("Processed success auditable operation: {}", event);
         } catch (Exception e) {
             // fire after the failure of an operation
-            fireAuditEvent(
-                    new FailEvent(
-                            event),
-                    listener);
+            fireAuditEvent(new FailEvent(event), listener);
 
             log.debug("Processed failure auditable operation: {}", event);
             throw e;

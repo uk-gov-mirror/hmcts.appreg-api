@@ -1,6 +1,5 @@
 package uk.gov.hmcts.appregister.audit.listener;
 
-import uk.gov.hmcts.appregister.audit.event.AuditEvent;
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 
 /** Audit logger listener for various audit events surrrounding an operation. */

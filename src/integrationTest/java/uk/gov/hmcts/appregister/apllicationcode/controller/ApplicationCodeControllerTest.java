@@ -28,7 +28,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenGenerator;
+import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 
 public class ApplicationCodeControllerTest extends AbstractSecurityControllerTest {
     private static final String WEB_CONTEXT = "application-codes";

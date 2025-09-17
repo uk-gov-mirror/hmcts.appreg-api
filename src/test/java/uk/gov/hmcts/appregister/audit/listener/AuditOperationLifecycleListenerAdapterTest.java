@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
-import uk.gov.hmcts.appregister.audit.event.*;
+import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
+import uk.gov.hmcts.appregister.audit.event.FailEvent;
+import uk.gov.hmcts.appregister.audit.event.StartEvent;
 
 public class AuditOperationLifecycleListenerAdapterTest {
 
@@ -15,8 +17,7 @@ public class AuditOperationLifecycleListenerAdapterTest {
         AuditOperationLifecycleListenerAdapter my =
                 Mockito.mock(
                         AuditOperationLifecycleListenerAdapter.class, Answers.CALLS_REAL_METHODS);
-        my.eventPerformed(
-                new StartEvent(AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT, "id"));
+        my.eventPerformed(new StartEvent(AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT, "id"));
         Mockito.verify(my, times(1)).started(Mockito.notNull());
     }
 
@@ -26,8 +27,9 @@ public class AuditOperationLifecycleListenerAdapterTest {
                 Mockito.mock(
                         AuditOperationLifecycleListenerAdapter.class, Answers.CALLS_REAL_METHODS);
         my.eventPerformed(
-                        new CompleteEvent(new StartEvent(AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT, "id"),
-                                null));
+                new CompleteEvent(
+                        new StartEvent(AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT, "id"),
+                        null));
         Mockito.verify(my, times(1)).finished(Mockito.notNull());
     }
 
@@ -37,8 +39,11 @@ public class AuditOperationLifecycleListenerAdapterTest {
                 Mockito.mock(
                         AuditOperationLifecycleListenerAdapter.class, Answers.CALLS_REAL_METHODS);
         my.eventPerformed(
-                new FailEvent(new CompleteEvent(new StartEvent(AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT, "id"),
-                        null)));
+                new FailEvent(
+                        new CompleteEvent(
+                                new StartEvent(
+                                        AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT, "id"),
+                                null)));
         Mockito.verify(my, times(1)).finishFail(Mockito.notNull());
     }
 }

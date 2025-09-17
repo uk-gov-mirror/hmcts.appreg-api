@@ -14,8 +14,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
 import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
-import uk.gov.hmcts.appregister.testutils.stubs.TokenGenerator;
 import uk.gov.hmcts.appregister.testutils.stubs.wiremock.TokenStub;
+import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 
 @AutoConfigureWebTestClient
 @AutoConfigureWireMock(port = 0)
