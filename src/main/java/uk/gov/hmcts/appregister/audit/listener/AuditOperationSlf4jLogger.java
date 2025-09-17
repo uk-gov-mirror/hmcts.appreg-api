@@ -1,9 +1,10 @@
 package uk.gov.hmcts.appregister.audit.listener;
 
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.hmcts.appregister.audit.model.AuditRequest;
-import uk.gov.hmcts.appregister.audit.model.AuditResponse;
-import uk.gov.hmcts.appregister.audit.model.BaseAuditPayload;
+import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
+import uk.gov.hmcts.appregister.audit.event.FailEvent;
+import uk.gov.hmcts.appregister.audit.event.StartEvent;
+import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 
 /** Logs the request and response of audit events using SLF4J. */
 @Slf4j
@@ -22,40 +23,40 @@ public class AuditOperationSlf4jLogger extends AuditOperationLifecycleListenerAd
     private static final String ACTION = "p_requestaction";
 
     @Override
-    protected void started(AuditRequest request) {
+    protected void started(StartEvent request) {
         log.info("Start audit {}", getLog(request));
     }
 
     @Override
-    protected void finished(AuditRequest request, AuditResponse response) {
-        log.info("Completion audit {}", getLog(response));
+    protected void finished(CompleteEvent request) {
+        log.info("Completion audit {}", getLog(request));
     }
 
     @Override
-    protected void finishFail(AuditRequest request, AuditResponse response) {
-        log.info("Completion fail audit {}", getLog(response));
+    protected void finishFail(FailEvent request) {
+        log.info("Completion fail audit {}", getLog(request));
     }
 
-    public static String getLog(BaseAuditPayload request) {
+    public static String getLog(BaseAuditEvent event) {
         return "\n"
                 + "-"
                 + ACTION
                 + "="
-                + request.getRequestAction().getEventName()
+                + event.getRequestAction().getEventName()
                 + "\n"
                 + "-"
                 + MESSAGE_UUID
                 + "="
-                + request.getMessageUuid()
+                + event.getMessageUuid()
                 + "\n"
                 + "-"
                 + STATUS
                 + "="
-                + request.getMessageStatus().getStatus()
+                + event.getMessageStatus().getStatus()
                 + "\n"
                 + "-"
                 + CONTENT
                 + "="
-                + request.getMessageContent();
+                + event.getMessageContent();
     }
 }

@@ -76,25 +76,23 @@ public class AuditOperationServiceImplTest {
         AuditEvent beforeOp = requestArgumentCaptor.getAllValues().get(0);
         AuditEvent completedOp = requestArgumentCaptor.getAllValues().get(1);
 
-        Assertions.assertFalse(beforeOp.getResponse().isPresent());
-        Assertions.assertNotNull(beforeOp.getRequest());
+        Assertions.assertNotNull(beforeOp);
         Assertions.assertEquals(
-                "Get Application Code", beforeOp.getRequest().getRequestAction().getEventName());
-        Assertions.assertEquals("No Correlation Id Found", beforeOp.getRequest().getMessageUuid());
-        Assertions.assertEquals(1, beforeOp.getRequest().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", beforeOp.getRequest().getMessageContent());
+                "Get Application Code", beforeOp.getRequestAction().getEventName());
+        Assertions.assertEquals("No Correlation Id Found", beforeOp.getMessageUuid());
+        Assertions.assertEquals(1, beforeOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", beforeOp.getMessageContent());
 
-        Assertions.assertTrue(completedOp.getResponse().isPresent());
-        Assertions.assertNotNull(completedOp.getRequest());
+        Assertions.assertNotNull(completedOp);
         Assertions.assertEquals(
                 "Get Application Code",
-                completedOp.getResponse().get().getRequestAction().getEventName());
+                completedOp.getRequestAction().getEventName());
         Assertions.assertEquals(
-                "No Correlation Id Found", completedOp.getResponse().get().getMessageUuid());
-        Assertions.assertEquals(10, completedOp.getResponse().get().getMessageStatus().getStatus());
+                "No Correlation Id Found", completedOp.getMessageUuid());
+        Assertions.assertEquals(10, completedOp.getMessageStatus().getStatus());
         Assertions.assertEquals(
                 objectMapper.writeValueAsString(applicationCodeDto),
-                completedOp.getResponse().get().getMessageContent());
+                completedOp.getMessageContent());
     }
 
     @Test
@@ -114,30 +112,28 @@ public class AuditOperationServiceImplTest {
         AuditEvent beforeOp = requestArgumentCaptor.getAllValues().get(0);
         AuditEvent completedOp = requestArgumentCaptor.getAllValues().get(1);
 
-        Assertions.assertFalse(beforeOp.getResponse().isPresent());
-        Assertions.assertNotNull(beforeOp.getRequest());
+        Assertions.assertNotNull(beforeOp);
         Assertions.assertEquals(
-                "Get Application Code", beforeOp.getRequest().getRequestAction().getEventName());
-        Assertions.assertEquals("No Correlation Id Found", beforeOp.getRequest().getMessageUuid());
-        Assertions.assertEquals(1, beforeOp.getRequest().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", beforeOp.getRequest().getMessageContent());
+                "Get Application Code", beforeOp.getRequestAction().getEventName());
+        Assertions.assertEquals("No Correlation Id Found", beforeOp.getMessageUuid());
+        Assertions.assertEquals(1, beforeOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", beforeOp.getMessageContent());
 
-        Assertions.assertTrue(completedOp.getResponse().isPresent());
-        Assertions.assertNotNull(completedOp.getRequest());
+        Assertions.assertNotNull(completedOp);
         Assertions.assertEquals(
-                "Get Application Code", completedOp.getRequest().getRequestAction().getEventName());
+                "Get Application Code", completedOp.getRequestAction().getEventName());
         Assertions.assertEquals(
-                "No Correlation Id Found", completedOp.getRequest().getMessageUuid());
-        Assertions.assertEquals(10, completedOp.getRequest().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", completedOp.getRequest().getMessageContent());
+                "No Correlation Id Found", completedOp.getMessageUuid());
+        Assertions.assertEquals(10, completedOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", completedOp.getMessageContent());
 
         Assertions.assertEquals(
                 "Get Application Code",
-                completedOp.getResponse().get().getRequestAction().getEventName());
+                completedOp.getRequestAction().getEventName());
         Assertions.assertEquals(
-                "No Correlation Id Found", completedOp.getResponse().get().getMessageUuid());
-        Assertions.assertEquals(10, completedOp.getResponse().get().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", completedOp.getResponse().get().getMessageContent());
+                "No Correlation Id Found", completedOp.getMessageUuid());
+        Assertions.assertEquals(10, completedOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", completedOp.getMessageContent());
     }
 
     @Test
@@ -162,29 +158,27 @@ public class AuditOperationServiceImplTest {
         AuditEvent beforeOp = requestArgumentCaptor.getAllValues().get(0);
         AuditEvent failOp = requestArgumentCaptor.getAllValues().get(1);
 
-        Assertions.assertFalse(beforeOp.getResponse().isPresent());
-        Assertions.assertNotNull(beforeOp.getRequest());
+        Assertions.assertNotNull(beforeOp);
         Assertions.assertEquals(
-                "Get Application Code", beforeOp.getRequest().getRequestAction().getEventName());
-        Assertions.assertEquals("No Correlation Id Found", beforeOp.getRequest().getMessageUuid());
-        Assertions.assertEquals(1, beforeOp.getRequest().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", beforeOp.getRequest().getMessageContent());
+                "Get Application Code", beforeOp.getRequestAction().getEventName());
+        Assertions.assertEquals("No Correlation Id Found", beforeOp.getMessageUuid());
+        Assertions.assertEquals(1, beforeOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", beforeOp.getMessageContent());
 
-        Assertions.assertNotNull(failOp.getRequest());
+        Assertions.assertNotNull(failOp);
         Assertions.assertEquals(
-                "Get Application Code", failOp.getRequest().getRequestAction().getEventName());
-        Assertions.assertEquals("No Correlation Id Found", failOp.getRequest().getMessageUuid());
-        Assertions.assertEquals(-1, failOp.getRequest().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", failOp.getRequest().getMessageContent());
+                "Get Application Code", failOp.getRequestAction().getEventName());
+        Assertions.assertEquals("No Correlation Id Found", failOp.getMessageUuid());
+        Assertions.assertEquals(-1, failOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", failOp.getMessageContent());
 
-        Assertions.assertTrue(failOp.getResponse().isPresent());
-        Assertions.assertNotNull(failOp.getRequest());
+        Assertions.assertNotNull(failOp);
         Assertions.assertEquals(
                 "Get Application Code",
-                failOp.getResponse().get().getRequestAction().getEventName());
+                failOp.getRequestAction().getEventName());
         Assertions.assertEquals(
-                "No Correlation Id Found", failOp.getResponse().get().getMessageUuid());
-        Assertions.assertEquals(-1, failOp.getResponse().get().getMessageStatus().getStatus());
-        Assertions.assertEquals("NULL", failOp.getResponse().get().getMessageContent());
+                "No Correlation Id Found", failOp.getMessageUuid());
+        Assertions.assertEquals(-1, failOp.getMessageStatus().getStatus());
+        Assertions.assertEquals("NULL", failOp.getMessageContent());
     }
 }

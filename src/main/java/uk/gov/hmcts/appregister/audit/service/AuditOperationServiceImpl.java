@@ -2,9 +2,7 @@ package uk.gov.hmcts.appregister.audit.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -12,11 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
-import uk.gov.hmcts.appregister.audit.event.AuditEvent;
-import uk.gov.hmcts.appregister.audit.listener.ApplyRequestActionAuditListener;
+import uk.gov.hmcts.appregister.audit.event.*;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditRequest;
-import uk.gov.hmcts.appregister.audit.model.AuditResponse;
 
 /**
  * Encapsulates a unit of work for the lifecycle of an auditable operation. Behaviour of each audit
@@ -35,27 +30,10 @@ public class AuditOperationServiceImpl implements AuditOperationService {
     private final ObjectMapper mapper;
 
     @Override
-    public <T> T processAudit(
-            AuditEventEnum auditType,
-            Function<AuditRequest, Optional<T>> execution,
+    public  <T> T processAudit(AuditEventEnum auditType,
+            Function<BaseAuditEvent, Optional<T>> execution,
             AuditOperationLifecycleListener... listener) {
-        List<AuditOperationLifecycleListener> allListeners =
-                new ArrayList<>(Arrays.stream(listener).toList());
-        allListeners.addFirst(new ApplyRequestActionAuditListener(auditType));
-        return processAudit(
-                execution, allListeners.toArray(new AuditOperationLifecycleListener[0]));
-    }
-
-    @Override
-    public <T> T processAudit(
-            Function<AuditRequest, Optional<T>> execution,
-            AuditOperationLifecycleListener... listener) {
-        AuditRequest auditRequest =
-                AuditRequest.builder()
-                        .messageStatus(OperationStatus.STARTED)
-                        .messageUuid(getTraceId())
-                        .build();
-        AuditEvent event = new AuditEvent(auditRequest, Optional.empty());
+        StartEvent event = new StartEvent(auditType, getTraceId());
 
         // before execution hook
         fireAuditEvent(event, listener);
@@ -63,48 +41,28 @@ public class AuditOperationServiceImpl implements AuditOperationService {
         log.debug("Processed start of auditable operation: {}", event);
         Optional<T> responsePayload;
         try {
-            responsePayload = execution.apply(auditRequest);
+            responsePayload = execution.apply(event);
             if (responsePayload.isPresent()) {
-                AuditResponse response =
-                        getResponseFromRequest(
-                                auditRequest,
-                                OperationStatus.COMPLETED,
-                                getBodyAsString(responsePayload.get()));
-
                 // fire after the completed operation
                 fireAuditEvent(
-                        new AuditEvent(
-                                getRequestWithStatus(auditRequest, OperationStatus.COMPLETED),
-                                Optional.of(response)),
+                        new CompleteEvent(
+                                event,   getBodyAsString(responsePayload.get())),
                         listener);
             } else {
-                AuditResponse response =
-                        getResponseFromRequest(
-                                getRequestWithStatus(auditRequest, OperationStatus.COMPLETED),
-                                OperationStatus.COMPLETED,
-                                null);
-
                 // fire after the completed operation
                 fireAuditEvent(
-                        new AuditEvent(
-                                getRequestWithStatus(auditRequest, OperationStatus.COMPLETED),
-                                Optional.of(response)),
+                        new CompleteEvent(
+                                event,
+                                null),
                         listener);
             }
 
             log.debug("Processed success auditable operation: {}", event);
         } catch (Exception e) {
-            AuditResponse response =
-                    getResponseFromRequest(
-                            getRequestWithStatus(auditRequest, OperationStatus.FAILED),
-                            OperationStatus.FAILED,
-                            null);
-
             // fire after the failure of an operation
             fireAuditEvent(
-                    new AuditEvent(
-                            getRequestWithStatus(auditRequest, OperationStatus.FAILED),
-                            Optional.of(response)),
+                    new FailEvent(
+                            event),
                     listener);
 
             log.debug("Processed failure auditable operation: {}", event);
@@ -125,33 +83,6 @@ public class AuditOperationServiceImpl implements AuditOperationService {
         } catch (JsonProcessingException e) {
             log.error("Problem marshalling the json response for auditing", e);
             return "Problem marshalling the json response for auditing";
-        }
-    }
-
-    private AuditRequest getRequestWithStatus(AuditRequest request, OperationStatus status) {
-        return AuditRequest.builder()
-                .requestAction(request.getRequestAction())
-                .messageStatus(status)
-                .messageUuid(request.getMessageUuid())
-                .build();
-    }
-
-    private AuditResponse getResponseFromRequest(
-            AuditRequest auditRequest, OperationStatus status, String message) {
-        if (message != null) {
-            return AuditResponse.builder()
-                    .requestAction(auditRequest.getRequestAction())
-                    .messageContent(message)
-                    .messageStatus(status)
-                    .messageUuid(auditRequest.getMessageUuid())
-                    .messageContent(message)
-                    .build();
-        } else {
-            return AuditResponse.builder()
-                    .requestAction(auditRequest.getRequestAction())
-                    .messageStatus(status)
-                    .messageUuid(auditRequest.getMessageUuid())
-                    .build();
         }
     }
 

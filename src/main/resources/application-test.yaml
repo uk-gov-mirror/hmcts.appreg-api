@@ -1,11 +1,5 @@
+# Flyway configuration for local environment. Useful for functional testing as well as integration testing.
 spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: http://localhost:${wiremock.server.port}/discovery/v2.0/keys
-
-  # Flyway configuration for local environment. Useful for integration testing.
   flyway:
     enabled: true
     locations: classpath:/migrations,/baseline_test
