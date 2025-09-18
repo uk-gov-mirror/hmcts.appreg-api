@@ -2,8 +2,8 @@ package uk.gov.hmcts.appregister.applicationfee.service.exception;
 
 import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.appregister.common.exception.DefaultErrorDetail;
-import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 import uk.gov.hmcts.appregister.common.exception.ErrorCodeEnum;
+import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 
 public enum ApplicationFeeCode implements ErrorCodeEnum {
     AMBIGUOUS_FEE(

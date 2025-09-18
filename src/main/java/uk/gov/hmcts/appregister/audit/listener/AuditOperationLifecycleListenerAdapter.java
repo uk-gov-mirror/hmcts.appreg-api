@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
 import uk.gov.hmcts.appregister.audit.event.FailEvent;
-import uk.gov.hmcts.appregister.audit.event.OperationStatus;
 import uk.gov.hmcts.appregister.audit.event.StartEvent;
 
 /**

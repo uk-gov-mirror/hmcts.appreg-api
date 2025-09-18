@@ -5,8 +5,7 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 
 /**
- * Describes an application error code. Typically we will use {@link
- * DefaultErrorDetail}
+ * Describes an application error code. Typically we will use {@link DefaultErrorDetail}.
  */
 public interface ErrorDetail {
 

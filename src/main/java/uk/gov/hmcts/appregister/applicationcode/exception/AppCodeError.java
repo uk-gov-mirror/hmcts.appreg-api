@@ -2,8 +2,8 @@ package uk.gov.hmcts.appregister.applicationcode.exception;
 
 import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.appregister.common.exception.DefaultErrorDetail;
-import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 import uk.gov.hmcts.appregister.common.exception.ErrorCodeEnum;
+import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 
 /** The app code errors that will be represented as problem details when exceptions are thrown. */
 public enum AppCodeError implements ErrorCodeEnum {
