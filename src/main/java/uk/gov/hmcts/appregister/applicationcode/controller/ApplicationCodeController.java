@@ -2,7 +2,7 @@ package uk.gov.hmcts.appregister.applicationcode.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,11 +36,11 @@ public class ApplicationCodeController {
     @GetMapping
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<Page<ApplicationCodeDto>> getAll(
-            @RequestParam(required = false) String appCode,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String title,
             @org.springframework.format.annotation.DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                     @RequestParam(required = false)
-                    String appTitle,
-            @RequestParam(required = false) OffsetDateTime lodgementDate,
+                    LocalDate date,
             @org.springframework.data.web.PageableDefault(
                             sort = ApplicationCode_.CODE,
                             direction = org.springframework.data.domain.Sort.Direction.ASC)
@@ -49,16 +49,19 @@ public class ApplicationCodeController {
         // validate the sort parameters
         pageable.getSort().get().forEach(o -> sortValidator.validate(o.getProperty()));
 
-        return ResponseEntity.ok()
-                .body(service.findAll(appCode, appTitle, lodgementDate, pageable));
+        return ResponseEntity.ok().body(service.findAll(code, title, date, pageable));
     }
 
+    @PreAuthorize("hasAnyRole('Admin','User')")
     @Operation(summary = "Get a single application code by its code")
     @ApiResponse(responseCode = "200", description = "Application code found")
     @ApiResponse(responseCode = "404", description = "Application code not found")
     @GetMapping("/{code}")
-    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
-    public ResponseEntity<ApplicationCodeDto> getByCode(@PathVariable String code) {
-        return ResponseEntity.ok(service.findByCode(code));
+    public ResponseEntity<ApplicationCodeDto> getByCode(
+            @PathVariable String code,
+            @org.springframework.format.annotation.DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    @RequestParam(required = true)
+                    LocalDate date) {
+        return ResponseEntity.ok(service.findByCode(code, date));
     }
 }

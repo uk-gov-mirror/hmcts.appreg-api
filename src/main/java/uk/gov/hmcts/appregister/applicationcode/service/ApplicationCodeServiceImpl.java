@@ -1,9 +1,11 @@
 package uk.gov.hmcts.appregister.applicationcode.service;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 /** Service implementation for managing application codes. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationCodeServiceImpl implements ApplicationCodeService {
 
     private final ApplicationCodeRepository repository;
@@ -32,9 +35,19 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
 
     @Override
     public Page<ApplicationCodeDto> findAll(
-            String appCode, String appTitle, OffsetDateTime lodgementDate, Pageable pageable) {
+            String appCode, String appTitle, LocalDate lodgementDate, Pageable pageable) {
         final Page<ApplicationCode> applicationCodeList =
-                repository.search(appCode, appTitle, lodgementDate, pageable);
+                repository.search(
+                        appCode,
+                        appTitle,
+                        lodgementDate != null,
+                        lodgementDate != null
+                                ? lodgementDate.atStartOfDay().atOffset(ZoneOffset.UTC)
+                                : null,
+                        lodgementDate != null
+                                ? lodgementDate.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC)
+                                : null,
+                        pageable);
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
@@ -50,23 +63,30 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     }
 
     @Override
-    public ApplicationCodeDto findByCode(String code) {
+    public ApplicationCodeDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT,
-                (req) -> {
-                    final ApplicationCode applicationCode =
-                            repository
-                                    .findByCode(code)
-                                    .orElseThrow(
-                                            () -> {
-                                                throw new AppRegistryException(
-                                                        AppCodeError.CODE_NOT_FOUND,
-                                                        "No code found for: " + code);
-                                            });
+                req -> {
+                    final List<ApplicationCode> applicationCodeResults =
+                            repository.findByCodeAndDate(
+                                    code, date.atStartOfDay().atOffset(ZoneOffset.UTC));
 
-                    FeePair feePair = feeService.resolveFeePair(applicationCode.getFeeReference());
+                    ApplicationCode codeToConsider = null;
 
-                    return Optional.of(applicationCodeMapper.toReadDto(applicationCode, feePair));
+                    // if empty throw an exception
+                    if (applicationCodeResults.isEmpty()) {
+                        throw new AppRegistryException(
+                                AppCodeError.CODE_NOT_FOUND,
+                                " No code found for code %s and date %s".formatted(code, date));
+                    } else {
+                        log.warn(
+                                "Too many records found for code %s and date %s. Defaulting to first one"
+                                        .formatted(code, date));
+                        codeToConsider = applicationCodeResults.stream().findFirst().get();
+                    }
+
+                    FeePair feePair = feeService.resolveFeePair(codeToConsider.getFeeReference());
+                    return Optional.of(applicationCodeMapper.toReadDto(codeToConsider, feePair));
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }

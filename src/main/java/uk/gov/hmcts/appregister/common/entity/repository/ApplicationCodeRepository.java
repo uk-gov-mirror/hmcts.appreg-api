@@ -2,7 +2,6 @@ package uk.gov.hmcts.appregister.common.entity.repository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,7 +20,15 @@ public interface ApplicationCodeRepository extends JpaRepository<ApplicationCode
      * @param applicationCode the application code to search for
      * @return an Optional containing the found ApplicationCode, or empty if not found
      */
-    Optional<ApplicationCode> findByCode(String applicationCode);
+    @Query(
+            """
+            SELECT c
+            FROM ApplicationCode c
+            WHERE c.code = :applicationCode
+              AND c.startDate <= :dateTime
+              AND (c.endDate IS NULL OR c.endDate >= :dateTime)
+            """)
+    List<ApplicationCode> findByCodeAndDate(String applicationCode, OffsetDateTime dateTime);
 
     /**
      * Finds all ApplicationCode entities with an ID greater than or equal to the specified value.
@@ -37,7 +44,9 @@ public interface ApplicationCodeRepository extends JpaRepository<ApplicationCode
      *
      * @param code The code to find
      * @param title The title
-     * @param lodgementDate The lodgement date
+     * @param applyLodgementDate The lodgement date
+     * @param fromTs The from time
+     * @param toTs The to time
      * @param pageable The pagaeable data to further the results
      * @return The list of application codes in page format
      */
@@ -48,11 +57,13 @@ public interface ApplicationCodeRepository extends JpaRepository<ApplicationCode
         LEFT JOIN c.applicationListEntryList ale
         WHERE (:code IS NULL OR c.code = :code)
           AND (:title IS NULL OR c.title = :title)
-          AND (cast(:lodgementDate as TIMESTAMP) IS NULL OR ale.lodgementDate = :lodgementDate)
+          AND ( :applyLodgementDate = false OR ale.lodgementDate >= :fromTs AND ale.lodgementDate < :toTs)
         """)
     Page<ApplicationCode> search(
             @Param("code") String code,
             @Param("title") String title,
-            @Param("lodgementDate") OffsetDateTime lodgementDate,
+            @Param("applyLodgementDate") Boolean applyLodgementDate,
+            @Param("fromTs") OffsetDateTime fromTs,
+            @Param("toTs") OffsetDateTime toTs,
             Pageable pageable);
 }

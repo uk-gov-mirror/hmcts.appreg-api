@@ -13,8 +13,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import joptsimple.util.RegexMatcher;
 import lombok.RequiredArgsConstructor;
+import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
-import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.applicationcode.service.ApplicationCodeServiceImpl;
+import uk.gov.hmcts.appregister.audit.event.OperationStatus;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.testutils.DateUtil;
@@ -53,6 +54,21 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
     @MockitoBean private Clock clock; // replaces Clock bean in Spring context
 
+    /** The total app codes inserted by flyway scripts. See V6__InitialTestData.sql */
+    private static final int TOTAL_APP_CODES_COUNT = 42;
+
+    private static final String FEE_DESCRIPTION = "JP perform function away from court";
+    private static final String OFFSITE_FEE_DESCRIPTION =
+            "Offsite: JP perform function away from court";
+    private static final String APPCODE_CODE = "AD99002";
+    private static final String DATE_TO_FIND_CODE = "2016-01-01T00:00Z";
+    private static final String START_AUDIT_LOG = "Start audit";
+    private static final String COMPLETION_AUDIT_LOG = "Completion audit";
+
+    private static final String GET_APPCODE_AUDIT_ACTION = "Get Application Code";
+    private static final String GET_APPCODES_AUDIT_ACTION = "Get Application Codes";
+    private static final String CURRENT_TIME = "2020-07-25T00:00:00Z";
+
     @BeforeEach
     public void before() {
         // a date that is without range for the main but out of range for the offsite fee
@@ -76,7 +92,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the response
         responseSpec.then().statusCode(200);
 
-        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, 41);
+        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, TOTAL_APP_CODES_COUNT);
         ApplicationCodeDto[] responseContent =
                 PagingUtil.getResponseContentFromPagingResponse(
                         responseSpec, ApplicationCodeDto[].class);
@@ -85,9 +101,9 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert
         ApplicationCodeDto applicationCodeDto =
                 generateDefaultApplicationCodeDtoAssertionPayload(
-                        Optional.of("JP perform function away from court"),
+                        Optional.of(FEE_DESCRIPTION),
                         Optional.of(200.0),
-                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
                         Optional.of(40.0));
 
         assertApplicationCode(responseContent[1], applicationCodeDto);
@@ -95,11 +111,10 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Codes\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG,
+                                GET_APPCODES_AUDIT_ACTION,
+                                OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
     }
 
@@ -114,7 +129,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 restAssuredClient.executeGetRequest(
                         getLocalUrl(WEB_CONTEXT), tokenGenerator.fetchTokenForRole());
 
-        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, 41);
+        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, TOTAL_APP_CODES_COUNT);
         ApplicationCodeDto[] responseContent =
                 PagingUtil.getResponseContentFromPagingResponse(
                         responseSpec, ApplicationCodeDto[].class);
@@ -122,23 +137,20 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert
         ApplicationCodeDto applicationCodeDto =
                 generateDefaultApplicationCodeDtoAssertionPayload(
-                        Optional.of("JP perform function away from court"),
+                        Optional.of(FEE_DESCRIPTION),
                         Optional.of(200.0),
-                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
                         Optional.of(40.0));
 
         assertApplicationCode(responseContent[1], applicationCodeDto);
 
-        RegexMatcher.regex(".*");
-
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Codes\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG,
+                                GET_APPCODES_AUDIT_ACTION,
+                                OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
     }
 
@@ -159,7 +171,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         responseSpec.then().statusCode(200);
 
-        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, 41);
+        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, TOTAL_APP_CODES_COUNT);
         ApplicationCodeDto[] responseContent =
                 PagingUtil.getResponseContentFromPagingResponse(
                         responseSpec, ApplicationCodeDto[].class);
@@ -168,7 +180,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert
         ApplicationCodeDto applicationCodeDto =
                 generateDefaultApplicationCodeDtoAssertionPayload(
-                        Optional.of("JP perform function away from court"),
+                        Optional.of(FEE_DESCRIPTION),
                         Optional.of(50.0),
                         Optional.empty(),
                         Optional.empty());
@@ -178,20 +190,18 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Codes\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG,
+                                GET_APPCODES_AUDIT_ACTION,
+                                OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion audit \n"
-                                + "-p_requestaction=Get Application Codes\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=10\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODES_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -199,7 +209,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
     public void givenValidRequest_whenGetApplicationCodesWithOffsiteFeeButNoMain_thenReturn200()
             throws Exception {
         // a date that is within range for the offset but out of range for the main fee
-        when(clock.instant()).thenReturn(Instant.parse("2020-07-25T00:00:00Z"));
+        when(clock.instant()).thenReturn(Instant.parse(CURRENT_TIME));
         when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
 
         TokenGenerator tokenGenerator =
@@ -211,7 +221,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         responseSpec.then().statusCode(200);
 
         // assert
-        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, 41);
+        PagingUtil.assertPageDetails(responseSpec, defaultPageSize, 0, 5, TOTAL_APP_CODES_COUNT);
         ApplicationCodeDto[] responseContent =
                 PagingUtil.getResponseContentFromPagingResponse(
                         responseSpec, ApplicationCodeDto[].class);
@@ -221,7 +231,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 generateDefaultApplicationCodeDtoAssertionPayload(
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
                         Optional.of(70.0));
 
         assertApplicationCode(responseContent[1], applicationCodeDto);
@@ -229,20 +239,18 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Codes\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG,
+                                GET_APPCODES_AUDIT_ACTION,
+                                OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion audit \n"
-                                + "-p_requestaction=Get Application Codes\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=10\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODES_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -253,10 +261,12 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        String id = "AD99002";
+        String id = APPCODE_CODE;
         Response responseSpec =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + id), tokenGenerator.fetchTokenForRole());
+                        getLocalUrlWithDate(
+                                WEB_CONTEXT + "/" + id, OffsetDateTime.parse(DATE_TO_FIND_CODE)),
+                        tokenGenerator.fetchTokenForRole());
 
         // make the assertions
         responseSpec.then().statusCode(200);
@@ -265,9 +275,9 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         ApplicationCodeDto applicationCodeDto =
                 generateDefaultApplicationCodeDtoAssertionPayload(
-                        Optional.of("JP perform function away from court"),
+                        Optional.of(FEE_DESCRIPTION),
                         Optional.of(200.0),
-                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
                         Optional.of(40.0));
 
         assertApplicationCode(responseContent, applicationCodeDto);
@@ -275,20 +285,16 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=10\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -299,10 +305,12 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.USER)).build();
 
-        String id = "AD99002";
+        String id = APPCODE_CODE;
         Response responseSpec =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + id), tokenGenerator.fetchTokenForRole());
+                        getLocalUrlWithDate(
+                                WEB_CONTEXT + "/" + id, OffsetDateTime.parse(DATE_TO_FIND_CODE)),
+                        tokenGenerator.fetchTokenForRole());
 
         responseSpec.then().statusCode(200);
         ApplicationCodeDto codeDto = responseSpec.as(ApplicationCodeDto.class);
@@ -310,9 +318,9 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the first auth code record
         ApplicationCodeDto applicationCodeDto =
                 generateDefaultApplicationCodeDtoAssertionPayload(
-                        Optional.of("JP perform function away from court"),
+                        Optional.of(FEE_DESCRIPTION),
                         Optional.of(200.0),
-                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
                         Optional.of(40.0));
 
         assertApplicationCode(codeDto, applicationCodeDto);
@@ -320,20 +328,16 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=10\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -347,10 +351,12 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        String id = "AD99002";
+        String id = APPCODE_CODE;
         Response responseSpec =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + id), tokenGenerator.fetchTokenForRole());
+                        getLocalUrlWithDate(
+                                WEB_CONTEXT + "/" + id, OffsetDateTime.parse(DATE_TO_FIND_CODE)),
+                        tokenGenerator.fetchTokenForRole());
 
         responseSpec.then().statusCode(200);
 
@@ -359,7 +365,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert
         ApplicationCodeDto applicationCodeDto =
                 generateDefaultApplicationCodeDtoAssertionPayload(
-                        Optional.of("JP perform function away from court"),
+                        Optional.of(FEE_DESCRIPTION),
                         Optional.of(50.0),
                         Optional.empty(),
                         Optional.empty());
@@ -369,20 +375,16 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=10\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -391,16 +393,18 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
             givenValidRequest_whenGetApplicationCodesForCodeWithOffsiteFeeButNoMain_thenReturn200()
                     throws Exception {
         // a date that is within range for the offset but out of range for the main fee
-        when(clock.instant()).thenReturn(Instant.parse("2020-07-25T00:00:00Z"));
+        when(clock.instant()).thenReturn(Instant.parse(CURRENT_TIME));
         when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
 
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        String id = "AD99002";
+        String id = APPCODE_CODE;
         Response responseSpec =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + id), tokenGenerator.fetchTokenForRole());
+                        getLocalUrlWithDate(
+                                WEB_CONTEXT + "/" + id, OffsetDateTime.parse(DATE_TO_FIND_CODE)),
+                        tokenGenerator.fetchTokenForRole());
 
         responseSpec.then().statusCode(200);
 
@@ -411,7 +415,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 generateDefaultApplicationCodeDtoAssertionPayload(
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of("Offsite: JP perform function away from court"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
                         Optional.of(70.0));
 
         assertApplicationCode(responseContent, applicationCodeDto);
@@ -419,20 +423,16 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // assert the audit log message
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=10\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -446,7 +446,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // execute the functionality
-        int pageSize = 2;
+        int pageSize = 3;
         int pageNumber = 1;
         Response responseSpec =
                 restAssuredClient.executeGetRequestWithPaging(
@@ -458,7 +458,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         responseSpec.then().statusCode(200);
 
         // make the assertions
-        PagingUtil.assertPageDetails(responseSpec, pageSize, pageNumber, 21, 41);
+        PagingUtil.assertPageDetails(responseSpec, pageSize, pageNumber, 14, TOTAL_APP_CODES_COUNT);
 
         ApplicationCodeDto[] responseContent =
                 responseSpec.jsonPath().getObject("content", ApplicationCodeDto[].class);
@@ -531,7 +531,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         responseSpec.then().statusCode(200);
 
         // assert the response
-        PagingUtil.assertPageDetails(responseSpec, pageSize, pageNumber, 21, 41);
+        PagingUtil.assertPageDetails(responseSpec, pageSize, pageNumber, 21, TOTAL_APP_CODES_COUNT);
 
         ApplicationCodeDto[] responseContent =
                 responseSpec.jsonPath().getObject("content", ApplicationCodeDto[].class);
@@ -566,7 +566,11 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                         new ApplicationCodeRequestFilter(
                                 Optional.of("does not exist"),
                                 Optional.of("does not exist"),
-                                Optional.of(OffsetDateTime.now().minusYears(20).toString())));
+                                Optional.of(
+                                        OffsetDateTime.now()
+                                                .minusYears(20)
+                                                .toLocalDate()
+                                                .toString())));
 
         // assert the response is successful with no content
         responseSpec.then().statusCode(200);
@@ -659,7 +663,10 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                         new ApplicationCodeRequestFilter(
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(OffsetDateTime.parse("2024-04-01T00:00Z").toString())));
+                                Optional.of(
+                                        OffsetDateTime.parse("2024-04-01T00:00Z")
+                                                .toLocalDate()
+                                                .toString())));
 
         // assert
         responseSpec.then().statusCode(200);
@@ -692,7 +699,10 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 Optional.of("AP99004"),
                                 Optional.of(
                                         "Request for Certificate of Refusal to State a Case (Civil)"),
-                                Optional.of(OffsetDateTime.parse("2006-02-01T00:00Z").toString())));
+                                Optional.of(
+                                        OffsetDateTime.parse("2006-02-01T00:00Z")
+                                                .toLocalDate()
+                                                .toString())));
 
         // assert the response
         responseSpec.then().statusCode(200);
@@ -726,7 +736,10 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 Optional.of("AP99004"),
                                 Optional.of(
                                         "Request for Certificate of Refusal to State a Case (Civil)"),
-                                Optional.of(OffsetDateTime.parse("2006-02-01T00:00Z").toString())));
+                                Optional.of(
+                                        OffsetDateTime.parse("2006-02-01T00:00Z")
+                                                .toLocalDate()
+                                                .toString())));
 
         // assert the response
         responseSpec.then().statusCode(200);
@@ -764,7 +777,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
     }
 
     @Test
-    public void givenValidRequest_whenGetApplicationCodesWithPagingInvalidPageNumber_thenReturn400()
+    public void givenValidRequest_whenGetApplicationCodesWithPagingInvalidPageNumber_thenReturn200()
             throws Exception {
         // create the token
         TokenGenerator tokenGenerator =
@@ -784,7 +797,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 Optional.of("AP99004"),
                                 Optional.of(
                                         "Request for Certificate of Refusal to State a Case (Civil)"),
-                                Optional.of(OffsetDateTime.parse("2006-02-01T00:00Z").toString())));
+                                Optional.of("2006-02-01")));
         // assert the response
         responseSpec.then().statusCode(200);
 
@@ -814,7 +827,10 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 Optional.of("AP99004"),
                                 Optional.of(
                                         "Request for Certificate of Refusal to State a Case (Civil)"),
-                                Optional.of(OffsetDateTime.parse("2006-02-01T00:00Z").toString())));
+                                Optional.of(
+                                        OffsetDateTime.parse("2006-02-01T00:00Z")
+                                                .toLocalDate()
+                                                .toString())));
 
         // assert the response
         responseSpec.then().statusCode(200);
@@ -829,10 +845,9 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         // execute the functionality
         String id = "doesntexist";
-        Optional<ApplicationCode> expectedRecord = applicationCodeRepository.findByCode(id);
         Response responseSpec =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + id),
+                        getLocalUrlWithDate(WEB_CONTEXT + "/" + id, OffsetDateTime.now()),
                         getATokenWithValidCredentials()
                                 .roles(List.of(RoleEnum.ADMIN))
                                 .build()
@@ -851,20 +866,112 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Start audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=1\n"
-                                + "-p_messagecontent=NULL",
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
 
         Assertions.assertTrue(
                 Pattern.matches(
-                        "Completion fail audit \n"
-                                + "-p_requestaction=Get Application Code\n"
-                                + "-p_messageuuid=.*\n"
-                                + "-p_messagestatus=-1\n"
-                                + "-p_messagecontent=.*",
+                        getExpectedLog(
+                                "Completion fail audit",
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.FAILED),
+                        logCaptor.getInfoLogs().get(1)));
+    }
+
+    @Test
+    public void givenValidRequest_whenGetApplicationCodesForDateNotValid_thenReturn404()
+            throws Exception {
+        String id = APPCODE_CODE;
+        Response responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrlWithDate(
+                                WEB_CONTEXT + "/" + id, OffsetDateTime.parse("1915-01-01T00:00Z")),
+                        getATokenWithValidCredentials()
+                                .roles(List.of(RoleEnum.ADMIN))
+                                .build()
+                                .fetchTokenForRole());
+
+        responseSpec.then().statusCode(404);
+        ProblemDetail codeDto = responseSpec.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                AppCodeError.CODE_NOT_FOUND.getCode().getType().get(), codeDto.getType());
+        Assertions.assertEquals(
+                AppCodeError.CODE_NOT_FOUND.getCode().getMessage(), codeDto.getDetail());
+        Assertions.assertEquals(
+                AppCodeError.CODE_NOT_FOUND.getCode().getMessage(), codeDto.getTitle());
+        Assertions.assertEquals("/" + WEB_CONTEXT + "/" + id, codeDto.getInstance().toString());
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        getExpectedLog(
+                                "Completion fail audit",
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.FAILED),
+                        logCaptor.getInfoLogs().get(1)));
+    }
+
+    @Test
+    public void
+            givenValidRequest_whenGetApplicationCodesReturnsMultipleRecords_thenReturn200WithFirstRecord()
+                    throws Exception {
+
+        // a date that is within range for the offset but out of range for the main fee
+        when(clock.instant()).thenReturn(Instant.parse(CURRENT_TIME));
+        when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        String id = APPCODE_CODE;
+        LogCaptor appCodeServiceLogCaptor = LogCaptor.forClass(ApplicationCodeServiceImpl.class);
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrlWithDate(
+                                WEB_CONTEXT + "/" + id,
+                                OffsetDateTime.parse("2016-01-01T00:00:00Z")),
+                        tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+        ApplicationCodeDto codeDto = responseSpec.as(ApplicationCodeDto.class);
+
+        // assert
+        ApplicationCodeDto applicationCodeDto =
+                generateDefaultApplicationCodeDtoAssertionPayload(
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION),
+                        Optional.of(70.0));
+
+        assertApplicationCode(codeDto, applicationCodeDto);
+
+        // assert that we see a warning in the logs
+        Assertions.assertTrue(
+                appCodeServiceLogCaptor
+                        .getWarnLogs()
+                        .get(0)
+                        .startsWith("Too many records found for code"));
+
+        // assert the audit log message
+        Assertions.assertTrue(
+                Pattern.matches(
+                        getExpectedLog(
+                                START_AUDIT_LOG, GET_APPCODE_AUDIT_ACTION, OperationStatus.STARTED),
+                        logCaptor.getInfoLogs().get(0)));
+
+        Assertions.assertTrue(
+                Pattern.matches(
+                        getExpectedLog(
+                                COMPLETION_AUDIT_LOG,
+                                GET_APPCODE_AUDIT_ACTION,
+                                OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
     }
 
@@ -875,7 +982,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
             Optional<Double> offsiteFeeAmt) {
         return new ApplicationCodeDto(
                 1L,
-                "AD99002",
+                APPCODE_CODE,
                 "Copy documents (electronic)",
                 "Request for copy documents on computer" + " disc or in electronic form",
                 "",
@@ -935,13 +1042,22 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
     protected Stream<RestEndpointDescription> getDescriptions() throws Exception {
         return Stream.of(
                 RestEndpointDescription.builder()
-                        .url(getLocalUrl("application-codes"))
+                        .url(getLocalUrl(WEB_CONTEXT))
                         .method(HttpMethod.GET)
+                        .successRole(RoleEnum.USER)
+                        .successRole(RoleEnum.ADMIN)
                         .build(),
                 RestEndpointDescription.builder()
-                        .url(getLocalUrl("application-codes/2"))
+                        .url(getLocalUrlWithDate("application-codes/2", OffsetDateTime.now()))
                         .method(HttpMethod.GET)
+                        .successRole(RoleEnum.USER)
+                        .successRole(RoleEnum.ADMIN)
                         .build());
+    }
+
+    private String getExpectedLog(String event, String action, OperationStatus operationStatus) {
+        return "%s\\s*-p_requestaction=%s\\R-p_messageuuid=.*\\R-p_messagestatus=%s\\R-p_messagecontent=.*"
+                .formatted(event, action, operationStatus.getStatus());
     }
 
     /**
@@ -958,15 +1074,15 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         @Override
         public RequestSpecification apply(RequestSpecification rs) {
             if (appCode.isPresent()) {
-                rs = rs.queryParam("appCode", appCode.get());
+                rs = rs.queryParam("code", appCode.get());
             }
 
             if (appTitle.isPresent()) {
-                rs = rs.queryParam("appTitle", appTitle.get());
+                rs = rs.queryParam("title", appTitle.get());
             }
 
             if (lodgementDate.isPresent()) {
-                rs = rs.queryParam("lodgementDate", lodgementDate.get());
+                rs = rs.queryParam("date", lodgementDate.get());
             }
 
             return rs;

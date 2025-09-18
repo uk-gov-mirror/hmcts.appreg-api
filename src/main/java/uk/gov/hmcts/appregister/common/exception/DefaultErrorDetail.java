@@ -9,24 +9,24 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode
-public class DefaultErrorCode implements ErrorCode {
+public class DefaultErrorDetail implements ErrorDetail {
     private final HttpStatus httpCode;
     private final String message;
     private final String appCode;
 
-    public static DefaultErrorCode createNotFoundRequest(ErrorCodeEnum detail) {
-        return new DefaultErrorCode(
+    public static DefaultErrorDetail createNotFoundRequest(ErrorCodeEnum detail) {
+        return new DefaultErrorDetail(
                 HttpStatus.NOT_FOUND, detail.getCode().getMessage(), detail.getCode().getAppCode());
     }
 
-    public static DefaultErrorCode create(HttpStatus status, String message, String appCode) {
-        return new DefaultErrorCode(status, message, appCode);
+    public static DefaultErrorDetail create(HttpStatus status, String message, String appCode) {
+        return new DefaultErrorDetail(status, message, appCode);
     }
 
-    public static ErrorCodeEnum getEnumEntry(ErrorCode code) {
+    public static ErrorCodeEnum getEnumEntry(ErrorDetail code) {
         return new ErrorCodeEnum() {
             @Override
-            public ErrorCode getCode() {
+            public ErrorDetail getCode() {
                 return code;
             }
         };

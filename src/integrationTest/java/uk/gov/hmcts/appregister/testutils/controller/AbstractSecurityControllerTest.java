@@ -1,5 +1,8 @@
 package uk.gov.hmcts.appregister.testutils.controller;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -7,6 +10,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 
 /**
@@ -35,7 +39,7 @@ public abstract class AbstractSecurityControllerTest extends BaseIntegration {
                                 .build()
                                 .fetchTokenForRole())
                 .then()
-                .statusCode(401);
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @ParameterizedTest
@@ -50,7 +54,7 @@ public abstract class AbstractSecurityControllerTest extends BaseIntegration {
                                 .build()
                                 .fetchTokenForRole())
                 .then()
-                .statusCode(401);
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @ParameterizedTest
@@ -65,7 +69,7 @@ public abstract class AbstractSecurityControllerTest extends BaseIntegration {
                                 .build()
                                 .fetchTokenForRole())
                 .then()
-                .statusCode(401);
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @ParameterizedTest
@@ -80,7 +84,7 @@ public abstract class AbstractSecurityControllerTest extends BaseIntegration {
                                 .build()
                                 .fetchTokenForRole())
                 .then()
-                .statusCode(401);
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @ParameterizedTest
@@ -95,6 +99,22 @@ public abstract class AbstractSecurityControllerTest extends BaseIntegration {
                                 .build()
                                 .fetchTokenForRole())
                 .then()
-                .statusCode(403);
+                .statusCode(HttpStatus.FORBIDDEN.value());
+    }
+
+    @ParameterizedTest
+    @MethodSource("getDescriptions")
+    public void givenValidRequest_whenCalledWithAnValidSignature_thenReturn200(
+            RestEndpointDescription restEndpointDescription) throws Exception {
+        restEndpointDescription
+                .process(
+                        restAssuredClient,
+                        getATokenWithValidCredentials()
+                                .roles(List.of(restEndpointDescription.getSuccessRole()))
+                                .build()
+                                .fetchTokenForRole())
+                .then()
+                .statusCode(is(not(HttpStatus.UNAUTHORIZED)))
+                .statusCode(is(not(HttpStatus.FORBIDDEN)));
     }
 }
