@@ -34,7 +34,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     public List<ApplicationCodeDto> findAll() {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODES_AUDIT_EVENT,
-                (req) -> {
+                req -> {
                     final List<ApplicationCode> applicationCodeList = repository.findAll();
                     List<ApplicationCodeDto> applicationCodeDtoList =
                             applicationCodeList.stream()
@@ -57,7 +57,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     public ApplicationCodeDto findByCode(String code, OffsetDateTime date) {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT,
-                (req) -> {
+                req -> {
                     final List<ApplicationCode> applicationCodeResults =
                             repository.findByCodeAndDate(code, date);
 
