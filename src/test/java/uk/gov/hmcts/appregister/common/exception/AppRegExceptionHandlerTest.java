@@ -55,7 +55,7 @@ class AppRegExceptionHandlerTest {
         AppRegistryException exception =
                 new AppRegistryException(
                         () ->
-                                new DefaultErrorCode(
+                                new DefaultErrorDetail(
                                         HttpStatus.BAD_REQUEST, customMessage, customType),
                         "Test message",
                         null);
