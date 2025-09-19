@@ -60,7 +60,7 @@ spring:
   sql:
     init:
       mode: never
-      schema-locations: appreg
+      schema-locations: ${APP_REG_SCHEMA:appreg}
   security:
     oauth2:
       resourceserver:

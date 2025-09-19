@@ -36,21 +36,24 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     @Override
     public Page<ApplicationCodeDto> findAll(
             String appCode, String appTitle, LocalDate lodgementDate, Pageable pageable) {
-        final Page<ApplicationCode> applicationCodeList =
-                repository.search(
-                        appCode,
-                        appTitle,
-                        lodgementDate != null,
-                        lodgementDate != null
-                                ? lodgementDate.atStartOfDay().atOffset(ZoneOffset.UTC)
-                                : null,
-                        lodgementDate != null
-                                ? lodgementDate.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC)
-                                : null,
-                        pageable);
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
+                    final Page<ApplicationCode> applicationCodeList =
+                            repository.search(
+                                    appCode,
+                                    appTitle,
+                                    lodgementDate != null,
+                                    lodgementDate != null
+                                            ? lodgementDate.atStartOfDay().atOffset(ZoneOffset.UTC)
+                                            : null,
+                                    lodgementDate != null
+                                            ? lodgementDate
+                                                    .plusDays(1)
+                                                    .atStartOfDay()
+                                                    .atOffset(ZoneOffset.UTC)
+                                            : null,
+                                    pageable);
                     return Optional.of(
                             applicationCodeList.map(
                                     code -> {

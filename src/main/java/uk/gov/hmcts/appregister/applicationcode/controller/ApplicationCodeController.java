@@ -52,7 +52,7 @@ public class ApplicationCodeController {
         return ResponseEntity.ok().body(service.findAll(code, title, date, pageable));
     }
 
-    @PreAuthorize("hasAnyRole('Admin','User')")
+    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     @Operation(summary = "Get a single application code by its code")
     @ApiResponse(responseCode = "200", description = "Application code found")
     @ApiResponse(responseCode = "404", description = "Application code not found")

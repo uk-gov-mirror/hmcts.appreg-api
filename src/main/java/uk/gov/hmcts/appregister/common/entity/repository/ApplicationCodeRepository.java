@@ -44,7 +44,7 @@ public interface ApplicationCodeRepository extends JpaRepository<ApplicationCode
      *
      * @param code The code to find
      * @param title The title
-     * @param applyLodgementDate The lodgement date
+     * @param applyLodgementDate The lodgement date will be a[[lied or not
      * @param fromTs The from time
      * @param toTs The to time
      * @param pageable The pagaeable data to further the results
@@ -54,10 +54,10 @@ public interface ApplicationCodeRepository extends JpaRepository<ApplicationCode
             """
         SELECT c
         FROM ApplicationCode c
-        LEFT JOIN c.applicationListEntryList ale
         WHERE (:code IS NULL OR c.code = :code)
-          AND (:title IS NULL OR c.title = :title)
-          AND ( :applyLodgementDate = false OR ale.lodgementDate >= :fromTs AND ale.lodgementDate < :toTs)
+        AND (:title IS NULL OR c.title = :title)
+        AND ( :applyLodgementDate = false OR c.id IN (SELECT ale.applicationCode.id FROM ApplicationListEntry ale
+                where ale.lodgementDate >= :fromTs AND ale.lodgementDate < :toTs))
         """)
     Page<ApplicationCode> search(
             @Param("code") String code,

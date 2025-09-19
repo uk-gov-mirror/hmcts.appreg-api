@@ -5,9 +5,8 @@ public class RoleNames {
     public static final String ADMIN_ROLE = "Admin";
     public static final String ADMIN_ROLE_RESTRICTION = "hasRole('Admin')";
 
-    public static final String USER_ROLE = "Admin";
+    public static final String USER_ROLE = "User";
     public static final String USER_ROLE_RESTRICTION = "hasRole('Admin')";
 
-    public static final String USER_ROLE_OR_ADMIN_ROLE_RESTRICTION =
-            "hasRole('Admin') or hasRole('User')";
+    public static final String USER_ROLE_OR_ADMIN_ROLE_RESTRICTION = "hasAnyRole('Admin', 'User')";
 }
