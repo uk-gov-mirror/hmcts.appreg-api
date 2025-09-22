@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.criminaljusticearea.mapper;
+package uk.gov.hmcts.appregister.criminaljusticearea.service;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.notNull;
@@ -23,7 +23,8 @@ import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
-import uk.gov.hmcts.appregister.criminaljusticearea.service.CriminalJusticeServiceImpl;
+import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
+import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapperImpl;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
 
 @ExtendWith(MockitoExtension.class)
