@@ -54,11 +54,11 @@ public class CriminalJusticeRepositoryTest extends BasePostgresIntegrationTest {
                     expectAllCommonEntityFields(
                             dataToPersist, criminalJusticeAreaToAssertAgainst.get());
                     assertEquals(
-                            dataToPersist.getCjaCode(),
-                            criminalJusticeAreaToAssertAgainst.get().getCjaCode());
+                            dataToPersist.getCode(),
+                            criminalJusticeAreaToAssertAgainst.get().getCode());
                     assertEquals(
-                            dataToPersist.getCjaDescription(),
-                            criminalJusticeAreaToAssertAgainst.get().getCjaDescription());
+                            dataToPersist.getDescription(),
+                            criminalJusticeAreaToAssertAgainst.get().getDescription());
                 });
     }
 }

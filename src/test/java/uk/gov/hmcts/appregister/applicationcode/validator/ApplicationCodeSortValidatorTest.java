@@ -1,32 +1,33 @@
-package uk.gov.hmcts.appregister.applicationcode;
+package uk.gov.hmcts.appregister.applicationcode.validator;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
-import uk.gov.hmcts.appregister.applicationcode.validator.ApplicationCodeSortValidator;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
+import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 
 public class ApplicationCodeSortValidatorTest {
     private ApplicationCodeSortValidator validator;
 
     @BeforeEach
-    public void before() {
+    void before() {
         validator = new ApplicationCodeSortValidator();
     }
 
     @Test
-    public void testFailureValidation() {
+    void testFailureValidation() {
         AppRegistryException exception =
                 Assertions.assertThrows(
                         AppRegistryException.class, () -> validator.validate("does not exist"));
         Assertions.assertEquals(
-                AppCodeError.SORT_NOT_SUITABLE.getCode(), exception.getCode().getCode());
+                CommonAppError.SORT_NOT_SUITABLE.getCode(), exception.getCode().getCode());
     }
 
     @Test
-    public void testSuccessfulValidation() {
-        // if no exception occurs then we succeed the test, no assertions required
-        validator.validate(ApplicationCodeSortValidator.VALID_SORT_VALUES[0]);
+    void testSuccessfulValidation() {
+        for (String sortParam : validator.getValidSortProperties()) {
+            // if no exception occurs then we succeed the test, no assertions required
+            validator.validate(sortParam);
+        }
     }
 }
