@@ -1,8 +1,6 @@
 package uk.gov.hmcts.appregister.criminaljusticearea.service;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
@@ -18,11 +16,11 @@ public interface CriminalJusticeService {
 
     /**
      * find all of the criminal justice areas, optionally filtered by code and/or description.
+     *
      * @param code The code to filter by (optional)
      * @param description The description to filter by (optional)
      * @param pageable The pageable details to establish a page of data
      * @return The pageable data that is returned
      */
-    CriminalJusticeAreaPage findAll(
-            String code, String description, Pageable pageable);
+    CriminalJusticeAreaPage findAll(String code, String description, Pageable pageable);
 }

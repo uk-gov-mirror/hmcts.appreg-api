@@ -64,19 +64,19 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                 AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDITS_EVENT,
                 (req) -> {
                     org.springframework.data.domain.Page<CriminalJusticeArea> criminalJusticeList =
-                            criminalJusticeAreaRepository.search(
-                                    code,
-                                    description,
-                                    pageable);
+                            criminalJusticeAreaRepository.search(code, description, pageable);
 
                     CriminalJusticeAreaPage criminalJusticeAreaPage = new CriminalJusticeAreaPage();
-                    criminalJusticeList.stream().forEach((entry) -> {
-                        pageMapper.toPage(criminalJusticeList, criminalJusticeAreaPage);
-                        criminalJusticeAreaPage.addContentItem(criminalJusticeMapper.toDto(entry));
-                    });
+                    pageMapper.toPage(criminalJusticeList, criminalJusticeAreaPage);
+                    criminalJusticeList.stream()
+                            .forEach(
+                                    (entry) -> {
+                                        criminalJusticeAreaPage.addContentItem(
+                                                criminalJusticeMapper.toDto(entry));
+                                    });
 
                     return Optional.of(criminalJusticeAreaPage);
-                    },
+                },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 }

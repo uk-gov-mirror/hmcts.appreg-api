@@ -4,7 +4,8 @@ import org.junit.jupiter.api.Assertions;
 import uk.gov.hmcts.appregister.generated.model.Page;
 
 /**
- * Asserts around the new paging open api specification. See {@link uk.gov.hmcts.appregister.generated.model.Page}
+ * Asserts around the new paging open api specification. See {@link
+ * uk.gov.hmcts.appregister.generated.model.Page}
  */
 public class PagingAssertionUtil {
     public static void assertPageDetails(
