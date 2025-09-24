@@ -3,7 +3,7 @@ package uk.gov.hmcts.appregister.criminaljusticearea.mapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 public class CriminalJusticeAreaMapperTest {
     @Test
@@ -17,7 +17,7 @@ public class CriminalJusticeAreaMapperTest {
         area.setCjaDescription(description);
 
         CriminalJusticeMapperImpl criminalJusticeMapper = new CriminalJusticeMapperImpl();
-        CriminalJusticeAreaDto actual = criminalJusticeMapper.toDto(area);
+        CriminalJusticeAreaGetDto actual = criminalJusticeMapper.toDto(area);
 
         // assert
         Assertions.assertEquals(code, actual.getCode());
