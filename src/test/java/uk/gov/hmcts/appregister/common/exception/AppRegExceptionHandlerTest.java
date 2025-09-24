@@ -28,7 +28,7 @@ class AppRegExceptionHandlerTest {
 
         // execute
         ResponseEntity<ProblemDetail> problemDetail =
-                exceptionHandler.handleDartsApiException(exception);
+                exceptionHandler.handleAppRegisterApiException(exception);
 
         // assert
         Assertions.assertEquals(HttpStatusCode.valueOf(404), problemDetail.getStatusCode());
@@ -45,7 +45,7 @@ class AppRegExceptionHandlerTest {
     }
 
     @Test
-    public void
+    void
             givenAnAppRegisterExceptionWithAppCode_whenTheExceptionIsThrown_thenAProblemDetailIsaReturned()
                     throws Exception {
         String customMessage = "Custom message";
@@ -62,7 +62,7 @@ class AppRegExceptionHandlerTest {
 
         // execute
         ResponseEntity<ProblemDetail> problemDetail =
-                exceptionHandler.handleDartsApiException(exception);
+                exceptionHandler.handleAppRegisterApiException(exception);
 
         // assert
         Assertions.assertEquals(HttpStatusCode.valueOf(400), problemDetail.getStatusCode());
