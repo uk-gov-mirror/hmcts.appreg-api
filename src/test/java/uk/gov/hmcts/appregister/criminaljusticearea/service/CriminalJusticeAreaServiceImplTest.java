@@ -25,7 +25,7 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapperImpl;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 @ExtendWith(MockitoExtension.class)
 public class CriminalJusticeAreaServiceImplTest {
@@ -56,7 +56,7 @@ public class CriminalJusticeAreaServiceImplTest {
                                         .cjaDescription("Test Area")
                                         .build()));
 
-        CriminalJusticeAreaDto criminalJusticeAreaDto = service.findByCode(code);
+        CriminalJusticeAreaGetDto criminalJusticeAreaDto = service.findByCode(code);
 
         Assertions.assertEquals(code, criminalJusticeAreaDto.getCode());
         Assertions.assertEquals(description, criminalJusticeAreaDto.getDescription());
@@ -83,7 +83,7 @@ public class CriminalJusticeAreaServiceImplTest {
                                         .cjaDescription("Test Area")
                                         .build()));
 
-        CriminalJusticeAreaDto criminalJusticeAreaDto = service.findByCode(code);
+        CriminalJusticeAreaGetDto criminalJusticeAreaDto = service.findByCode(code);
 
         Assertions.assertEquals(code, criminalJusticeAreaDto.getCode());
         Assertions.assertEquals(description, criminalJusticeAreaDto.getDescription());

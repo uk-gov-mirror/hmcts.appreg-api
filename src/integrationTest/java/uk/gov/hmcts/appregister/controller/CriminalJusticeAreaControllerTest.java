@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
@@ -42,10 +42,11 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
         // assert the response
         responseSpec.then().statusCode(200);
 
-        CriminalJusticeAreaDto responseContent = responseSpec.as(CriminalJusticeAreaDto.class);
+        CriminalJusticeAreaGetDto responseContent =
+                responseSpec.as(CriminalJusticeAreaGetDto.class);
 
         // assert the core payload
-        CriminalJusticeAreaDto criminalJusticeAreaDto =
+        CriminalJusticeAreaGetDto criminalJusticeAreaDto =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
@@ -86,9 +87,9 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
                 EXPECTED_GET_CRIMINAL_JUSTICE_AREA_AUDIT_ACTION, logCaptor.getInfoLogs().get(1));
     }
 
-    private CriminalJusticeAreaDto generateDefaultCriminalJusticeDtoAssertionPayload(
+    private CriminalJusticeAreaGetDto generateDefaultCriminalJusticeDtoAssertionPayload(
             String code, String description) {
-        return new CriminalJusticeAreaDto(code, description);
+        return new CriminalJusticeAreaGetDto(code, description);
     }
 
     @Override

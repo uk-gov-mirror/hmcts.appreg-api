@@ -1,6 +1,6 @@
 package uk.gov.hmcts.appregister.criminaljusticearea.service;
 
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 /** Service interface for criminal justice areax. */
 public interface CriminalJusticeService {
@@ -10,5 +10,5 @@ public interface CriminalJusticeService {
      * @param code The code to find
      * @return The criminal justice area that has matched the code
      */
-    CriminalJusticeAreaDto findByCode(String code);
+    CriminalJusticeAreaGetDto findByCode(String code);
 }
