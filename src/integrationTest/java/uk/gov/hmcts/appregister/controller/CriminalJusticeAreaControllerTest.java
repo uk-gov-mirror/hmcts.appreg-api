@@ -14,7 +14,7 @@ import org.springframework.http.HttpMethod;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
@@ -64,10 +64,11 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
         // assert the response
         responseSpec.then().statusCode(200);
 
-        CriminalJusticeAreaDto responseContent = responseSpec.as(CriminalJusticeAreaDto.class);
+        CriminalJusticeAreaGetDto responseContent =
+                responseSpec.as(CriminalJusticeAreaGetDto.class);
 
         // assert the core payload
-        CriminalJusticeAreaDto criminalJusticeAreaDto =
+        CriminalJusticeAreaGetDto criminalJusticeAreaDto =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
@@ -127,11 +128,11 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
                 responseContent, DEFAULT_PAGE_SIZE, 0, 1, TOTAL_CJA_COUNT);
 
         // assert the expected default order and content
-        CriminalJusticeAreaDto expectedCriminalJusticeArea =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
-        CriminalJusticeAreaDto expectedCriminalJusticeArea2 =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea2 =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE1, EXPECTED_DESCRIPTION1);
 
@@ -171,11 +172,11 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
         PagingAssertionUtil.assertPageDetails(responseContent, 2, 0, 2, TOTAL_CJA_COUNT);
 
         // assert the expected default order and content
-        CriminalJusticeAreaDto expectedCriminalJusticeArea =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
-        CriminalJusticeAreaDto expectedCriminalJusticeArea2 =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea2 =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE1, EXPECTED_DESCRIPTION1);
 
@@ -215,7 +216,7 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
                 responseContent, DEFAULT_PAGE_SIZE, 0, 1, TOTAL_CJA_COUNT);
 
         // assert the expected order and content
-        CriminalJusticeAreaDto expectedCriminalJusticeArea =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE2, EXPECTED_DESCRIPTION2);
 
@@ -282,7 +283,7 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
         PagingAssertionUtil.assertPageDetails(responseContent, 2, 0, 1, 1);
 
         // assert the expected default order and content
-        CriminalJusticeAreaDto expectedCriminalJusticeArea =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
@@ -324,7 +325,7 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
         PagingAssertionUtil.assertPageDetails(responseContent, 2, 0, 1, 1);
 
         // assert the expected default order and content
-        CriminalJusticeAreaDto expectedCriminalJusticeArea =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
@@ -368,7 +369,7 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
         PagingAssertionUtil.assertPageDetails(responseContent, 2, 0, 1, 1);
 
         // assert the expected default order and content
-        CriminalJusticeAreaDto expectedCriminalJusticeArea =
+        CriminalJusticeAreaGetDto expectedCriminalJusticeArea =
                 generateDefaultCriminalJusticeDtoAssertionPayload(
                         EXPECTED_CODE, EXPECTED_DESCRIPTION);
 
@@ -382,9 +383,9 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
                 EXPECTED_GET_CRIMINAL_JUSTICE_AREAS_AUDIT_ACTION, logCaptor.getInfoLogs().get(1));
     }
 
-    private CriminalJusticeAreaDto generateDefaultCriminalJusticeDtoAssertionPayload(
+    private CriminalJusticeAreaGetDto generateDefaultCriminalJusticeDtoAssertionPayload(
             String code, String description) {
-        return new CriminalJusticeAreaDto(code, description);
+        return new CriminalJusticeAreaGetDto(code, description);
     }
 
     @Override

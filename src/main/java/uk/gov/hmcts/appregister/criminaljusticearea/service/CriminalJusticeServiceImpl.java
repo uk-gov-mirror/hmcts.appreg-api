@@ -15,7 +15,7 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
 @Component
@@ -29,14 +29,14 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
     private final PageMapper pageMapper;
 
     @Override
-    public CriminalJusticeAreaDto findByCode(String code) {
+    public CriminalJusticeAreaGetDto findByCode(String code) {
         return auditService.processAudit(
                 AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT,
                 req -> {
                     final List<CriminalJusticeArea> criminalJusticeAreaList =
                             criminalJusticeAreaRepository.findByCode(code);
 
-                    CriminalJusticeAreaDto codeToConsider = null;
+                    CriminalJusticeAreaGetDto codeToConsider = null;
 
                     // if empty throw an exception
                     if (criminalJusticeAreaList.isEmpty()) {

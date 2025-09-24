@@ -12,7 +12,7 @@ import uk.gov.hmcts.appregister.common.security.RoleNames;
 import uk.gov.hmcts.appregister.criminaljusticearea.service.CriminalJusticeService;
 import uk.gov.hmcts.appregister.criminaljusticearea.validator.CriminalJusticeAreaSortValidator;
 import uk.gov.hmcts.appregister.generated.api.CriminalJusticeAreasApi;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
 /** The core controller for the criminal justice area. */
@@ -25,8 +25,8 @@ public class CriminalJusticeAreaController implements CriminalJusticeAreasApi {
 
     @Override
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
-    public ResponseEntity<CriminalJusticeAreaDto> getCriminalJusticeAreaByCode(String code) {
-        CriminalJusticeAreaDto criminalJusticeAreaDto = criminalJusticeService.findByCode(code);
+    public ResponseEntity<CriminalJusticeAreaGetDto> getCriminalJusticeAreaByCode(String code) {
+        CriminalJusticeAreaGetDto criminalJusticeAreaDto = criminalJusticeService.findByCode(code);
         return ResponseEntity.ok().body(criminalJusticeAreaDto);
     }
 

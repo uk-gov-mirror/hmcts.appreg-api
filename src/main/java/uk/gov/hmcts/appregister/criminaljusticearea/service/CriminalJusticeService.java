@@ -1,10 +1,10 @@
 package uk.gov.hmcts.appregister.criminaljusticearea.service;
 
 import org.springframework.data.domain.Pageable;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
-/** Service interface for criminal justice areax. */
+/** Service interface for criminal justice area. */
 public interface CriminalJusticeService {
     /**
      * gets a criminal justice area by its code.
@@ -12,7 +12,7 @@ public interface CriminalJusticeService {
      * @param code The code to find
      * @return The criminal justice area that has matched the code
      */
-    CriminalJusticeAreaDto findByCode(String code);
+    CriminalJusticeAreaGetDto findByCode(String code);
 
     /**
      * find all of the criminal justice areas, optionally filtered by code and/or description.

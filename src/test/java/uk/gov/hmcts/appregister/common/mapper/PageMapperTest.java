@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaDto;
+import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 import uk.gov.hmcts.appregister.generated.model.SortOrdersInner;
 
@@ -22,7 +22,7 @@ public class PageMapperTest {
         pageable = pageable.withSort(sort);
 
         PageMapper mapper = new PageMapper();
-        Page<?> page = new PageImpl<CriminalJusticeAreaDto>(List.of(), pageable, 25);
+        Page<?> page = new PageImpl<CriminalJusticeAreaGetDto>(List.of(), pageable, 25);
 
         CriminalJusticeAreaPage criminalJusticeAreaPage = new CriminalJusticeAreaPage();
         mapper.toPage(page, criminalJusticeAreaPage);
@@ -44,7 +44,7 @@ public class PageMapperTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         PageMapper mapper = new PageMapper();
-        Page<?> page = new PageImpl<CriminalJusticeAreaDto>(List.of(), pageable, 25);
+        Page<?> page = new PageImpl<CriminalJusticeAreaGetDto>(List.of(), pageable, 25);
 
         CriminalJusticeAreaPage criminalJusticeAreaPage = new CriminalJusticeAreaPage();
         mapper.toPage(page, criminalJusticeAreaPage);
