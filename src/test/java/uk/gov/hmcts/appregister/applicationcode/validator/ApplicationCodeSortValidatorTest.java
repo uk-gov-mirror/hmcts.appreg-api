@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 
-public class ApplicationCodeSortValidatorTest {
+class ApplicationCodeSortValidatorTest {
     private ApplicationCodeSortValidator validator;
 
     @BeforeEach

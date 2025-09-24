@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
-public class PageableMapperTest {
+class PageableMapperTest {
 
     @Test
-    public void testPageableTest() {
+    void testPageableTest() {
         PageableMapper appPageable = new PageableMapper();
         appPageable.setMaxPageSize(10);
         appPageable.setDefaultPageSize(23);
@@ -23,7 +23,7 @@ public class PageableMapperTest {
     }
 
     @Test
-    public void testPageableDefaultSort() {
+    void testPageableDefaultSort() {
         PageableMapper appPageable = new PageableMapper();
         appPageable.setMaxPageSize(10);
         appPageable.setDefaultPageSize(23);
@@ -39,7 +39,7 @@ public class PageableMapperTest {
     }
 
     @Test
-    public void testPageableMultiSort() {
+    void testPageableMultiSort() {
         PageableMapper appPageable = new PageableMapper();
         appPageable.setMaxPageSize(10);
         appPageable.setDefaultPageSize(23);
@@ -62,7 +62,7 @@ public class PageableMapperTest {
     }
 
     @Test
-    public void testPageableDefault() {
+    void testPageableDefault() {
         PageableMapper appPageable = new PageableMapper();
         appPageable.setMaxPageSize(100);
         appPageable.setDefaultPageSize(23);
@@ -85,7 +85,7 @@ public class PageableMapperTest {
     }
 
     @Test
-    public void testPageableCapAtMaxSize() {
+    void testPageableCapAtMaxSize() {
         PageableMapper appPageable = new PageableMapper();
         appPageable.setMaxPageSize(100);
         appPageable.setDefaultPageSize(23);

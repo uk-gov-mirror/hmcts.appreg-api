@@ -28,7 +28,7 @@ import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 @ExtendWith(MockitoExtension.class)
-public class CriminalJusticeAreaServiceImplTest {
+class CriminalJusticeAreaServiceImplTest {
     @Mock private CriminalJusticeAreaRepository repository;
 
     @Spy
@@ -44,7 +44,7 @@ public class CriminalJusticeAreaServiceImplTest {
     @InjectMocks private CriminalJusticeServiceImpl service;
 
     @Test
-    public void testSuccess() {
+    void testSuccess() {
         String code = "X123";
         String description = "Test Area";
 
@@ -67,7 +67,7 @@ public class CriminalJusticeAreaServiceImplTest {
     }
 
     @Test
-    public void testSuccessOnDuplicate() {
+    void testSuccessOnDuplicate() {
         String code = "X123";
         String description = "Test Area";
 
@@ -93,7 +93,7 @@ public class CriminalJusticeAreaServiceImplTest {
     }
 
     @Test
-    public void testInvalid() {
+    void testInvalid() {
         String code = "X123";
 
         when(repository.findByCode(code)).thenReturn(List.of());
