@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.common.mapper;
 
 import org.springframework.stereotype.Component;
-
 import uk.gov.hmcts.appregister.generated.model.Sort;
 import uk.gov.hmcts.appregister.generated.model.SortOrdersInner;
 
@@ -45,10 +44,9 @@ public class PageMapper {
             var item = new SortOrdersInner();
             item.setProperty(o.getProperty());
             item.setDirection(
-                o.getDirection() == org.springframework.data.domain.Sort.Direction.ASC
-                    ? SortOrdersInner.DirectionEnum.ASC
-                    : SortOrdersInner.DirectionEnum.DESC
-            );
+                    o.getDirection() == org.springframework.data.domain.Sort.Direction.ASC
+                            ? SortOrdersInner.DirectionEnum.ASC
+                            : SortOrdersInner.DirectionEnum.DESC);
             s.addOrdersItem(item);
         }
         return s;
