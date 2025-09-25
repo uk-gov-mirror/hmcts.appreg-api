@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.testutils.client;
 
-/** Paging query meta data. Allows tests to use different query parameter names for paging. */
+/**
+ * Paging query meta data. Allows tests to use different query parameter names for paging.
+ */
 public interface PageMetaData {
 
     /**

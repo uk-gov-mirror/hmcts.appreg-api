@@ -5,7 +5,9 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 
-/** Repository interface for managing ApplicationList entities. */
+/**
+ * Repository interface for managing ApplicationList entities.
+ */
 public interface ApplicationListRepository extends JpaRepository<ApplicationList, Long> {
 
     /**

@@ -2,7 +2,9 @@ package uk.gov.hmcts.appregister.standardapplicant.dto;
 
 import java.time.LocalDate;
 
-/** DTO for Standard Applicant. */
+/**
+ * DTO for Standard Applicant.
+ */
 public record StandardApplicantDto(
         Long id,
         String applicantCode,

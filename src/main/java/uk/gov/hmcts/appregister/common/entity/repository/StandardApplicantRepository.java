@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 
-/** Repository for StandardApplicant entities. */
+/**
+ * Repository for StandardApplicant entities.
+ */
 @Repository
 public interface StandardApplicantRepository extends JpaRepository<StandardApplicant, Long> {
 

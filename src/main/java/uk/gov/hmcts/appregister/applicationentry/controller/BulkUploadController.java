@@ -17,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.appregister.applicationentry.dto.BulkUploadResponseDto;
 import uk.gov.hmcts.appregister.applicationentry.service.BulkUploadService;
 
-/** Controller for handling bulk upload of application entries via CSV files. */
+/**
+ * Controller for handling bulk upload of application entries via CSV files.
+ */
 @RestController
 @RequestMapping("/application-lists")
 @RequiredArgsConstructor

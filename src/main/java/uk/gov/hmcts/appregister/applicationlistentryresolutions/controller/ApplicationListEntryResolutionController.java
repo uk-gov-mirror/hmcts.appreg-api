@@ -21,7 +21,9 @@ import uk.gov.hmcts.appregister.applicationlistentryresolutions.dto.ApplicationL
 import uk.gov.hmcts.appregister.applicationlistentryresolutions.dto.ApplicationListEntryResolutionWriteDto;
 import uk.gov.hmcts.appregister.applicationlistentryresolutions.service.ApplicationListEntryResolutionService;
 
-/** REST controller for managing application results. */
+/**
+ * REST controller for managing application results.
+ */
 @RestController
 @RequestMapping("/application-lists/{listId}/applications")
 @RequiredArgsConstructor

@@ -43,9 +43,9 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
     private static final String EXPECTED_GET_CRIMINAL_JUSTICE_AREAS_AUDIT_ACTION =
             AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDITS_EVENT.getEventName();
 
-    private static final Integer DEFAULT_PAGE_SIZE = 20;
+    private static final Integer DEFAULT_PAGE_SIZE = 10;
 
-    /** The total criminal justice area inserted by flyway scripts. See V6__InitialTestData.sql */
+    // The total criminal justice area inserted by flyway scripts. See V6__InitialTestData.sql
     private static final int TOTAL_CJA_COUNT = 4;
 
     @Test

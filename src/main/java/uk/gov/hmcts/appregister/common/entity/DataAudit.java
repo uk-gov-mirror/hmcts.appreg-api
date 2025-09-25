@@ -21,7 +21,9 @@ import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.Changeable;
 import uk.gov.hmcts.appregister.common.entity.base.PreCreateUpdateEntityListener;
 
-/** Entity for Data Audit table. */
+/**
+ * Entity for Data Audit table.
+ */
 @Entity
 @Table(name = "data_audit")
 @NoArgsConstructor

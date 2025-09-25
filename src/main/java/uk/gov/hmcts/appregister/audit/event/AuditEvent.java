@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.ToString;
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 
-/** Encapsulates the audit request and response. */
+/**
+ * Encapsulates the audit request and response.
+ */
 @Getter
 @AllArgsConstructor
 @ToString

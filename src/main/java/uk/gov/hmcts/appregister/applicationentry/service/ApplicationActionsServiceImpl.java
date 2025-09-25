@@ -12,7 +12,9 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRep
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 
-/** Service for handling application actions such as moving applications between lists. */
+/**
+ * Service for handling application actions such as moving applications between lists.
+ */
 @Service
 @RequiredArgsConstructor
 public class ApplicationActionsServiceImpl implements ApplicationActionsService {

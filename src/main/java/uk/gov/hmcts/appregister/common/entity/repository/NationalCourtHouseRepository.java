@@ -5,84 +5,78 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 
 /**
- * Spring Data repository for {@link NationalCourtHouse}.
+ * Spring Data JPA repository for {@link NationalCourtHouse} entities.
  *
- * <p>Features:
- *
- * <ul>
- *   <li>Paging &amp; sorting via {@link PagingAndSortingRepository}
- *   <li>Specification support via {@link JpaSpecificationExecutor}
- *   <li>A custom JPQL search that supports optional filters
- * </ul>
- *
- * <p><b>Notes on the custom search:</b>
- *
- * <ul>
- *   <li>All parameters are optional; when a parameter is {@code null}, its predicate is ignored.
- *   <li>Name filtering is a case-insensitive {@code contains} match using {@code lower(...)}.
- *   <li>Date range semantics:
- *       <ul>
- *         <li>{@code startFrom}/{@code startTo} bound the entity's {@code startDate} inclusively.
- *         <li>{@code endFrom} treats {@code endDate = null} as "still active" (included) or a date
- *             on/after {@code endFrom}.
- *         <li>{@code endTo} includes rows with {@code endDate} on/before {@code endTo}.
- *       </ul>
- *   <li>If you ever see a Postgres error like <i>"function lower(bytea) does not exist"</i>, ensure
- *       the bound parameter is a string/varchar. An alternative is to pre-build a {@code %pattern%}
- *       on the Java side and use {@code LOWER(n.name) LIKE :namePattern} (with {@code namePattern}
- *       already lower-cased).
- *   <li>Make sure {@code n.name} matches the actual entity property (e.g. if your field is {@code
- *       courthouseName}, update the query accordingly).
- * </ul>
+ * <p>Provides access to National Court Houses (NCH) stored in the {@code national_court_houses}
+ * table. Includes custom queries for retrieving active court locations by code/date and paginated
+ * searches with optional filters.
  */
-public interface NationalCourtHouseRepository
-        extends PagingAndSortingRepository<NationalCourtHouse, Long>,
-                JpaSpecificationExecutor<NationalCourtHouse> {
+public interface NationalCourtHouseRepository extends JpaRepository<NationalCourtHouse, Long> {
 
     /**
-     * Searches {@link NationalCourtHouse} rows applying the provided (nullable) filters.
+     * Find an active Court Location of type CHOA by code and date.
      *
-     * <p>Sorting is provided by the {@link Pageable} argument unless you hardcode an {@code ORDER
-     * BY} in the JPQL.
+     * <p>Matches records where:
      *
-     * @param name optional courthouse name fragment (case-insensitive contains)
-     * @param courtType optional exact court type match
-     * @param startFrom optional lower bound (inclusive) for {@code startDate}
-     * @param startTo optional upper bound (inclusive) for {@code startDate}
-     * @param endFrom optional lower bound (inclusive) for {@code endDate}; {@code null} endDate is
-     *     treated as active
-     * @param endTo optional upper bound (inclusive) for {@code endDate}
-     * @param pageable page + size (+ optional sort)
-     * @return a page of matching {@link NationalCourtHouse} entities
+     * <ul>
+     *   <li>{@code courtType} = CHOA
+     *   <li>{@code courtLocationCode} equals {@code code}, case-insensitive
+     *   <li>{@code startDate} is on or before {@code date}
+     *   <li>{@code endDate} is {@code null} (still active)
+     * </ul>
+     *
+     * <p>This query may return zero, one, or multiple results. Service layer is responsible for
+     * enforcing uniqueness.
+     *
+     * @param code business identifier for the Court Location
+     * @param date date on which the Court Location must be valid
+     * @return list of matching active courts
      */
     @Query(
             """
-            SELECT n
-            FROM NationalCourtHouse n
-            WHERE (:courtType IS NULL OR n.courtType = :courtType)
-              AND (:name IS NULL OR lower(n.name) LIKE concat('%', lower(cast(:name as string)), '%'))
-              AND (:startFrom IS NULL OR n.startDate >= :startFrom)
-              AND (:startTo   IS NULL OR n.startDate <= :startTo)
-              AND (:endFrom  IS NULL OR n.endDate IS NULL OR n.endDate >= :endFrom)
-              AND (:endTo    IS NULL OR n.endDate <= :endTo)
-            """)
-    Page<NationalCourtHouse> search(
-            @Param("name") String name,
-            @Param("courtType") String courtType,
-            @Param("startFrom") LocalDate startFrom,
-            @Param("startTo") LocalDate startTo,
-            @Param("endFrom") LocalDate endFrom,
-            @Param("endTo") LocalDate endTo,
-            Pageable pageable);
+        SELECT nch
+        FROM NationalCourtHouse nch
+        WHERE nch.courtType = 'CHOA'
+          AND LOWER(nch.courtLocationCode) = LOWER(:code)
+          AND nch.startDate <= :date
+          AND nch.endDate IS NULL
+        """)
+    List<NationalCourtHouse> findActiveCourt(
+            @Param("code") String code, @Param("date") LocalDate date);
 
-    /** Convenience method for single-row lookup. */
+    /**
+     * Retrieve a paginated list of active Court Locations of type CHOA.
+     *
+     * <p>Filters applied if non-null:
+     *
+     * <ul>
+     *   <li>{@code code} — case-insensitive partial match on courtLocationCode
+     *   <li>{@code name} — case-insensitive partial match on courthouse name
+     * </ul>
+     *
+     * @param code optional filter for court location code
+     * @param name optional filter for courthouse name
+     * @param pageable Spring Data paging and sorting configuration
+     * @return page of matching Court Locations
+     */
+    @Query(
+            """
+        SELECT nch
+        FROM NationalCourtHouse nch
+        WHERE nch.courtType = 'CHOA'
+          AND nch.endDate IS NULL
+          AND (:code IS NULL OR LOWER(nch.courtLocationCode) LIKE LOWER(CONCAT('%', :code, '%')))
+          AND (:name IS NULL OR LOWER(nch.name) LIKE LOWER(CONCAT('%', :name, '%')))
+        """)
+    Page<NationalCourtHouse> findAllActiveCourts(
+            @Param("code") String code, @Param("name") String name, Pageable pageable);
+
     Optional<NationalCourtHouse> findById(Long id);
 
     List<NationalCourtHouse> findByIdGreaterThanEqual(Integer value);

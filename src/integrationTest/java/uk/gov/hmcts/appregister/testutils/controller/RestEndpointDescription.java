@@ -11,7 +11,9 @@ import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
-/** A description of a rest endpoints and the data surrounding it. */
+/**
+ * A description of a rest endpoints and the data surrounding it.
+ */
 @Builder
 @Getter
 public class RestEndpointDescription {

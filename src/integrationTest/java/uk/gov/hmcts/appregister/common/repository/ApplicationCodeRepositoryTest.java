@@ -27,7 +27,7 @@ public class ApplicationCodeRepositoryTest extends BasePostgresIntegrationTest {
 
     @Autowired private UserProvider loggedInUser;
 
-    /** The total app codes inserted by flyway scripts. See V6__InitialTestData.sql */
+    // The total app codes inserted by flyway scripts. See V6__InitialTestData.sql
     private static final int TOTAL_APP_CODES_COUNT = 42;
 
     @Test

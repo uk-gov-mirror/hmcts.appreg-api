@@ -6,15 +6,17 @@ import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListDto;
 import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListWriteDto;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
-import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
-import uk.gov.hmcts.appregister.nationalcourthouse.mapper.NationalCourtHouseMapper;
+import uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper;
+import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
 
-/** Mapper for ApplicationList entity and its DTOs. */
+/**
+ * Mapper for ApplicationList entity and its DTOs.
+ */
 @RequiredArgsConstructor
 @Component
 public class ApplicationListMapper {
 
-    private final NationalCourtHouseMapper courtHouseMapper;
+    private final CourtLocationMapper courtHouseMapper;
 
     @SuppressWarnings("java:S1135")
     public ApplicationListDto toReadDto(ApplicationList entity) {
@@ -29,18 +31,7 @@ public class ApplicationListMapper {
 
         */
         // TODO: This will likely derive from a foreign key relation which does not currently exist
-        NationalCourtHouseDto courtHouseDto =
-                new NationalCourtHouseDto(
-                        null,
-                        entity.getCourthouseName(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null);
+        CourtLocationGetDetailDto courtHouseDto = new CourtLocationGetDetailDto();
 
         return new ApplicationListDto(
                 entity.getId(),

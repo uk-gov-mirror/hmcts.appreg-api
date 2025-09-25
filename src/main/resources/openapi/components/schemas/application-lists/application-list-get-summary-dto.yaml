@@ -1,5 +1,5 @@
 type: object
-description: Immutable DTO representing a summerised Application List.
+description: Lightweight DTO for Application Lists, used in list/search views.
 required:
   - id
   - date

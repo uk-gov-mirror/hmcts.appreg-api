@@ -10,7 +10,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 
-/** Repository interface for managing ApplicationCode entities. */
+/**
+ * Repository interface for managing ApplicationCode entities.
+ */
 @Repository
 public interface ApplicationCodeRepository extends JpaRepository<ApplicationCode, Long> {
 

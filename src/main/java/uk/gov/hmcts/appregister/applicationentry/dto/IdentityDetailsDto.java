@@ -2,7 +2,9 @@ package uk.gov.hmcts.appregister.applicationentry.dto;
 
 import java.time.OffsetDateTime;
 
-/** DTO representing identity details. */
+/**
+ * DTO representing identity details.
+ */
 public record IdentityDetailsDto(
         Long id,
         String code,

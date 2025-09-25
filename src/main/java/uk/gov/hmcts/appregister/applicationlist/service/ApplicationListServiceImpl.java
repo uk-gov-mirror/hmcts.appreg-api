@@ -15,7 +15,9 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListReposito
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 
-/** Service implementation for managing application lists. */
+/**
+ * Service implementation for managing application lists.
+ */
 @RequiredArgsConstructor
 @Service
 public class ApplicationListServiceImpl implements ApplicationListService {

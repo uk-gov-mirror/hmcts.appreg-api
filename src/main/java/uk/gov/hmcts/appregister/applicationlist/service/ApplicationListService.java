@@ -4,7 +4,9 @@ import java.util.List;
 import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListDto;
 import uk.gov.hmcts.appregister.applicationlist.dto.ApplicationListWriteDto;
 
-/** Service interface for managing application lists. */
+/**
+ * Service interface for managing application lists.
+ */
 public interface ApplicationListService {
     List<ApplicationListDto> getAll();
 

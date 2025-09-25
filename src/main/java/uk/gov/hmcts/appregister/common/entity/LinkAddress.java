@@ -22,7 +22,9 @@ import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 
-/** Represents a LinkAddress entity mapped to the "link_addresses" table in the database. */
+/**
+ * Represents a LinkAddress entity mapped to the "link_addresses" table in the database.
+ */
 @Entity
 @Table(name = "link_addresses")
 @NoArgsConstructor

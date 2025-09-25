@@ -2,7 +2,9 @@ package uk.gov.hmcts.appregister.common.enumeration;
 
 import lombok.Getter;
 
-/** Enumeration representing the status of a fee. */
+/**
+ * Enumeration representing the status of a fee.
+ */
 @Getter
 public enum FeeStatusType {
     DUE("Due"),

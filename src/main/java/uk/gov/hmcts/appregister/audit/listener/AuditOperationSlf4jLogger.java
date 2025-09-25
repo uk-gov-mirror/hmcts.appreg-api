@@ -6,7 +6,9 @@ import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
 import uk.gov.hmcts.appregister.audit.event.FailEvent;
 import uk.gov.hmcts.appregister.audit.event.StartEvent;
 
-/** Logs the request and response of audit events using SLF4J. */
+/**
+ * Logs the request and response of audit events using SLF4J.
+ */
 @Slf4j
 public class AuditOperationSlf4jLogger extends AuditOperationLifecycleListenerAdapter {
 

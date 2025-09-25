@@ -20,7 +20,9 @@ import uk.gov.hmcts.appregister.applicationcode.validator.ApplicationCodeSortVal
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode_;
 import uk.gov.hmcts.appregister.common.security.RoleNames;
 
-/** REST controller for managing application codes. */
+/**
+ * REST controller for managing application codes.
+ */
 @RestController
 @RequestMapping("/application-codes")
 @RequiredArgsConstructor

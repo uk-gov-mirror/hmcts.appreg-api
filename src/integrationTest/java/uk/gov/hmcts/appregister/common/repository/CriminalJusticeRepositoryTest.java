@@ -22,7 +22,7 @@ public class CriminalJusticeRepositoryTest extends BasePostgresIntegrationTest {
 
     @Autowired private TransactionalUnitOfWork transactionalUnitOfWork;
 
-    /** Count for the baseline integration test data in the flyway script. */
+    // Count for the baseline integration test data in the flyway script.
     private static final int BASELINE_TEST_COUNT = 4;
 
     @Test

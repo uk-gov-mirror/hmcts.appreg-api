@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Assertions;
 import uk.gov.hmcts.appregister.audit.event.OperationStatus;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
 
-/** A utility for making assertions around audit logs. */
+/**
+ * A utility for making assertions around audit logs.
+ */
 public class AuditAssertUtil {
 
     /**

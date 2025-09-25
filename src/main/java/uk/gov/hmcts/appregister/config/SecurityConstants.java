@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.config;
 
-/** Security-related constants used across the application. */
+/**
+ * Security-related constants used across the application.
+ */
 public final class SecurityConstants {
 
     private SecurityConstants() {

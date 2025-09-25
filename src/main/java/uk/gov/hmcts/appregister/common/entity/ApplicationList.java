@@ -25,7 +25,9 @@ import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 
-/** The ApplicationList entity represents a list of applications in the system. */
+/**
+ * The ApplicationList entity represents a list of applications in the system.
+ */
 @Entity
 @Table(name = "application_lists")
 @NoArgsConstructor

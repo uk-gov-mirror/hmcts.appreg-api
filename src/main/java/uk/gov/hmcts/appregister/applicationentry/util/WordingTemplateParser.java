@@ -6,7 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
-/** Service to parse wording templates and inject input fields. */
+/**
+ * Service to parse wording templates and inject input fields.
+ */
 @Service
 public class WordingTemplateParser {
 

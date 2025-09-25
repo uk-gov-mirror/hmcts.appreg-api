@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.report.fee.dto.FeeReportFilterDto;
 import uk.gov.hmcts.appregister.report.fee.service.FeeReportService;
 
-/** Controller for generating fee reports. */
+/**
+ * Controller for generating fee reports.
+ */
 @RestController
 @RequestMapping("/reports")
 @RequiredArgsConstructor

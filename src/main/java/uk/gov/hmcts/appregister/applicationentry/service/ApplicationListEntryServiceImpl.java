@@ -25,7 +25,9 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.common.validator.ValidationExceptionHandler;
 
-/** Service Implementation for managing Applications. */
+/**
+ * Service Implementation for managing Applications.
+ */
 @Service
 @RequiredArgsConstructor
 public class ApplicationListEntryServiceImpl implements ApplicationListEntryService {

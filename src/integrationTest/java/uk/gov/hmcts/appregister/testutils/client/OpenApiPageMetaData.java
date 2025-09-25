@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.testutils.client;
 
-/** This class represents the specific paging meta data related to the open api specifications. */
+/**
+ * This class represents the specific paging meta data related to the open api specifications.
+ */
 public class OpenApiPageMetaData implements PageMetaData {
     @Override
     public String getPageNumberQueryName() {

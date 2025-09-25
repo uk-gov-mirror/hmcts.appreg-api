@@ -3,7 +3,9 @@ package uk.gov.hmcts.appregister.testutils.docker;
 import java.io.IOException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 
-/** A command that allows us to start and stop a docker container. */
+/**
+ * A command that allows us to start and stop a docker container.
+ */
 public interface Command {
 
     /** Stops the container and cleans up any resources. */

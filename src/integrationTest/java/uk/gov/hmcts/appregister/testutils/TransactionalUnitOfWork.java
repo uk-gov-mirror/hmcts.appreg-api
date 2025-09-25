@@ -4,7 +4,9 @@ import java.util.concurrent.Callable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/** A unit of work class that allows us to write custom code in a transactional. */
+/**
+ * A unit of work class that allows us to write custom code in a transactional.
+ */
 @Component
 public class TransactionalUnitOfWork {
     @Transactional()

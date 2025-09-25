@@ -55,6 +55,13 @@ spotless {
     googleJavaFormat('1.22.0').aosp()
     trimTrailingWhitespace()
     endWithNewline()
+
+    // Expand single-line Javadocs into multi-line
+    replaceRegex(
+      'Expand one-line Javadocs',
+      '(?m)^/\\*\\* (.+) \\*/$',
+      '/**\n * $1\n */'
+    )
   }
 }
 

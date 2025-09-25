@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 
-/** A problem details class that allows to assert around problem details. */
+/**
+ * A problem details class that allows to assert around problem details.
+ */
 public class ProblemAssertUtil {
 
     /**

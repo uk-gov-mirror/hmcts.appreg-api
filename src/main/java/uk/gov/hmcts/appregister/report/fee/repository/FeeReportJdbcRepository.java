@@ -12,7 +12,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.appregister.report.fee.dto.FeeReportRowDto;
 
-/** Repository to run custom SQL queries for generating fee reports. */
+/**
+ * Repository to run custom SQL queries for generating fee reports.
+ */
 @RequiredArgsConstructor
 @Repository
 public class FeeReportJdbcRepository {

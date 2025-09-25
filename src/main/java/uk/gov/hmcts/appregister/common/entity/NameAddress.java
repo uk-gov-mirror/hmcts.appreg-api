@@ -19,7 +19,9 @@ import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 
-/** Represents a Name and Address entity mapped to the "name_address" table in the database. */
+/**
+ * Represents a Name and Address entity mapped to the "name_address" table in the database.
+ */
 @Entity
 @Table(name = "name_address")
 @NoArgsConstructor

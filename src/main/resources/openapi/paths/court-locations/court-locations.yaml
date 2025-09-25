@@ -22,7 +22,7 @@ get:
       description: Zero-based page index.
     - in: query
       name: size
-      schema: { type: integer, format: int32, minimum: 1, default: 20, maximum: 100}
+      schema: { type: integer, format: int32, minimum: 1, default: 10, maximum: 100}
       description: Page size.
     - in: query
       name: sort
