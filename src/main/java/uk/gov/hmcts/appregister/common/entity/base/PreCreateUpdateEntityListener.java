@@ -19,9 +19,7 @@ import uk.gov.hmcts.appregister.common.security.UserProvider;
 @RequiredArgsConstructor
 public class PreCreateUpdateEntityListener {
 
-    /**
- * The logged in user.
- */
+    /** The logged in user. */
     private final UserProvider userIdentity;
 
     private final Clock clock;

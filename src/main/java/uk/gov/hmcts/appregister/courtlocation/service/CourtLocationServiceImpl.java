@@ -1,6 +1,7 @@
 package uk.gov.hmcts.appregister.courtlocation.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -32,29 +33,19 @@ import uk.gov.hmcts.appregister.generated.model.CourtLocationPage;
 @Slf4j
 public class CourtLocationServiceImpl implements CourtLocationService {
 
-    /**
- * Service for wrapping operations in an auditable context.
- */
+    // Service for wrapping operations in an auditable context.
     private final AuditOperationService auditService;
 
-    /**
- * Lifecycle listeners invoked during audit processing.
- */
+    // Lifecycle listeners invoked during audit processing.
     private final List<AuditOperationLifecycleListener> auditLifecycleListeners;
 
-    /**
- * Repository for querying {@link NationalCourtHouse} entities.
- */
+    // Repository for querying {@link NationalCourtHouse} entities.
     private final NationalCourtHouseRepository repository;
 
-    /**
- * Mapper converting {@link NationalCourtHouse} entities to API DTOs.
- */
+    // Mapper converting {@link NationalCourtHouse} entities to API DTOs.
     private final CourtLocationMapper mapper;
 
-    /**
- * Mapper for transferring Spring Data {@link Page} metadata into API page objects. *
- */
+    // Mapper for transferring Spring Data {@link Page} metadata into API page objects.
     private final PageMapper pageMapper;
 
     /**
@@ -115,6 +106,13 @@ public class CourtLocationServiceImpl implements CourtLocationService {
 
                     // Populate the API page response with metadata
                     var responsePage = new CourtLocationPage();
+
+                    // Ensure content is never null: API spec requires an array, so return []
+                    // instead of null
+                    if (responsePage.getContent() == null) {
+                        responsePage.setContent(new ArrayList<>());
+                    }
+
                     pageMapper.toPage(dbPage, responsePage);
 
                     // Map each entity to a summary DTO and add to the page content

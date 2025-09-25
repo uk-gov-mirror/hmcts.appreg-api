@@ -37,9 +37,7 @@ public enum CourtLocationError implements ErrorCodeEnum {
                     "Multiple Court Locations found when only one was expected",
                     "CL-2"));
 
-    /**
- * Backing detail for the error code.
- */
+    /** Backing detail for the error code. */
     private final DefaultErrorDetail defaultErrorCode;
 
     CourtLocationError(DefaultErrorDetail defaultErrorCode) {

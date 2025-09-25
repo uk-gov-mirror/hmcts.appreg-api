@@ -18,34 +18,22 @@ import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 @Getter
 public class RestEndpointDescription {
 
-    /**
- * The url to call.
- */
+    /** The url to call. */
     private URL url;
 
-    /**
- * The method to call.
- */
+    /** The method to call. */
     private HttpMethod method;
 
-    /**
- * The invalid role.
- */
+    /** The invalid role. */
     @Builder.Default private RoleEnum invalidRole = RoleEnum.NONE;
 
-    /**
- * The success role.
- */
+    /** The success role. */
     @Builder.Default private RoleEnum successRole = RoleEnum.NONE;
 
-    /**
- * The payload for the operation.
- */
+    /** The payload for the operation. */
     private Object payload;
 
-    /**
- * The callback with the response for assertion purposes.
- */
+    /** The callback with the response for assertion purposes. */
     private Consumer<Response> responseConsumer;
 
     public Response process(RestAssuredClient client, TokenAndJwksKey tokenAndJwksKey)

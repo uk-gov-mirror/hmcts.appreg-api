@@ -9,12 +9,14 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 
 /**
  * A persistence class that knows how to install the data into the database in the correct order.
@@ -32,6 +34,8 @@ public class DatabasePersistance {
     @Autowired private ApplicationListEntryRepository applicationListEntryRepository;
 
     @Autowired private CriminalJusticeAreaRepository criminalJusticeAreaRepository;
+
+    @Autowired private NationalCourtHouseRepository nationalCourtHouseRepository;
 
     @Transactional
     public ApplicationCode save(ApplicationCode data) {
@@ -62,6 +66,11 @@ public class DatabasePersistance {
     @Transactional
     public CriminalJusticeArea save(CriminalJusticeArea data) {
         return criminalJusticeAreaRepository.save(data);
+    }
+
+    @Transactional
+    public NationalCourtHouse save(NationalCourtHouse data) {
+        return nationalCourtHouseRepository.save(data);
     }
 
     @Transactional

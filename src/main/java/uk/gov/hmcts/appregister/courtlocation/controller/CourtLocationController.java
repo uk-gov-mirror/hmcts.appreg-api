@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.courtlocation.controller;
 
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse_;
 import uk.gov.hmcts.appregister.common.mapper.PageableMapper;
@@ -32,22 +34,17 @@ import uk.gov.hmcts.appregister.generated.model.CourtLocationPage;
  * {@link RoleNames#USER_ROLE_OR_ADMIN_ROLE_RESTRICTION}.
  */
 @RestController
+@Validated
 @RequiredArgsConstructor
 public class CourtLocationController implements CourtLocationsApi {
 
-    /**
- * Service layer providing Court Location business logic.
- */
+    // Service layer providing Court Location business logic.
     private final CourtLocationService courtLocationService;
 
-    /**
- * Mapper converting OpenAPI paging params to Spring Data {@link Pageable}. *
- */
+    // Mapper converting OpenAPI paging params to Spring Data {@link Pageable}.
     private final PageableMapper pageableMapper;
 
-    /**
- * Validator ensuring requested sort fields are valid for Court Locations.
- */
+    // Validator ensuring requested sort fields are valid for Court Locations.
     private final CourtLocationsSortValidator sortValidator;
 
     /**
@@ -62,7 +59,7 @@ public class CourtLocationController implements CourtLocationsApi {
      */
     @Override
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
-    public ResponseEntity<CourtLocationGetDetailDto> getCourtLocationByCodeAndDate(
+    public ResponseEntity<@Valid CourtLocationGetDetailDto> getCourtLocationByCodeAndDate(
             String code, LocalDate date) {
         var courtLocationGetDetailDto = courtLocationService.findByCodeAndDate(code, date);
         return ResponseEntity.ok().body(courtLocationGetDetailDto);
@@ -90,7 +87,7 @@ public class CourtLocationController implements CourtLocationsApi {
      */
     @Override
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
-    public ResponseEntity<CourtLocationPage> getCourtLocations(
+    public ResponseEntity<@Valid CourtLocationPage> getCourtLocations(
             String name, String code, Integer page, Integer size, List<String> sort) {
 
         // Map OpenAPI paging params into a Spring Pageable with default sort by name ascending

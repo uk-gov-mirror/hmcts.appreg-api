@@ -59,7 +59,7 @@ spotless {
     // Expand single-line Javadocs into multi-line
     replaceRegex(
       'Expand one-line Javadocs',
-      '/\\*\\* (.*?) \\*/',
+      '(?m)^/\\*\\* (.+) \\*/$',
       '/**\n * $1\n */'
     )
   }

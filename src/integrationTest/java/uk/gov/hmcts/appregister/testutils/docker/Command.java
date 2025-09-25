@@ -8,9 +8,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
  */
 public interface Command {
 
-    /**
- * Stops the container and cleans up any resources.
- */
+    /** Stops the container and cleans up any resources. */
     void cleanupResources();
 
     /**
@@ -20,18 +18,12 @@ public interface Command {
      */
     void start(DynamicPropertyRegistry dynamicPropertyRegistry) throws IOException;
 
-    /**
- * Returns true if the container started successfully.
- */
+    /** Returns true if the container started successfully. */
     boolean isSuccess();
 
-    /**
- * Returns the port that the container is mapped to on the host machine.
- */
+    /** Returns the port that the container is mapped to on the host machine. */
     Integer getPortForContainer();
 
-    /**
- * Returns true if the container is currently running.
- */
+    /** Returns true if the container is currently running. */
     boolean isRunning();
 }

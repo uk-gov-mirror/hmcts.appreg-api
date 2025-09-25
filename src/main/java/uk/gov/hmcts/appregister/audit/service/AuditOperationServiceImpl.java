@@ -27,9 +27,7 @@ import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 @Component
 public class AuditOperationServiceImpl implements AuditOperationService {
 
-    /**
- * The trace id name that is inserted by micrometer.
- */
+    /** The trace id name that is inserted by micrometer. */
     private static final String TRACE_ID = "traceId";
 
     private final ObjectMapper mapper;

@@ -42,14 +42,10 @@ import uk.gov.hmcts.appregister.shared.validation.DateRangeValidator;
 @RequiredArgsConstructor
 public class ResolutionCodeController {
 
-    /**
- * Application service that encapsulates search and lookup logic.
- */
+    /** Application service that encapsulates search and lookup logic. */
     private final ResolutionCodeService service;
 
-    /**
- * Centralised validator for start/end date ranges.
- */
+    /** Centralised validator for start/end date ranges. */
     private final DateRangeValidator dateRangeValidator;
 
     /**
