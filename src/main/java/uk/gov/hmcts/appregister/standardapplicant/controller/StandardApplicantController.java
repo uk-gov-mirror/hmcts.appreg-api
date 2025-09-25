@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
 import uk.gov.hmcts.appregister.standardapplicant.service.StandardApplicantService;
 
-/** Controller for managing standard applicants. */
+/**
+ * Controller for managing standard applicants.
+ */
 @RestController
 @RequestMapping("/standard-applicants")
 @RequiredArgsConstructor

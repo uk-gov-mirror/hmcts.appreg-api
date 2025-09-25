@@ -6,29 +6,45 @@ import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
 import uk.gov.hmcts.appregister.audit.event.FailEvent;
 import uk.gov.hmcts.appregister.audit.event.StartEvent;
 
-/** Logs the request and response of audit events using SLF4J. */
+/**
+ * Logs the request and response of audit events using SLF4J.
+ */
 @Slf4j
 public class AuditOperationSlf4jLogger extends AuditOperationLifecycleListenerAdapter {
 
-    /** A prefix when starting an audit event. */
+    /**
+ * A prefix when starting an audit event.
+ */
     public static final String START_AUDIT_LOG = "Start audit";
 
-    /** A suffix when ending an audit event. */
+    /**
+ * A suffix when ending an audit event.
+ */
     public static final String COMPLETION_AUDIT_LOG = "Completion audit";
 
-    /** A suffix when failing an audit event. */
+    /**
+ * A suffix when failing an audit event.
+ */
     public static final String FAILED_CFOMPLETION_AUDIT_LOG = "Completion fail audit";
 
-    /** The message uuid. */
+    /**
+ * The message uuid.
+ */
     private static final String MESSAGE_UUID = "p_messageuuid";
 
-    /** The message status. */
+    /**
+ * The message status.
+ */
     private static final String STATUS = "p_messagestatus";
 
-    /** The message content. */
+    /**
+ * The message content.
+ */
     private static final String CONTENT = "p_messagecontent";
 
-    /** The action. */
+    /**
+ * The action.
+ */
     private static final String ACTION = "p_requestaction";
 
     @Override

@@ -9,7 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 
-/** Repository interface for managing ApplicationCode entities. */
+/**
+ * Repository interface for managing ApplicationCode entities.
+ */
 @Repository
 public interface CriminalJusticeAreaRepository extends JpaRepository<CriminalJusticeArea, Long> {
     /**

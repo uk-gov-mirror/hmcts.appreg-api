@@ -70,10 +70,9 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                     pageMapper.toPage(criminalJusticeList, criminalJusticeAreaPage);
                     criminalJusticeList.stream()
                             .forEach(
-                                    (entry) -> {
-                                        criminalJusticeAreaPage.addContentItem(
-                                                criminalJusticeMapper.toDto(entry));
-                                    });
+                                    (entry) ->
+                                            criminalJusticeAreaPage.addContentItem(
+                                                    criminalJusticeMapper.toDto(entry)));
 
                     return Optional.of(criminalJusticeAreaPage);
                 },

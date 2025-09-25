@@ -6,8 +6,7 @@ import uk.gov.hmcts.appregister.common.validator.AbstractSortValidator;
 
 @Component
 public class CriminalJusticeAreaSortValidator extends AbstractSortValidator {
-    @Override
-    protected String[] getValidSortProperties() {
-        return new String[] {CriminalJusticeArea_.CODE, CriminalJusticeArea_.DESCRIPTION};
+    public CriminalJusticeAreaSortValidator() {
+        super(CriminalJusticeArea_.CODE, CriminalJusticeArea_.DESCRIPTION);
     }
 }

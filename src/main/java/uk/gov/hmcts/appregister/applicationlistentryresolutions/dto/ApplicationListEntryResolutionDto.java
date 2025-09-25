@@ -3,7 +3,9 @@ package uk.gov.hmcts.appregister.applicationlistentryresolutions.dto;
 import java.time.OffsetDateTime;
 import uk.gov.hmcts.appregister.resolutioncode.dto.ResolutionCodeDto;
 
-/** Application Result Data Transfer Object. */
+/**
+ * Application Result Data Transfer Object.
+ */
 public record ApplicationListEntryResolutionDto(
         Long id,
         ResolutionCodeDto resultCode,

@@ -4,7 +4,9 @@ import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
-/** Service interface for criminal justice area. */
+/**
+ * Service interface for criminal justice area.
+ */
 public interface CriminalJusticeService {
     /**
      * gets a criminal justice area by its code.

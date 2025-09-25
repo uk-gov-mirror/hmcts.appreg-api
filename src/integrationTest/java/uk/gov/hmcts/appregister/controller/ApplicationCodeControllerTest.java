@@ -47,7 +47,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
     @MockitoBean private Clock clock; // replaces Clock bean in Spring context
 
-    /** The total app codes inserted by flyway scripts. See V6__InitialTestData.sql */
+    // The total app codes inserted by flyway scripts. See V6__InitialTestData.sql
     private static final int TOTAL_APP_CODES_COUNT = 42;
 
     private static final String FEE_DESCRIPTION = "JP perform function away from court";

@@ -21,7 +21,9 @@ import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractSecurityControllerTest extends BaseIntegration {
 
-    /** The stream of negative security contexts to be tested. */
+    /**
+ * The stream of negative security contexts to be tested.
+ */
     protected abstract Stream<RestEndpointDescription> getDescriptions() throws Exception;
 
     @ParameterizedTest

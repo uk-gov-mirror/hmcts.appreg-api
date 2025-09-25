@@ -5,7 +5,9 @@ import uk.gov.hmcts.appregister.common.exception.DefaultErrorDetail;
 import uk.gov.hmcts.appregister.common.exception.ErrorCodeEnum;
 import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 
-/** The app code errors that will be represented as problem details when exceptions are thrown. */
+/**
+ * The app code errors that will be represented as problem details when exceptions are thrown.
+ */
 public enum AppCodeError implements ErrorCodeEnum {
     CODE_NOT_FOUND(
             DefaultErrorDetail.create(

@@ -1,8 +1,11 @@
 package uk.gov.hmcts.appregister.applicationcode.validator;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.common.entity.ApplicationCode_;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 
@@ -25,9 +28,7 @@ class ApplicationCodeSortValidatorTest {
 
     @Test
     void testSuccessfulValidation() {
-        for (String sortParam : validator.getValidSortProperties()) {
-            // if no exception occurs then we succeed the test, no assertions required
-            validator.validate(sortParam);
-        }
+        assertDoesNotThrow(() -> validator.validate(ApplicationCode_.CODE));
+        assertDoesNotThrow(() -> validator.validate(ApplicationCode_.TITLE));
     }
 }

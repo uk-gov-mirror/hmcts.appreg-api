@@ -19,8 +19,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
-import uk.gov.hmcts.appregister.nationalcourthouse.dto.NationalCourtHouseDto;
-import uk.gov.hmcts.appregister.nationalcourthouse.mapper.NationalCourtHouseMapper;
 
 /**
  * JPA entity representing a row in the {@code national_court_house} table.
@@ -32,9 +30,7 @@ import uk.gov.hmcts.appregister.nationalcourthouse.mapper.NationalCourtHouseMapp
  * <p><strong>Usage:</strong>
  *
  * <ul>
- *   <li>Loaded and persisted via Spring Data repositories.
- *   <li>Mapped into {@link NationalCourtHouseDto} using {@link NationalCourtHouseMapper} for API
- *       responses.
+ *   <li>Loaded and persisted via Spring Data repositories. responses.
  *   <li>Consumed in paginated search results returned directly as Spring Data {@link
  *       org.springframework.data.domain.Page}.
  * </ul>
@@ -70,7 +66,6 @@ public class NationalCourtHouse extends BaseChangeableEntity implements Versiona
     @Column(name = "courthouse_name", nullable = false)
     private String name;
 
-    // Type of court, such as "CROWN" or "MAGISTRATES".
     @Column(name = "version_number", nullable = false)
     @Version
     private Long version;

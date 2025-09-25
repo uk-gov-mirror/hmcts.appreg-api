@@ -15,7 +15,9 @@ import uk.gov.hmcts.appregister.generated.api.CriminalJusticeAreasApi;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
-/** The core controller for the criminal justice area. */
+/**
+ * The core controller for the criminal justice area.
+ */
 @RestController
 @RequiredArgsConstructor
 public class CriminalJusticeAreaController implements CriminalJusticeAreasApi {

@@ -16,7 +16,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-/** Configuration for securing the API using Spring Security and JWTs. */
+/**
+ * Configuration for securing the API using Spring Security and JWTs.
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {

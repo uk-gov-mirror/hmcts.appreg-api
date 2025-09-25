@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 
-/** Repository interface for managing Application Fees. */
+/**
+ * Repository interface for managing Application Fees.
+ */
 public interface FeeRepository extends JpaRepository<Fee, Long> {
 
     /**

@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.common.validator;
 
-/** A generic validation interface. */
+/**
+ * A generic validation interface.
+ */
 @FunctionalInterface
 public interface Validator<T> {
 

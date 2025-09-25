@@ -15,7 +15,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.Identifiable;
 
-/** Entity representing a Criminal Justice Area (CJA). */
+/**
+ * Entity representing a Criminal Justice Area (CJA).
+ */
 @Entity
 @Table(name = "criminal_justice_area")
 @NoArgsConstructor

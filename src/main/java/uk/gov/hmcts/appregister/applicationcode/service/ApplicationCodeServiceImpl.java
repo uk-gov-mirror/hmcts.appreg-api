@@ -22,7 +22,9 @@ import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 
-/** Service implementation for managing application codes. */
+/**
+ * Service implementation for managing application codes.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

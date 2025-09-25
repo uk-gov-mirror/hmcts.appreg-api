@@ -2,7 +2,9 @@ package uk.gov.hmcts.appregister.audit.event;
 
 import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 
-/** The audit payload base interface. */
+/**
+ * The audit payload base interface.
+ */
 public interface BaseAuditEvent {
     String NO_VALUE = "NULL";
 

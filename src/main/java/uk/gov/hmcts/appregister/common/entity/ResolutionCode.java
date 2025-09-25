@@ -82,7 +82,9 @@ public class ResolutionCode extends BaseChangeableEntity implements Accountable,
     @Column(name = "resolution_legislation")
     private String legislation;
 
-    /** Optional primary destination email address tied to this resolution code. */
+    /**
+ * Optional primary destination email address tied to this resolution code.
+ */
     @Column(name = "rc_destination_email_address_1", length = 253)
     private String destinationEmail1;
 

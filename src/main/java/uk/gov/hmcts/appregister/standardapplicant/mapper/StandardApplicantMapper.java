@@ -4,7 +4,9 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
 
-/** Mapper for StandardApplicant entity to StandardApplicantDto. */
+/**
+ * Mapper for StandardApplicant entity to StandardApplicantDto.
+ */
 @Component
 public class StandardApplicantMapper {
 

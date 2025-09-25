@@ -2,7 +2,9 @@ package uk.gov.hmcts.appregister.audit.listener;
 
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 
-/** Audit logger listener for various audit events surrrounding an operation. */
+/**
+ * Audit logger listener for various audit events surrrounding an operation.
+ */
 @FunctionalInterface
 public interface AuditOperationLifecycleListener {
 

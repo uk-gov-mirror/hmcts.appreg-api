@@ -13,7 +13,9 @@ import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
 
-/** Service to handle application fee operations. */
+/**
+ * Service to handle application fee operations.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

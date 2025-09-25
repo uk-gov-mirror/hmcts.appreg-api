@@ -2,7 +2,9 @@ package uk.gov.hmcts.appregister.common.exception;
 
 import lombok.Getter;
 
-/** The exception that is thrown when an error occurs in the App Registry service. */
+/**
+ * The exception that is thrown when an error occurs in the App Registry service.
+ */
 @Getter
 public class AppRegistryException extends RuntimeException {
 

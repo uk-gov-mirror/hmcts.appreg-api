@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.common.entity.base;
 
-/** This interface is to be implemented by entities that need to track the user who created them. */
+/**
+ * This interface is to be implemented by entities that need to track the user who created them.
+ */
 public interface Accountable {
 
     /**

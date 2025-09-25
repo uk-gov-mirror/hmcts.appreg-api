@@ -6,7 +6,9 @@ import uk.gov.hmcts.appregister.audit.AuditEventEnum;
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 
-/** An API that can be used to audit an event across all endpoints. */
+/**
+ * An API that can be used to audit an event across all endpoints.
+ */
 public interface AuditOperationService {
     /**
      * process a command within the context of the audit.

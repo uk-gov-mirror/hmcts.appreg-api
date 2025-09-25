@@ -11,8 +11,7 @@ import uk.gov.hmcts.appregister.common.validator.AbstractSortValidator;
  */
 @Component
 public class ApplicationCodeSortValidator extends AbstractSortValidator {
-    @Override
-    protected String[] getValidSortProperties() {
-        return new String[] {ApplicationCode_.CODE, ApplicationCode_.TITLE};
+    public ApplicationCodeSortValidator() {
+        super(ApplicationCode_.CODE, ApplicationCode_.TITLE);
     }
 }

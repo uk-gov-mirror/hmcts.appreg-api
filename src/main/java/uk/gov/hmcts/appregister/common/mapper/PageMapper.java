@@ -4,7 +4,9 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.generated.model.Sort;
 import uk.gov.hmcts.appregister.generated.model.SortOrdersInner;
 
-/** A mapper that allows us to between Spring and our custom pagination format. */
+/**
+ * A mapper that allows us to between Spring and our custom pagination format.
+ */
 @Component
 public class PageMapper {
     /**

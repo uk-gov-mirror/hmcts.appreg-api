@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.applicationentry.dto;
 
-/** DTO representing a row in the CSV file for application entries. */
+/**
+ * DTO representing a row in the CSV file for application entries.
+ */
 public record CsvRowDto(
         String standardApplicantCode,
         String respondentTitle,

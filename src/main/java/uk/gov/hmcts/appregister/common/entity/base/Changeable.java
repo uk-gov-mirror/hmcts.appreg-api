@@ -3,7 +3,9 @@ package uk.gov.hmcts.appregister.common.entity.base;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-/** This interface should be implemented by entities that need to track changes. */
+/**
+ * This interface should be implemented by entities that need to track changes.
+ */
 public interface Changeable {
 
     /**
