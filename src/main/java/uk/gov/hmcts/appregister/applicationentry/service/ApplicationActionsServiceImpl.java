@@ -40,7 +40,7 @@ public class ApplicationActionsServiceImpl implements ApplicationActionsService 
         // TODO: Should we all user to create a new list if the target list doesn't exist?
         ApplicationList targetList =
                 applicationListRepository
-                        .findByIdAndCreatedUser(targetListId, userProvider.getUser())
+                        .findByPkAndCreatedUser(targetListId, userProvider.getUser())
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(

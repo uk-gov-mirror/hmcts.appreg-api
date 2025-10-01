@@ -1,27 +1,25 @@
 package uk.gov.hmcts.appregister.applicationlist.validator;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
-import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
-import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
-import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
-import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
-
-import java.time.LocalDate;
-
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ApplicationListCreateRequestValidatorTest {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 
-    private ApplicationListCreateRequestValidator validator;
+public class ApplicationListCreateValidatorTest {
 
-    private enum Field { COURT, CJA, OTHER }
+    private ApplicationListLocationValidator validator;
+
+    private enum Field {
+        COURT,
+        CJA,
+        OTHER
+    }
 
     // ---- HELPERS ----
     private ApplicationListCreateDto buildDto(Field... fields) {
@@ -29,31 +27,18 @@ public class ApplicationListCreateRequestValidatorTest {
 
         for (Field f : fields) {
             switch (f) {
-                case COURT -> dto.setCourtLocation(getCourtDto());
-                case CJA   -> dto.setCriminalJusticeArea(getCjaDto());
+                case COURT -> dto.setCourtLocationCode("COURT-123");
+                case CJA -> dto.setCjaCode("CJA-123");
                 case OTHER -> dto.setOtherLocationDescription("Some other location");
             }
         }
         return dto;
     }
 
-    private CourtLocationGetDetailDto getCourtDto() {
-        var court = new CourtLocationGetDetailDto();
-        court.setLocationCode("COURT-123");
-        court.setName("Court Name");
-        court.setStartDate(LocalDate.now());
-        return court;
-    }
-
-    private CriminalJusticeAreaGetDto getCjaDto() {
-        var cja = new CriminalJusticeAreaGetDto();
-        cja.setCode("CJA-123");
-        cja.setDescription("CJA Description");
-        return cja;
-    }
-
     @BeforeEach
-    void before() { validator = new ApplicationListCreateRequestValidator(); }
+    void before() {
+        validator = new ApplicationListLocationValidator();
+    }
 
     // ---- TESTS ----
     @Nested
@@ -78,8 +63,9 @@ public class ApplicationListCreateRequestValidatorTest {
         @Test
         void invalid_whenNothingProvided() {
             var appList = buildDto();
-            var ex = assertThrows(AppRegistryException.class, () -> validator.validate(appList));
-            assertEquals(ApplicationListError.INVALID_LOCATION_COMBINATION.getCode(), ex.getCode());
+            AppRegistryException ex =
+                    assertThrows(AppRegistryException.class, () -> validator.validate(appList));
+            assertEquals(ApplicationListError.INVALID_LOCATION_COMBINATION, ex.getCode());
         }
 
         @Test

@@ -48,7 +48,7 @@ public class ApplicationListEntryServiceImpl implements ApplicationListEntryServ
         ensureUserOwnsList(listId);
 
         List<ApplicationListEntry> applications =
-                applicationListEntryRepository.findByApplicationListIdAndCreatedUser(
+                applicationListEntryRepository.findByApplicationListPkAndCreatedUser(
                         listId, userProvider.getUser());
         return applications.stream().map(this::toDtoWithFees).toList();
     }
@@ -140,7 +140,7 @@ public class ApplicationListEntryServiceImpl implements ApplicationListEntryServ
 
     private ApplicationList findListOrThrow(Long listId, String userId) {
         return listRepository
-                .findByIdAndCreatedUser(listId, userId)
+                .findByPkAndCreatedUser(listId, userId)
                 .orElseThrow(
                         () ->
                                 new ResponseStatusException(
@@ -149,7 +149,7 @@ public class ApplicationListEntryServiceImpl implements ApplicationListEntryServ
 
     private ApplicationListEntry getApplicationForUserOrThrow(Long listId, Long appId) {
         return applicationListEntryRepository
-                .findByIdAndApplicationListIdAndCreatedUser(appId, listId, userProvider.getUser())
+                .findByIdAndApplicationListPkAndCreatedUser(appId, listId, userProvider.getUser())
                 .orElseThrow(
                         () ->
                                 new ResponseStatusException(
@@ -158,7 +158,7 @@ public class ApplicationListEntryServiceImpl implements ApplicationListEntryServ
     }
 
     private void ensureUserOwnsList(Long listId) {
-        if (!listRepository.existsByIdAndCreatedUser(listId, userProvider.getUser())) {
+        if (!listRepository.existsByPkAndCreatedUser(listId, userProvider.getUser())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "List not found for user");
         }
     }

@@ -28,7 +28,7 @@ public class NationalCourtHouseRepositoryTest extends BasePostgresIntegrationTes
                 "returns seeded Cardiff (CCC003) when active on given date (case-insensitive code)")
         void returnsCardiff() {
             List<NationalCourtHouse> result =
-                    repository.findActiveCourt("ccc003", LocalDate.of(2025, 1, 1));
+                    repository.findActiveCourtsWithDate("ccc003", LocalDate.of(2025, 1, 1));
 
             assertThat(result)
                     .hasSize(1)
@@ -48,7 +48,7 @@ public class NationalCourtHouseRepositoryTest extends BasePostgresIntegrationTes
         @DisplayName("returns seeded Bristol (BCC006) when active on given date")
         void returnsBristol() {
             List<NationalCourtHouse> result =
-                    repository.findActiveCourt("BCC006", LocalDate.of(2025, 1, 1));
+                    repository.findActiveCourtsWithDate("BCC006", LocalDate.of(2025, 1, 1));
 
             assertThat(result)
                     .extracting(NationalCourtHouse::getCourtLocationCode)
