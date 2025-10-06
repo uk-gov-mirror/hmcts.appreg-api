@@ -175,13 +175,26 @@ tasks.register('smoke', Test) {
   classpath = sourceSets.smokeTest.runtimeClasspath
 }
 
-jacocoTestReport {
-  dependsOn test, integration
-  reports {
-    xml.required = true
-    csv.required = true
-    html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+tasks.register('jacocoUnitReport', JacocoReport) {
+  dependsOn test
+  reports { xml.required = true; html.required = false }
+  executionData file("$buildDir/jacoco/test.exec")
+  classDirectories.from files(sourceSets.main.output).asFileTree.matching {
+    exclude "uk/gov/hmcts/appregister/**/dto/*.class",
+            "uk/gov/hmcts/appregister/generated/api/**/*.class"
   }
+  sourceDirectories.from sourceSets.main.allSource.srcDirs
+}
+
+tasks.register('jacocoIntegrationReport', JacocoReport) {
+  dependsOn integration
+  reports { xml.required = true; html.required = false }
+  executionData file("$buildDir/jacoco/integration.exec")
+  classDirectories.from files(sourceSets.main.output).asFileTree.matching {
+    exclude "uk/gov/hmcts/appregister/**/dto/*.class",
+            "uk/gov/hmcts/appregister/generated/api/**/*.class"
+  }
+  sourceDirectories.from sourceSets.main.allSource.srcDirs
 }
 
 //AD disabled
@@ -189,11 +202,18 @@ tasks.sonarqube.dependsOn(jacocoTestReport)
 tasks['check'].finalizedBy integration
 
 
+def xmls = [
+        layout.buildDirectory.file("reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml").get().asFile,
+        layout.buildDirectory.file("reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml").get().asFile
+]
 sonarqube {
   properties {
     property "sonar.projectName", "AppReg :: appreg-api"
     property "sonar.projectKey", "uk.gov.hmcts.appreg:appreg-api"
-    property "sonar.exclusions", "**/Dto/*.java"
+    property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            xmls.collect { it.absolutePath }.join(',')
+    )
   }
 }
 
