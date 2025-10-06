@@ -198,7 +198,7 @@ tasks.register('jacocoIntegrationReport', JacocoReport) {
 }
 
 //AD disabled
-tasks.sonarqube.dependsOn(jacocoTestReport)
+tasks.sonarqube.dependsOn(jacocoIntegrationReport).dependsOn(jacocoUnitReport)
 tasks['check'].finalizedBy integration
 
 
