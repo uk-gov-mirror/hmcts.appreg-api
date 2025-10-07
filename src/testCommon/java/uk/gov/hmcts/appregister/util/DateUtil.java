@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.testutils;
+package uk.gov.hmcts.appregister.util;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;

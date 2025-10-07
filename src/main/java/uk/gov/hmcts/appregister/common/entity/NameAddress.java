@@ -111,7 +111,7 @@ public class NameAddress extends BaseChangeableEntity implements Accountable {
 
     @Column(name = "dms_id")
     @Size(max = 20)
-    private Long dmsId;
+    private String dmsId;
 
     @Override
     public String getCreatedUser() {

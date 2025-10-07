@@ -72,30 +72,6 @@ rewrite {
   ]
 }
 
-def configureSourceSet(String name) {
-  sourceSets.create(name) { sourceSet ->
-    sourceSet.java {
-      compileClasspath += sourceSets.main.output + sourceSets.test.output
-      runtimeClasspath += sourceSets.main.output + sourceSets.test.output
-      srcDir "src/${name}/java"
-    }
-    sourceSet.resources.srcDir "src/${name}/resources"
-  }
-}
-
-['smokeTest', 'integrationTest', 'functionalTest'].each { configureSourceSet(it) }
-
-configurations {
-  functionalTestImplementation.extendsFrom testImplementation
-  functionalTestRuntimeOnly.extendsFrom runtimeOnly
-
-  integrationTestImplementation.extendsFrom testImplementation
-  integrationTestRuntimeOnly.extendsFrom runtimeOnly
-
-  smokeTestImplementation.extendsFrom testImplementation
-  smokeTestRuntimeOnly.extendsFrom runtimeOnly
-}
-
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
 }
@@ -115,7 +91,21 @@ tasks.withType(Test).configureEach {
   }
 }
 
+def configureSourceSet(String name) {
+  sourceSets.create(name) { sourceSet ->
+    sourceSet.java {
+      compileClasspath += sourceSets.main.output
+      runtimeClasspath += sourceSets.main.output
+      srcDir "src/${name}/java"
+    }
+    sourceSet.resources.srcDir "src/${name}/resources"
+  }
+}
+
+['smokeTest', 'integrationTest', 'functionalTest'].each { configureSourceSet(it) }
+
 sourceSets {
+
   main {
     resources {
       srcDirs = ["$buildDir/generated/openapi/src/main/java",'src/main/java', 'src/main/resources', 'flyway']
@@ -125,12 +115,29 @@ sourceSets {
     }
   }
 
+  tasks.withType(JavaCompile).configureEach {
+    options.warnings = true           // show warnings
+    options.deprecation = true        // show deprecation
+    options.compilerArgs.removeAll(["-Werror"]) // drop -Werror for now
+    options.compilerArgs += ["-Xlint:all", "-Xdiags:verbose"] // verbose diagnostics
+  }
+
+  testCommon {
+    java {
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+      srcDir file('src/testCommon/java')
+    }
+    resources.srcDir file('src/testCommon/resources')
+  }
+
   // Ensure main source set includes resources from flyway directory
   functionalTest {
     java {
       compileClasspath += main.output
-
       runtimeClasspath += main.output
+      compileClasspath += testCommon.output
+      runtimeClasspath += testCommon.output
       srcDir file('src/functionalTest/java')
     }
     resources.srcDir file('src/functionalTest/resources')
@@ -140,6 +147,8 @@ sourceSets {
     java {
       compileClasspath += main.output
       runtimeClasspath += main.output
+      compileClasspath += testCommon.output
+      runtimeClasspath += testCommon.output
       srcDir file('src/integrationTest/java')
     }
     resources.srcDir file('src/integrationTest/resources')
@@ -149,30 +158,56 @@ sourceSets {
     java {
       compileClasspath += main.output
       runtimeClasspath += main.output
+      compileClasspath += testCommon.output
+      runtimeClasspath += testCommon.output
       srcDir file('src/smokeTest/java')
     }
     resources.srcDir file('src/smokeTest/resources')
   }
+
+  test {
+    java {
+      compileClasspath += main.output
+      compileClasspath += testCommon.output
+      runtimeClasspath += main.output
+      runtimeClasspath += testCommon.output
+      srcDir file('src/test/java')
+    }
+    resources.srcDir file('src/test/resources')
+  }
+}
+
+configurations {
+  testCommonImplementation.extendsFrom testImplementation
+
+  functionalTestImplementation.extendsFrom testImplementation
+  functionalTestRuntimeOnly.extendsFrom runtimeOnly
+
+  integrationTestImplementation.extendsFrom testCommonImplementation
+  integrationTestRuntimeOnly.extendsFrom runtimeOnly
+
+  smokeTestImplementation.extendsFrom testImplementation
+  smokeTestRuntimeOnly.extendsFrom runtimeOnly
 }
 
 tasks.register('functional', Test) {
   description = "Runs functional tests"
   group = "Verification"
   testClassesDirs = sourceSets.functionalTest.output.classesDirs
-  classpath = sourceSets.functionalTest.runtimeClasspath
+  classpath = files(sourceSets.functionalTest.runtimeClasspath, sourceSets.testCommon.runtimeClasspath )
 }
 
 tasks.register('integration', Test) {
   description = "Runs integration tests"
   group = "Verification"
   testClassesDirs = sourceSets.integrationTest.output.classesDirs
-  classpath = sourceSets.integrationTest.runtimeClasspath
+  classpath = files(sourceSets.integrationTest.runtimeClasspath, sourceSets.testCommon.runtimeClasspath)
 }
 
 tasks.register('smoke', Test) {
   description = "Runs Smoke Tests"
   testClassesDirs = sourceSets.smokeTest.output.classesDirs
-  classpath = sourceSets.smokeTest.runtimeClasspath
+  classpath = files(sourceSets.smokeTest.runtimeClasspath, sourceSets.testCommon.runtimeClasspath)
 }
 
 tasks.register('jacocoUnitReport', JacocoReport) {
@@ -206,10 +241,29 @@ def xmls = [
         layout.buildDirectory.file("reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml").get().asFile,
         layout.buildDirectory.file("reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml").get().asFile
 ]
+
+""" A useful function to run a local SonarQube analysis against a local SonarQube server instance."
+    'You can run a local SonarQube server using Docker: docker run -d --name sonarqube -p 9000:9000 sonarqube'
+    'Once the server is running, you can execute this task using: ./gradlew localSonar'
+    'Default login credentials are admin/admin. You can change these in the properties below.
+"""
+import org.sonarqube.gradle.SonarTask;
+import org.sonarqube.gradle.SonarExtension
+// Register a brand-new task that runs a local analysis
+tasks.register('localSonarqube', GradleBuild) {
+  dependsOn('sonarqube')
+}
+
 sonarqube {
   properties {
     property "sonar.projectName", "AppReg :: appreg-api"
     property "sonar.projectKey", "uk.gov.hmcts.appreg:appreg-api"
+
+    if (gradle.startParameter.taskNames.contains("localSonarqube")) {
+      property 'sonar.host.url', 'http://localhost:9000'
+      property 'sonar.login', System.getenv('SONAR_TOKEN') ?: 'admin'
+    }
+
     property(
             "sonar.coverage.jacoco.xmlReportPaths",
             xmls.collect { it.absolutePath }.join(',')
@@ -322,6 +376,7 @@ dependencies {
   testImplementation 'io.github.hakky54:logcaptor:2.12.1'
 
   testImplementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-contract-stub-runner', version: '4.2.1'
+  testImplementation 'org.instancio:instancio-junit:5.5.1'
   rewrite group: 'org.openrewrite.recipe', name: 'rewrite-static-analysis', version: '2.16.0'
 
   // Updated Third-Party Dependencies

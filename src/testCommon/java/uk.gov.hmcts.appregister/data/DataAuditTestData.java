@@ -1,12 +1,14 @@
-package uk.gov.hmcts.appregister.testutils.data;
+package uk.gov.hmcts.appregister.data;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
-import uk.gov.hmcts.appregister.testutils.StringUtil;
+import uk.gov.hmcts.appregister.util.StringUtil;
 
-public class DataAuditTestData implements Persistable<DataAudit.DataAuditBuilder> {
+public class DataAuditTestData
+        implements uk.gov.hmcts.appregister.testutils.data.Persistable<
+                DataAudit, DataAudit.DataAuditBuilder> {
 
     @Override
     public DataAudit.DataAuditBuilder someMinimal() {

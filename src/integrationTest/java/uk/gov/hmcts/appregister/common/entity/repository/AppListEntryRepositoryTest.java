@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.common.repository;
+package uk.gov.hmcts.appregister.common.entity.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,11 +8,10 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
+import uk.gov.hmcts.appregister.data.AppListEntryData;
 import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
-import uk.gov.hmcts.appregister.testutils.DateUtil;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
-import uk.gov.hmcts.appregister.testutils.data.AppListEntryData;
+import uk.gov.hmcts.appregister.util.DateUtil;
 
 public class AppListEntryRepositoryTest extends BasePostgresIntegrationTest {
 
@@ -37,7 +36,8 @@ public class AppListEntryRepositoryTest extends BasePostgresIntegrationTest {
 
                     // assert that the data that has been retrieved aligns with the data that we
                     // have stored
-                    expectAllCommonEntityFields(listEntryData, applicationListEntryToAssertAgainst);
+                    expectAllCommonEntityFields(
+                            listEntryData, applicationListEntryToAssertAgainst.get());
                     assertNotNull(applicationListEntryToAssertAgainst.get());
                     assertEquals(
                             listEntryData.getApplicationCode().getId(),

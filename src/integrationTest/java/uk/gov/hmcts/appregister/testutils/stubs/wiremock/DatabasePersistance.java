@@ -9,6 +9,7 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
@@ -16,6 +17,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListReposito
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 
 /**
@@ -37,6 +39,8 @@ public class DatabasePersistance {
 
     @Autowired private NationalCourtHouseRepository nationalCourtHouseRepository;
 
+    @Autowired private NameAddressRepository nameAddressRepository;
+
     @Transactional
     public ApplicationCode save(ApplicationCode data) {
 
@@ -56,6 +60,11 @@ public class DatabasePersistance {
     @Transactional
     public Fee save(Fee data) {
         return feeRepository.save(data);
+    }
+
+    @Transactional
+    public NameAddress save(NameAddress data) {
+        return nameAddressRepository.save(data);
     }
 
     @Transactional

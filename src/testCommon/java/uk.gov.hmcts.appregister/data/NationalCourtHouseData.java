@@ -1,12 +1,13 @@
-package uk.gov.hmcts.appregister.testutils.data;
+package uk.gov.hmcts.appregister.data;
 
 import java.time.LocalDate;
 import java.util.UUID;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
-import uk.gov.hmcts.appregister.testutils.StringUtil;
+import uk.gov.hmcts.appregister.util.StringUtil;
 
 public class NationalCourtHouseData
-        implements Persistable<NationalCourtHouse.NationalCourtHouseBuilder> {
+        implements uk.gov.hmcts.appregister.testutils.data.Persistable<
+                NationalCourtHouse, NationalCourtHouse.NationalCourtHouseBuilder> {
 
     @Override
     public NationalCourtHouse.NationalCourtHouseBuilder someMinimal() {
@@ -22,6 +23,6 @@ public class NationalCourtHouseData
 
     @Override
     public NationalCourtHouse.NationalCourtHouseBuilder someMaximal() {
-        return Persistable.super.someMaximal();
+        return uk.gov.hmcts.appregister.testutils.data.Persistable.super.someMaximal();
     }
 }

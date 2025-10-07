@@ -17,6 +17,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Changeable;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
 import uk.gov.hmcts.appregister.testutils.stubs.wiremock.DatabasePersistance;
+import uk.gov.hmcts.appregister.util.DateUtil;
 
 /**
  * A base class that loads postgres test container and resets any data inserted before each test
@@ -64,6 +65,10 @@ public abstract class BasePostgresIntegrationTest {
     }
 
     public void expectAllCommonEntityFields(Object expected, Object actual) {
+        if (expected.getClass() != actual.getClass()) {
+            throw new IllegalArgumentException("Objects must be of the same class");
+        }
+
         if (expected instanceof Accountable expectedAccountable
                 && actual instanceof Accountable actualAccountable) {
             expectAccountable(expectedAccountable, actualAccountable);

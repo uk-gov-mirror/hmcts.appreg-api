@@ -1,7 +1,7 @@
 package uk.gov.hmcts.appregister.common.validator;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
@@ -12,7 +12,7 @@ import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 public abstract class AbstractSortValidator implements Validator<String> {
 
     /** Set of allowed property names for sorting. */
-    private final Set<String> allowed;
+    private final List<String> allowed;
 
     /**
      * Constructs a new validator with the given allowed property names.
@@ -25,7 +25,7 @@ public abstract class AbstractSortValidator implements Validator<String> {
                 Arrays.stream(props)
                         .map(s -> s == null ? "" : s.trim())
                         .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toUnmodifiableSet());
+                        .collect(Collectors.toList());
         if (allowed.isEmpty()) {
             throw new AppRegistryException(
                     CommonAppError.SORT_NOT_SUITABLE, "No allowed sort properties configured");
