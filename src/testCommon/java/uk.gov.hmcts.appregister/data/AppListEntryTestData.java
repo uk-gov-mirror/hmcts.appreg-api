@@ -9,14 +9,14 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 
-public class AppListEntryData
+public class AppListEntryTestData
         implements uk.gov.hmcts.appregister.testutils.data.Persistable<
                 ApplicationListEntry, ApplicationListEntry.ApplicationListEntryBuilder> {
 
     @Override
     public ApplicationListEntry.ApplicationListEntryBuilder someMinimal() {
         UUID uniqueId = UUID.randomUUID();
-        ApplicationList list = new AppListData().someMinimal().build();
+        ApplicationList list = new AppListTestData().someMinimal().build();
         ApplicationCode code = new ApplicationCodeTestData().someMinimal().build();
         return ApplicationListEntry.builder()
                 .applicationCode(code)

@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
-import uk.gov.hmcts.appregister.data.AppListData;
-import uk.gov.hmcts.appregister.data.AppListEntryData;
+import uk.gov.hmcts.appregister.data.AppListEntryTestData;
+import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.util.DateUtil;
@@ -41,8 +41,8 @@ public class AppListRepositoryTest extends BasePostgresIntegrationTest {
 
                     // assert
                     // test save
-                    ApplicationList listData = new AppListData().someMinimal().build();
-                    ApplicationListEntry entry = new AppListEntryData().someMinimal().build();
+                    ApplicationList listData = new AppListTestData().someMinimal().build();
+                    ApplicationListEntry entry = new AppListEntryTestData().someMinimal().build();
                     listData.setEntries(new ArrayList<>());
                     listData.getEntries().add(entry);
 

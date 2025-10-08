@@ -8,7 +8,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
-import uk.gov.hmcts.appregister.data.AppListEntryData;
+import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.util.DateUtil;
@@ -26,7 +26,7 @@ public class AppListEntryRepositoryTest extends BasePostgresIntegrationTest {
                     // assert
                     // test save
                     ApplicationListEntry listEntryData =
-                            new AppListEntryData().someMinimal().build();
+                            new AppListEntryTestData().someMinimal().build();
 
                     ApplicationListEntry data = persistance.save(listEntryData);
 

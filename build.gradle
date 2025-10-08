@@ -115,6 +115,10 @@ sourceSets {
     }
   }
 
+  /**
+   * Sets up the java compiler to warn of errors but crucially not to stop compiling as a result of these errors. This is essential to determine
+   * visibility of issues i.e. mapstruct warnings
+   */
   tasks.withType(JavaCompile).configureEach {
     options.warnings = true           // show warnings
     options.deprecation = true        // show deprecation

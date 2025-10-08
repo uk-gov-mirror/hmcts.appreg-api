@@ -5,7 +5,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 
-public class AppListData
+public class AppListTestData
         implements uk.gov.hmcts.appregister.testutils.data.Persistable<
                 ApplicationList, ApplicationList.ApplicationListBuilder> {
     @Override

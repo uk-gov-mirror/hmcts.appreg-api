@@ -1,11 +1,11 @@
 package uk.gov.hmcts.appregister.testutils.stubs.wiremock;
 
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
+import uk.gov.hmcts.appregister.common.entity.ApplicationRegister;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.entity.Fee;
@@ -14,6 +14,7 @@ import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationRegisterRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
@@ -41,7 +42,8 @@ public class DatabasePersistance {
 
     @Autowired private NameAddressRepository nameAddressRepository;
 
-    @Transactional
+    @Autowired private ApplicationRegisterRepository applicationRegisterRepository;
+
     public ApplicationCode save(ApplicationCode data) {
 
         if (data.getApplicationListEntryList() != null) {
@@ -49,40 +51,44 @@ public class DatabasePersistance {
                     .forEach(
                             e -> {
                                 if (data.getId() == null) {
-                                    applicationListEntryRepository.save(e);
+                                    applicationListEntryRepository.saveAndFlush(e);
                                 }
                             });
         }
 
-        return applicationCodeRepository.save(data);
+        return applicationCodeRepository.saveAndFlush(data);
     }
 
-    @Transactional
     public Fee save(Fee data) {
-        return feeRepository.save(data);
+        return feeRepository.saveAndFlush(data);
     }
 
-    @Transactional
     public NameAddress save(NameAddress data) {
-        return nameAddressRepository.save(data);
+        return nameAddressRepository.saveAndFlush(data);
     }
 
-    @Transactional
+    public ApplicationRegister save(ApplicationRegister data) {
+        if (data.getApplicationList() != null) {
+            save(data.getApplicationList());
+        }
+
+        ApplicationRegister register = applicationRegisterRepository.saveAndFlush(data);
+        applicationRegisterRepository.flush();
+        return register;
+    }
+
     public DataAudit save(DataAudit data) {
-        return dataAuditRepository.save(data);
+        return dataAuditRepository.saveAndFlush(data);
     }
 
-    @Transactional
     public CriminalJusticeArea save(CriminalJusticeArea data) {
-        return criminalJusticeAreaRepository.save(data);
+        return criminalJusticeAreaRepository.saveAndFlush(data);
     }
 
-    @Transactional
     public NationalCourtHouse save(NationalCourtHouse data) {
-        return nationalCourtHouseRepository.save(data);
+        return nationalCourtHouseRepository.saveAndFlush(data);
     }
 
-    @Transactional
     public ApplicationListEntry save(ApplicationListEntry entry) {
 
         if (entry.getApplicationCode() != null) {
@@ -90,15 +96,14 @@ public class DatabasePersistance {
         }
 
         if (entry.getApplicationList() != null && entry.getApplicationList().getId() == null) {
-            applicationListRepository.save(entry.getApplicationList());
+            applicationListRepository.saveAndFlush(entry.getApplicationList());
         }
 
-        return applicationListEntryRepository.save(entry);
+        return applicationListEntryRepository.saveAndFlush(entry);
     }
 
-    @Transactional
     public ApplicationList save(ApplicationList entry) {
-        ApplicationList savedEntry = applicationListRepository.save(entry);
+        ApplicationList savedEntry = applicationListRepository.saveAndFlush(entry);
 
         // save all entries
         if (savedEntry.getEntries() != null) {
@@ -107,7 +112,7 @@ public class DatabasePersistance {
                     .forEach(
                             e -> {
                                 if (savedEntry.getId() == null) {
-                                    applicationListEntryRepository.save(e);
+                                    applicationListEntryRepository.saveAndFlush(e);
                                 }
                             });
         }
