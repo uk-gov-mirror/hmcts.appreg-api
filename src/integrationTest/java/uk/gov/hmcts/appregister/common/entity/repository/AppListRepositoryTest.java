@@ -4,23 +4,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
-import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
-import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.data.AppListTestData;
-import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
+import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.util.DateUtil;
 
 @Slf4j
-public class AppListRepositoryTest extends BasePostgresIntegrationTest {
+public class AppListRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private ApplicationListRepository applicationListRepository;
 
@@ -41,12 +38,8 @@ public class AppListRepositoryTest extends BasePostgresIntegrationTest {
 
                     // assert
                     // test save
-                    ApplicationList listData = new AppListTestData().someMinimal().build();
-                    ApplicationListEntry entry = new AppListEntryTestData().someMinimal().build();
-                    listData.setEntries(new ArrayList<>());
-                    listData.getEntries().add(entry);
-
-                    ApplicationList data = persistance.save(listData);
+                    ApplicationList listData = new AppListTestData().someComplete();
+                    listData = persistance.save(listData);
 
                     // assert that the save has occurred
                     count = applicationListRepository.count();
@@ -54,30 +47,39 @@ public class AppListRepositoryTest extends BasePostgresIntegrationTest {
 
                     // test get
                     Optional<ApplicationList> applicationListToAssertAgainst =
-                            applicationListRepository.findById(data.getId());
+                            applicationListRepository.findById(listData.getPk());
 
                     // assert that the data that has been retrieved aligns with the data that we
                     // have stored
                     expectAllCommonEntityFields(listData, applicationListToAssertAgainst.get());
                     assertNotNull(applicationListToAssertAgainst.get());
-                    assertEquals(
-                            data.getEntries().getFirst().getId(),
-                            applicationListToAssertAgainst.get().getEntries().getFirst().getId());
                     assertTrue(
                             DateUtil.equalsIgnoreMillis(
-                                    data.getDate(),
+                                    listData.getDate(),
                                     applicationListToAssertAgainst.get().getDate()));
                     assertTrue(
                             DateUtil.equalsIgnoreMillis(
-                                    data.getDate(),
+                                    listData.getDate(),
                                     applicationListToAssertAgainst.get().getDate()));
                     assertTrue(
                             DateUtil.equalsIgnoreMillis(
-                                    data.getTime(),
+                                    listData.getTime(),
                                     applicationListToAssertAgainst.get().getTime()));
                     assertEquals(
-                            data.getListDescription(),
-                            applicationListToAssertAgainst.get().getListDescription());
+                            listData.getCourtCode(),
+                            applicationListToAssertAgainst.get().getCourtCode());
+                    assertEquals(
+                            listData.getTime(), applicationListToAssertAgainst.get().getTime());
+                    assertEquals(
+                            listData.getDurationHours(),
+                            applicationListToAssertAgainst.get().getDurationHours());
+                    assertEquals(
+                            listData.getDurationMinutes(),
+                            applicationListToAssertAgainst.get().getDurationMinutes());
+                    assertEquals(
+                            listData.getOtherLocation(),
+                            applicationListToAssertAgainst.get().getOtherLocation());
+                    assertEquals(listData.getCja(), applicationListToAssertAgainst.get().getCja());
                 });
     }
 }

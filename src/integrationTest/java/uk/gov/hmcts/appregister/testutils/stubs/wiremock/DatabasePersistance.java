@@ -95,28 +95,18 @@ public class DatabasePersistance {
             save(entry.getApplicationCode());
         }
 
-        if (entry.getApplicationList() != null && entry.getApplicationList().getId() == null) {
-            applicationListRepository.saveAndFlush(entry.getApplicationList());
+        if (entry.getApplicationList() != null && entry.getApplicationList().getUuid() == null) {
+            save(entry.getApplicationList());
         }
 
         return applicationListEntryRepository.saveAndFlush(entry);
     }
 
     public ApplicationList save(ApplicationList entry) {
-        ApplicationList savedEntry = applicationListRepository.saveAndFlush(entry);
-
-        // save all entries
-        if (savedEntry.getEntries() != null) {
-            savedEntry
-                    .getEntries()
-                    .forEach(
-                            e -> {
-                                if (savedEntry.getId() == null) {
-                                    applicationListEntryRepository.saveAndFlush(e);
-                                }
-                            });
+        if (entry.getCja() != null) {
+            save(entry.getCja());
         }
 
-        return entry;
+        return applicationListRepository.saveAndFlush(entry);
     }
 }

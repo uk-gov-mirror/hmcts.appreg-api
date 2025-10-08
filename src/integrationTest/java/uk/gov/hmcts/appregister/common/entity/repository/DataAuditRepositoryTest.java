@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.DataAuditTestData;
-import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
+import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 
 @Slf4j
-public class DataAuditRepositoryTest extends BasePostgresIntegrationTest {
+public class DataAuditRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private DataAuditRepository dataAuditRepository;
 

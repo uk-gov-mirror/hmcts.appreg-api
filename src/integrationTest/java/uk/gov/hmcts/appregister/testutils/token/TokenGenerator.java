@@ -10,6 +10,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +18,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
+import org.springframework.security.oauth2.jwt.Jwt;
 import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
 
 @Builder
@@ -27,12 +30,18 @@ public class TokenGenerator {
     public static final String DEFAULT_AUDIENCE = "audience";
     public static final String DEFAULT_ISSUER = "issuer";
     public static final String DEFAULT_USERNAME = "app.registry@hmcts.net";
+    public static final String DEFAULT_TID = "00000000-0000-0000-0000-000000000000";
+    public static final String DEFAULT_OID = "11111111-1111-1111-1111-111111111111";
 
     @Builder.Default private String issuer = DEFAULT_ISSUER;
 
     @Builder.Default private String audience = DEFAULT_AUDIENCE;
 
     @Builder.Default private String email = DEFAULT_USERNAME;
+
+    @Builder.Default private String tid = DEFAULT_TID;
+
+    @Builder.Default private String oid = DEFAULT_OID;
 
     @Builder.Default private Date expiredDate = Date.from(Instant.now().plusSeconds(SECONDS));
 
@@ -100,8 +109,14 @@ public class TokenGenerator {
                         .issuer(issuer)
                         .audience(audience)
                         .expirationTime(expiredDate)
-                        .claim("emails", List.of(email))
-                        .claim("sub", email)
+                        .claim(StandardClaimNames.EMAIL, List.of(email))
+                        .claim(StandardClaimNames.SUB, email)
+                        .claim(
+                                org.springframework.security.oauth2.core.oidc.StandardClaimNames
+                                        .PREFERRED_USERNAME,
+                                email)
+                        .claim("tid", tid)
+                        .claim("oid", oid)
                         .claim(
                                 "roles",
                                 StringUtils.join(
@@ -109,7 +124,6 @@ public class TokenGenerator {
                                                 .map(RoleEnum::getRole)
                                                 .toArray(String[]::new),
                                         ","))
-                        .claim("aud", audience)
                         .build();
 
         // create a signed token using the private key
@@ -122,6 +136,19 @@ public class TokenGenerator {
         token.setJwksKey(key.toPublicJWK().toJSONString());
 
         return token;
+    }
+
+    public Jwt getJwtFromToken() throws JOSEException, ParseException {
+        com.nimbusds.jwt.SignedJWT signedJwt =
+                com.nimbusds.jwt.SignedJWT.parse(fetchTokenForRole().getToken());
+        return new Jwt(
+                fetchTokenForRole().getToken(),
+                signedJwt.getJWTClaimsSet().getIssueTime() == null
+                        ? Instant.now()
+                        : signedJwt.getJWTClaimsSet().getIssueTime().toInstant(),
+                signedJwt.getJWTClaimsSet().getExpirationTime().toInstant(),
+                signedJwt.getHeader().toJSONObject(),
+                signedJwt.getJWTClaimsSet().getClaims());
     }
 
     public String getGlobalKey() {

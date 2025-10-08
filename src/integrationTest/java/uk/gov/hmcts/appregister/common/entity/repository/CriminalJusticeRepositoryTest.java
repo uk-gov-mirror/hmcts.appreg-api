@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.CriminalJusticeTestData;
-import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
+import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 
-public class CriminalJusticeRepositoryTest extends BasePostgresIntegrationTest {
+public class CriminalJusticeRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private CriminalJusticeAreaRepository criminalJusticeAreaRepository;
 

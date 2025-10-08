@@ -8,10 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationRegister;
 import uk.gov.hmcts.appregister.data.ApplicationRegisterTestData;
-import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
+import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 
-public class ApplicationRegisterRepositoryTest extends BasePostgresIntegrationTest {
+public class ApplicationRegisterRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private ApplicationRegisterRepository appRegRepository;
 
@@ -47,8 +47,8 @@ public class ApplicationRegisterRepositoryTest extends BasePostgresIntegrationTe
                             appRegEntryData.getText(),
                             applicationRegToAssertAgainst.get().getText());
                     assertEquals(
-                            appRegEntryData.getApplicationList().getId(),
-                            applicationRegToAssertAgainst.get().getApplicationList().getId());
+                            appRegEntryData.getApplicationList().getPk(),
+                            applicationRegToAssertAgainst.get().getApplicationList().getPk());
                 });
     }
 }

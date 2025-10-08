@@ -4,7 +4,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Assertions;
@@ -29,32 +28,36 @@ class PreCreateUpdateEntityListenerTest {
     @Test
     void testCreate() {
         String userName = "test-user";
+        String email = "email";
         when(clock.instant()).thenReturn(java.time.Instant.parse("2024-01-01T10:00:00Z"));
         when(clock.getZone()).thenReturn(java.time.ZoneId.of("UTC"));
-        when(userProvider.getUser()).thenReturn(userName);
-        when(userProvider.getUserNumber()).thenReturn(100L);
+        when(userProvider.getUserId()).thenReturn(userName);
+        when(userProvider.getEmail()).thenReturn(email);
+
         ApplicationRegister register = new ApplicationRegisterTestData().someMinimal().build();
         listener.beforeSave(register);
-        Assertions.assertEquals(userName, register.getCreatedUser());
+        Assertions.assertEquals(email, register.getCreatedUser());
         Assertions.assertEquals(
                 OffsetDateTime.parse("2024-01-01T10:00:00Z"), register.getChangedDate());
-        Assertions.assertEquals(new BigDecimal(100L), register.getChangedBy());
+        Assertions.assertEquals(userName, register.getChangedBy());
     }
 
     @Test
     void testUpdate() {
         String userName = "test-user";
+        String email = "email";
+        String email1 = "email1";
+
         when(clock.instant()).thenReturn(java.time.Instant.parse("2024-01-01T10:00:00Z"));
         when(clock.getZone()).thenReturn(java.time.ZoneId.of("UTC"));
-        when(userProvider.getUser()).thenReturn(userName);
-        when(userProvider.getUserNumber()).thenReturn(100L);
+        when(userProvider.getUserId()).thenReturn(userName);
+        when(userProvider.getEmail()).thenReturn(email);
         ApplicationRegister register = new ApplicationRegisterTestData().someMinimal().build();
 
         // create the entity
         listener.beforeSave(register);
 
         // setup a new id to use for the update
-        when(userProvider.getUserNumber()).thenReturn(101L);
         when(clock.instant()).thenReturn(java.time.Instant.parse("2024-03-01T10:00:00Z"));
 
         // run the test
@@ -62,12 +65,13 @@ class PreCreateUpdateEntityListenerTest {
 
         // assert that the update has occurred on the relevant fields but it does not adversely
         // effect the created fields
-        Assertions.assertEquals(userName, register.getCreatedUser());
+        Assertions.assertEquals(email, register.getCreatedUser());
         Assertions.assertEquals(
                 OffsetDateTime.parse("2024-03-01T10:00:00Z"), register.getChangedDate());
-        Assertions.assertEquals(new BigDecimal(101L), register.getChangedBy());
+        Assertions.assertEquals(userName, register.getChangedBy());
 
         // verify that the user provider was called twice, once for create
-        verify(userProvider, times(1)).getUser();
+        verify(userProvider, times(2)).getUserId();
+        verify(userProvider, times(1)).getEmail();
     }
 }

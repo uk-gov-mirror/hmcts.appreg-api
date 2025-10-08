@@ -11,11 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.NameAddressTestData;
-import uk.gov.hmcts.appregister.testutils.BasePostgresIntegrationTest;
+import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.util.DateUtil;
 
 @Slf4j
-public class NameAddressRepositoryTest extends BasePostgresIntegrationTest {
+public class NameAddressRepositoryTest extends BaseRepositoryTest {
     @Autowired private NameAddressRepository namedAddressRepository;
 
     @Autowired private UserProvider loggedInUser;
