@@ -8,10 +8,12 @@ import uk.gov.hmcts.appregister.common.entity.NameAddress;
 /**
  * Mapper for converting between NameAddress entity and its DTOs.
  */
+/**
+ * Mapper for converting between NameAddress entity and its DTOs.
+ */
 @Component
 public class NameAddressMapper {
 
-<<<<<<< Updated upstream
     public IdentityDetailsDto toReadDto(NameAddress entity) {
         return new IdentityDetailsDto(
                 entity.getId(),
@@ -33,15 +35,6 @@ public class NameAddressMapper {
                 entity.getTelephoneNumber(),
                 entity.getDateOfBirth());
     }
-=======
-    @Mapping(target = "address1", source = "addressLine1")
-    @Mapping(target = "address2", source = "addressLine2")
-    @Mapping(target = "address3", source = "addressLine3")
-    @Mapping(target = "address4", source = "addressLine4")
-    @Mapping(target = "address5", source = "addressLine5")
-    @Mapping(target = "dmsId", ignore = true)
-    abstract NameAddress createFromWriteDto(IdentityDetailsWriteDto dto);
->>>>>>> Stashed changes
 
     public NameAddress createFromWriteDto(IdentityDetailsWriteDto dto) {
         return NameAddress.builder()

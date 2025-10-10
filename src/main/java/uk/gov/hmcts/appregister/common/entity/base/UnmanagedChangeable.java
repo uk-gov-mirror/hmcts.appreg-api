@@ -4,11 +4,11 @@ import java.time.OffsetDateTime;
 
 /**
  * This interface should be implemented by entities that need to support the legacy information that
- * is unmanged.
+ * is unmanaged.
  */
-public interface UnmanagedChangeable {
+public interface UnmanagedChangeable extends UnmanagedEntity {
     /**
-     * Gets the OID + TID of the user who made the last change.
+     * The change by id.
      *
      * @return Changed by user number
      */

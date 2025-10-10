@@ -34,14 +34,10 @@ public class ApplicationCodeRepositoryTest extends BaseRepositoryTest {
         long count = applicationCodeRepository.count();
         Assertions.assertEquals(TOTAL_APP_CODES_COUNT, count);
 
-<<<<<<< Updated upstream:src/integrationTest/java/uk/gov/hmcts/appregister/common/repository/ApplicationCodeRepositoryTest.java
-=======
         ApplicationCode codeToSave = new ApplicationCodeTestData().someComplete();
 
->>>>>>> Stashed changes:src/integrationTest/java/uk/gov/hmcts/appregister/common/entity/repository/ApplicationCodeRepositoryTest.java
         // test save
-        ApplicationCode code =
-                persistance.save(new ApplicationCodeTestData().someMinimal().build());
+        ApplicationCode code = persistance.save(codeToSave);
 
         // assert that the save has occurred
         count = applicationCodeRepository.count();
@@ -66,8 +62,7 @@ public class ApplicationCodeRepositoryTest extends BaseRepositoryTest {
         assertEquals(
                 code.getBulkRespondentAllowed(),
                 applicationCodeToAssertAgainst.get().getBulkRespondentAllowed());
-        assertEquals(
-                loggedInUser.getEmail(), applicationCodeToAssertAgainst.get().getCreatedUser());
+        assertEquals(code.getCreatedUser(), applicationCodeToAssertAgainst.get().getCreatedUser());
         assertEquals(code.getChangedBy(), applicationCodeToAssertAgainst.get().getChangedBy());
         assertNotNull(applicationCodeToAssertAgainst.get().getChangedDate());
         assertEquals(0, applicationCodeToAssertAgainst.get().getVersion());

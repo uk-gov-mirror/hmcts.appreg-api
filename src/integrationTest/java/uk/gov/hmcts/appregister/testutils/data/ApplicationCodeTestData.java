@@ -13,7 +13,7 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.testutils.StringUtil;
 
 public class ApplicationCodeTestData
-        implements Persistable<ApplicationCode.ApplicationCodeBuilder> {
+        implements Persistable<ApplicationCode, ApplicationCode.ApplicationCodeBuilder> {
     @Override
     public ApplicationCode.ApplicationCodeBuilder someMinimal() {
         UUID uniqueId = UUID.randomUUID();

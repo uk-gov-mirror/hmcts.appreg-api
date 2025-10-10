@@ -11,7 +11,7 @@ import org.instancio.settings.Settings;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.testutils.StringUtil;
 
-public class FeeTestData implements Persistable<Fee.FeeBuilder> {
+public class FeeTestData implements Persistable<Fee, Fee.FeeBuilder> {
     @Override
     public Fee.FeeBuilder someMinimal() {
         UUID uniqueId = UUID.randomUUID();

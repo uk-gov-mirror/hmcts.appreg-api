@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.common.entity.base;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import java.time.OffsetDateTime;
 import lombok.EqualsAndHashCode;
@@ -12,7 +11,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@EntityListeners(PreCreateUpdateEntityListener.class)
 public class BaseUnmanagedChangeableEntity implements UnmanagedChangeable {
     @Column(name = "changed_by", nullable = false)
     private Long changedBy;
