@@ -17,7 +17,7 @@ public class AppListEntryTestData
     public ApplicationListEntry.ApplicationListEntryBuilder someMinimal() {
         UUID uniqueId = UUID.randomUUID();
         ApplicationList list = new AppListTestData().someMinimal().build();
-        ApplicationCode code = new ApplicationCodeTestData().someMinimal().build();
+        ApplicationCode code = new ApplicationCodeTestData().someComplete();
         return ApplicationListEntry.builder()
                 .applicationCode(code)
                 .applicationList(list)

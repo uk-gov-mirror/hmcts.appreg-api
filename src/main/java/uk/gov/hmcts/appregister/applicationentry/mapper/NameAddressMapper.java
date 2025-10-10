@@ -13,6 +13,9 @@ import uk.gov.hmcts.appregister.common.entity.NameAddress;
 /**
  * Mapper for converting between NameAddress entity and its DTOs.
  */
+/**
+ * Mapper for converting between NameAddress entity and its DTOs.
+ */
 @Component
 @Mapper(
         componentModel = "spring",
