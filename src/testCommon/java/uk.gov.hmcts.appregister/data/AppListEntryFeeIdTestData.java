@@ -21,7 +21,7 @@ public class AppListEntryFeeIdTestData
                         .withSettings(settings)
                         .create();
 
-        entryFeeId.setFeeId(new FeeTestData().someMinimal().build());
+        entryFeeId.setFeeId(new FeeTestData().someComplete());
 
         return entryFeeId;
     }

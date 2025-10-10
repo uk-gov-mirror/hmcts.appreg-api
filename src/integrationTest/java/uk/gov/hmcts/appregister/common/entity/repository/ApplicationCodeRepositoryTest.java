@@ -2,7 +2,6 @@ package uk.gov.hmcts.appregister.common.entity.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.OffsetDateTime;
@@ -34,7 +33,7 @@ public class ApplicationCodeRepositoryTest extends BaseRepositoryTest {
         long count = applicationCodeRepository.count();
         Assertions.assertEquals(TOTAL_APP_CODES_COUNT, count);
 
-        ApplicationCode codeToSave = new ApplicationCodeTestData().someMinimal().build();
+        ApplicationCode codeToSave = new ApplicationCodeTestData().someComplete();
 
         // test save
         ApplicationCode code = persistance.save(codeToSave);
@@ -62,15 +61,14 @@ public class ApplicationCodeRepositoryTest extends BaseRepositoryTest {
         assertEquals(
                 code.getBulkRespondentAllowed(),
                 applicationCodeToAssertAgainst.get().getBulkRespondentAllowed());
-        assertEquals(
-                loggedInUser.getEmail(), applicationCodeToAssertAgainst.get().getCreatedUser());
-        assertEquals(loggedInUser.getUserId(), applicationCodeToAssertAgainst.get().getChangedBy());
+        assertEquals(code.getCreatedUser(), applicationCodeToAssertAgainst.get().getCreatedUser());
+        assertEquals(code.getChangedBy(), applicationCodeToAssertAgainst.get().getChangedBy());
         assertNotNull(applicationCodeToAssertAgainst.get().getChangedDate());
         assertEquals(0, applicationCodeToAssertAgainst.get().getVersion());
-        assertNull(
+        assertEquals(
                 code.getDestinationEmail1(),
                 applicationCodeToAssertAgainst.get().getDestinationEmail1());
-        assertNull(
+        assertEquals(
                 code.getDestinationEmail2(),
                 applicationCodeToAssertAgainst.get().getDestinationEmail2());
     }

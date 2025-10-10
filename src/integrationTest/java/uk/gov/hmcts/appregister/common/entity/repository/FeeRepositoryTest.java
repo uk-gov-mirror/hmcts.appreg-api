@@ -31,7 +31,7 @@ public class FeeRepositoryTest extends BaseRepositoryTest {
         Assertions.assertEquals(BASELINE_TEST_COUNT, count);
 
         // test save
-        Fee fee = persistance.save(new FeeTestData().someMinimal().build());
+        Fee fee = persistance.save(new FeeTestData().someComplete());
 
         // test get
         Optional<Fee> feeToAssertAgainst = applicationFeeRepository.findById(fee.getId());
