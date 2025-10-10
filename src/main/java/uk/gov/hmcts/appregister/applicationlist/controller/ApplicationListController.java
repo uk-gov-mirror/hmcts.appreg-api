@@ -66,6 +66,7 @@ public class ApplicationListController implements ApplicationListsApi {
     // Mapper converting OpenAPI paging params to Spring Data {@link Pageable}.
     private final PageableMapper pageableMapper;
 
+    // Mapper converting API sort params to internal db fields.
     private final ApplicationListSortMapper sortMapper;
 
     /**
@@ -96,18 +97,37 @@ public class ApplicationListController implements ApplicationListsApi {
                 .body(created);
     }
 
+    /**
+     * Retrieves a paginated and optionally sorted list of application lists.
+     *
+     * <p>This endpoint allows clients to fetch existing {@link ApplicationListPage} resources
+     * using pagination, filtering, and sorting options. It converts OpenAPI paging parameters
+     * into Spring Data's {@link Pageable} and applies default sorting by {@code description}
+     * in ascending order when no explicit sort is provided.
+     *
+     * <p>Security:
+     * <ul>
+     *   <li>Accessible only to users with USER or ADMIN roles (see {@link RoleNames}).</li>
+     * </ul>
+     *
+     * @param filter an {@link ApplicationListGetFilterDto} containing optional filter criteria
+     *               such as name, status, or other attributes
+     * @param page the page number to retrieve (zero-based)
+     * @param size the number of records per page
+     * @param sort a list of sort parameters (e.g., {@code ["description,asc", "createdDate,desc"]});
+     *             validated and mapped by {@link ApplicationListSortMapper}
+     * @return {@link ResponseEntity} containing the requested page of application lists
+     *         wrapped in an {@link ApplicationListPage} object
+     */
     @Override
+    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<ApplicationListPage> getApplicationLists(ApplicationListGetFilterDto filter, Integer page, Integer size, List<String> sort) {
 
         List<String> mappedSort = sortMapper.mapAndValidate(sort);
-
-        // Map OpenAPI paging params into a Spring Pageable with default sort by name ascending
         Pageable pageInfo = pageableMapper.from(page, size, mappedSort,
                                                 ApplicationList_.DESCRIPTION, Sort.Direction.ASC);
 
-        // Fetch paginated results from service layer
         var applicationListPage = service.getPage(filter, pageInfo);
-
         return ResponseEntity.ok(applicationListPage);
     }
 

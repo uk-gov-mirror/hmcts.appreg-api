@@ -2,21 +2,64 @@ package uk.gov.hmcts.appregister.common.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
+
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 
 class ApplicationListRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private ApplicationListRepository repository;
+    @Autowired private CriminalJusticeAreaRepository cjaRepository;
+
+    private void save(
+        String status,
+        String courtCode,
+        CriminalJusticeArea cja,
+        LocalDateTime dateMidnight,
+        LocalDateTime time,
+        String description,
+        String otherLocation) {
+
+        ApplicationList al = ApplicationList.builder()
+            .status(ApplicationListStatus.fromValue(status))
+            .description(description)
+            .otherLocation(otherLocation)
+            .courtName(courtCode != null ? "Court " + courtCode : null)
+            .courtCode(courtCode)
+            .cja(cja)
+            .date(dateMidnight)
+            .time(time)
+            .durationHours((short) 0)
+            .durationMinutes((short) 0)
+            .build();
+        repository.saveAndFlush(al);
+    }
+
+    private CriminalJusticeArea saveCja(String code, String desc) {
+        CriminalJusticeArea cja = CriminalJusticeArea.builder()
+            .code(code)
+            .description(desc)
+            .build();
+        return cjaRepository.saveAndFlush(cja);
+    }
 
     private ApplicationList buildEntity() {
         return ApplicationList.builder()
-                .status("OPEN")
+                .status(ApplicationListStatus.OPEN)
                 .description("Smoke test list")
                 .courtName("Cardiff Crown Court")
                 .courtCode("CCC003")
@@ -45,4 +88,213 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
         assertThat(reloaded.getCreatedUser()).isEqualTo(EMAIL_CLAIM);
         assertThat(reloaded.getChangedBy()).isEqualTo(TID_CLAIM + ":" + OID_CLAIM);
     }
+
+
+//    @Test
+//    @DisplayName("findAllByFilter: status + courtCode filters match")
+//    void findAllByFilter_statusAndCourtCode_match() {
+//        // Given
+//        var midnight = LocalDate.of(2025, 1, 2).atStartOfDay();
+//        var anyTime = LocalDateTime.of(1970, 1, 1, 9, 0);
+//
+//        save("OPEN", "CCC003", null, midnight, anyTime, "keep", "west");
+//        save("CLOSED", "CCC003", null, midnight, anyTime, "drop", "west");
+//        save("OPEN", "OTHER01", null, midnight, anyTime, "drop", "west");
+//
+//        Pageable page = PageRequest.of(0, 10);
+//
+//        // When
+//        Page<ApplicationList> result = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN,
+//            "CCC003",
+//            null,
+//            null,   // date filter not applied
+//            null,   // time filter not applied
+//            null,
+//            null,
+//            page
+//        );
+//
+//        // Then
+//        assertThat(result.getTotalElements()).isEqualTo(1);
+//        assertThat(result.getContent().getFirst().getCourtCode()).isEqualTo("CCC003");
+//        assertThat(result.getContent().getFirst().getStatus()).isEqualTo("OPEN");
+//    }
+//
+//    @Test
+//    @DisplayName("findAllByFilter: CJA entity equality filter matches exactly")
+//    void findAllByFilter_cja_match() {
+//        // Given
+//        var cja52 = saveCja("52", "CJA 52");
+//        var cja53 = saveCja("53", "CJA 53");
+//        var midnight = LocalDate.of(2025, 1, 3).atStartOfDay();
+//
+//        save("OPEN", null, cja52, midnight, LocalDateTime.of(1970,1,1,10,0), "keep", "loc");
+//        save("OPEN", null, cja53, midnight, LocalDateTime.of(1970,1,1,10,0), "drop", "loc");
+//
+//        // When
+//        Page<ApplicationList> result = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN,
+//            null,
+//            cja52,
+//            null,
+//            null,
+//            null,
+//            null,
+//            PageRequest.of(0, 10)
+//        );
+//
+//        // Then
+//        assertThat(result.getTotalElements()).isEqualTo(1);
+//        assertThat(result.getContent().getFirst().getCja().getCode()).isEqualTo("52");
+//    }
+//
+//    @Test
+//    @DisplayName("findAllByFilter: dateMidnight must match exactly (timestamp at midnight)")
+//    void findAllByFilter_dateMidnight_exactMatch() {
+//        // Given
+//        var d1 = LocalDate.of(2025, 2, 1).atStartOfDay();
+//        var d2 = LocalDate.of(2025, 2, 2).atStartOfDay();
+//        var t = LocalDateTime.of(1970,1,1,8,0);
+//
+//        save("OPEN", "AAA001", null, d1, t, "a", "b");
+//        save("OPEN", "AAA001", null, d2, t, "a", "b");
+//
+//        // When
+//        Page<ApplicationList> result = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN,
+//            "AAA001",
+//            null,
+//            d2,   // exact midnight for Feb 2
+//            null,
+//            null,
+//            null,
+//            PageRequest.of(0, 10)
+//        );
+//
+//        // Then
+//        assertThat(result.getTotalElements()).isEqualTo(1);
+//        assertThat(result.getContent().getFirst().getDate()).isEqualTo(d2);
+//    }
+//
+//    @Test
+//    @DisplayName("findAllByFilter: time matches on hour+minute (ignores seconds and anchor date)")
+//    void findAllByFilter_time_hourMinuteMatchOnly() {
+//        // Given
+//        // Persist lists with different seconds/dates but same HH:mm
+//        var anchorA = LocalDateTime.of(1970,1,1,10,30,0);
+//        var anchorB = LocalDateTime.of(1980,5,5,10,30,59); // different date/seconds → still match
+//        var midnight = LocalDate.of(2025, 3, 10).atStartOfDay();
+//
+//        save("OPEN", "TST001", null, midnight, anchorA, "x", "y");
+//        save("OPEN", "TST001", null, midnight, anchorB, "x", "y");
+//
+//        // Probe time value (10:30 on any date)
+//        var probe = LocalDateTime.of(1999, 12, 31, 10, 30, 12);
+//
+//        // When
+//        Page<ApplicationList> result = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN,
+//            "TST001",
+//            null,
+//            null,
+//            probe,
+//            null,
+//            null,
+//            PageRequest.of(0, 10)
+//        );
+//
+//        // Then
+//        assertThat(result.getTotalElements()).isEqualTo(2);
+//        assertThat(result.getContent())
+//            .extracting(al -> al.getTime().toLocalTime())
+//            .allMatch(t -> t.getHour() == 10 && t.getMinute() == 30);
+//    }
+//
+//    @Test
+//    @DisplayName("findAllByFilter: description contains is case-insensitive")
+//    void findAllByFilter_description_contains_caseInsensitive() {
+//        // Given
+//        var midnight = LocalDate.of(2025, 4, 1).atStartOfDay();
+//        var t = LocalDateTime.of(1970,1,1,9,15);
+//
+//        save("OPEN", null, null, midnight, t, "Morning Session", "Hall");
+//        save("OPEN", null, null, midnight, t, "Afternoon list", "Hall");
+//
+//        // When
+//        Page<ApplicationList> result = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN,
+//            null,
+//            null,
+//            null,
+//            null,
+//            "SESSION",   // search token (upper)
+//            null,
+//            PageRequest.of(0, 10)
+//        );
+//
+//        // Then
+//        assertThat(result.getTotalElements()).isEqualTo(1);
+//        assertThat(result.getContent().getFirst().getDescription()).isEqualTo("Morning Session");
+//    }
+//
+//    @Test
+//    @DisplayName("findAllByFilter: otherLocation contains is case-insensitive")
+//    void findAllByFilter_otherLocation_contains_caseInsensitive() {
+//        // Given
+//        var midnight = LocalDate.of(2025, 4, 2).atStartOfDay();
+//        var t = LocalDateTime.of(1970,1,1,14,0);
+//
+//        save("OPEN", null, null, midnight, t, "x", "Town Hall");
+//        save("OPEN", null, null, midnight, t, "x", "Library Room");
+//
+//        // When
+//        Page<ApplicationList> result = repository.findAllByFilter(
+//            null,
+//            null,
+//            null,
+//            null,
+//            null,
+//            null,
+//            "hall",
+//            PageRequest.of(0, 10)
+//        );
+//
+//        // Then
+//        assertThat(result.getTotalElements()).isEqualTo(1);
+//        assertThat(result.getContent().getFirst().getOtherLocation()).isEqualTo("Town Hall");
+//    }
+//
+//    @Test
+//    @DisplayName("findAllByFilter: paging works (page size 1, sorted by date asc)")
+//    void findAllByFilter_paging_andSorting() {
+//        // Given
+//        var d1 = LocalDate.of(2025, 6, 1).atStartOfDay();
+//        var d2 = LocalDate.of(2025, 6, 2).atStartOfDay();
+//        var t = LocalDateTime.of(1970,1,1,11,0);
+//
+//        save("OPEN", "PG1", null, d1, t, "first", "loc");
+//        save("OPEN", "PG1", null, d2, t, "second", "loc");
+//
+//        // When: page 0 size 1
+//        Page<ApplicationList> page0 = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN, "PG1", null, null, null, null, null,
+//            PageRequest.of(0, 1, org.springframework.data.domain.Sort.by("date").ascending())
+//        );
+//
+//        // And: page 1 size 1
+//        Page<ApplicationList> page1 = repository.findAllByFilter(
+//            ApplicationListStatus.OPEN, "PG1", null, null, null, null, null,
+//            PageRequest.of(1, 1, org.springframework.data.domain.Sort.by("date").ascending())
+//        );
+//
+//        // Then
+//        assertThat(page0.getTotalElements()).isEqualTo(2);
+//        assertThat(page0.getNumberOfElements()).isEqualTo(1);
+//        assertThat(page1.getNumberOfElements()).isEqualTo(1);
+//
+//        // Confirm ordering by date asc
+//        assertThat(page0.getContent().getFirst().getDate()).isEqualTo(d1);
+//        assertThat(page1.getContent().getFirst().getDate()).isEqualTo(d2);
+//    }
 }

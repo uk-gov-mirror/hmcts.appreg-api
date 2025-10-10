@@ -1,5 +1,11 @@
 package uk.gov.hmcts.appregister.applicationlist.api;
 
+/**
+ * Defines the API field names exposed by the Application List endpoints.
+ *
+ * These constants represent the property names that clients can use in
+ * filters, sorting, or query parameters.
+ */
 public final class ApplicationListApiFields {
     private ApplicationListApiFields() {}
 

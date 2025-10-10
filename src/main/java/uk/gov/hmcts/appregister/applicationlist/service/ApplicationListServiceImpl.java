@@ -1,35 +1,31 @@
 package uk.gov.hmcts.appregister.applicationlist.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListLocationValidator;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
-import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
-import uk.gov.hmcts.appregister.courtlocation.exception.CourtLocationError;
-import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
+import uk.gov.hmcts.appregister.common.service.DateTimeService;
+import uk.gov.hmcts.appregister.common.service.LocationLookupService;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetFilterDto;
@@ -51,14 +47,16 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 @Service
 public class ApplicationListServiceImpl implements ApplicationListService {
 
+    private static final long ZERO_ENTITIES = 0L;
+
     private final ApplicationListRepository repository;
-    private final NationalCourtHouseRepository courtHouseRepository;
-    private final CriminalJusticeAreaRepository cjaRepository;
     private final ApplicationListEntryRepository aleRepository;
     private final ApplicationListMapper mapper;
     private final ApplicationListLocationValidator validator;
     private final EntityManager entityManager;
     private final PageMapper pageMapper;
+    private final LocationLookupService locationLookupService;
+    private final DateTimeService dateTimeService;
 
     /**
      * {@inheritDoc}
@@ -72,74 +70,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     public ApplicationListGetDetailDto create(ApplicationListCreateDto dto) {
         validator.validate(dto);
         return hasCourt(dto) ? createWithCourt(dto) : createWithCja(dto);
-    }
-
-    @Override
-    public ApplicationListPage getPage(ApplicationListGetFilterDto dto, Pageable pageable) {
-
-        CriminalJusticeArea cja = null;
-
-        if (dto.getCjaCode() != null) {
-            final List<CriminalJusticeArea> criminalJusticeAreas = cjaRepository.findByCode(dto.getCjaCode());
-
-            // =======
-            // TODO - This code is copied across the app. Split out into it's own service.
-            var cjaCode = dto.getCjaCode().trim();
-            if (criminalJusticeAreas.isEmpty()) {
-                throw new AppRegistryException(
-                    CriminalJusticeAreaError.CJA_NOT_FOUND,
-                    "No Criminal Justice Areas found for code '%s'".formatted(cjaCode));
-            } else if (criminalJusticeAreas.size() > 1) {
-                throw new AppRegistryException(
-                    CriminalJusticeAreaError.DUPLICATE_CJA_FOUND,
-                    "Multiple Criminal Justice Areas found for code '%s'".formatted(cjaCode));
-            }
-            cja = criminalJusticeAreas.getFirst();
-            // ========
-        }
-
-        // TODO - Date/Time converter needs to be consistent across the app - split into it's own service
-        LocalDate date = dto.getDate();
-        LocalTime time = LocalTime.parse(dto.getTime());
-        LocalDateTime dateTime = date.atTime(time);
-
-        // TODO - Pass in dto as single object?
-        final Page<ApplicationList> dbPage = repository.findAllByFilter(
-            dto.getStatus(),
-            dto.getCourtLocationCode(),
-            cja,
-            dto.getDate().atStartOfDay(),
-            dateTime,
-            dto.getDescription(),
-            dto.getOtherLocationDescription(),
-            pageable
-            );
-
-        var responsePage = new ApplicationListPage();
-
-        if (responsePage.getContent() == null) {
-            responsePage.setContent(new ArrayList<>());
-        }
-
-        pageMapper.toPage(dbPage, responsePage);
-
-        dbPage.forEach(applicationList -> {
-
-            String location = "Location not set";
-
-            if (applicationList.getCourtName() != null) {
-                location = applicationList.getCourtName();
-            // TODO - check in the legacy app if the location for CJA is a combo of Other Location and CJA
-            } else if (applicationList.getCja() != null) {
-                location = applicationList.getCja().getDescription();
-            }
-
-            // TODO - This count is going to be called for every application list - can we optimise?
-            long entryCount = aleRepository.countByApplicationListPk(applicationList.getPk());
-            responsePage.addContentItem(mapper.toGetSummaryDto(applicationList, entryCount, location));
-        });
-
-        return responsePage;
     }
 
     private static boolean hasCourt(ApplicationListCreateDto dto) {
@@ -157,22 +87,10 @@ public class ApplicationListServiceImpl implements ApplicationListService {
      * @throws AppRegistryException if no court or multiple courts are found for the given code
      */
     private ApplicationListGetDetailDto createWithCourt(ApplicationListCreateDto dto) {
-        var courtCode = dto.getCourtLocationCode().trim();
-        final List<NationalCourtHouse> courts = courtHouseRepository.findActiveCourts(courtCode);
-
-        if (courts.isEmpty()) {
-            throw new AppRegistryException(
-                    CourtLocationError.COURT_NOT_FOUND,
-                    "No court found for code '%s'".formatted(courtCode));
-        } else if (courts.size() > 1) {
-            throw new AppRegistryException(
-                    CourtLocationError.DUPLICATE_COURT_FOUND,
-                    "Multiple courts found for code '%s'".formatted(courtCode));
-        }
-
-        var savedEntity = repository.save(mapper.toCreateEntityWithCourt(dto, courts.getFirst()));
-        var hydrated = refreshEntity(savedEntity);
-        return mapper.toGetDetailDto(hydrated, null);
+        var court = locationLookupService.getActiveCourtOrThrow(dto.getCourtLocationCode());
+        var savedEntity = repository.save(mapper.toCreateEntityWithCourt(dto, court));
+        var hydratedEntity = refreshEntity(savedEntity);
+        return mapper.toGetDetailDto(hydratedEntity, null);
     }
 
     /**
@@ -186,25 +104,10 @@ public class ApplicationListServiceImpl implements ApplicationListService {
      * @throws AppRegistryException if no CJA or multiple CJAs are found for the given code
      */
     private ApplicationListGetDetailDto createWithCja(ApplicationListCreateDto dto) {
-        var cjaCode = dto.getCjaCode().trim();
-        final List<CriminalJusticeArea> criminalJusticeAreas = cjaRepository.findByCode(cjaCode);
-
-        if (criminalJusticeAreas.isEmpty()) {
-            throw new AppRegistryException(
-                    CriminalJusticeAreaError.CJA_NOT_FOUND,
-                    "No Criminal Justice Areas found for code '%s'".formatted(cjaCode));
-        } else if (criminalJusticeAreas.size() > 1) {
-            throw new AppRegistryException(
-                    CriminalJusticeAreaError.DUPLICATE_CJA_FOUND,
-                    "Multiple Criminal Justice Areas found for code '%s'".formatted(cjaCode));
-        }
-
-        var cja = criminalJusticeAreas.getFirst();
-
+        var cja = locationLookupService.getCjaOrThrow(dto.getCjaCode());
         var savedEntity = repository.save(mapper.toCreateEntityWithCja(dto, cja));
-        var hydrated = refreshEntity(savedEntity);
-
-        return mapper.toGetDetailDto(hydrated, cja);
+        var hydratedEntity = refreshEntity(savedEntity);
+        return mapper.toGetDetailDto(hydratedEntity, cja);
     }
 
     /**
@@ -216,5 +119,86 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         entityManager.flush();
         entityManager.refresh(entity);
         return entity;
+    }
+
+    /**
+     * Retrieves a paginated list of application lists based on the given filter and paging parameters.
+     *
+     * <p>Resolves and normalizes input filters (including CJA lookup and date/time normalization),
+     * queries the repository for matching records, retrieves associated entry counts, and maps the
+     * results into an {@link ApplicationListPage} containing summary DTOs.
+     *
+     * @param dto the filter criteria used to select application lists
+     * @param pageable pagination and sorting information
+     * @return a populated {@link ApplicationListPage} with metadata and summary items
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ApplicationListPage getPage(ApplicationListGetFilterDto dto, Pageable pageable) {
+
+        CriminalJusticeArea cja = resolveCja(dto.getCjaCode()).orElse(null);
+
+
+
+        final Page<ApplicationList> dbPage = repository.findAllByFilter(
+            dto.getStatus(),
+            dto.getCourtLocationCode(),
+            cja,
+            dateTimeService.normalizeDate(dto.getDate()),
+            dateTimeService.normalizeTime(dto.getTime()),
+            dto.getDescription(),
+            dto.getOtherLocationDescription(),
+            pageable
+        );
+
+        // Pre-fetch the number of entries linked to each list in the page.
+        // Avoids having to do a separate count query per list when mapping to DTOs.
+        Map<UUID, Long> entriesPerListCounter = dbPage.isEmpty()
+            ? Map.of()
+            : fetchEntryCounts(dbPage.map(ApplicationList::getUuid).toList());
+
+        return assembleResponsePage(dbPage, entriesPerListCounter);
+    }
+
+    private Optional<CriminalJusticeArea> resolveCja(String cjaCode) {
+        return cjaCode == null ? Optional.empty() : Optional.of(locationLookupService.getCjaOrThrow(cjaCode));
+    }
+
+    private Map<UUID, Long> fetchEntryCounts(List<UUID> uuids) {
+        return aleRepository.countByApplicationListUuids(uuids).stream()
+            .collect(Collectors.toMap(
+                ApplicationListEntryRepository.EntryCount::getPk,
+                ApplicationListEntryRepository.EntryCount::getCnt
+            ));
+    }
+
+    private ApplicationListPage assembleResponsePage(Page<ApplicationList> dbPage, Map<UUID, Long> entriesPerListCounter) {
+        var responsePage = new ApplicationListPage();
+        pageMapper.toPage(dbPage, responsePage);
+
+        // Ensure content is never null:
+        // API spec requires an array, so return an empty one instead of null.
+        if (responsePage.getContent() == null) {
+            responsePage.setContent(new ArrayList<>());
+        }
+
+        for (ApplicationList al : dbPage) {
+            long entryCount = entriesPerListCounter.getOrDefault(al.getUuid(), ZERO_ENTITIES);
+            String location = deriveLocation(al);
+            responsePage.addContentItem(
+                mapper.toGetSummaryDto(al, entryCount, location)
+            );
+        }
+        return responsePage;
+    }
+
+    private String deriveLocation(ApplicationList al) {
+        if (al.getCourtName() != null) {
+            return al.getCourtName();
+        }
+        if (al.getCja() != null) {
+            return al.getCja().getDescription();
+        }
+        return "Location not set";
     }
 }

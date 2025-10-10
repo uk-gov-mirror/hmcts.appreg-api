@@ -13,6 +13,7 @@ import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
+import uk.gov.hmcts.appregister.common.service.LocationLookupService;
 import uk.gov.hmcts.appregister.criminaljusticearea.exception.CriminalJusticeAreaError;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
@@ -27,33 +28,15 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
     private final CriminalJusticeAreaRepository criminalJusticeAreaRepository;
     private final CriminalJusticeMapper criminalJusticeMapper;
     private final PageMapper pageMapper;
+    private final LocationLookupService locationLookupService;
 
     @Override
     public CriminalJusticeAreaGetDto findByCode(String code) {
         return auditService.processAudit(
                 AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT,
                 req -> {
-                    final List<CriminalJusticeArea> criminalJusticeAreaList =
-                            criminalJusticeAreaRepository.findByCode(code);
-
-                    CriminalJusticeAreaGetDto codeToConsider = null;
-
-                    // if empty throw an exception
-                    if (criminalJusticeAreaList.isEmpty()) {
-                        throw new AppRegistryException(
-                                CriminalJusticeAreaError.CJA_NOT_FOUND,
-                                " No Criminal Justice Area found for code %s".formatted(code));
-                    } else {
-                        if (criminalJusticeAreaList.size() > 1) {
-                            log.warn(
-                                    "Too many records found for code %s. Defaulting to first one"
-                                            .formatted(code));
-                        }
-                        codeToConsider =
-                                criminalJusticeMapper.toDto(
-                                        criminalJusticeAreaList.stream().findFirst().get());
-                    }
-                    return Optional.of(codeToConsider);
+                    var cja = locationLookupService.getCjaOrThrow(code);
+                    return Optional.of(criminalJusticeMapper.toDto(cja));
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }

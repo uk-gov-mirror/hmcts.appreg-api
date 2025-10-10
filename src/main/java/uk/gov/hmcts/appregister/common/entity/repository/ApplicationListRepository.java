@@ -33,7 +33,7 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * Find an ApplicationList entity by its ID and associated user.
      *
      * @param primaryKey the PK of the ApplicationList
-     * @param userId the ID of the user
+     * @param userId     the ID of the user
      * @return an Optional containing the ApplicationList if found, or empty if not found
      */
     Optional<ApplicationList> findByPkAndCreatedUser(Long primaryKey, String userId);
@@ -42,7 +42,7 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * Check if an ApplicationList entity exists by its ID and associated user.
      *
      * @param primaryKey the PK of the ApplicationList
-     * @param userId the ID of the user
+     * @param userId     the ID of the user
      * @return true if the ApplicationList exists, false otherwise
      */
     boolean existsByPkAndCreatedUser(Long primaryKey, String userId);
@@ -52,28 +52,39 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      *
      * @param value the minimum ID value (inclusive)
      * @return a list of ApplicationCode entities with IDs greater than or equal to the specified
-     *     value
+     * value
      */
     List<ApplicationList> findByPkGreaterThanEqual(Integer value);
 
     @Query("""
-    SELECT al
-    FROM ApplicationList al
-    WHERE (:status IS NULL OR al.status = :status)
-      AND (:courtCode IS NULL OR al.courtCode = :courtCode)
-      AND (:cja IS NULL OR al.cja = :cja)
-      AND (:dateMidnight IS NULL OR al.date = :dateMidnight)
-      AND (:time IS NULL OR (hour(al.time) = hour(:time) AND minute(al.time) = minute(:time)))
-      AND (:description IS NULL OR LOWER(al.description) LIKE CONCAT('%', LOWER(CAST(:description AS string)), '%'))
-      AND (:otherDesc IS NULL OR LOWER(al.otherLocation) LIKE CONCAT('%', LOWER(CAST(:otherDesc AS string)), '%'))
-        """)
+
+        SELECT al
+FROM ApplicationList al
+WHERE (:status IS NULL OR al.status = :status)
+  AND (:courtCode IS NULL OR al.courtCode = :courtCode)
+  AND (:cja IS NULL OR al.cja = :cja)
+  AND (
+      :dateStart IS NULL OR
+      (al.date >= :dateStart AND al.date < :dateEnd)
+  )
+  AND (
+      :hour IS NULL OR
+      (function('date_part','hour', al.time) = :hour
+       AND function('date_part','minute', al.time) = :minute)
+  )
+  AND (:description IS NULL OR lower(al.description) LIKE concat('%', lower(:description), '%'))
+  AND (:otherDesc   IS NULL OR lower(al.otherLocation) LIKE concat('%', lower(:otherDesc), '%'))
+""")
     Page<ApplicationList> findAllByFilter(
         @Param("status") ApplicationListStatus status,
-        @Param("courtCode") String courtLocationCode,
+        @Param("courtCode") String courtCode,
         @Param("cja") CriminalJusticeArea cja,
-        @Param("dateMidnight") LocalDateTime date,   // pass date at 00:00:00
-        @Param("time") LocalDateTime time,                 // HH:mm (no seconds)
-        @Param("description") String descriptionContains,
-        @Param("otherDesc") String otherLocationDescriptionContains,
-        Pageable pageable);
+        @Param("dateStart") LocalDateTime dateStart,
+        @Param("dateEnd") LocalDateTime dateEnd,
+        @Param("hour") Integer hour,
+        @Param("minute") Integer minute,
+        @Param("description") String description,
+        @Param("otherDesc") String otherDesc,
+        Pageable pageable
+    );
 }

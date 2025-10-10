@@ -17,13 +17,27 @@ import java.util.Map;
 
 import static java.util.Locale.ROOT;
 
+/**
+ * Maps and validates API sort parameters for Application List queries.
+ *
+ * <p>Acts as the bridge between external API field names and internal
+ * entity properties, enforcing allowed fields and sort directions.
+ * Delegates field validation to {@link ApplicationListSortValidator}.
+ */
 @Component
 @RequiredArgsConstructor
 public class ApplicationListSortMapper {
 
     private static final String ASC = "asc";
     private static final String DESC = "desc";
+    private static final int MAX_SORT_VAL = 2;
+    private static final int API_FIELD_INDEX = 0;
+    private final static int DIRECTION_INDEX = 1;
+    private static final String SORT_DELIMITER = ",";
 
+    /*
+     * A map which links the API field name to the entity property name.
+     */
     private static final Map<String, String> SORT_MAP = Map.of(
         ApplicationListApiFields.DATE, ApplicationList_.DATE,
         ApplicationListApiFields.TIME, ApplicationList_.TIME,
@@ -37,27 +51,27 @@ public class ApplicationListSortMapper {
     private final ApplicationListSortValidator sortValidator;
 
     /**
-     * Map API sort tokens to entity-property tokens and validate PROPERTY names.
-     * Returns an empty list if client supplied no sort (so caller can apply defaults).
+     * Translates API sort fields (e.g. "date,desc") into validated entity property names
+     * used for persistence queries. If the client provides no sort fields, an empty list
+     * is returned so that the caller can apply default sorting behavior.
      *
      * @param sorts e.g. ["date,desc","status,asc"]
-     * @return      e.g. ["listDate,desc","status,asc"]
+     * @return           e.g. ["listDate,desc","status,asc"]
      */
     public List<String> mapAndValidate(List<String> sorts) {
         if (sorts == null || sorts.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<String> mapped = new ArrayList<>();
+        List<String> mappedSorts = new ArrayList<>();
         for (String sortValue : sorts) {
             if (sortValue == null || sortValue.isBlank()) {
                 throw new AppRegistryException(CommonAppError.SORT_NOT_SUITABLE, "Sort value is blank");
             }
 
-            String[] parts = sortValue.split(",", 2);
-            String apiField = parts[0].trim();
+            String[] sortParts = sortValue.split(SORT_DELIMITER, MAX_SORT_VAL);
+            String apiField = sortParts[API_FIELD_INDEX].trim();
 
-            // Validate API field exists in mapping
             String entityField = SORT_MAP.get(apiField);
             if (entityField == null) {
                 throw new AppRegistryException(
@@ -66,22 +80,21 @@ public class ApplicationListSortMapper {
                         .formatted(apiField, String.join(", ", SORT_MAP.keySet())));
             }
 
-            // Validate the ENTITY PROPERTY via the domain validator
             sortValidator.validate(entityField);
 
-            if (parts.length > 1) {
-                String direction = checkDirection(parts, apiField);
-                mapped.add(entityField + "," + direction);
+            boolean hasDirection = sortParts.length > 1;
+            if (hasDirection) {
+                String direction = checkDirection(sortParts, apiField);
+                mappedSorts.add(entityField + SORT_DELIMITER + direction);
             } else {
-                mapped.add(entityField); // no direction → let downstream default to ASC
+                mappedSorts.add(entityField);
             }
         }
-        return mapped;
+        return mappedSorts;
     }
 
-    private static String checkDirection(String[] parts, String apiField) {
-        String direction = parts[1].trim();
-        // Strict direction check (asc|desc), case-insensitive
+    private static String checkDirection(String[] sortParts, String apiField) {
+        String direction = sortParts[DIRECTION_INDEX].trim();
         String norm = direction.toLowerCase(ROOT);
         if (!norm.equals(ASC) && !norm.equals(DESC)) {
             throw new AppRegistryException(
