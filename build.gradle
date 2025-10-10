@@ -214,29 +214,106 @@ tasks.register('smoke', Test) {
   classpath = files(sourceSets.smokeTest.runtimeClasspath, sourceSets.testCommon.runtimeClasspath)
 }
 
+def commonJacocoExclusionsIntegration = [
+        "**/uk/gov/hmcts/appregister/**/dto/**/*.class",
+        "**/uk/gov/hmcts/appregister/generated/**/*.class",
+        "**/uk/gov/hmcts/appregister/applicationentry/**/*.class",
+        "**/uk/gov/hmcts/appregister/report/**/*.class",
+        "**/uk/gov/hmcts/appregister/applicationlistentryresolutions/**/*.class"
+]
+
+def commonJacocoExclusionsUnit = [
+        "**/uk/gov/hmcts/appregister/**/dto/**/*.class",
+        "**/uk/gov/hmcts/appregister/generated/**/*.class",
+        "**/uk/gov/hmcts/appregister/applicationentry/**/*.class",
+        "**/uk/gov/hmcts/appregister/report/**/*.class",
+        "**/uk/gov/hmcts/appregister/applicationlistentryresolutions/**/*.class",
+
+        // These are packages in which I do not envisage tests. These would be tested more appropriately in
+        // integration tests or other types of tests
+        "**/uk/gov/hmcts/appregister/**/controller/*.class",
+        "**/uk/gov/hmcts/appregister/**/dao/*.class",
+        "**/uk/gov/hmcts/appregister/**/config/*.class",
+        "**/uk/gov/hmcts/appregister/**/entity/*.class",
+
+        // If we use MapStruct, we don't need to test the generated mappers or we test them as part of integration tests
+        "**/uk/gov/hmcts/appregister/**/mapper/*.class"
+]
+
 tasks.register('jacocoUnitReport', JacocoReport) {
   dependsOn test
-  reports { xml.required = true; html.required = false }
+  reports { xml.required = true; html.required = true }
   executionData file("$buildDir/jacoco/test.exec")
-  classDirectories.from files(sourceSets.main.output).asFileTree.matching {
-
-  }
   sourceDirectories.from sourceSets.main.allSource.srcDirs
+
+  classDirectories.setFrom(
+          files(sourceSets.main.output).asFileTree.matching {
+            exclude(commonJacocoExclusionsUnit)
+          }
+  )
+}
+
+// ✅ thresholds go here (NOT on JacocoReport)
+tasks.register('jacocoUnitCoverageVerification', JacocoCoverageVerification) {
+  dependsOn jacocoUnitReport
+  executionData.setFrom(file("$buildDir/jacoco/test.exec"))
+  sourceDirectories.from sourceSets.main.allSource.srcDirs
+  violationRules {
+    failOnViolation = true
+    rule {
+      // optional: choose counter/value explicitly
+      // counter = 'INSTRUCTION' // or BRANCH, CLASS, LINE, METHOD
+      // value   = 'COVEREDRATIO'
+      limit { minimum = 0.8 } // 80%
+    }
+  }
+
+  classDirectories.setFrom(
+          files(sourceSets.main.output).asFileTree.matching {
+            exclude(
+                    commonJacocoExclusionsUnit)
+          }
+  )
 }
 
 tasks.register('jacocoIntegrationReport', JacocoReport) {
   dependsOn integration
-  reports { xml.required = true; html.required = false }
+  reports { xml.required = true; html.required = true }
   executionData file("$buildDir/jacoco/integration.exec")
-  classDirectories.from files(sourceSets.main.output).asFileTree.matching {
-
-
-  }
   sourceDirectories.from sourceSets.main.allSource.srcDirs
+  classDirectories.setFrom(
+          files(sourceSets.main.output).asFileTree.matching {
+            exclude(
+                    commonJacocoExclusionsIntegration)
+          }
+  )
 }
 
+tasks.register('jacocoIntegrationCoverageVerification', JacocoCoverageVerification) {
+  dependsOn jacocoIntegrationReport
+  executionData.setFrom(file("$buildDir/jacoco/integration.exec"))
+  sourceDirectories.from sourceSets.main.allSource.srcDirs
+  violationRules {
+    failOnViolation = true
+    rule {
+      // optional: choose counter/value explicitly
+      // counter = 'INSTRUCTION' // or BRANCH, CLASS, LINE, METHOD
+      // value   = 'COVEREDRATIO'
+      limit { minimum = 0.8 } // 80%
+    }
+  }
+
+  classDirectories.setFrom(
+          files(sourceSets.main.output).asFileTree.matching {
+            exclude(
+                    commonJacocoExclusionsIntegration)
+          }
+  )
+}
+
+
 //AD disabled
-tasks.sonarqube.dependsOn(jacocoIntegrationReport).dependsOn(jacocoUnitReport)
+tasks.sonarqube.dependsOn(jacocoIntegrationCoverageVerification).dependsOn(jacocoUnitCoverageVerification)
 tasks['check'].finalizedBy integration
 
 
