@@ -89,6 +89,52 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
         assertThat(reloaded.getChangedBy()).isEqualTo(TID_CLAIM + ":" + OID_CLAIM);
     }
 
+    @Test
+    @DisplayName("findAllByFilter: matches by calendar day + hh:mm only")
+    void findAllByFilter_dateAndTime_match() {
+        // Given
+        LocalDate targetDay = LocalDate.of(2025, 1, 2);
+        LocalDateTime dateStart = targetDay.atStartOfDay();
+        LocalDateTime dateEnd   = targetDay.plusDays(1).atStartOfDay();
+
+        // We only care about hour/minute = 09:00; seconds ignored
+        LocalDateTime nineAm    = LocalDateTime.of(1970, 1, 1, 9, 0);
+        LocalDateTime tenAm     = LocalDateTime.of(1970, 1, 1, 10, 0);
+
+        // Matching row: correct day AND 09:00
+        save("OPEN", "CCC003", null, dateStart, nineAm, "keep", "west");
+
+        // Wrong time (10:00) on same day -> should NOT match
+        save("OPEN", "CCC003", null, dateStart, tenAm, "drop", "west");
+
+        // Right time (09:00) but wrong day -> should NOT match
+        LocalDateTime otherDayStart = targetDay.plusDays(1).atStartOfDay();
+        save("OPEN", "CCC003", null, otherDayStart, nineAm, "drop", "west");
+
+        Pageable page = PageRequest.of(0, 10);
+
+        // When: filter ONLY by date (day) and time (hh:mm). Leave status/courtCode/cja/contains filters null.
+        Page<ApplicationList> result = repository.findAllByFilter(
+            null,       // status not applied
+            null,       // courtCode not applied
+            null,       // cja not applied
+            dateStart,  // inclusive
+            dateEnd,    // exclusive
+            9,          // hour
+            0,          // minute
+            null,       // description contains not applied
+            null,       // other location contains not applied
+            page
+        );
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        ApplicationList only = result.getContent().getFirst();
+        assertThat(only.getDate()).isEqualTo(dateStart);
+        assertThat(only.getTime().getHour()).isEqualTo(9);
+        assertThat(only.getTime().getMinute()).isEqualTo(0);
+    }
+
 
 //    @Test
 //    @DisplayName("findAllByFilter: status + courtCode filters match")

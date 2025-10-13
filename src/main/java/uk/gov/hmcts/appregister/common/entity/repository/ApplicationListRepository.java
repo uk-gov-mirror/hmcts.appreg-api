@@ -57,23 +57,25 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
     List<ApplicationList> findByPkGreaterThanEqual(Integer value);
 
     @Query("""
-
-        SELECT al
+SELECT al
 FROM ApplicationList al
-WHERE (:status IS NULL OR al.status = :status)
+WHERE (:status   IS NULL OR al.status   = :status)
   AND (:courtCode IS NULL OR al.courtCode = :courtCode)
-  AND (:cja IS NULL OR al.cja = :cja)
+  AND (:cja      IS NULL OR al.cja      = :cja)
+
   AND (
-      :dateStart IS NULL OR
+      cast(:dateStart as timestamp) IS NULL OR
       (al.date >= :dateStart AND al.date < :dateEnd)
   )
+
   AND (
-      :hour IS NULL OR
-      (function('date_part','hour', al.time) = :hour
-       AND function('date_part','minute', al.time) = :minute)
+      cast(:hour as int) IS NULL OR
+      (function('date_part','hour',   al.time) = cast(:hour   as int)
+       AND function('date_part','minute', al.time) = cast(:minute as int))
   )
-  AND (:description IS NULL OR lower(al.description) LIKE concat('%', lower(:description), '%'))
-  AND (:otherDesc   IS NULL OR lower(al.otherLocation) LIKE concat('%', lower(:otherDesc), '%'))
+
+  AND ( :description IS NULL OR lower(al.description)   LIKE concat('%', lower(cast(:description as string)), '%'))
+  AND ( :otherDesc   IS NULL OR lower(al.otherLocation) LIKE concat('%', lower(cast(:otherDesc   as string)), '%'))
 """)
     Page<ApplicationList> findAllByFilter(
         @Param("status") ApplicationListStatus status,

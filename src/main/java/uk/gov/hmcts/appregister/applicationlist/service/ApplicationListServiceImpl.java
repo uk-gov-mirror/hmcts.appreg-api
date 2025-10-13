@@ -2,6 +2,7 @@ package uk.gov.hmcts.appregister.applicationlist.service;
 
 import jakarta.persistence.EntityManager;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -136,16 +137,33 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     public ApplicationListPage getPage(ApplicationListGetFilterDto dto, Pageable pageable) {
 
+        // 1) Date -> [start, end) range (calendar day only)
+        LocalDateTime dateStart = null;
+        LocalDateTime dateEnd = null;
+        if (dto.getDate() != null) {
+            dateStart = dateTimeService.normalizeDate(dto.getDate());
+            dateEnd   = dateStart.plusDays(1);
+        }
+
+        // 2) Time string -> hour/minute (ignore seconds)
+        Integer hour = null;
+        Integer minute = null;
+        if (StringUtils.hasText(dto.getTime())) {
+            LocalDateTime anchor = dateTimeService.normalizeTime(dto.getTime());
+            hour = anchor.getHour();
+            minute = anchor.getMinute();
+        }
+
         CriminalJusticeArea cja = resolveCja(dto.getCjaCode()).orElse(null);
-
-
 
         final Page<ApplicationList> dbPage = repository.findAllByFilter(
             dto.getStatus(),
             dto.getCourtLocationCode(),
             cja,
-            dateTimeService.normalizeDate(dto.getDate()),
-            dateTimeService.normalizeTime(dto.getTime()),
+            dateStart,   // inclusive lower bound (or null)
+            dateEnd,     // exclusive upper bound (or null)
+            hour,        // or null
+            minute,
             dto.getDescription(),
             dto.getOtherLocationDescription(),
             pageable
