@@ -74,7 +74,7 @@ public class DatabaseReset {
                                     + "WHERE sequence_schema = '"
                                     + sqlInitSchema
                                     + "'");
-            final List sequences = query.getResultList();
+            final List<?> sequences = query.getResultList();
             for (Object seqName : sequences) {
                 em.createNativeQuery(
                                 "ALTER SEQUENCE "

@@ -12,7 +12,7 @@ public class DataAuditTestData
 
     @Override
     public DataAudit.DataAuditBuilder someMinimal() {
-        DataAudit.DataAuditBuilder dataAudit = new DataAudit().builder();
+        DataAudit.DataAuditBuilder dataAudit = DataAudit.builder();
         UUID uniqueId = UUID.randomUUID();
         dataAudit
                 .schemaName(StringUtil.stripToMax(uniqueId.toString(), 30))

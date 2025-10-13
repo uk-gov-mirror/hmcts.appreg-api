@@ -35,6 +35,10 @@ public abstract class NameAddressMapper {
     @Mapping(target = "address3", source = "addressLine3")
     @Mapping(target = "address4", source = "addressLine4")
     @Mapping(target = "address5", source = "addressLine5")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "userName", ignore = true)
+    @Mapping(target = "dmsId", ignore = true)
     abstract NameAddress createFromWriteDto(IdentityDetailsWriteDto dto);
 
     void updateFromWriteDto(IdentityDetailsWriteDto dto, NameAddress entity) {
