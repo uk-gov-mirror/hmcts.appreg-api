@@ -52,11 +52,11 @@ public abstract class AbstractApplicationListLocationValidator<T, O extends List
      */
     abstract O getResult();
 
-    protected ApplicationListRepository applicationListRepository;
+    protected final ApplicationListRepository applicationListRepository;
 
-    protected NationalCourtHouseRepository courtHouseRepository;
+    protected final NationalCourtHouseRepository courtHouseRepository;
 
-    protected CriminalJusticeAreaRepository criminalJusticeAreaRepository;
+    protected final CriminalJusticeAreaRepository criminalJusticeAreaRepository;
     protected static final int SINGLE_RECORD = 1;
 
     /**

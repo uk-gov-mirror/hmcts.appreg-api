@@ -1,6 +1,9 @@
 package uk.gov.hmcts.appregister.applicationlist.validator;
 
 import org.springframework.stereotype.Component;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 
@@ -15,6 +18,10 @@ import java.util.function.Function;
  */
 @Component
 public class ApplicationCreateListLocationValidator extends AbstractApplicationListLocationValidator<ApplicationListCreateDto, ListLocationValidationSuccess> {
+
+    public ApplicationCreateListLocationValidator(ApplicationListRepository applicationListRepository, NationalCourtHouseRepository courtHouseRepository, CriminalJusticeAreaRepository criminalJusticeAreaRepository) {
+        super(applicationListRepository, courtHouseRepository, criminalJusticeAreaRepository);
+    }
 
     @Override
     Function<ApplicationListCreateDto, String> getCourtLocation() {

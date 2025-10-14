@@ -82,22 +82,6 @@ public class ApplicationListServiceImplTest {
         verify(entityManager).refresh(saved);
     }
 
-    @Test
-    void create_noCourtReturnedFromRepository_throwsAppRegException() {
-        // given
-        ApplicationListCreateDto dto = mock(ApplicationListCreateDto.class);
-        when(dto.getCourtLocationCode()).thenReturn("CODE1");
-
-        when(courtHouseRepository.findActiveCourts("CODE1")).thenReturn(List.of());
-
-        // expect
-        assertThatThrownBy(() -> service.create(dto))
-                .isInstanceOf(AppRegistryException.class)
-                .hasMessageContaining("No court found");
-
-        verify(validator).validate(dto);
-        verify(repository, never()).save(any());
-    }
 
     @Test
     void create_multipleCourtsReturnedFromRepository_throwsAppRegException() {

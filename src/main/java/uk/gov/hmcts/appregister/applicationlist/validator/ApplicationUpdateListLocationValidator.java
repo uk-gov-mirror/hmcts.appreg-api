@@ -3,6 +3,9 @@ package uk.gov.hmcts.appregister.applicationlist.validator;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
@@ -19,6 +22,10 @@ import java.util.function.Function;
  */
 @Component
 public class ApplicationUpdateListLocationValidator extends AbstractApplicationListLocationValidator<PayloadForUpdate<ApplicationListUpdateDto>, ListUpdateValidationSuccess> {
+
+    public ApplicationUpdateListLocationValidator(ApplicationListRepository applicationListRepository, NationalCourtHouseRepository courtHouseRepository, CriminalJusticeAreaRepository criminalJusticeAreaRepository) {
+        super(applicationListRepository, courtHouseRepository, criminalJusticeAreaRepository);
+    }
 
     @Override
     public void validate(PayloadForUpdate<ApplicationListUpdateDto> dto) {

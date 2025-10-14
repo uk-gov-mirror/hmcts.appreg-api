@@ -30,7 +30,9 @@ public interface ApplicationListMapper {
      * @param time the time string ("HH:mm" or "HH:mm:ss") from the DTO
      * @return a combined {@code LocalDateTime}, or {@code null} if either part is null
      */
-    default LocalTime timeConversion(String time) {
+    default LocalTime toTime(String time) {
+        // DTO has @NotNull + @Pattern, but this keeps things defensive
+        if (time == null || time.isBlank()) return null;
         return LocalTime.parse(time, TIME_FORMAT);
     }
 
@@ -62,8 +64,8 @@ public interface ApplicationListMapper {
     @Mapping(target = "courtCode", source = "court.courtLocationCode")
     @Mapping(target = "courtName", source = "court.name")
     @Mapping(target = "description", source = "dto.description")
-    @Mapping(target = "date", expression = "dto.getDate()")
-    @Mapping(target = "time", expression = "java(timeConversion(dto.getTime()))")
+    @Mapping(target = "date", source = "dto.date")
+    @Mapping(target = "time", expression = "java(toTime(dto.getTime()))")
     ApplicationList toCreateEntityWithCourt(ApplicationListCreateDto dto, NationalCourtHouse court);
 
     @Mapping(target = "pk", ignore = true)
@@ -74,12 +76,12 @@ public interface ApplicationListMapper {
     @Mapping(target = "courtName", ignore = true)
     @Mapping(target = "otherLocation", source = "dto.otherLocationDescription")
     @Mapping(target = "description", source = "dto.description")
-    @Mapping(target = "date", expression = "dto.getDate()")
-    @Mapping(target = "time", expression = "java(timeConversion(dto.getTime()))")
+    @Mapping(target = "date", source = "dto.date")
+    @Mapping(target = "time", expression = "java(toTime(dto.getTime()))")
     ApplicationList toCreateEntityWithCja(ApplicationListCreateDto dto, CriminalJusticeArea cja);
 
     @Mapping(target = "id", source = "appList.uuid")
-    @Mapping(target = "date", expression = "appList.getDate()")
+    @Mapping(target = "date", source = "appList.date")
     @Mapping(target = "time", expression = "java(toTimeString(appList.getTime()))")
     @Mapping(target = "description", source = "appList.description")
     @Mapping(target = "status", source = "appList.status")
@@ -101,10 +103,10 @@ public interface ApplicationListMapper {
     @Mapping(target = "otherLocation", source = "dto.otherLocationDescription")
     @Mapping(target = "durationMinutes", source = "dto.durationMinutes")
     @Mapping(target = "durationHours", source = "dto.durationHours")
-    @Mapping(target = "date", expression = "dto.getDate()")
+    @Mapping(target = "date", source = "dto.date")
     @Mapping(target = "description", source = "dto.description")
     @Mapping(target = "status", source = "dto.status.value")
-    @Mapping(target = "time", expression = "java(timeConversion(dto.getTime()))")
+    @Mapping(target = "time", expression = "java(toTime(dto.getTime()))")
     ApplicationList toUpdateEntityWithCja(ApplicationListUpdateDto dto, CriminalJusticeArea cja);
 
     @Mapping(target = "pk", ignore = true)
@@ -116,7 +118,7 @@ public interface ApplicationListMapper {
     @Mapping(target = "courtCode", source = "court.courtLocationCode")
     @Mapping(target = "courtName", source = "court.name")
     @Mapping(target = "description", source = "dto.description")
-    @Mapping(target = "date", expression = "dto.getDate()")
-    @Mapping(target = "time", expression = "java(timeConversion(dto.getTime()))")
+    @Mapping(target = "date", source = "dto.date")
+    @Mapping(target = "time", expression = "java(toTime(dto.getTime()))")
     ApplicationList toUpdateEntityWithCourt(ApplicationListUpdateDto dto, NationalCourtHouse court);
 }

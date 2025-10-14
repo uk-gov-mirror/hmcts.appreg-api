@@ -34,5 +34,8 @@ public interface Validator<T, O> {
      *
      * @throws uk.gov.hmcts.appregister.common.exception.AppRegistryException if validation fails
      */
-    <R> R validate(T validatable, BiFunction<T, O, R> validateSuccess);
+    default <R> R validate(T validatable, BiFunction<T, O, R> validateSuccess) {
+        validate(validatable);
+        return validateSuccess.apply(validatable, null);
+    }
 }
