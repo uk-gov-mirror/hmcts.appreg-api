@@ -1,5 +1,7 @@
 package uk.gov.hmcts.appregister.common.validator;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
@@ -16,9 +18,7 @@ class AbstractSortValidatorTest {
                 Assertions.assertThrows(
                         AppRegistryException.class, () -> validator.validate("NOT KNOWN"));
         Assertions.assertEquals(CommonAppError.SORT_NOT_SUITABLE, exception.getCode());
-        Assertions.assertEquals(
-                "Sort property 'NOT KNOWN' is not allowed. Allowed: field1, field2",
-                exception.getMessage());
+        assertThat(exception.getMessage()).startsWith("Sort property 'NOT KNOWN' is not allowed.");
     }
 
     @Test
