@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Validator component for {@link uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto} location fields.
+ * Validator component for {@link uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto} location fields.
  *
  * <p>Enforces the business rule that exactly one valid location option is provided: either a court
  * location code, or a combination of criminal justice area code and other location description.
@@ -51,12 +51,10 @@ public class ApplicationUpdateListLocationValidator extends AbstractApplicationL
         }
 
         //validate the location fields
-        super.validate(dto, (payload, updateLocatedList) -> {
+        return super.validate(dto, (payload, updateLocatedList) -> {
             updateLocatedList.setApplicationList(applicationListList.getFirst());
             return createApplicationSupplier.apply(payload, updateLocatedList);
         });
-
-        return null;
     }
 
     @Override

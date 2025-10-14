@@ -1,14 +1,10 @@
 package uk.gov.hmcts.appregister.common.validator;
 
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A generic validation interface.
  */
-@FunctionalInterface
 public interface Validator<T, O> {
 
     /**
@@ -28,7 +24,9 @@ public interface Validator<T, O> {
      * Validate the provided {@code validatable}.
      *
      * @param validatable The object to validate
-     * @param validateSuccess Callback to be executed if validation is successful
+     * @param validateSuccess Function to be executed if validation is successful with an associated response.
+     *                        The function is passed the original DTO as well as the success data from the
+     *                        implementing validator. The function should return a response of type R.
      *
      * <p>The general convention is to throw a {@link
      * uk.gov.hmcts.appregister.common.exception.AppRegistryException} if validation fails, but this

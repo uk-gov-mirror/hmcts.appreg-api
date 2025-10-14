@@ -10,7 +10,7 @@ import java.util.UUID;
  * The etag that will be returned with the associated operation payload
  */
 @Getter
-public class MatchResponse<T> implements MatchResponse<T>{
+public class MatchResponse<T>{
     private final String etag;
     private final T payload;
 

@@ -22,18 +22,36 @@ import java.util.function.Function;
  * <p>Enforces the business rule that exactly one valid location option is provided: either a court
  * location code, or a combination of criminal justice area code and other location description.
  *
- * This class should be provided with method references to the relevant getters of the DTO to be validated.
+ * This class should be provided with method references to the relevant getters of the DTO to be validated. In this way it
+ * can be shared
  */
 @RequiredArgsConstructor
 public abstract class AbstractApplicationListLocationValidator<T, O extends ListLocationValidationSuccess> implements Validator<T, O> {
+
+    /**
+     * gets the court location from the underlying dto
+     * @return the court location
+     */
     abstract Function<T, String> getCourtLocation();
+
+    /**
+     * gets the cja code from the underlying dto
+     * @return The cja code
+     */
     abstract Function<T, String> getCjaCode();
+
+    /**
+     * gets the location description from the underlying dto
+     * @return The location description
+     */
     abstract Function<T, String> getLocationDescription();
 
     /**
-     *
+     * creates the result the validator success that. Always a sub class of {@link ListLocationValidationSuccess}
+     * @return The validation result
      */
     abstract O getResult();
+
     protected ApplicationListRepository applicationListRepository;
 
     protected NationalCourtHouseRepository courtHouseRepository;
@@ -61,6 +79,7 @@ public abstract class AbstractApplicationListLocationValidator<T, O extends List
         validate(dto, null);
     }
 
+    @Override
     public <R> R validate(T dto, BiFunction<T, O, R> createApplicationSupplier) {
         String court = getCourtLocation().apply(dto);
         String cja = getCjaCode().apply(dto);
