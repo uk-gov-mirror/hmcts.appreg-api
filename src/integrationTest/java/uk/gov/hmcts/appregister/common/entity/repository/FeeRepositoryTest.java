@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.Fee;
-import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.FeeTestData;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.util.DateUtil;
@@ -19,8 +18,6 @@ import uk.gov.hmcts.appregister.util.DateUtil;
 public class FeeRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private FeeRepository applicationFeeRepository;
-
-    @Autowired private UserProvider loggedInUser;
 
     private static final int BASELINE_TEST_COUNT = 23;
 
