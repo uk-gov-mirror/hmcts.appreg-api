@@ -352,7 +352,8 @@ sonarqube {
             "src/main/java/uk/gov/hmcts/appregister/generated/**/*",
             "src/main/java/uk/gov/hmcts/appregister/applicationentry/**/*",
             "src/main/java/uk/gov/hmcts/appregister/report/**/*",
-            "src/main/java/uk/gov/hmcts/appregister/applicationlistentryresolutions/**/*"
+            "src/main/java/uk/gov/hmcts/appregister/applicationlistentryresolutions/**/*",
+            "src/main/java/uk/gov/hmcts/appregister/**/mapper/*"
     ]
     if (gradle.startParameter.taskNames.contains("localSonarqube")) {
       property 'sonar.host.url', 'http://localhost:9000'
