@@ -25,7 +25,11 @@ public enum AuditEventEnum {
     GET_COURT_LOCATION_AUDIT_EVENT(
             TableNames.NATIONAL_COURT_HOUSES, NationalCourtHouse_.NAME, "Get Court Location"),
 
-    GET_COURT_LOCATIONS_AUDIT_EVENT(TableNames.NATIONAL_COURT_HOUSES, "N/A", "Get Court Locations");
+    GET_COURT_LOCATIONS_AUDIT_EVENT(TableNames.NATIONAL_COURT_HOUSES, "N/A", "Get Court Locations"),
+
+    ADD_APPLICATION_LIST_AUDIT_EVENT(TableNames.APPLICATION_LISTS, "N/A", "Add Application List"),
+
+    UPDATE_APPLICATION_LIST_AUDIT_EVENT(TableNames.APPLICATION_LISTS, "N/A", "Update Application List");
 
     private final String tableName;
 

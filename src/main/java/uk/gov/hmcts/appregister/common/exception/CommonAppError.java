@@ -4,7 +4,9 @@ import org.springframework.http.HttpStatus;
 
 public enum CommonAppError implements ErrorCodeEnum {
     SORT_NOT_SUITABLE(
-            DefaultErrorDetail.create(HttpStatus.BAD_REQUEST, "Sort key not suitable", "COMMON-1"));
+            DefaultErrorDetail.create(HttpStatus.BAD_REQUEST, "Sort key not suitable", "COMMON-1")),
+    MATCH_ETAG_FAILURE(
+            DefaultErrorDetail.create(HttpStatus.PRECONDITION_FAILED, "Etag failure", "COMMON-2"));
 
     private final DefaultErrorDetail defaultErrorCode;
 

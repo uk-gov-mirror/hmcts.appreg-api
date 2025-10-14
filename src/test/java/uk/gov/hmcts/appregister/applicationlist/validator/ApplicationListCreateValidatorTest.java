@@ -13,7 +13,7 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 
 public class ApplicationListCreateValidatorTest {
 
-    private ApplicationListLocationValidator validator;
+    private ApplicationCreateListLocationValidator validator;
 
     private enum Field {
         COURT,
@@ -37,7 +37,7 @@ public class ApplicationListCreateValidatorTest {
 
     @BeforeEach
     void before() {
-        validator = new ApplicationListLocationValidator();
+        validator = new ApplicationCreateListLocationValidator();
     }
 
     // ---- TESTS ----
