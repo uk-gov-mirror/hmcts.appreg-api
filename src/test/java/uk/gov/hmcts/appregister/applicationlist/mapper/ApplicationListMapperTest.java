@@ -17,6 +17,7 @@ import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 
 /**
@@ -164,6 +165,44 @@ class ApplicationListMapperTest {
             assertEquals(2, dto.getDurationHours());
             assertEquals(30, dto.getDurationMinutes());
             assertEquals(3L, dto.getVersion());
+        }
+    }
+
+    // ---------- Mapping: toGetSummaryDto ----------
+
+    @Nested
+    class ToGetSummaryDtoTests {
+
+        @Test
+        void toGetSummaryDto_validEntityAndArgs_returnsValidDto() {
+            // Given
+            UUID id = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+
+            var appList =
+                    ApplicationList.builder()
+                            .uuid(id)
+                            .description("Morning session")
+                            .status(ApplicationListStatus.OPEN)
+                            .date(LocalDate.of(2025, 9, 19))
+                            .time(LocalTime.of(9, 0, 0))
+                            .build();
+
+            long entryCount = 5L;
+            String location = "Bath Magistrates Court";
+
+            // When
+            ApplicationListGetSummaryDto dto =
+                    mapper.toGetSummaryDto(appList, entryCount, location);
+
+            // Then
+            assertNotNull(dto);
+            assertEquals(id, dto.getId());
+            assertEquals(LocalDate.of(2025, 9, 19), dto.getDate());
+            assertEquals(LocalTime.of(9, 0, 0), dto.getTime());
+            assertEquals("Bath Magistrates Court", dto.getLocation());
+            assertEquals("Morning session", dto.getDescription());
+            assertEquals(5, dto.getNumberOfEntries());
+            assertEquals(ApplicationListStatus.OPEN, dto.getStatus());
         }
     }
 }

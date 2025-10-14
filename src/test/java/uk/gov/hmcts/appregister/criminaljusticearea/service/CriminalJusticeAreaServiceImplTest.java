@@ -51,10 +51,7 @@ class CriminalJusticeAreaServiceImplTest {
         // Given
         String code = "X123";
         String description = "Test Area";
-        var cja = CriminalJusticeArea.builder()
-            .code(code)
-            .description(description)
-            .build();
+        var cja = CriminalJusticeArea.builder().code(code).description(description).build();
 
         when(locationLookupService.getCjaOrThrow(code)).thenReturn(cja);
 
@@ -65,44 +62,49 @@ class CriminalJusticeAreaServiceImplTest {
         Assertions.assertEquals(code, dto.getCode());
         Assertions.assertEquals(description, dto.getDescription());
         verify(auditOperationService)
-            .processAudit(eq(AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
+                .processAudit(
+                        eq(AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
     }
 
     @Test
     void testDuplicate_throwsDomainError() {
         // Given
         String code = "X123";
-        var ex = new AppRegistryException(
-            CriminalJusticeAreaError.DUPLICATE_CJA_FOUND,
-            "Multiple Criminal Justice Areas found for code '%s'".formatted(code));
+        var ex =
+                new AppRegistryException(
+                        CriminalJusticeAreaError.DUPLICATE_CJA_FOUND,
+                        "Multiple Criminal Justice Areas found for code '%s'".formatted(code));
 
         when(locationLookupService.getCjaOrThrow(code)).thenThrow(ex);
 
         // When / Then
         AppRegistryException thrown =
-            Assertions.assertThrows(AppRegistryException.class, () -> service.findByCode(code));
+                Assertions.assertThrows(AppRegistryException.class, () -> service.findByCode(code));
 
         Assertions.assertEquals(CriminalJusticeAreaError.DUPLICATE_CJA_FOUND, thrown.getCode());
         verify(auditOperationService)
-            .processAudit(eq(AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
+                .processAudit(
+                        eq(AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
     }
 
     @Test
     void testNotFound_throwsDomainError() {
         // Given
         String code = "X123";
-        var ex = new AppRegistryException(
-            CriminalJusticeAreaError.CJA_NOT_FOUND,
-            "No Criminal Justice Areas found for code '%s'".formatted(code));
+        var ex =
+                new AppRegistryException(
+                        CriminalJusticeAreaError.CJA_NOT_FOUND,
+                        "No Criminal Justice Areas found for code '%s'".formatted(code));
 
         when(locationLookupService.getCjaOrThrow(code)).thenThrow(ex);
 
         // When / Then
         AppRegistryException thrown =
-            Assertions.assertThrows(AppRegistryException.class, () -> service.findByCode(code));
+                Assertions.assertThrows(AppRegistryException.class, () -> service.findByCode(code));
 
         Assertions.assertEquals(CriminalJusticeAreaError.CJA_NOT_FOUND, thrown.getCode());
         verify(auditOperationService)
-            .processAudit(eq(AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
+                .processAudit(
+                        eq(AuditEventEnum.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
     }
 }

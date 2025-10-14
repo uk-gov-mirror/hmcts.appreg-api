@@ -54,18 +54,41 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      */
     List<ApplicationList> findByPkGreaterThanEqual(Integer value);
 
+    /**
+     * Retrieves a paginated list of {@link ApplicationList} entities filtered by the specified
+     * criteria, including status, court code, criminal justice area (CJA), date, time, and
+     * description fields. The query uses an {@link EntityGraph} to eagerly fetch the associated
+     * {@link CriminalJusticeArea} to prevent N+1 select issues.
+     *
+     * <p>All filter parameters are optional; if a parameter is {@code null}, it will be ignored in
+     * the filtering process.
+     *
+     * @param status the application list status to filter by, or {@code null} to include all
+     *     statuses
+     * @param courtCode the court code to filter by, or {@code null} to include all court codes
+     * @param cja the criminal justice area to filter by, or {@code null} to include all areas
+     * @param onDate the specific date to filter by, or {@code null} to include all dates
+     * @param atTime the specific time to filter by, or {@code null} to include all times
+     * @param description the description text to search within application descriptions, or {@code
+     *     null} for no filter
+     * @param otherDesc the text to search within the {@code otherLocation} field, or {@code null}
+     *     for no filter
+     * @param pageable the pagination and sorting information
+     * @return a {@link Page} of {@link ApplicationList} entities matching the provided filter
+     *     criteria
+     */
     @EntityGraph(attributePaths = "cja")
     @Query(
             """
         SELECT al
         FROM ApplicationList al
-        WHERE (:status     IS NULL OR al.status        = :status)
-          AND (:courtCode  IS NULL OR al.courtCode     = :courtCode)
-          AND (:cja        IS NULL OR al.cja           = :cja)
-          AND (:onDate     IS NULL OR al.date          = :onDate)
-          AND (:atTime     IS NULL OR al.time          = :atTime)
-          AND (:description IS NULL OR lower(al.description)   LIKE concat('%', lower(:description), '%'))
-          AND (:otherDesc   IS NULL OR lower(al.otherLocation) LIKE concat('%', lower(:otherDesc), '%'))
+        WHERE (:status IS NULL OR al.status = :status)
+          AND (:courtCode IS NULL OR al.courtCode = :courtCode)
+          AND (:cja IS NULL OR al.cja = :cja)
+          AND (al.date = COALESCE(:onDate, al.date))
+          AND (al.time = COALESCE(:atTime, al.time))
+          AND (:description IS NULL OR lower(al.description) LIKE concat('%', lower(cast(:description AS string)), '%'))
+          AND (:otherDesc IS NULL OR lower(al.otherLocation) LIKE concat('%', lower(cast(:otherDesc AS string)), '%'))
         """)
     Page<ApplicationList> findAllByFilter(
             @Param("status") ApplicationListStatus status,
