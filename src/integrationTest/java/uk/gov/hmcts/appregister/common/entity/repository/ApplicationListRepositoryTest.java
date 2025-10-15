@@ -1,6 +1,9 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.gov.hmcts.appregister.testutils.token.TokenGenerator.DEFAULT_OID;
+import static uk.gov.hmcts.appregister.testutils.token.TokenGenerator.DEFAULT_TID;
+import static uk.gov.hmcts.appregister.testutils.token.TokenGenerator.DEFAULT_USERNAME;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -12,11 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
-import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 
 class ApplicationListRepositoryTest extends BaseRepositoryTest {
 
@@ -59,7 +59,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
 
     private ApplicationList buildEntity() {
         return ApplicationList.builder()
-                .status("OPEN")
+                .status(ApplicationListStatus.OPEN)
                 .description("Smoke test list")
                 .courtName("Cardiff Crown Court")
                 .courtCode("CCC003")
@@ -84,13 +84,12 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
         assertThat(reloaded.getDescription()).isEqualTo("Smoke test list");
         assertThat(reloaded.getCourtName()).isEqualTo("Cardiff Crown Court");
         assertThat(reloaded.getCourtCode()).isEqualTo("CCC003");
-        assertThat(reloaded.getStatus()).isEqualTo("OPEN");
-        assertThat(reloaded.getCreatedUser()).isEqualTo(TokenGenerator.DEFAULT_USERNAME);
-        assertThat(reloaded.getChangedBy())
-                .isEqualTo(TokenGenerator.DEFAULT_TID + ":" + TokenGenerator.DEFAULT_OID);
         assertThat(reloaded.getStatus()).isEqualTo(ApplicationListStatus.OPEN);
-        assertThat(reloaded.getCreatedUser()).isEqualTo(EMAIL);
-        assertThat(reloaded.getChangedBy()).isEqualTo(TID + ":" + OID);
+        assertThat(reloaded.getCreatedUser()).isEqualTo(DEFAULT_USERNAME);
+        assertThat(reloaded.getChangedBy()).isEqualTo(DEFAULT_TID + ":" + DEFAULT_OID);
+        assertThat(reloaded.getStatus()).isEqualTo(ApplicationListStatus.OPEN);
+        assertThat(reloaded.getCreatedUser()).isEqualTo(DEFAULT_USERNAME);
+        assertThat(reloaded.getChangedBy()).isEqualTo(DEFAULT_TID + ":" + DEFAULT_OID);
     }
 
     @Test

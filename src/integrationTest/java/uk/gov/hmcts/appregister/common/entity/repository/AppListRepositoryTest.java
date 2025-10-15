@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
-import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
@@ -20,8 +19,6 @@ import uk.gov.hmcts.appregister.util.DateUtil;
 public class AppListRepositoryTest extends BaseRepositoryTest {
 
     @Autowired private ApplicationListRepository applicationListRepository;
-
-    @Autowired private UserProvider loggedInUser;
 
     @Autowired private TransactionalUnitOfWork transactionalUnitOfWork;
 

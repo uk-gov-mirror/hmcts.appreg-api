@@ -8,6 +8,38 @@
 	},
 	"item": [
 		{
+			"name": "application-lists",
+			"item": [
+				{
+					"name": "Application Lists",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{APP_REG_HOST}}/application-lists",
+							"host": [
+								"{{APP_REG_HOST}}"
+							],
+							"path": [
+								"application-lists"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Get Application Code",
 			"request": {
 				"auth": {

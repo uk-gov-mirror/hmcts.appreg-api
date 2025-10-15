@@ -26,30 +26,6 @@ public class ApplicationListMapperTest {
 
     private final ApplicationListMapper mapper = Mappers.getMapper(ApplicationListMapper.class);
 
-    // ---------- Helper method tests ----------
-
-    @Nested
-    class ToTimeTests {
-        @Test
-        void combine_nullDateParam_returnsNull() {
-            assertEquals(LocalTime.of(10, 30), mapper.toTime("10:30"));
-        }
-    }
-
-    @Nested
-    class ToTimeStringTests {
-        @Test
-        void returnsNullWhenInputIsNull() {
-            assertNull(mapper.toTimeString(null));
-        }
-
-        @Test
-        void emitsHHmmssWhenSecondsPresent() {
-            LocalTime lt = LocalTime.of(8, 5, 07);
-            assertEquals("08:05:07", mapper.toTimeString(lt));
-        }
-    }
-
     // ---------- Mapping: toCreateEntityWithCourt ----------
 
     @Nested
@@ -104,7 +80,7 @@ public class ApplicationListMapperTest {
             ApplicationListCreateDto dto =
                     new ApplicationListCreateDto()
                             .date(LocalDate.of(2025, 9, 18))
-                            .time("14:05:07")
+                            .time(LocalTime.parse("14:05:07"))
                             .description("Afternoon session")
                             .otherLocationDescription("Temporary Courtroom at Town Hall")
                             .status(ApplicationListStatus.OPEN)
@@ -132,7 +108,7 @@ public class ApplicationListMapperTest {
             assertEquals("CJA001", entity.getCja().getCode());
             assertEquals("Temporary Courtroom at Town Hall", entity.getOtherLocation());
             assertEquals("Afternoon session", entity.getDescription());
-            assertEquals("OPEN", entity.getStatus());
+            assertEquals(ApplicationListStatus.OPEN, entity.getStatus());
             assertEquals(LocalDate.of(2025, 9, 18), entity.getDate());
             assertEquals(LocalTime.of(14, 5, 7), entity.getTime());
             assertEquals(1, entity.getDurationHours());
