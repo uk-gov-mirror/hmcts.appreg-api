@@ -74,12 +74,17 @@ public class ApplicationListController implements ApplicationListsApi {
         MatchResponse<ApplicationListGetDetailDto> created =
                 service.create(applicationListCreateDto);
 
-        return ResponseEntity.status(CREATED)
-                .varyBy("Accept")
-                .contentType(VND_JSON_V1)
-                .headers(h -> h.setLocation(locationOf(created.getPayload().getId())))
-                .eTag(created.getEtag())
-                .body(created.getPayload());
+        ResponseEntity<ApplicationListGetDetailDto> response =
+                ResponseEntity.status(CREATED)
+                        .varyBy("Accept")
+                        .contentType(VND_JSON_V1)
+                        .headers(h -> h.setLocation(locationOf(created.getPayload().getId())))
+                        .eTag(created.getEtag())
+                        .body(created.getPayload());
+
+        log.info(
+                "Create successful for Application List with id: {}", created.getPayload().getId());
+        return response;
     }
 
     @Override
@@ -93,11 +98,16 @@ public class ApplicationListController implements ApplicationListsApi {
                                 .data(applicationListUpdateDto)
                                 .build());
 
-        return ResponseEntity.status(OK)
-                .varyBy("Accept")
-                .contentType(VND_JSON_V1)
-                .eTag(updated.getEtag())
-                .body(updated.getPayload());
+        ResponseEntity<ApplicationListGetDetailDto> response =
+                ResponseEntity.status(OK)
+                        .varyBy("Accept")
+                        .contentType(VND_JSON_V1)
+                        .eTag(updated.getEtag())
+                        .body(updated.getPayload());
+
+        log.info(
+                "Update successful for Application List with id: {}", updated.getPayload().getId());
+        return response;
     }
 
     /**

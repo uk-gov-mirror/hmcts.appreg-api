@@ -3,6 +3,8 @@ package uk.gov.hmcts.appregister.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.instancio.Select.field;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.response.Response;
 import java.net.URI;
 import java.time.LocalDate;
@@ -263,14 +265,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
     @Test
     void givenValidRequest_whenUpdateWithCourt_then200AndBody() throws Exception {
-        var token =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        String[] createdLocation = createAppListUsingRestApi();
-
         CourtLocationGetDetailDto courtLocationGetDetailDto = new CourtLocationGetDetailDto();
         courtLocationGetDetailDto.setLocationCode(VALID_COURT_CODE2);
         courtLocationGetDetailDto.setStartDate(LocalDate.now());
@@ -287,6 +281,17 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .durationMinutes(32)
                         .version(2L);
 
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.writeValueAsString(req);
+
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        String[] createdLocation = createAppListUsingRestApi();
         Response resp =
                 restAssuredClient.executePutRequest(
                         URI.create(createdLocation[0]).toURL(), token, req);
@@ -295,7 +300,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         resp.then().contentType(VND_JSON_V1);
         resp.then().header("Etag", org.hamcrest.Matchers.notNullValue());
 
-        // Location header should point to /application-lists/{uuid}
+        // Assert
         ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
         assertThat(dto.getId()).isNotNull();
         assertThat(dto.getVersion()).isEqualTo(1L); // per seed: Version = 0
@@ -381,7 +386,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         resp.then().contentType(VND_JSON_V1);
         resp.then().header("Etag", org.hamcrest.Matchers.notNullValue());
 
-        // Location header should point to /application-lists/{uuid}
+        // Assert
         ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
         assertThat(dto.getId()).isNotNull();
         assertThat(dto.getVersion()).isEqualTo(1L); // per seed: Version = 0
@@ -432,6 +437,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         resp.then().contentType(VND_JSON_V1);
 
+        // Assert
         ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
         assertThat(dto.getId()).isNotNull();
         assertThat(dto.getVersion()).isEqualTo(1L);
@@ -480,6 +486,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         resp.then().contentType(VND_JSON_V1);
 
+        // Assert
         ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
         assertThat(dto.getId()).isNotNull();
         assertThat(dto.getVersion()).isEqualTo(1L);

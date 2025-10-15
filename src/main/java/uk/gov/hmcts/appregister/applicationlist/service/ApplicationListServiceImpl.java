@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.applicationlist.service;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationCreateListLocationValidator;
@@ -33,6 +34,7 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
  *   <li>Map between entities and DTOs using {@link ApplicationListMapper}.
  * </ul>
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ApplicationListServiceImpl implements ApplicationListService {
@@ -59,12 +61,16 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional
     public MatchResponse<ApplicationListGetDetailDto> create(ApplicationListCreateDto dto) {
-        return applicationCreateListLocationValidator.validate(
-                dto,
-                (listCreateDto, success) ->
-                        success.hasCourt()
-                                ? createWithCourt(listCreateDto, success)
-                                : createWithCja(listCreateDto, success));
+        log.debug("Start: Request to create application list : {}", dto);
+        MatchResponse<ApplicationListGetDetailDto> response =
+                applicationCreateListLocationValidator.validate(
+                        dto,
+                        (listCreateDto, success) ->
+                                success.hasCourt()
+                                        ? createWithCourt(listCreateDto, success)
+                                        : createWithCja(listCreateDto, success));
+        log.debug("Finish: Request to create application list : {}", response.getPayload());
+        return response;
     }
 
     /**
@@ -79,12 +85,18 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Transactional
     public MatchResponse<ApplicationListGetDetailDto> update(
             PayloadForUpdate<ApplicationListUpdateDto> dto) {
-        return applicationUpdateListLocationValidator.validate(
-                dto,
-                (updateDto, success) ->
-                        success.hasCourt()
-                                ? updateWithCourt(updateDto, success)
-                                : updateWithCja(updateDto, success));
+        log.debug("Start: Request to update application list : {}", dto);
+
+        MatchResponse<ApplicationListGetDetailDto> response =
+                applicationUpdateListLocationValidator.validate(
+                        dto,
+                        (updateDto, success) ->
+                                success.hasCourt()
+                                        ? updateWithCourt(updateDto, success)
+                                        : updateWithCja(updateDto, success));
+
+        log.debug("Finish: Request to update application list : {}", response.getPayload());
+        return response;
     }
 
     /**
