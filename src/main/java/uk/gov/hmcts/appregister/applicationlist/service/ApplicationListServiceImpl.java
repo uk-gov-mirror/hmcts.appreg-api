@@ -2,11 +2,14 @@ package uk.gov.hmcts.appregister.applicationlist.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationCreateListLocationValidator;
+import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletionValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationUpdateListLocationValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListLocationValidationSuccess;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListUpdateValidationSuccess;
@@ -47,6 +50,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
 
     private final EntityManager entityManager;
     private final MatchService matchService;
+    private final ApplicationListDeletionValidator deletionValidator;
 
     /**
      * {@inheritDoc}
@@ -192,6 +196,20 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                     return MatchResponse.of(
                             hydrated.getUuid(), hydrated, mapper.toGetDetailDto(hydrated, cja));
                 });
+    }
+
+    @Override
+    @Transactional
+    public void delete(UUID idToDelete) {
+        log.debug("Start: Deleting Application List with id: {}", idToDelete);
+        deletionValidator.validate(idToDelete);
+        Optional<ApplicationList> applicationList = repository.findByUuid(idToDelete);
+
+        if (applicationList.isPresent()) {
+            applicationList.get().setDeleted(true);
+            repository.save(applicationList.get());
+        }
+        log.debug("Finish: Deleted Application List with id: {}", idToDelete);
     }
 
     /**

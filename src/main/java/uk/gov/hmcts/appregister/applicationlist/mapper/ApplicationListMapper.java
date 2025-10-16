@@ -115,6 +115,9 @@ public interface ApplicationListMapper {
     @Mapping(target = "status", source = "dto.status.value")
     @Mapping(target = "time", expression = "java(toTime(dto.getTime()))")
     @Mapping(target = "cja", source = "cja")
+    @Mapping(target = "deletedBy", ignore = true)
+    @Mapping(target = "deletedDate", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
     void toUpdateEntityWithCja(
             ApplicationListUpdateDto dto,
             CriminalJusticeArea cja,
@@ -133,6 +136,9 @@ public interface ApplicationListMapper {
     @Mapping(target = "date", source = "dto.date")
     @Mapping(target = "time", expression = "java(toTime(dto.getTime()))")
     @Mapping(target = "cja", source = "cja")
+    @Mapping(target = "deletedBy", ignore = true)
+    @Mapping(target = "deletedDate", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
     void toUpdateEntityWithCourt(
             ApplicationListUpdateDto dto,
             CriminalJusticeArea cja,

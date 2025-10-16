@@ -3,8 +3,6 @@ package uk.gov.hmcts.appregister.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.instancio.Select.field;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.response.Response;
 import java.net.URI;
 import java.time.LocalDate;
@@ -15,19 +13,21 @@ import org.apache.http.HttpHeaders;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
+import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
-import uk.gov.hmcts.appregister.testutils.client.RoleEnum;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
@@ -265,6 +265,14 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
     @Test
     void givenValidRequest_whenUpdateWithCourt_then200AndBody() throws Exception {
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        String[] createdLocation = createAppListUsingRestApi();
+
         CourtLocationGetDetailDto courtLocationGetDetailDto = new CourtLocationGetDetailDto();
         courtLocationGetDetailDto.setLocationCode(VALID_COURT_CODE2);
         courtLocationGetDetailDto.setStartDate(LocalDate.now());
@@ -281,17 +289,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .durationMinutes(32)
                         .version(2L);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.writeValueAsString(req);
-
-        var token =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        String[] createdLocation = createAppListUsingRestApi();
         Response resp =
                 restAssuredClient.executePutRequest(
                         URI.create(createdLocation[0]).toURL(), token, req);
@@ -300,6 +297,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         resp.then().contentType(VND_JSON_V1);
         resp.then().header("Etag", org.hamcrest.Matchers.notNullValue());
 
+        // Location header should point to /application-lists/{uuid}
         // Assert
         ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
         assertThat(dto.getId()).isNotNull();
@@ -386,6 +384,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         resp.then().contentType(VND_JSON_V1);
         resp.then().header("Etag", org.hamcrest.Matchers.notNullValue());
 
+        // Location header should point to /application-lists/{uuid}
         // Assert
         ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
         assertThat(dto.getId()).isNotNull();
@@ -763,5 +762,101 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
         return new String[] {resp.header(HttpHeaders.LOCATION), resp.header(HttpHeaders.ETAG)};
+    }
+
+    @Test
+    void givenValidRequest_whenDeleteWithValidId_then204() throws Exception {
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.ADMIN))
+                        .build()
+                        .fetchTokenForRole();
+
+        var req =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("Morning list (cja)")
+                        .status(ApplicationListStatus.OPEN)
+                        .cjaCode(VALID_CJA_CODE)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        // setup a record for deletion
+        Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
+        resp.then().statusCode(HttpStatus.CREATED.value());
+
+        ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
+        UUID id = dto.getId();
+
+        // fire tests
+        resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+
+        // assert success
+        resp.then().statusCode(HttpStatus.NO_CONTENT.value());
+    }
+
+    @Test
+    void givenValidRequest_whenDeleteWithInvalidId_then204() throws Exception {
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.ADMIN))
+                        .build()
+                        .fetchTokenForRole();
+
+        // fire tests
+        Response resp =
+                restAssuredClient.executeDeleteRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + UUID.randomUUID()), token);
+
+        // assert success
+        resp.then().statusCode(HttpStatus.NOT_FOUND.value());
+        ProblemDetail problemDetail = resp.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                ApplicationListError.DELETION_ID_NOT_FOUND.getCode().getAppCode(),
+                problemDetail.getType().toString());
+    }
+
+    @Test
+    void givenValidRequest_whenDeleteWithConflict_then204() throws Exception {
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.ADMIN))
+                        .build()
+                        .fetchTokenForRole();
+
+        var req =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("Morning list (cja)")
+                        .status(ApplicationListStatus.OPEN)
+                        .cjaCode(VALID_CJA_CODE)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        // setup a record for deletion
+        Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
+        resp.then().statusCode(HttpStatus.CREATED.value());
+
+        ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
+        UUID id = dto.getId();
+
+        // fire tests
+        resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+
+        // assert success
+        resp.then().statusCode(HttpStatus.NO_CONTENT.value());
+
+        // prove the delete has been made
+        resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+        resp.then().statusCode(HttpStatus.CONFLICT.value());
+
+        ProblemDetail problemDetail = resp.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                ApplicationListError.DELETION_ALREADY_IN_DELETABLE_STATE.getCode().getAppCode(),
+                problemDetail.getType().toString());
     }
 }

@@ -28,8 +28,18 @@ public enum ApplicationListError implements ErrorCodeEnum {
                     "Multiple Court Locations found when only one was expected",
                     "CL-5")),
     APPLICATION_LIST_NOT_FOUND(
-            DefaultErrorDetail.create(HttpStatus.NOT_FOUND, "Application list not found", "CL-6"));
+            DefaultErrorDetail.create(HttpStatus.NOT_FOUND, "Application list not found", "CL-6")),
 
+    DELETION_ID_NOT_FOUND(
+            DefaultErrorDetail.create(
+                    HttpStatus.NOT_FOUND,
+                    "No application list found with the provided id for deletion",
+                    "AL-2")),
+    DELETION_ALREADY_IN_DELETABLE_STATE(
+            DefaultErrorDetail.create(
+                    HttpStatus.CONFLICT,
+                    "The application list is not in a deletable state",
+                    "AL-3"));
     private final DefaultErrorDetail defaultErrorCode;
 
     ApplicationListError(DefaultErrorDetail defaultErrorCode) {

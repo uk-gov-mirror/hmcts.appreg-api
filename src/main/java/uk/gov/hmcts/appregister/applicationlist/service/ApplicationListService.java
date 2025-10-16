@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.applicationlist.service;
 
+import java.util.UUID;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
@@ -48,4 +49,14 @@ public interface ApplicationListService {
      */
     MatchResponse<ApplicationListGetDetailDto> update(
             PayloadForUpdate<ApplicationListUpdateDto> dto);
+
+    /**
+     * Deletes an Application List.
+     *
+     * @param idToDelete the id to delete
+     * @throws uk.gov.hmcts.appregister.common.exception.AppRegistryException if validation fails
+     *     due to the id not existing, the id already being deleted, the id having application
+     *     entries
+     */
+    void delete(UUID idToDelete);
 }

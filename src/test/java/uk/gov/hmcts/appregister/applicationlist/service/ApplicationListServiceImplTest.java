@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityManager;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import lombok.Setter;
@@ -22,6 +23,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationCreateListLocationValidator;
+import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletionValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationUpdateListLocationValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListLocationValidationSuccess;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListUpdateValidationSuccess;
@@ -58,7 +60,10 @@ public class ApplicationListServiceImplTest {
                     repository, courtHouseRepository, cjaRepository);
 
     @Mock private EntityManager entityManager;
+
     @Spy private MatchService matchService = new MatchServiceImpl(null);
+
+    @Mock private ApplicationListDeletionValidator deletionValidator;
 
     private ApplicationListServiceImpl service;
 
@@ -73,7 +78,8 @@ public class ApplicationListServiceImplTest {
                         validator,
                         updateValidator,
                         entityManager,
-                        matchService);
+                        matchService,
+                        deletionValidator);
     }
 
     @Test
@@ -266,5 +272,17 @@ public class ApplicationListServiceImplTest {
                         createApplicationSupplier) {
             return createApplicationSupplier.apply(dto, success);
         }
+    }
+
+    @Test
+    void delete_validId_deletesEntry() {
+        UUID id = UUID.randomUUID();
+        when(repository.findByUuid(id)).thenReturn(Optional.of(new ApplicationList()));
+
+        service.delete(id);
+
+        verify(deletionValidator).validate(id);
+        verify(repository).findByUuid(id);
+        verify(repository).save(any(ApplicationList.class));
     }
 }

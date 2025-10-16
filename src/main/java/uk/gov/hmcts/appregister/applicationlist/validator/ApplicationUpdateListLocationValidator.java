@@ -1,6 +1,6 @@
 package uk.gov.hmcts.appregister.applicationlist.validator;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.springframework.stereotype.Component;
@@ -47,7 +47,7 @@ public class ApplicationUpdateListLocationValidator
             PayloadForUpdate<ApplicationListUpdateDto> dto,
             BiFunction<PayloadForUpdate<ApplicationListUpdateDto>, ListUpdateValidationSuccess, R>
                     createApplicationSupplier) {
-        List<ApplicationList> applicationListList =
+        Optional<ApplicationList> applicationListList =
                 applicationListRepository.findByUuid(dto.getId());
 
         // if there is more than one record with the same UUID, it is an error
@@ -61,7 +61,7 @@ public class ApplicationUpdateListLocationValidator
         return super.validate(
                 dto,
                 (payload, updateLocatedList) -> {
-                    updateLocatedList.setApplicationList(applicationListList.getFirst());
+                    updateLocatedList.setApplicationList(applicationListList.get());
                     if (createApplicationSupplier != null) {
                         return createApplicationSupplier.apply(payload, updateLocatedList);
                     }

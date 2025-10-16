@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import org.junit.jupiter.api.Assertions;
@@ -78,7 +79,7 @@ public class ApplicationListUpdateValidatorTest {
         when(courtHouseRepository.findActiveCourts("CODE1")).thenReturn(List.of());
 
         UUID uuid = UUID.randomUUID();
-        when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+        when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
         PayloadForUpdate<ApplicationListUpdateDto> payload = new PayloadForUpdate<>(dto, uuid);
 
         // expect
@@ -100,7 +101,7 @@ public class ApplicationListUpdateValidatorTest {
         when(courtHouseRepository.findActiveCourts("DUPE")).thenReturn(List.of(c1, c2));
 
         UUID uuid = UUID.randomUUID();
-        when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+        when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
         PayloadForUpdate<ApplicationListUpdateDto> payload = new PayloadForUpdate<>(dto, uuid);
 
         // expect
@@ -121,7 +122,7 @@ public class ApplicationListUpdateValidatorTest {
 
         when(cjaRepository.findByCode("X1")).thenReturn(List.of());
         UUID uuid = UUID.randomUUID();
-        when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+        when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
         PayloadForUpdate<ApplicationListUpdateDto> payload = new PayloadForUpdate<>(dto, uuid);
 
         AppRegistryException exception =
@@ -144,7 +145,7 @@ public class ApplicationListUpdateValidatorTest {
         when(cjaRepository.findByCode("X1")).thenReturn(List.of(a, b));
 
         UUID uuid = UUID.randomUUID();
-        when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+        when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
         PayloadForUpdate<ApplicationListUpdateDto> payload = new PayloadForUpdate<>(dto, uuid);
 
         AppRegistryException exception =
@@ -179,7 +180,7 @@ public class ApplicationListUpdateValidatorTest {
                     .thenReturn(List.of(new NationalCourtHouse()));
 
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -194,7 +195,7 @@ public class ApplicationListUpdateValidatorTest {
                     .thenReturn(List.of(new NationalCourtHouse()));
 
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -210,7 +211,7 @@ public class ApplicationListUpdateValidatorTest {
                     .thenReturn(List.of(new CriminalJusticeArea()));
 
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -224,7 +225,7 @@ public class ApplicationListUpdateValidatorTest {
                     .thenReturn(List.of(new CriminalJusticeArea()));
 
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -241,7 +242,7 @@ public class ApplicationListUpdateValidatorTest {
         void invalid_whenNothingProvided() {
             var appList = buildDto();
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -254,7 +255,7 @@ public class ApplicationListUpdateValidatorTest {
         void invalid_whenOnlyCjaProvided() {
             var appList = buildDto(Field.CJA);
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -265,7 +266,7 @@ public class ApplicationListUpdateValidatorTest {
         void invalid_whenOnlyOtherLocationProvided() {
             var appList = buildDto(Field.OTHER);
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload =
                     new PayloadForUpdate<>(appList, uuid);
 
@@ -277,7 +278,7 @@ public class ApplicationListUpdateValidatorTest {
             var dto = buildDto(Field.COURT, Field.CJA, Field.OTHER);
 
             UUID uuid = UUID.randomUUID();
-            when(repository.findByUuid(uuid)).thenReturn(List.of(new ApplicationList()));
+            when(repository.findByUuid(uuid)).thenReturn(Optional.of(new ApplicationList()));
             PayloadForUpdate<ApplicationListUpdateDto> payload = new PayloadForUpdate<>(dto, uuid);
 
             assertThrows(AppRegistryException.class, () -> validator.validate(payload));
