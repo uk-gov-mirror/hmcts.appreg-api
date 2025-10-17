@@ -19,6 +19,7 @@ import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletio
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListLocationValidator;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
+import uk.gov.hmcts.appregister.common.entity.base.EntryCount;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
@@ -184,8 +185,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         return aleRepository.countByApplicationListUuids(uuids).stream()
                 .collect(
                         Collectors.toMap(
-                                ApplicationListEntryRepository.EntryCount::getPk,
-                                ApplicationListEntryRepository.EntryCount::getCnt));
+                            EntryCount::getPrimaryKey,
+                            EntryCount::getCount));
     }
 
     private ApplicationListPage assembleResponsePage(

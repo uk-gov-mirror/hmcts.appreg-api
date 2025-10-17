@@ -144,6 +144,7 @@ public class ApplicationListController implements ApplicationListsApi {
                         page, size, mappedSort, ApplicationList_.DESCRIPTION, Sort.Direction.ASC);
 
         var applicationListPage = service.getPage(filter, pageInfo);
+        log.info("Retrieved Application Lists");
         return ResponseEntity.ok(applicationListPage);
     }
 
