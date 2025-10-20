@@ -32,7 +32,8 @@ public class ApplicationListEntryMapper {
         return new ApplicationListEntryDto(
                 entity.getId(),
                 standardApplicantMapper.toReadDto(entity.getStandardApplicant()),
-                applicationCodeMapper.toReadDto(entity.getApplicationCode(), fees),
+                applicationCodeMapper.toApplicationCodeGetDetailDto(
+                        entity.getApplicationCode(), fees.mainFee(), fees.offsetFee()),
                 mainFeeRecord != null
                         ? FeeStatusType.fromDisplayName(mainFeeRecord.getAlefsFeeStatus())
                         : null,

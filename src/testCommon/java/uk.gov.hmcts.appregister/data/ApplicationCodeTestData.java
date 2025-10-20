@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.data;
 
 import static org.instancio.Select.field;
-import static uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper.TRUE_VALUE;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -10,6 +9,7 @@ import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.util.StringUtil;
 
 public class ApplicationCodeTestData
@@ -22,10 +22,10 @@ public class ApplicationCodeTestData
         return data.code(StringUtil.stripToMax(uniqueId.toString(), 10))
                 .title("title" + uniqueId)
                 .wording("wording" + uniqueId)
-                .feeDue("1")
-                .requiresRespondent(TRUE_VALUE)
+                .feeDue(YesOrNo.YES)
+                .requiresRespondent(YesOrNo.YES)
                 .startDate(OffsetDateTime.now(ZoneOffset.UTC))
-                .bulkRespondentAllowed(TRUE_VALUE);
+                .bulkRespondentAllowed(YesOrNo.YES);
     }
 
     @Override

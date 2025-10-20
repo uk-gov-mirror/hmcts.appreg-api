@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
 import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
@@ -21,6 +20,10 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
+import uk.gov.hmcts.appregister.common.mapper.PageMapper;
+import uk.gov.hmcts.appregister.common.mapper.PageableMapper;
+import uk.gov.hmcts.appregister.generated.model.ApplicationCodeGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationCodePage;
 
 /**
  * Service implementation for managing application codes.
@@ -35,42 +38,40 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     private final ApplicationFeeService feeService;
     private final AuditOperationService auditService;
     private final List<AuditOperationLifecycleListener> auditLifecycleListeners;
+    private final PageMapper pageMapper;
+    private final PageableMapper pageableMapper;
 
     @Override
     @Transactional
-    public Page<ApplicationCodeDto> findAll(
-            String appCode, String appTitle, LocalDate lodgementDate, Pageable pageable) {
+    public ApplicationCodePage findAll(String appCode, String appTitle, Pageable pageable) {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
                     final Page<ApplicationCode> applicationCodeList =
-                            repository.search(
-                                    appCode,
-                                    appTitle,
-                                    lodgementDate != null,
-                                    lodgementDate != null
-                                            ? lodgementDate.atStartOfDay().atOffset(ZoneOffset.UTC)
-                                            : null,
-                                    lodgementDate != null
-                                            ? lodgementDate
-                                                    .plusDays(1)
-                                                    .atStartOfDay()
-                                                    .atOffset(ZoneOffset.UTC)
-                                            : null,
-                                    pageable);
-                    return Optional.of(
-                            applicationCodeList.map(
-                                    code -> {
-                                        FeePair feePair =
-                                                feeService.resolveFeePair(code.getFeeReference());
-                                        return applicationCodeMapper.toReadDto(code, feePair);
-                                    }));
+                            repository.search(appCode, appTitle, pageable);
+
+                    ApplicationCodePage newPage = new ApplicationCodePage();
+                    pageMapper.toPage(applicationCodeList, newPage);
+
+                    // Map each entity to a summary DTO and add to the page content
+                    applicationCodeList.map(
+                            code -> {
+                                FeePair feePair = feeService.resolveFeePair(code.getFeeReference());
+
+                                return newPage.addContentItem(
+                                        applicationCodeMapper.toApplicationCodeGetSummaryDto(
+                                                code,
+                                                feePair != null ? feePair.mainFee() : null,
+                                                feePair != null ? feePair.offsetFee() : null));
+                            });
+
+                    return Optional.of(newPage);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
-    public ApplicationCodeDto findByCode(String code, LocalDate date) {
+    public ApplicationCodeGetDetailDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT,
                 req -> {
@@ -97,7 +98,11 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                     }
 
                     FeePair feePair = feeService.resolveFeePair(codeToConsider.getFeeReference());
-                    return Optional.of(applicationCodeMapper.toReadDto(codeToConsider, feePair));
+                    return Optional.of(
+                            applicationCodeMapper.toApplicationCodeGetDetailDto(
+                                    codeToConsider,
+                                    feePair != null ? feePair.mainFee() : null,
+                                    feePair != null ? feePair.offsetFee() : null));
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
