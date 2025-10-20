@@ -47,6 +47,8 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
+                    log.debug("Start: Find Application List for: app code: {} app title: {} with paging: {}", appCode, appTitle, pageable);
+
                     final Page<ApplicationCode> applicationCodeList =
                             repository.search(appCode, appTitle, pageable);
 
@@ -65,6 +67,8 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                                 feePair != null ? feePair.offsetFee() : null));
                             });
 
+                    log.debug("Finished: Find Application List for: app code: {} app title: {} with paging: {}", appCode, appTitle, pageable);
+
                     return Optional.of(newPage);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
@@ -75,6 +79,9 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
         return auditService.processAudit(
                 AuditEventEnum.GET_APPLICATION_CODE_AUDIT_EVENT,
                 req -> {
+
+                    log.debug("Start: Find Application for app code: {} date: {}", code, date);
+
                     final List<ApplicationCode> applicationCodeResults =
                             repository.findByCodeAndDate(
                                     code, date.atStartOfDay().atOffset(ZoneOffset.UTC));
@@ -98,11 +105,14 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                     }
 
                     FeePair feePair = feeService.resolveFeePair(codeToConsider.getFeeReference());
-                    return Optional.of(
+                    Optional result =  Optional.of(
                             applicationCodeMapper.toApplicationCodeGetDetailDto(
                                     codeToConsider,
                                     feePair != null ? feePair.mainFee() : null,
                                     feePair != null ? feePair.offsetFee() : null));
+
+                    log.debug("Finish: Find Application for app code: {} date: {}", code, date);
+                    return result;
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }

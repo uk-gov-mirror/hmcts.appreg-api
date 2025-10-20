@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.applicationcode.controller;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationCodePage;
 /**
  * REST controller for managing application codes.
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class ApplicationCodeController implements ApplicationCodesApi {
@@ -41,6 +43,7 @@ public class ApplicationCodeController implements ApplicationCodesApi {
         // Validate resolved sort properties to prevent invalid/unsafe sort fields
         pageable.getSort().forEach(o -> sortValidator.validate(o.getProperty()));
 
+        log.info("getApplicationCodes: code: {}, title{}, page: {}, size: {}", code, title, page, size);
         return ResponseEntity.ok().body(service.findAll(code, title, pageable));
     }
 
@@ -48,6 +51,8 @@ public class ApplicationCodeController implements ApplicationCodesApi {
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<ApplicationCodeGetDetailDto> getApplicationCodeByCodeAndDate(
             String code, LocalDate date) {
-        return ResponseEntity.ok(service.findByCode(code, date));
+        ResponseEntity response = ResponseEntity.ok(service.findByCode(code, date));
+        log.info("getApplicationCodes: code: {}, date{}", code, date);
+        return  response;
     }
 }
