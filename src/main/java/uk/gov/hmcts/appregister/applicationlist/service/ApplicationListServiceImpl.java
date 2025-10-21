@@ -1,28 +1,38 @@
 package uk.gov.hmcts.appregister.applicationlist.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationCreateListLocationValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletionValidator;
+import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListGetValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationUpdateListLocationValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListLocationValidationSuccess;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListUpdateValidationSuccess;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.base.EntryCount;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
+import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListGetFilterDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 
 /**
@@ -41,15 +51,19 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 @RequiredArgsConstructor
 @Service
 public class ApplicationListServiceImpl implements ApplicationListService {
+
+    private static final long ZERO_ENTITIES = 0L;
+
     private final ApplicationListRepository repository;
-    private final NationalCourtHouseRepository courtHouseRepository;
-    private final CriminalJusticeAreaRepository cjaRepository;
+    private final ApplicationListEntryRepository aleRepository;
     private final ApplicationListMapper mapper;
     private final ApplicationCreateListLocationValidator applicationCreateListLocationValidator;
     private final ApplicationUpdateListLocationValidator applicationUpdateListLocationValidator;
-
+    private final ApplicationListGetValidator applicationListGetValidator;
     private final EntityManager entityManager;
     private final MatchService matchService;
+
+    private final PageMapper pageMapper;
     private final ApplicationListDeletionValidator deletionValidator;
 
     /**
@@ -221,5 +235,81 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         entityManager.flush();
         entityManager.refresh(entity);
         return entity;
+    }
+
+    /**
+     * Retrieves a paginated list of application lists based on the given filter and paging
+     * parameters.
+     *
+     * <p>Resolves and normalizes input filters (including CJA lookup and date/time normalization),
+     * queries the repository for matching records, retrieves associated entry counts, and maps the
+     * results into an {@link ApplicationListPage} containing summary DTOs.
+     *
+     * @param dto the filter criteria used to select application lists
+     * @param pageable pagination and sorting information
+     * @return a populated {@link ApplicationListPage} with metadata and summary items
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ApplicationListPage getPage(ApplicationListGetFilterDto dto, Pageable pageable) {
+        return applicationListGetValidator.validateCja(
+                dto,
+                (getDto, success) -> {
+                    final Page<ApplicationList> dbPage =
+                            repository.findAllByFilter(
+                                    dto.getStatus(),
+                                    dto.getCourtLocationCode(),
+                                    success.getCriminalJusticeArea(),
+                                    dto.getDate(),
+                                    dto.getTime(),
+                                    dto.getDescription(),
+                                    dto.getOtherLocationDescription(),
+                                    pageable);
+
+                    // Pre-fetch the number of entries linked to each list in the page.
+                    // Avoids having to do a separate count query per list when mapping to DTOs.
+                    Map<UUID, Long> entriesPerListCounter =
+                            dbPage.isEmpty()
+                                    ? Map.of()
+                                    : fetchEntryCounts(
+                                            dbPage.map(ApplicationList::getUuid).toList());
+
+                    return assembleResponsePage(dbPage, entriesPerListCounter);
+                },
+                true);
+    }
+
+    private Map<UUID, Long> fetchEntryCounts(List<UUID> uuids) {
+        return aleRepository.countByApplicationListUuids(uuids).stream()
+                .collect(Collectors.toMap(EntryCount::getPrimaryKey, EntryCount::getCount));
+    }
+
+    private ApplicationListPage assembleResponsePage(
+            Page<ApplicationList> appLists, Map<UUID, Long> entriesPerListCounter) {
+        var responsePage = new ApplicationListPage();
+        pageMapper.toPage(appLists, responsePage);
+
+        // Ensure content is never null:
+        // API spec requires an array, so return an empty one instead of null.
+        if (responsePage.getContent() == null) {
+            responsePage.setContent(new ArrayList<>());
+        }
+
+        for (ApplicationList al : appLists) {
+            long entryCount = entriesPerListCounter.getOrDefault(al.getUuid(), ZERO_ENTITIES);
+            String location = deriveLocation(al);
+            responsePage.addContentItem(mapper.toGetSummaryDto(al, entryCount, location));
+        }
+        return responsePage;
+    }
+
+    private String deriveLocation(ApplicationList al) {
+        if (al.getCourtName() != null) {
+            return al.getCourtName();
+        }
+        if (al.getCja() != null) {
+            return al.getCja().getDescription();
+        }
+        return "Location not set";
     }
 }

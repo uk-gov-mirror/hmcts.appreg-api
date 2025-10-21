@@ -121,25 +121,30 @@ public abstract class AbstractApplicationListLocationValidator<
     }
 
     /**
-     * validates the court.
+     * validate the cja code only if doNotFailOnMissing is false.
      *
-     * @param dto The dto type top validate
+     * @param dto The dto to validate
+     * @param createApplicationSupplier The function to create the application
+     * @param doNotFailOnMissing flag to indicate if validation should be skipped when no cja is
+     *     supplied
+     * @return The result of a successful validation
      */
-    private void validateCourt(T dto, O createApplication) {
-        var courtCode = getCourtLocation().apply(dto).trim();
-        final List<NationalCourtHouse> courts = courtHouseRepository.findActiveCourts(courtCode);
-
-        if (courts.isEmpty()) {
+    public <R> R validateCja(
+            T dto, BiFunction<T, O, R> createApplicationSupplier, boolean doNotFailOnMissing) {
+        String cja = getCjaCode().apply(dto);
+        boolean hasCja = StringUtils.hasText(cja);
+        O createApplication = getResult();
+        if (!hasCja && !doNotFailOnMissing) {
             throw new AppRegistryException(
-                    ApplicationListError.COURT_NOT_FOUND,
-                    "No court found for code '%s'".formatted(courtCode));
-        } else if (courts.size() > SINGLE_RECORD) {
-            throw new AppRegistryException(
-                    ApplicationListError.DUPLICATE_COURT_FOUND,
-                    "Multiple courts found for code '%s'".formatted(courtCode));
+                    ApplicationListError.CJA_NOT_FOUND, "No Criminal Justice Areas found");
+        } else if (hasCja) {
+            validateCja(dto, createApplication);
         }
 
-        createApplication.setNationalCourtHouse(courts.getFirst());
+        if (createApplicationSupplier != null) {
+            return createApplicationSupplier.apply(dto, createApplication);
+        }
+        return null;
     }
 
     /**
@@ -163,5 +168,27 @@ public abstract class AbstractApplicationListLocationValidator<
         }
 
         createApplication.setCriminalJusticeArea(criminalJusticeAreas.getFirst());
+    }
+
+    /**
+     * validates the court.
+     *
+     * @param dto The dto type top validate
+     */
+    private void validateCourt(T dto, O createApplication) {
+        var courtCode = getCourtLocation().apply(dto).trim();
+        final List<NationalCourtHouse> courts = courtHouseRepository.findActiveCourts(courtCode);
+
+        if (courts.isEmpty()) {
+            throw new AppRegistryException(
+                    ApplicationListError.COURT_NOT_FOUND,
+                    "No court found for code '%s'".formatted(courtCode));
+        } else if (courts.size() > SINGLE_RECORD) {
+            throw new AppRegistryException(
+                    ApplicationListError.DUPLICATE_COURT_FOUND,
+                    "Multiple courts found for code '%s'".formatted(courtCode));
+        }
+
+        createApplication.setNationalCourtHouse(courts.getFirst());
     }
 }

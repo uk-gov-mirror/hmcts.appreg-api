@@ -1,15 +1,23 @@
 package uk.gov.hmcts.appregister.applicationlist.service;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityManager;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -21,9 +29,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationCreateListLocationValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletionValidator;
+import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListGetValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationUpdateListLocationValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListLocationValidationSuccess;
 import uk.gov.hmcts.appregister.applicationlist.validator.ListUpdateValidationSuccess;
@@ -33,21 +45,30 @@ import uk.gov.hmcts.appregister.common.concurrency.MatchServiceImpl;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
+import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListGetFilterDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 
 @ExtendWith(MockitoExtension.class)
 public class ApplicationListServiceImplTest {
 
+    private static final LocalDate DEFAULT_DATE = LocalDate.of(2025, 10, 7);
+    private static final LocalTime DEFAULT_TIME = LocalTime.of(10, 30);
+
     @Mock private ApplicationListRepository repository;
     @Mock private NationalCourtHouseRepository courtHouseRepository;
     @Mock private CriminalJusticeAreaRepository cjaRepository;
     @Mock private ApplicationListMapper mapper;
+    @Mock private ApplicationListEntryRepository aleRepository;
 
     @Spy
     private DummyApplicationCreateListLocationValidator validator =
@@ -59,11 +80,17 @@ public class ApplicationListServiceImplTest {
             new DummyApplicationUpdateListLocationValidator(
                     repository, courtHouseRepository, cjaRepository);
 
+    @Spy
+    private DummyApplicationListGetValidator getValidator =
+            new DummyApplicationListGetValidator(repository, courtHouseRepository, cjaRepository);
+
     @Mock private EntityManager entityManager;
 
     @Spy private MatchService matchService = new MatchServiceImpl(null);
 
     @Mock private ApplicationListDeletionValidator deletionValidator;
+
+    @Mock private PageMapper pageMapper;
 
     private ApplicationListServiceImpl service;
 
@@ -72,13 +99,14 @@ public class ApplicationListServiceImplTest {
         service =
                 new ApplicationListServiceImpl(
                         repository,
-                        courtHouseRepository,
-                        cjaRepository,
+                        aleRepository,
                         mapper,
                         validator,
                         updateValidator,
+                        getValidator,
                         entityManager,
                         matchService,
+                        pageMapper,
                         deletionValidator);
     }
 
@@ -229,6 +257,328 @@ public class ApplicationListServiceImplTest {
         verify(entityManager).refresh(saved);
     }
 
+    @Test
+    void delete_validId_deletesEntry() {
+        UUID id = UUID.randomUUID();
+        when(repository.findByUuid(id)).thenReturn(Optional.of(new ApplicationList()));
+
+        service.delete(id);
+
+        verify(deletionValidator).validate(id);
+        verify(repository).findByUuid(id);
+        verify(repository).save(any(ApplicationList.class));
+    }
+
+    @Test
+    void getPage_cjaAndOtherLocationFilled_success_returnsMappedPage() {
+
+        // Resolve CJA
+        CriminalJusticeArea cja = new CriminalJusticeArea();
+        cja.setDescription("CJA Desc");
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        success.setCriminalJusticeArea(cja);
+        getValidator.setSuccess(success);
+
+        // DB results
+        ApplicationList row = new ApplicationList();
+        row.setUuid(UUID.randomUUID());
+        row.setCja(cja);
+        Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
+
+        Pageable pageable = mock(Pageable.class);
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.OPEN),
+                        isNull(),
+                        eq(cja),
+                        eq(DEFAULT_DATE),
+                        eq(DEFAULT_TIME),
+                        eq("morning"),
+                        eq("town hall"),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
+                .thenReturn(List.of());
+
+        // Page metadata mapping
+        doAnswer(
+                        inv -> {
+                            ApplicationListPage target = inv.getArgument(1);
+                            target.totalPages(1);
+                            target.elementsOnPage(1);
+                            return null;
+                        })
+                .when(pageMapper)
+                .toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        // Given a filter with CJA + otherLocation (court is null)
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto()
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode(null)
+                        .cjaCode("52")
+                        .date(DEFAULT_DATE)
+                        .time(DEFAULT_TIME)
+                        .description("morning")
+                        .otherLocationDescription("town hall");
+
+        // When
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isNotNull();
+        assertThat(result.getContent().size()).isEqualTo(1);
+
+        verify(aleRepository).countByApplicationListUuids(List.of(row.getUuid()));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), anyString());
+    }
+
+    @Test
+    void getPage_courtFilled_success_returnsMappedPage() {
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        getValidator.setSuccess(success);
+
+        // DB results
+        ApplicationList row = new ApplicationList();
+        row.setUuid(UUID.randomUUID());
+        row.setCourtName("Central Court");
+        Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
+
+        Pageable pageable = mock(Pageable.class);
+
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.CLOSED),
+                        eq("LOC123"),
+                        isNull(),
+                        eq(DEFAULT_DATE),
+                        eq(DEFAULT_TIME),
+                        isNull(),
+                        isNull(),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
+                .thenReturn(List.of());
+        doAnswer(inv -> null).when(pageMapper).toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        // Given a filter with COURT (CJA is null)
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto()
+                        .status(ApplicationListStatus.CLOSED)
+                        .courtLocationCode("LOC123")
+                        .cjaCode(null)
+                        .date(DEFAULT_DATE)
+                        .time(DEFAULT_TIME);
+
+        // When
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isNotNull();
+        assertThat(result.getContent().size()).isEqualTo(1);
+
+        verify(aleRepository).countByApplicationListUuids(List.of(row.getUuid()));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Central Court"));
+    }
+
+    @Test
+    void getPage_missingEntryCount_defaultsZero_mapsSummary() {
+
+        CriminalJusticeArea cja = new CriminalJusticeArea();
+        cja.setDescription("CJA Desc");
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        success.setCriminalJusticeArea(cja);
+        getValidator.setSuccess(success);
+
+        ApplicationList row = new ApplicationList();
+        row.setUuid(UUID.randomUUID());
+        row.setCja(cja);
+
+        Pageable pageable = mock(Pageable.class);
+
+        Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.OPEN),
+                        isNull(),
+                        eq(cja),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        eq("town"),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
+                .thenReturn(List.of());
+        doAnswer(inv -> null).when(pageMapper).toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        // Given CJA filter, no entry count returned
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto()
+                        .status(ApplicationListStatus.OPEN)
+                        .cjaCode("52")
+                        .otherLocationDescription("town");
+
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isNotNull();
+        assertThat(result.getContent().size()).isEqualTo(1);
+
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("CJA Desc"));
+    }
+
+    @Test
+    void getPage_emptyRepositoryPage_returnsEmptyContent() {
+
+        Pageable pageable = mock(Pageable.class);
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        getValidator.setSuccess(success);
+
+        Page<ApplicationList> dbPage = Page.empty();
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.OPEN),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        doAnswer(inv -> null).when(pageMapper).toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto().status(ApplicationListStatus.OPEN);
+
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isNotNull();
+        assertThat(result.getContent()).isEmpty();
+
+        verify(aleRepository, never()).countByApplicationListUuids(any());
+        verify(mapper, never()).toGetSummaryDto(any(), anyLong(), anyString());
+    }
+
+    @Test
+    void getPage_cjaPresent_derivesLocation_usesCjaDescription() {
+
+        CriminalJusticeArea cja = new CriminalJusticeArea();
+        cja.setDescription("CJA Name");
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        getValidator.setSuccess(success);
+
+        ApplicationList row = new ApplicationList();
+        row.setUuid(UUID.randomUUID());
+        row.setCja(cja);
+
+        Pageable pageable = mock(Pageable.class);
+
+        Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.OPEN),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
+                .thenReturn(List.of());
+        doAnswer(inv -> null).when(pageMapper).toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto().status(ApplicationListStatus.OPEN);
+
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        assertThat(result.getContent()).isNotNull().hasSize(1);
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("CJA Name"));
+    }
+
+    @Test
+    void getPage_courtNamePresent_derivesLocation_usesCourtName() {
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        getValidator.setSuccess(success);
+
+        ApplicationList row = new ApplicationList();
+        row.setUuid(UUID.randomUUID());
+        row.setCourtName("Some Court");
+
+        Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
+        Pageable pageable = mock(Pageable.class);
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.OPEN),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
+                .thenReturn(List.of());
+        doAnswer(inv -> null).when(pageMapper).toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto().status(ApplicationListStatus.OPEN);
+
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        assertThat(result.getContent()).isNotNull().hasSize(1);
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Some Court"));
+    }
+
+    @Test
+    void getPage_noCourtOrCja_derivesLocation_usesFallback() {
+
+        Pageable pageable = mock(Pageable.class);
+
+        ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
+        getValidator.setSuccess(success);
+
+        ApplicationList row = new ApplicationList();
+        row.setUuid(UUID.randomUUID());
+
+        Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
+        when(repository.findAllByFilter(
+                        eq(ApplicationListStatus.OPEN),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
+                .thenReturn(List.of());
+        doAnswer(inv -> null).when(pageMapper).toPage(eq(dbPage), any(ApplicationListPage.class));
+
+        ApplicationListGetFilterDto filter =
+                new ApplicationListGetFilterDto().status(ApplicationListStatus.OPEN);
+        ApplicationListPage result = service.getPage(filter, pageable);
+
+        assertThat(result.getContent()).isNotNull().hasSize(1);
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Location not set"));
+    }
+
     @Setter
     class DummyApplicationCreateListLocationValidator
             extends ApplicationCreateListLocationValidator {
@@ -274,15 +624,32 @@ public class ApplicationListServiceImplTest {
         }
     }
 
-    @Test
-    void delete_validId_deletesEntry() {
-        UUID id = UUID.randomUUID();
-        when(repository.findByUuid(id)).thenReturn(Optional.of(new ApplicationList()));
+    @Setter
+    class DummyApplicationListGetValidator extends ApplicationListGetValidator {
+        private ListLocationValidationSuccess success;
 
-        service.delete(id);
+        public DummyApplicationListGetValidator(
+                ApplicationListRepository repository,
+                NationalCourtHouseRepository courtHouseRepository,
+                CriminalJusticeAreaRepository cjaRepository) {
+            super(repository, courtHouseRepository, cjaRepository);
+        }
 
-        verify(deletionValidator).validate(id);
-        verify(repository).findByUuid(id);
-        verify(repository).save(any(ApplicationList.class));
+        @Override
+        public <R> R validate(
+                ApplicationListGetFilterDto dto,
+                BiFunction<ApplicationListGetFilterDto, ListLocationValidationSuccess, R>
+                        createApplicationSupplier) {
+            return createApplicationSupplier.apply(dto, success);
+        }
+
+        @Override
+        public <R> R validateCja(
+                ApplicationListGetFilterDto dto,
+                BiFunction<ApplicationListGetFilterDto, ListLocationValidationSuccess, R>
+                        createApplicationSupplier,
+                boolean doNotFailOnMissing) {
+            return createApplicationSupplier.apply(dto, success);
+        }
     }
 }
