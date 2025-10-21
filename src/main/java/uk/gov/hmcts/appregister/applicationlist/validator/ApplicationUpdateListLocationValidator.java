@@ -72,17 +72,14 @@ public class ApplicationUpdateListLocationValidator
     @Override
     Function<PayloadForUpdate<ApplicationListUpdateDto>, String> getCourtLocation() {
         return (dto) ->
-                dto.getData().getCourtLocation() != null
-                        ? dto.getData().getCourtLocation().getLocationCode()
+                dto.getData().getCourtLocationCode() != null
+                        ? dto.getData().getCourtLocationCode()
                         : null;
     }
 
     @Override
     Function<PayloadForUpdate<ApplicationListUpdateDto>, String> getCjaCode() {
-        return (dto) ->
-                dto.getData().getCriminalJusticeArea() != null
-                        ? dto.getData().getCriminalJusticeArea().getCode()
-                        : null;
+        return (dto) -> dto.getData().getCjaCode() != null ? dto.getData().getCjaCode() : null;
     }
 
     @Override

@@ -31,7 +31,6 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
-import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.testutils.client.PageMetaData;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
@@ -266,7 +265,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .courtLocation(courtLocationGetDetailDto)
+                        .courtLocationCode(VALID_COURT_CODE2)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L);
@@ -308,18 +307,13 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         String[] createdLocation = createAppListUsingRestApi();
 
-        CourtLocationGetDetailDto courtLocationGetDetailDto = new CourtLocationGetDetailDto();
-        courtLocationGetDetailDto.setLocationCode(VALID_COURT_CODE2);
-        courtLocationGetDetailDto.setStartDate(LocalDate.now());
-        courtLocationGetDetailDto.setEndDate(JsonNullable.of(LocalDate.now()));
-        courtLocationGetDetailDto.setName("Manchester Crown Court");
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .courtLocation(courtLocationGetDetailDto)
+                        .courtLocationCode(VALID_COURT_CODE2)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L);
@@ -342,18 +336,13 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         String[] createdLocation = createAppListUsingRestApi();
 
-        CourtLocationGetDetailDto courtLocationGetDetailDto = new CourtLocationGetDetailDto();
-        courtLocationGetDetailDto.setLocationCode(VALID_COURT_CODE2);
-        courtLocationGetDetailDto.setStartDate(LocalDate.now());
-        courtLocationGetDetailDto.setEndDate(JsonNullable.of(LocalDate.now()));
-        courtLocationGetDetailDto.setName("Manchester Crown Court");
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .courtLocation(courtLocationGetDetailDto)
+                        .courtLocationCode(VALID_COURT_CODE2)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L);
@@ -396,17 +385,13 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         String[] createdLocation = createAppListUsingRestApi();
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = new CriminalJusticeAreaGetDto();
-        criminalJusticeAreaGetDto.setCode(VALID_CJA_CODE);
-        criminalJusticeAreaGetDto.setDescription("Description of CD");
-
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .criminalJusticeArea(criminalJusticeAreaGetDto)
+                        .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
@@ -445,17 +430,13 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         String[] createdLocation = createAppListUsingRestApi();
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = new CriminalJusticeAreaGetDto();
-        criminalJusticeAreaGetDto.setCode(VALID_CJA_CODE);
-        criminalJusticeAreaGetDto.setDescription("Description of CD");
-
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .criminalJusticeArea(criminalJusticeAreaGetDto)
+                        .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
@@ -493,17 +474,13 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         String[] createdLocation = createAppListUsingRestApi();
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = new CriminalJusticeAreaGetDto();
-        criminalJusticeAreaGetDto.setCode(VALID_CJA_CODE);
-        criminalJusticeAreaGetDto.setDescription("Description of CD");
-
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .criminalJusticeArea(criminalJusticeAreaGetDto)
+                        .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
@@ -525,17 +502,13 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .build()
                         .fetchTokenForRole();
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = new CriminalJusticeAreaGetDto();
-        criminalJusticeAreaGetDto.setCode(VALID_CJA_CODE);
-        criminalJusticeAreaGetDto.setDescription("Description of CD");
-
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .criminalJusticeArea(criminalJusticeAreaGetDto)
+                        .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
@@ -556,26 +529,17 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
     @Test
     void givenInvalidLocationCombination_whenUpdate_then400() throws Exception {
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = new CriminalJusticeAreaGetDto();
-        criminalJusticeAreaGetDto.setCode(VALID_CJA_CODE);
-        criminalJusticeAreaGetDto.setDescription("Description of CD");
-
-        CourtLocationGetDetailDto courtLocationGetDetailDto = new CourtLocationGetDetailDto();
-        courtLocationGetDetailDto.setName("Court Location");
-        courtLocationGetDetailDto.setLocationCode(VALID_COURT_CODE2);
-        courtLocationGetDetailDto.setStartDate(LocalDate.now());
-        courtLocationGetDetailDto.setEndDate(JsonNullable.of(LocalDate.now()));
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
                         .time(TEST_TIME2)
                         .description("Morning list (court) update")
                         .status(ApplicationListStatus.CLOSED)
-                        .criminalJusticeArea(criminalJusticeAreaGetDto)
+                        .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
-                        .courtLocation(courtLocationGetDetailDto)
+                        .courtLocationCode(VALID_COURT_CODE2)
                         .otherLocationDescription("Updated other location");
 
         var token =
@@ -609,11 +573,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .fetchTokenForRole();
 
         String[] createdLocation = createAppListUsingRestApi();
-        CourtLocationGetDetailDto courtLocationGetDetailDto = new CourtLocationGetDetailDto();
-        courtLocationGetDetailDto.setName("Court Location");
-        courtLocationGetDetailDto.setLocationCode("Unknown");
-        courtLocationGetDetailDto.setStartDate(LocalDate.now());
-        courtLocationGetDetailDto.setEndDate(JsonNullable.of(LocalDate.now()));
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
@@ -623,7 +582,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
-                        .courtLocation(courtLocationGetDetailDto)
+                        .courtLocationCode("Unknown")
                         .otherLocationDescription("Updated other location");
 
         Response resp =
@@ -645,9 +604,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         String[] createdLocation = createAppListUsingRestApi();
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = new CriminalJusticeAreaGetDto();
-        criminalJusticeAreaGetDto.setCode("Unknown");
-        criminalJusticeAreaGetDto.setDescription("Description of CD");
         var req =
                 new ApplicationListUpdateDto()
                         .date(TEST_DATE2)
@@ -657,7 +613,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .durationHours(4)
                         .durationMinutes(32)
                         .version(2L)
-                        .criminalJusticeArea(criminalJusticeAreaGetDto)
+                        .cjaCode("Unknown")
                         .otherLocationDescription("Updated other location");
 
         Response resp =
@@ -682,7 +638,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         ApplicationListUpdateDto uploadPayload =
                 Instancio.of(ApplicationListUpdateDto.class)
                         .withSettings(settings)
-                        .ignore(field(ApplicationListUpdateDto::getCourtLocation))
+                        .ignore(field(ApplicationListUpdateDto::getCourtLocationCode))
 
                         // Instancio does not honour Max and Min annotations
                         .ignore(field(ApplicationListUpdateDto::getDurationHours))

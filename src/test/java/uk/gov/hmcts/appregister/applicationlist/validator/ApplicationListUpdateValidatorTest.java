@@ -31,7 +31,6 @@ import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepos
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
-import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,12 +55,10 @@ public class ApplicationListUpdateValidatorTest {
         for (Field f : fields) {
             switch (f) {
                 case COURT -> {
-                    dto.setCourtLocation(new CourtLocationGetDetailDto());
-                    dto.getCourtLocation().setLocationCode("COURT-123");
+                    dto.setCourtLocationCode("COURT-123");
                 }
                 case CJA -> {
-                    dto.setCriminalJusticeArea(new CriminalJusticeAreaGetDto());
-                    dto.getCriminalJusticeArea().setCode("CJA-123");
+                    dto.setCjaCode("CJA-123");
                 }
                 case OTHER -> dto.setOtherLocationDescription("Some other location");
             }
@@ -73,9 +70,7 @@ public class ApplicationListUpdateValidatorTest {
     void update_noCourtReturnedFromRepository_throwsAppRegException() {
         // given
         ApplicationListUpdateDto dto = mock(ApplicationListUpdateDto.class);
-        CourtLocationGetDetailDto courtLocationGetDetailDto = mock(CourtLocationGetDetailDto.class);
-        when(dto.getCourtLocation()).thenReturn(courtLocationGetDetailDto);
-        when(courtLocationGetDetailDto.getLocationCode()).thenReturn("CODE1");
+        when(dto.getCourtLocationCode()).thenReturn("CODE1");
         when(courtHouseRepository.findActiveCourts("CODE1")).thenReturn(List.of());
 
         UUID uuid = UUID.randomUUID();
@@ -92,9 +87,7 @@ public class ApplicationListUpdateValidatorTest {
     void update_multipleCourtsReturnedFromRepository_throwsAppRegException() {
         // given
         ApplicationListUpdateDto dto = mock(ApplicationListUpdateDto.class);
-        CourtLocationGetDetailDto courtLocationGetDetailDto = mock(CourtLocationGetDetailDto.class);
-        when(dto.getCourtLocation()).thenReturn(courtLocationGetDetailDto);
-        when(courtLocationGetDetailDto.getLocationCode()).thenReturn("DUPE");
+        when(dto.getCourtLocationCode()).thenReturn("DUPE");
 
         NationalCourtHouse c1 = new NationalCourtHouse();
         NationalCourtHouse c2 = new NationalCourtHouse();
@@ -114,10 +107,8 @@ public class ApplicationListUpdateValidatorTest {
     void update_noCjaReturnedFromRepository_throwsAppRegException() {
         ApplicationListUpdateDto dto = mock(ApplicationListUpdateDto.class);
 
-        CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = mock(CriminalJusticeAreaGetDto.class);
-        when(dto.getCourtLocation()).thenReturn(null);
-        when(dto.getCriminalJusticeArea()).thenReturn(criminalJusticeAreaGetDto);
-        when(criminalJusticeAreaGetDto.getCode()).thenReturn("X1");
+        when(dto.getCourtLocationCode()).thenReturn(null);
+        when(dto.getCjaCode()).thenReturn("X1");
         when(dto.getOtherLocationDescription()).thenReturn("Y2");
 
         when(cjaRepository.findByCode("X1")).thenReturn(List.of());
@@ -135,9 +126,8 @@ public class ApplicationListUpdateValidatorTest {
     void update_multipleCjaReturnedFromRepository_throwsAppRegException() {
         ApplicationListUpdateDto dto = mock(ApplicationListUpdateDto.class);
         CriminalJusticeAreaGetDto criminalJusticeAreaGetDto = mock(CriminalJusticeAreaGetDto.class);
-        when(dto.getCourtLocation()).thenReturn(null);
-        when(dto.getCriminalJusticeArea()).thenReturn(criminalJusticeAreaGetDto);
-        when(criminalJusticeAreaGetDto.getCode()).thenReturn("X1");
+        when(dto.getCourtLocationCode()).thenReturn(null);
+        when(dto.getCjaCode()).thenReturn("X1");
         when(dto.getOtherLocationDescription()).thenReturn("Y2");
 
         CriminalJusticeArea a = new CriminalJusticeArea();
@@ -175,8 +165,7 @@ public class ApplicationListUpdateValidatorTest {
         @Test
         void valid_whenCourtLocationPresent_only() {
             var appList = buildDto(Field.COURT);
-            when(courtHouseRepository.findActiveCourts(
-                            appList.getCourtLocation().getLocationCode()))
+            when(courtHouseRepository.findActiveCourts(appList.getCourtLocationCode()))
                     .thenReturn(List.of(new NationalCourtHouse()));
 
             UUID uuid = UUID.randomUUID();
@@ -190,8 +179,7 @@ public class ApplicationListUpdateValidatorTest {
         @Test
         void valid_whenCourtLocationPresentWithCallback_only() {
             var appList = buildDto(Field.COURT);
-            when(courtHouseRepository.findActiveCourts(
-                            appList.getCourtLocation().getLocationCode()))
+            when(courtHouseRepository.findActiveCourts(appList.getCourtLocationCode()))
                     .thenReturn(List.of(new NationalCourtHouse()));
 
             UUID uuid = UUID.randomUUID();
@@ -207,7 +195,7 @@ public class ApplicationListUpdateValidatorTest {
         @Test
         void valid_whenCjaAndNonBlankOtherLocation_andNoCourtLocation() {
             var appList = buildDto(Field.CJA, Field.OTHER);
-            when(cjaRepository.findByCode(appList.getCriminalJusticeArea().getCode()))
+            when(cjaRepository.findByCode(appList.getCjaCode()))
                     .thenReturn(List.of(new CriminalJusticeArea()));
 
             UUID uuid = UUID.randomUUID();
@@ -221,7 +209,7 @@ public class ApplicationListUpdateValidatorTest {
         @Test
         void valid_whenCjaAndNonBlankOtherLocationWithCallback_andNoCourtLocation() {
             var appList = buildDto(Field.CJA, Field.OTHER);
-            when(cjaRepository.findByCode(appList.getCriminalJusticeArea().getCode()))
+            when(cjaRepository.findByCode(appList.getCjaCode()))
                     .thenReturn(List.of(new CriminalJusticeArea()));
 
             UUID uuid = UUID.randomUUID();
