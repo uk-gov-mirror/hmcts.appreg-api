@@ -51,7 +51,6 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 @RequiredArgsConstructor
 @Service
 public class ApplicationListServiceImpl implements ApplicationListService {
-
     private static final long ZERO_ENTITIES = 0L;
 
     private final ApplicationListRepository repository;
@@ -281,7 +280,10 @@ public class ApplicationListServiceImpl implements ApplicationListService {
 
     private Map<UUID, Long> fetchEntryCounts(List<UUID> uuids) {
         return aleRepository.countByApplicationListUuids(uuids).stream()
-                .collect(Collectors.toMap(EntryCount::getPrimaryKey, EntryCount::getCount));
+                .collect(
+                        Collectors.toMap(
+                                EntryCount::getPrimaryKey,
+                                ec -> ec.getCount() == null ? ZERO_ENTITIES : ec.getCount()));
     }
 
     private ApplicationListPage assembleResponsePage(
