@@ -1,12 +1,11 @@
 package uk.gov.hmcts.appregister.audit.event;
 
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import uk.gov.hmcts.appregister.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
-
-import java.util.Optional;
 
 /**
  * Encapsulates the audit request and response.

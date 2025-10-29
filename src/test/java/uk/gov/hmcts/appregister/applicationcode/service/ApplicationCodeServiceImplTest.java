@@ -30,7 +30,7 @@ import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
 import uk.gov.hmcts.appregister.audit.event.StartEvent;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditResult;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
@@ -226,15 +226,20 @@ public class ApplicationCodeServiceImplTest {
     class DummyAuditOperationService implements AuditOperationService {
 
         @Override
-        public <T, E extends Keyable> T processAudit(Optional<E> oldValue, AuditOperation<E> auditType, Function<BaseAuditEvent, Optional<AuditResult<T, E>>> execution, AuditOperationLifecycleListener... listener) {
-            Optional<AuditResult<T, E>> optional =
+        public <T, E extends Keyable> T processAudit(
+                Optional<E> oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
+                AuditOperationLifecycleListener... listener) {
+            Optional<AuditableResult<T, E>> optional =
                     execution.apply(
                             new CompleteEvent(
                                     new StartEvent(
                                             AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                                             UUID.randomUUID().toString(),
                                             Optional.empty()),
-                                    "result", Optional.empty()));
+                                    "result",
+                                    Optional.empty()));
             return optional.get().getResultingValue();
         }
     }

@@ -78,8 +78,11 @@ public class CourtLocationServiceImplTest {
         Assertions.assertEquals(LocalDate.parse("2020-01-01"), dto.getStartDate());
 
         verify(auditOperationService)
-                .processAudit(java.util.Optional.empty(),
-                        eq(CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT), notNull(), notNull());
+                .processAudit(
+                        notNull(),
+                        eq(CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -99,8 +102,11 @@ public class CourtLocationServiceImplTest {
         Assertions.assertEquals(CourtLocationError.COURT_NOT_FOUND, ex.getCode());
 
         verify(auditOperationService)
-                .processAudit(java.util.Optional.empty(),
-                        eq(CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT), notNull(), notNull());
+                .processAudit(
+                        notNull(),
+                        eq(CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -123,8 +129,11 @@ public class CourtLocationServiceImplTest {
         Assertions.assertEquals(CourtLocationError.DUPLICATE_COURT_FOUND, ex.getCode());
 
         verify(auditOperationService)
-                .processAudit(java.util.Optional.empty(),
-                        eq(CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT), notNull(), notNull());
+                .processAudit(
+                        notNull(),
+                        eq(CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -177,8 +186,10 @@ public class CourtLocationServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        java.util.Optional.empty(),
-                        eq(CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT), notNull(), notNull());
+                        notNull(),
+                        eq(CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -214,7 +225,9 @@ public class CourtLocationServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        java.util.Optional.empty(),
-                        eq(CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT), notNull(), notNull());
+                        notNull(),
+                        eq(CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 }

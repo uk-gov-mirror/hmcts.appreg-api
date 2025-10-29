@@ -14,7 +14,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
 import uk.gov.hmcts.appregister.audit.listener.DataAuditLogger;
-import uk.gov.hmcts.appregister.audit.listener.diff.AuditDifferentiator;
 import uk.gov.hmcts.appregister.audit.listener.diff.ReflectiveAuditDifferentiator;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 
@@ -49,13 +48,17 @@ public class AppConfig implements WebMvcConfigurer {
         registry.addConverter(new ListStringConverter());
     }
 
-    /** load a preconfigured data audit logger that logs to the database based on a data differentiator. The
-     * default differentiator is a reflective one that checks all fields for differences.
-     * NOTE: This can be overridden at the operation level.
-     * See {@link uk.gov.hmcts.appregister.audit.service.AuditOperationService} */
+    /**
+     * load a preconfigured data audit logger that logs to the database based on a data
+     * differentiator. The default differentiator is a reflective one that checks all fields for
+     * differences. Reflective nesting of complex objects as well as collections are disabled by
+     * default. This can be overridden as appropriate NOTE: This can be overridden at the operation
+     * level. See {@link uk.gov.hmcts.appregister.audit.service.AuditOperationService}
+     */
     @Bean
     public DataAuditLogger auditDifferentiator(DataAuditRepository dataAuditRepository) {
-        return new DataAuditLogger(new ReflectiveAuditDifferentiator(false, false), dataAuditRepository);
+        return new DataAuditLogger(
+                new ReflectiveAuditDifferentiator(false, false), dataAuditRepository);
     }
 
     /**

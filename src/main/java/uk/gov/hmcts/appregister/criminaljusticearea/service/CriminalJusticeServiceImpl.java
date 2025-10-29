@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditResult;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
@@ -15,7 +15,6 @@ import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.service.LocationLookupService;
 import uk.gov.hmcts.appregister.criminaljusticearea.audit.CriminalJusticeAuditOperation;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
-import uk.gov.hmcts.appregister.generated.model.CourtLocationPage;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
@@ -38,8 +37,11 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                 req -> {
                     var cja = locationLookupService.getCjaOrThrow(code);
 
-                    AuditResult<CriminalJusticeAreaGetDto, CriminalJusticeArea> result
-                            = new AuditResult<>(criminalJusticeMapper.toDto(cja), Optional.empty(), Optional.empty());
+                    AuditableResult<CriminalJusticeAreaGetDto, CriminalJusticeArea> result =
+                            new AuditableResult<>(
+                                    criminalJusticeMapper.toDto(cja),
+                                    Optional.empty(),
+                                    Optional.empty());
 
                     return Optional.of(result);
                 },
@@ -63,8 +65,9 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                                             criminalJusticeAreaPage.addContentItem(
                                                     criminalJusticeMapper.toDto(entry)));
 
-                    AuditResult<CriminalJusticeAreaPage, CriminalJusticeArea> result
-                            = new AuditResult<>(criminalJusticeAreaPage, Optional.empty(), Optional.empty());
+                    AuditableResult<CriminalJusticeAreaPage, CriminalJusticeArea> result =
+                            new AuditableResult<>(
+                                    criminalJusticeAreaPage, Optional.empty(), Optional.empty());
 
                     return Optional.of(result);
                 },

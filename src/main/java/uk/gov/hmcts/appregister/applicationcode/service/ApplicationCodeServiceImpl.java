@@ -17,7 +17,7 @@ import uk.gov.hmcts.appregister.applicationcode.exception.AppCodeError;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
 import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditResult;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
@@ -63,14 +63,18 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                             : null,
                                     pageable);
 
-
-                    AuditResult<Page<ApplicationCodeDto>, ApplicationCode> result = new AuditResult<>(applicationCodeList.map(
-                                    code -> {
-                                        FeePair feePair =
-                                                feeService.resolveFeePair(code.getFeeReference());
-                                        return applicationCodeMapper.toReadDto(code, feePair);
-                                    }), Optional.empty(), Optional.empty());
-
+                    AuditableResult<Page<ApplicationCodeDto>, ApplicationCode> result =
+                            new AuditableResult<>(
+                                    applicationCodeList.map(
+                                            code -> {
+                                                FeePair feePair =
+                                                        feeService.resolveFeePair(
+                                                                code.getFeeReference());
+                                                return applicationCodeMapper.toReadDto(
+                                                        code, feePair);
+                                            }),
+                                    Optional.empty(),
+                                    Optional.empty());
 
                     return Optional.of(result);
                 },
@@ -105,8 +109,11 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                     }
 
                     FeePair feePair = feeService.resolveFeePair(codeToConsider.getFeeReference());
-                    AuditResult<ApplicationCodeDto, ApplicationCode> result = new AuditResult<>(
-                            applicationCodeMapper.toReadDto(codeToConsider, feePair), Optional.empty(), Optional.empty());
+                    AuditableResult<ApplicationCodeDto, ApplicationCode> result =
+                            new AuditableResult<>(
+                                    applicationCodeMapper.toReadDto(codeToConsider, feePair),
+                                    Optional.empty(),
+                                    Optional.empty());
                     return Optional.of(result);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));

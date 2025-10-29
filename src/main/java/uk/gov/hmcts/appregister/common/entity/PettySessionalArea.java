@@ -32,7 +32,8 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-public class PettySessionalArea extends BaseUnmanagedChangeableEntity implements Versionable, Keyable {
+public class PettySessionalArea extends BaseUnmanagedChangeableEntity
+        implements Versionable, Keyable {
     @Id
     @Column(name = "psa_id", nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "psa_gen")

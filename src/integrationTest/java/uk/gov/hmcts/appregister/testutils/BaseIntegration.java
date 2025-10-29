@@ -12,6 +12,8 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
+import uk.gov.hmcts.appregister.audit.listener.DataAuditLogger;
+import uk.gov.hmcts.appregister.audit.listener.diff.ReflectiveAuditDifferentiator;
 import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
 import uk.gov.hmcts.appregister.testutils.stubs.wiremock.TokenStub;
@@ -43,6 +45,10 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
 
     protected LogCaptor logCaptor;
 
+    protected LogCaptor dataAuditLogger;
+
+    protected LogCaptor reflectiveAuditLogger;
+
     @BeforeEach
     void setup() {
         try {
@@ -55,7 +61,11 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
         }
 
         logCaptor = LogCaptor.forClass(AuditOperationSlf4jLogger.class);
+        dataAuditLogger = LogCaptor.forClass(DataAuditLogger.class);
+        reflectiveAuditLogger = LogCaptor.forClass(ReflectiveAuditDifferentiator.class);
         logCaptor.clearLogs();
+        dataAuditLogger.clearLogs();
+        reflectiveAuditLogger.clearLogs();
     }
 
     @DynamicPropertySource

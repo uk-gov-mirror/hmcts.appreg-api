@@ -1,14 +1,15 @@
 package uk.gov.hmcts.appregister.audit.operation;
 
-import uk.gov.hmcts.appregister.common.enumeration.CRUDEnum;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 
 /**
  * Represents an audit operation with an event name and type.
  */
-public interface AuditOperation<T> {
+public interface AuditOperation {
+
+    /** The audit event name of the operation. */
     String getEventName();
 
-    CRUDEnum getType();
-
-    Class<T> getEntityClass();
+    /** The underlying audit operation. */
+    CrudEnum getType();
 }

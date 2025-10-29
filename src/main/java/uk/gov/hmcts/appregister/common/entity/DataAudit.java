@@ -1,6 +1,14 @@
 package uk.gov.hmcts.appregister.common.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -13,7 +21,7 @@ import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.Changeable;
 import uk.gov.hmcts.appregister.common.entity.base.PreCreateUpdateEntityListener;
 import uk.gov.hmcts.appregister.common.entity.converter.CrudConverter;
-import uk.gov.hmcts.appregister.common.enumeration.CRUDEnum;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 
 /**
  * Entity for Data Audit table.
@@ -77,7 +85,7 @@ public class DataAudit implements Changeable {
 
     @Column(name = "update_type", nullable = false)
     @Convert(converter = CrudConverter.class)
-    private CRUDEnum updateType;
+    private CrudEnum updateType;
 
     @Column(name = "data_type")
     @Size(max = 1000)

@@ -35,7 +35,8 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @Getter
-public class LinkCommunicationMedia extends BaseUnmanagedChangeableEntity implements Versionable, Keyable {
+public class LinkCommunicationMedia extends BaseUnmanagedChangeableEntity
+        implements Versionable, Keyable {
 
     @Id
     @Column(name = "lcm_id", nullable = false, updatable = false)

@@ -19,7 +19,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uk.gov.hmcts.appregister.common.entity.base.*;
+import uk.gov.hmcts.appregister.common.entity.base.Accountable;
+import uk.gov.hmcts.appregister.common.entity.base.Changeable;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
+import uk.gov.hmcts.appregister.common.entity.base.PreCreateUpdateEntityListener;
+import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 
 /**
  * The AppListEntryFeeStatus entity represents the fee status of an application list entry.

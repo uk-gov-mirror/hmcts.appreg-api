@@ -9,9 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.applicationcode.dto.ApplicationCodeDto;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditResult;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
@@ -81,8 +80,11 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                                         .formatted(code, date));
                     }
 
-                    AuditResult<CourtLocationGetDetailDto, NationalCourtHouse> result
-                            = new AuditResult<>(mapper.toDetailDto(rows.getFirst()), Optional.empty(), Optional.empty());
+                    AuditableResult<CourtLocationGetDetailDto, NationalCourtHouse> result =
+                            new AuditableResult<>(
+                                    mapper.toDetailDto(rows.getFirst()),
+                                    Optional.empty(),
+                                    Optional.empty());
 
                     // Map the single matching entity to a detail DTO
                     return Optional.of(result);
@@ -127,8 +129,8 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                     dbPage.forEach(
                             court -> responsePage.addContentItem(mapper.toSummaryDto(court)));
 
-                    AuditResult<CourtLocationPage, NationalCourtHouse> result
-                            = new AuditResult<>(responsePage, Optional.empty(), Optional.empty());
+                    AuditableResult<CourtLocationPage, NationalCourtHouse> result =
+                            new AuditableResult<>(responsePage, Optional.empty(), Optional.empty());
                     return Optional.of(result);
                 },
                 // Spring injects all AuditOperationLifecycleListener beans as a List;

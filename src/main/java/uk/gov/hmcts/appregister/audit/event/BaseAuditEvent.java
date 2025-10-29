@@ -1,9 +1,8 @@
 package uk.gov.hmcts.appregister.audit.event;
 
+import java.util.Optional;
 import uk.gov.hmcts.appregister.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
-
-import java.util.Optional;
 
 /**
  * The audit payload base interface.

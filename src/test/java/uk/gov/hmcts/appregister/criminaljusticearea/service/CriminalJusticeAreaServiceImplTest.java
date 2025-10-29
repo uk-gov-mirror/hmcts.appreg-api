@@ -63,8 +63,10 @@ class CriminalJusticeAreaServiceImplTest {
         Assertions.assertEquals(description, dto.getDescription());
         verify(auditOperationService)
                 .processAudit(
-                        java.util.Optional.empty(),
-                        eq(CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
+                        notNull(),
+                        eq(CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     @Test
@@ -85,8 +87,10 @@ class CriminalJusticeAreaServiceImplTest {
         Assertions.assertEquals(CriminalJusticeAreaError.DUPLICATE_CJA_FOUND, thrown.getCode());
         verify(auditOperationService)
                 .processAudit(
-                        java.util.Optional.empty(),
-                        eq(CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
+                        notNull(),
+                        eq(CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     @Test
@@ -107,7 +111,9 @@ class CriminalJusticeAreaServiceImplTest {
         Assertions.assertEquals(CriminalJusticeAreaError.CJA_NOT_FOUND, thrown.getCode());
         verify(auditOperationService)
                 .processAudit(
-                        java.util.Optional.empty(),
-                        eq(CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT), notNull(), notNull());
+                        notNull(),
+                        eq(CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -90,6 +91,17 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getCourtName()).isEqualTo(VALID_COURT_NAME);
         assertThat(dto.getCjaCode()).isNull();
         assertThat(dto.getOtherLocationDescription()).isNull();
+
+        // assert the audit log message
+        Assertions.assertEquals(0, reflectiveAuditLogger.getWarnLogs().size());
+        Assertions.assertEquals(0, reflectiveAuditLogger.getErrorLogs().size());
+
+        List<Boolean> matches = new ArrayList<>();
+        for (String log : dataAuditLogger.getDebugLogs()) {
+            matches.add(Pattern.matches("Saved data audit record.*", log));
+        }
+
+        Assertions.assertEquals(14, matches.stream().filter((b) -> b).count());
     }
 
     // --- Happy path: create with CJA + otherLocation ------------------------------------------
@@ -135,6 +147,14 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getOtherLocationDescription()).isEqualTo(VALID_OTHER_LOCATION);
         assertThat(dto.getCourtCode()).isNull();
         assertThat(dto.getCourtName()).isNull();
+
+        // assert the audit log message
+        List<Boolean> matches = new ArrayList<>();
+        for (String log : dataAuditLogger.getDebugLogs()) {
+            matches.add(Pattern.matches("Saved data audit record.*", log));
+        }
+
+        Assertions.assertEquals(13, matches.stream().filter((b) -> b).count());
     }
 
     // --- Validation: XOR rule (both supplied) -------------------------------------------------

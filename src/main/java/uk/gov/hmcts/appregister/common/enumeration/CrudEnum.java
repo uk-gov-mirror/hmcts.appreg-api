@@ -1,16 +1,17 @@
 package uk.gov.hmcts.appregister.common.enumeration;
 
 /**
- * A programmatic means to determine the type of operation that is being performed
+ * A programmatic means to determine the type of operation that is being performed.
  */
-public enum CRUDEnum {
+public enum CrudEnum {
     CREATE('C'),
     READ('R'),
     UPDATE('S'),
     DELETE('D');
 
     private char val;
-    CRUDEnum(char  value){
+
+    CrudEnum(char value) {
         this.val = value;
     }
 
@@ -34,13 +35,12 @@ public enum CRUDEnum {
         return val;
     }
 
-    public static CRUDEnum fromValue(char value) {
-        for (CRUDEnum crud : CRUDEnum.values()) {
+    public static CrudEnum fromValue(char value) {
+        for (CrudEnum crud : CrudEnum.values()) {
             if (crud.val == value) {
                 return crud;
             }
         }
         throw new IllegalArgumentException("Unknown value: " + value);
     }
-
 }

@@ -53,7 +53,8 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-public class NationalCourtHouse extends BaseUnmanagedChangeableEntity implements Versionable, Keyable {
+public class NationalCourtHouse extends BaseUnmanagedChangeableEntity
+        implements Versionable, Keyable {
 
     // Primary key identifier for the courthouse record.
     @Id

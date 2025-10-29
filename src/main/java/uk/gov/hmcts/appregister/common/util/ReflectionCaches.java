@@ -3,7 +3,6 @@ package uk.gov.hmcts.appregister.common.util;
 import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -11,18 +10,16 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A central place for cache to exist to avoid reflection based performance problems. This cache is simple and lazy (not
- * called then no memory usage). There is no associated eviction policy like other, more sophisticated  third party solutions.
- * The cache is based on ClassValue.
+ * A central place for cache to exist to avoid reflection based performance problems. This cache is
+ * simple and lazy (not called then no memory usage). There is no associated eviction policy like
+ * other, more sophisticated third party solutions. The cache is based on ClassValue.
  */
 public class ReflectionCaches {
     public record MethodData(String tableName, String columnName, Method method, Field field) {}
+
     public record ReflectionMeta(List<MethodData> methods) {}
 
-    /**
-     * The method cache that is used for performance
-     * @return The method cache for performance
-     */
+    /** The method cache that is used for performance. */
     public static final ClassValue<ReflectionMeta> METHOD_CACHE =
             new ClassValue<>() {
                 @Override
@@ -32,8 +29,8 @@ public class ReflectionCaches {
                     for (Field field : getAllFields(type)) {
                         Method get = getGetterForField(type, field.getName());
                         String col = getColumnOrJoinColumnName(field);
-                       if (get != null && col!=null) {
-                            returnMethods.add( new MethodData(table, col, get, field));
+                        if (get != null && col != null) {
+                            returnMethods.add(new MethodData(table, col, get, field));
                         }
                     }
 
@@ -42,8 +39,8 @@ public class ReflectionCaches {
             };
 
     /**
-     * Returns all methods declared in the given class and its superclasses.
-     * Includes private/protected/package methods, and avoids duplicates.
+     * Returns all methods declared in the given class and its superclasses. Includes
+     * private/protected/package methods, and avoids duplicates.
      */
     public static List<Field> getAllFields(Class<?> type) {
         List<Field> methods = new ArrayList<>();
@@ -54,13 +51,15 @@ public class ReflectionCaches {
     }
 
     /**
-     * Returns the getter method corresponding to a field if it exists.
-     * Example: field 'status' → method 'getStatus' or 'isStatus' (for booleans)
+     * Returns the getter method corresponding to a field if it exists. Example: field 'status' →
+     * method 'getStatus' or 'isStatus' (for booleans)
      */
     public static Method getGetterForField(Class<?> clazz, String fieldName) {
         try {
             Field field = findField(clazz, fieldName);
-            if (field == null) return null;
+            if (field == null) {
+                return null;
+            }
 
             String name = field.getName();
             Class<?> type = field.getType();
@@ -81,12 +80,12 @@ public class ReflectionCaches {
     }
 
     /**
-     * Returns the table name defined on a class @Table
+     * Returns the table name defined on a class @Table.
      *
      * @param clazz the Java method to inspect (usually a getter)
      * @return the column name if present, otherwise null
      */
-    public  static <T> String getTableName(Class<T> clazz) {
+    public static <T> String getTableName(Class<T> clazz) {
         // Try @JoinColumn next
         Table table = clazz.getAnnotation(Table.class);
         if (table != null) {
@@ -100,8 +99,8 @@ public class ReflectionCaches {
     /**
      * Finds a field by name in the given class or its superclasses.
      *
-     * @param type       the class to search
-     * @param fieldName  the name of the field
+     * @param type the class to search
+     * @param fieldName the name of the field
      * @return the Field if found, otherwise null
      */
     public static Field findField(Class<?> type, String fieldName) {
@@ -126,7 +125,9 @@ public class ReflectionCaches {
      * @return the column name if present, otherwise null
      */
     public static String getColumnOrJoinColumnName(Field field) {
-        if (field == null) return null;
+        if (field == null) {
+            return null;
+        }
 
         // Try @Column first
         Column column = field.getAnnotation(Column.class);

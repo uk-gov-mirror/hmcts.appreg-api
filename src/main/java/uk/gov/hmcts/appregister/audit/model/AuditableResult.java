@@ -1,0 +1,24 @@
+package uk.gov.hmcts.appregister.audit.model;
+
+import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
+
+/**
+ * The result of an audit operation containing both the old value (if applicable). Only applies on
+ * an UPDATE or DELETE and new value
+ */
+@Builder
+@Getter
+@AllArgsConstructor
+public class AuditableResult<R, E extends Keyable> {
+    private final R resultingValue;
+
+    /** The old entity contains the old data prior to a update or soft delete. */
+    private final Optional<E> oldEntity;
+
+    /** The new entity contains the create, updates or soft delete. */
+    private final Optional<E> newEntity;
+}

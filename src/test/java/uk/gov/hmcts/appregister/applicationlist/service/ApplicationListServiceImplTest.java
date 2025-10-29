@@ -20,23 +20,32 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletionValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListLocationValidator;
+import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
+import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
+import uk.gov.hmcts.appregister.audit.event.StartEvent;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
+import uk.gov.hmcts.appregister.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
@@ -65,8 +74,10 @@ public class ApplicationListServiceImplTest {
     @Mock private PageMapper pageMapper;
     @Mock private LocationLookupService locationLookupService;
 
-    @Mock private AuditOperationService auditOperationService;
     @Mock private AuditOperationLifecycleListener auditOperationLifecycleListener;
+
+    @Spy
+    private final AuditOperationService auditOperationService = new DummyAuditOperationService();
 
     private ApplicationListServiceImpl service;
 
@@ -527,5 +538,26 @@ public class ApplicationListServiceImplTest {
 
         assertThat(result.getContent()).isNotNull().hasSize(1);
         verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Location not set"));
+    }
+
+    class DummyAuditOperationService implements AuditOperationService {
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                Optional<E> oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
+                AuditOperationLifecycleListener... listener) {
+            Optional<AuditableResult<T, E>> optional =
+                    execution.apply(
+                            new CompleteEvent(
+                                    new StartEvent(
+                                            AppListAuditOperation.CREATE_APP_LIST,
+                                            UUID.randomUUID().toString(),
+                                            Optional.empty()),
+                                    "result",
+                                    Optional.empty()));
+            return optional.get().getResultingValue();
+        }
     }
 }

@@ -3,21 +3,17 @@ package uk.gov.hmcts.appregister.audit;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.audit.operation.AuditOperation;
-import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
-import uk.gov.hmcts.appregister.common.entity.ApplicationList;
-import uk.gov.hmcts.appregister.common.enumeration.CRUDEnum;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 
 @RequiredArgsConstructor
 @Getter
-public enum TestAuditOperation implements AuditOperation<ApplicationList> {
-    CREATE("Create Application List",CRUDEnum.CREATE, ApplicationList.class),
-    UPDATE("Delete Application List",CRUDEnum.UPDATE, ApplicationList.class),
-    DELETE("Create Application List",CRUDEnum.DELETE, ApplicationList.class),
-    READ("Read Application List",CRUDEnum.READ, ApplicationList.class);
+public enum TestAuditOperation implements AuditOperation {
+    CREATE("Create Application List", CrudEnum.CREATE),
+    UPDATE("Update Application List", CrudEnum.UPDATE),
+    DELETE("Delete Application List", CrudEnum.DELETE),
+    READ("Read Application List", CrudEnum.READ);
 
     private final String eventName;
 
-    private final CRUDEnum type;
-
-    private final Class<ApplicationList> entityClass;
+    private final CrudEnum type;
 }

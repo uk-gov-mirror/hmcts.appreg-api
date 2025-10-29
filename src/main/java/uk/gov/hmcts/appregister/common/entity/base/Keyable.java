@@ -6,7 +6,8 @@ package uk.gov.hmcts.appregister.common.entity.base;
 public interface Keyable {
 
     /**
-     * gets the id
+     * gets the id.
+     *
      * @return The id
      */
     Long getId();

@@ -14,7 +14,7 @@ import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
 import uk.gov.hmcts.appregister.audit.event.FailEvent;
 import uk.gov.hmcts.appregister.audit.event.StartEvent;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditResult;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
@@ -39,18 +39,17 @@ public class AuditOperationServiceImpl implements AuditOperationService {
     @Override
     public <T, E extends Keyable> T processAudit(
             Optional<E> oldValue,
-            AuditOperation<E> auditType,
-            Function<BaseAuditEvent, Optional<AuditResult<T, E>>> execution,
-            AuditOperationLifecycleListener... listener
-          ) {
-        StartEvent event = new StartEvent(auditType, getTraceId(),
-                Optional.ofNullable(oldValue.orElse(null)));
+            AuditOperation auditType,
+            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
+            AuditOperationLifecycleListener... listener) {
+        StartEvent event =
+                new StartEvent(auditType, getTraceId(), Optional.ofNullable(oldValue.orElse(null)));
 
         // before execution hook
         fireAuditEvent(event, listener);
 
         log.debug("Processed start of auditable operation: {}", event);
-        Optional<AuditResult<T, E>> responsePayload;
+        Optional<AuditableResult<T, E>> responsePayload;
         try {
             responsePayload = execution.apply(event);
 
@@ -60,8 +59,12 @@ public class AuditOperationServiceImpl implements AuditOperationService {
             if (responsePayload.isPresent()) {
                 // fire after the completed operation
                 fireAuditEvent(
-                        new CompleteEvent(event, getBodyAsString(responsePayload.get().getResultingValue()),
-                                Optional.ofNullable(responsePayload.get().getNewEntity().orElse(null))), listener);
+                        new CompleteEvent(
+                                event,
+                                getBodyAsString(responsePayload.get().getResultingValue()),
+                                Optional.ofNullable(
+                                        responsePayload.get().getNewEntity().orElse(null))),
+                        listener);
             } else {
                 // fire after the completed operation
                 fireAuditEvent(new CompleteEvent(event, null, Optional.empty()), listener);
@@ -76,27 +79,35 @@ public class AuditOperationServiceImpl implements AuditOperationService {
             throw e;
         }
 
-        return responsePayload.map(AuditResult::getResultingValue).orElse(null);
+        return responsePayload.map(AuditableResult::getResultingValue).orElse(null);
     }
 
     /**
-     * validates the audit operation is suitable for the old and new values being audited. Incorrect usage throws
-     * an exception back to the user, this error is simply a programmatic error of the audit api
+     * validates the audit operation is suitable for the old and new values being audited. Incorrect
+     * usage throws an exception back to the user, this error is simply a programmatic error of the
+     * audit api
+     *
      * @param eventEnum The event type
      * @param result The result containing old and new values on which to audit
      */
-    private <T, E extends Keyable> void checkIfAuditOperationIsSuitableForResult(AuditOperation<E> eventEnum, Optional<AuditResult<T, E>> result){
-        if (eventEnum.getType().isCreate() && ((result.isPresent() && result.get().getOldEntity().isPresent()) ||
-                (result.isPresent() && result.get().getNewEntity().isEmpty()))) {
-            throw new AppRegistryException(CommonAppError.INTERNAL_SERVER_ERROR,
-                    "Create audit cannot have old entity");
-        } else if (eventEnum.getType().isUpdate() && result.isPresent() && (
-                result.get().getNewEntity().isEmpty() || result.get().getOldEntity().isEmpty())) {
-            throw new AppRegistryException(CommonAppError.INTERNAL_SERVER_ERROR,
-                    "Update audit must have old and new");
-        } else if (eventEnum.getType().isDelete() && result.isPresent() && result.get().getOldEntity().isEmpty()) {
-            throw new AppRegistryException(CommonAppError.INTERNAL_SERVER_ERROR,
-                    "Delete audit must have old and new");
+    private <T, E extends Keyable> void checkIfAuditOperationIsSuitableForResult(
+            AuditOperation eventEnum, Optional<AuditableResult<T, E>> result) {
+        if (eventEnum.getType().isCreate()
+                && ((result.isPresent() && result.get().getOldEntity().isPresent())
+                        || (result.isPresent() && result.get().getNewEntity().isEmpty()))) {
+            throw new AppRegistryException(
+                    CommonAppError.INTERNAL_SERVER_ERROR, "Create audit cannot have old entity");
+        } else if (eventEnum.getType().isUpdate()
+                && result.isPresent()
+                && (result.get().getNewEntity().isEmpty()
+                        || result.get().getOldEntity().isEmpty())) {
+            throw new AppRegistryException(
+                    CommonAppError.INTERNAL_SERVER_ERROR, "Update audit must have old and new");
+        } else if (eventEnum.getType().isDelete()
+                && result.isPresent()
+                && result.get().getOldEntity().isEmpty()) {
+            throw new AppRegistryException(
+                    CommonAppError.INTERNAL_SERVER_ERROR, "Delete audit must have old and new");
         }
     }
 

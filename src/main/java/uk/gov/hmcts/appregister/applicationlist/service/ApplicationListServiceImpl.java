@@ -14,13 +14,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import uk.gov.hmcts.appregister.applicationcode.audit.AppCodeAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.mapper.ApplicationListMapper;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListDeletionValidator;
 import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListLocationValidator;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditResult;
+import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
@@ -76,13 +75,12 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional
     public ApplicationListGetDetailDto create(ApplicationListCreateDto dto) {
-       return auditService.processAudit(
+        return auditService.processAudit(
                 Optional.empty(),
                 AppListAuditOperation.CREATE_APP_LIST,
                 req -> {
                     validator.validate(dto);
-                    return Optional.of(
-                            hasCourt(dto) ? createWithCourt(dto) : createWithCja(dto));
+                    return Optional.of(hasCourt(dto) ? createWithCourt(dto) : createWithCja(dto));
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
@@ -101,11 +99,15 @@ public class ApplicationListServiceImpl implements ApplicationListService {
      * @return the created Application List DTO
      * @throws AppRegistryException if no court or multiple courts are found for the given code
      */
-    private AuditResult<ApplicationListGetDetailDto, ApplicationList> createWithCourt(ApplicationListCreateDto dto) {
+    private AuditableResult<ApplicationListGetDetailDto, ApplicationList> createWithCourt(
+            ApplicationListCreateDto dto) {
         var court = locationLookupService.getActiveCourtOrThrow(dto.getCourtLocationCode());
         var savedEntity = repository.save(mapper.toCreateEntityWithCourt(dto, court));
         var hydratedEntity = refreshEntity(savedEntity);
-        return new AuditResult<>(mapper.toGetDetailDto(hydratedEntity, null), Optional.empty(), Optional.of(hydratedEntity));
+        return new AuditableResult<>(
+                mapper.toGetDetailDto(hydratedEntity, null),
+                Optional.empty(),
+                Optional.of(hydratedEntity));
     }
 
     /**
@@ -118,11 +120,15 @@ public class ApplicationListServiceImpl implements ApplicationListService {
      * @return the created Application List DTO
      * @throws AppRegistryException if no CJA or multiple CJAs are found for the given code
      */
-    private AuditResult<ApplicationListGetDetailDto, ApplicationList> createWithCja(ApplicationListCreateDto dto) {
+    private AuditableResult<ApplicationListGetDetailDto, ApplicationList> createWithCja(
+            ApplicationListCreateDto dto) {
         var cja = locationLookupService.getCjaOrThrow(dto.getCjaCode());
         var savedEntity = repository.save(mapper.toCreateEntityWithCja(dto, cja));
         var hydratedEntity = refreshEntity(savedEntity);
-        return new AuditResult<> (mapper.toGetDetailDto(hydratedEntity, cja), Optional.empty(), Optional.of(hydratedEntity));
+        return new AuditableResult<>(
+                mapper.toGetDetailDto(hydratedEntity, cja),
+                Optional.empty(),
+                Optional.of(hydratedEntity));
     }
 
     @Override

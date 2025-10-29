@@ -1,8 +1,7 @@
 package uk.gov.hmcts.appregister.audit.event;
 
-import uk.gov.hmcts.appregister.common.entity.base.Keyable;
-
 import java.util.Optional;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 
 /**
  * Represents a completed operation audit event.
