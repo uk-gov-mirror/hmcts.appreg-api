@@ -12,12 +12,11 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
-import uk.gov.hmcts.appregister.audit.listener.DataAuditLogger;
-import uk.gov.hmcts.appregister.audit.listener.diff.ReflectiveAuditDifferentiator;
 import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
 import uk.gov.hmcts.appregister.testutils.stubs.wiremock.TokenStub;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
+import uk.gov.hmcts.appregister.testutils.util.DifferenceLogAsserter;
 
 @AutoConfigureWebTestClient
 @AutoConfigureWireMock(port = 0)
@@ -45,9 +44,7 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
 
     protected LogCaptor logCaptor;
 
-    protected LogCaptor dataAuditLogger;
-
-    protected LogCaptor reflectiveAuditLogger;
+    protected DifferenceLogAsserter differenceLogAsserter;
 
     @BeforeEach
     void setup() {
@@ -61,11 +58,9 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
         }
 
         logCaptor = LogCaptor.forClass(AuditOperationSlf4jLogger.class);
-        dataAuditLogger = LogCaptor.forClass(DataAuditLogger.class);
-        reflectiveAuditLogger = LogCaptor.forClass(ReflectiveAuditDifferentiator.class);
+        differenceLogAsserter = new DifferenceLogAsserter();
         logCaptor.clearLogs();
-        dataAuditLogger.clearLogs();
-        reflectiveAuditLogger.clearLogs();
+        differenceLogAsserter.clearLogs();
     }
 
     @DynamicPropertySource

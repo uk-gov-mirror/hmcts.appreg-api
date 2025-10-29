@@ -27,7 +27,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testOldWithoutNewDiff() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.id = 20L;
 
         test.resolutionWording = "32";
@@ -69,7 +69,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testNewWithoutOldDiff() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.id = 20L;
 
         test.resolutionWording = "32";
@@ -115,10 +115,10 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testNewAndOldFailOnIdDiff() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.id = 20L;
 
-        TestEntity test1 = new TestEntity();
+        TestEntityAuditable test1 = new TestEntityAuditable();
         test1.id = 201L;
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
@@ -152,13 +152,13 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testChangesCustomComplexDiff() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.id = 20L;
 
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
-        TestEntity test1 = new TestEntity();
+        TestEntityAuditable test1 = new TestEntityAuditable();
         test1.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
         test1.id = 20L;
 
@@ -194,7 +194,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testChangesCustomOldNullWithNew() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
@@ -229,12 +229,12 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testChangesDiffContainingNewWithNullComplex() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.id = 23L;
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
-        TestEntity test1 = new TestEntity();
+        TestEntityAuditable test1 = new TestEntityAuditable();
         test1.id = 23L;
         test1.resolutionWording = "3254";
         test1.name = "my_name";
@@ -270,7 +270,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testChangesDiffComplexOnlyNew() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.resolutionWording = "32";
         test.name = "myname";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -306,7 +306,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testNewComplexRecursionAndCollectionRecursionOff() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
         test.resolutionWording = "32";
         test.name = "myname";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -328,7 +328,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testNewAndOldParsingWithRecursionParsingDisabledAndInfiniteRecursionDetection() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
 
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -340,7 +340,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
         test.entry.add(listEntity);
 
-        TestEntity test2 = new TestEntity();
+        TestEntityAuditable test2 = new TestEntityAuditable();
         test2.id = 123L;
         ListEntity listEntitya = new ListEntity();
         listEntitya.setName("ee1");
@@ -391,7 +391,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testNewObjectWithComplexAndBasicListWithRecursionOffForComplexObjects() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
 
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -425,7 +425,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testNewAndOldWithComplexAndBasicList() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
 
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -438,7 +438,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.entry.add(listEntity);
         test.entryStrings.addAll(List.of("test string", "test string another"));
 
-        TestEntity test1 = new TestEntity();
+        TestEntityAuditable test1 = new TestEntityAuditable();
 
         test1.resolutionWording = "32544";
         test1.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -501,7 +501,7 @@ public class ReflectiveAuditDifferentiatorTest {
 
     @Test
     public void testOldWithComplexAndBasicList() {
-        TestEntity test = new TestEntity();
+        TestEntityAuditable test = new TestEntityAuditable();
 
         test.resolutionWording = "32";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
@@ -601,7 +601,7 @@ public class ReflectiveAuditDifferentiatorTest {
         List<Difference> differenceList = reflectiveAuditDifferentiator.diff(CrudEnum.DELETE, test);
         Assertions.assertEquals(1, differenceList.size());
         Assertions.assertEquals(
-                new Difference("Table not defined", "myname", "null", "random name"),
+                new Difference("test_entity", "myname", "null", "random name"),
                 differenceList.get(0));
     }
 
@@ -696,37 +696,9 @@ public class ReflectiveAuditDifferentiatorTest {
     }
 
     @Getter
-    @AuditEnabled
-    class TestEntityAuditable implements Keyable {
-        @Id
-        @Column(name = "adr_id", nullable = false, updatable = false)
-        @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "adr_gen")
-        @SequenceGenerator(name = "adr_gen", sequenceName = "adr_id", allocationSize = 1)
-        @EqualsAndHashCode.Include
-        private Long id;
-
-        @Column(name = "line1")
-        @Size(max = 35)
-        private CriminalJusticeArea criminalJusticeArea;
-
-        @Column(name = "al_entry_resolution_wording", nullable = false)
-        private String resolutionWording;
-
-        @Column(name = "myname", nullable = false)
-        @Audit(action = CrudEnum.DELETE)
-        private String name;
-
-        @Column(name = "entry", nullable = false)
-        @Audit(action = CrudEnum.DELETE)
-        private List<ListEntity> entry = new ArrayList<>();
-
-        @Column(name = "entry2", nullable = false)
-        private List<String> entryStrings = new ArrayList<>();
-    }
-
-    @Getter
+    @AuditEnabled(types = {CrudEnum.DELETE})
     @Table(name = "test_entity")
-    class TestEntity implements Keyable {
+    class TestEntityAuditable implements Keyable {
         @Id
         @Column(name = "adr_id", nullable = false, updatable = false)
         @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "adr_gen")
@@ -770,6 +742,6 @@ public class ReflectiveAuditDifferentiatorTest {
 
         // test recursion
         @Column(name = "lst_entity", nullable = false)
-        private TestEntity entity;
+        private TestEntityAuditable entity;
     }
 }

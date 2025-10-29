@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.audit.listener.diff;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -118,7 +119,8 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
                 new HashSet<>(),
                 recurseNestedObjects,
                 recurseCollectionObjects,
-                isAuditableAnnotated(newVal != null ? newVal.getClass() : oldVal.getClass()));
+                isAuditableAnnotatedForOperation(
+                        crudEnum, newVal != null ? newVal.getClass() : oldVal.getClass()));
 
         return diffs;
     }
@@ -148,7 +150,7 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
                 processed,
                 recurseNestedObjects,
                 recurseCollectionObjects,
-                isAuditableAnnotated(newVal.getClass()));
+                isAuditableAnnotatedForOperation(crudEnum, newVal.getClass()));
     }
 
     /**
@@ -498,11 +500,19 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
     /**
      * Is this an auditable class.
      *
+     * @param crudEnum The audit operation taking place
      * @param cls The class to check
      * @return true if auditable
      */
-    public static boolean isAuditableAnnotated(Class<?> cls) {
-        return cls.getAnnotation(AuditEnabled.class) != null;
+    public static boolean isAuditableAnnotatedForOperation(CrudEnum crudEnum, Class<?> cls) {
+        AuditEnabled auditEnabled = cls.getAnnotation(AuditEnabled.class);
+
+        if (auditEnabled != null) {
+            return Arrays.stream(auditEnabled.types()).toList().stream()
+                    .anyMatch(t -> t.equals(crudEnum));
+        }
+
+        return false;
     }
 
     /**

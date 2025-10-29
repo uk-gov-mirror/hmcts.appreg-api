@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +27,7 @@ import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.testutils.client.PageMetaData;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
+import uk.gov.hmcts.appregister.testutils.util.DifferenceLogAsserter;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 
 public class ApplicationListControllerTest extends AbstractSecurityControllerTest {
@@ -92,16 +92,62 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getCjaCode()).isNull();
         assertThat(dto.getOtherLocationDescription()).isNull();
 
-        // assert the audit log message
-        Assertions.assertEquals(0, reflectiveAuditLogger.getWarnLogs().size());
-        Assertions.assertEquals(0, reflectiveAuditLogger.getErrorLogs().size());
+        // assert the diff audit log message
+        differenceLogAsserter.assertNoErrors();
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "application_list_status",
+                        "null",
+                        req.getStatus().toString()));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "application_description",
+                        "null",
+                        req.getDescription()));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "courthouse_name", "null", "Cardiff Crown Court"));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "courthouse_code", "null", VALID_COURT_CODE));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "courthouse_code", "null", VALID_COURT_CODE));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "other_courthouse", "null", "CJA_CD_DESCRIPTION"));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "user_name", "null", "app.registry@hmcts.net"));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "duration_hour",
+                        "null",
+                        req.getDurationHours().toString()));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "duration_minute",
+                        "null",
+                        req.getDurationMinutes().toString()));
+        differenceLogAsserter.assertFieldLogPresent("application_list_date");
+        differenceLogAsserter.assertFieldLogPresent("application_list_time");
 
-        List<Boolean> matches = new ArrayList<>();
-        for (String log : dataAuditLogger.getDebugLogs()) {
-            matches.add(Pattern.matches("Saved data audit record.*", log));
-        }
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "version", "null", "0"));
+        differenceLogAsserter.assertFieldLogPresent("al_id");
+        differenceLogAsserter.assertFieldLogPresent("changed_date");
+        differenceLogAsserter.assertFieldLogPresent("changed_by");
+        differenceLogAsserter.assertFieldLogPresent("id");
+        differenceLogAsserter.assertFieldLogNotPresent("is_deleted");
+        differenceLogAsserter.assertFieldLogNotPresent("deleted_by");
+        differenceLogAsserter.assertFieldLogNotPresent("deleted_date");
 
-        Assertions.assertEquals(14, matches.stream().filter((b) -> b).count());
+        differenceLogAsserter.assertDiffCount(14);
     }
 
     // --- Happy path: create with CJA + otherLocation ------------------------------------------
@@ -148,13 +194,59 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getCourtCode()).isNull();
         assertThat(dto.getCourtName()).isNull();
 
-        // assert the audit log message
-        List<Boolean> matches = new ArrayList<>();
-        for (String log : dataAuditLogger.getDebugLogs()) {
-            matches.add(Pattern.matches("Saved data audit record.*", log));
-        }
+        // assert the diff audit log message
+        differenceLogAsserter.assertNoErrors();
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "application_list_status",
+                        "null",
+                        req.getStatus().toString()));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "application_description",
+                        "null",
+                        req.getDescription()));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "courthouse_name", "null", "Cardiff Crown Court"));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "courthouse_code", "null", VALID_COURT_CODE));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "other_courthouse", "null", "CJA_CD_DESCRIPTION"));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "user_name", "null", "app.registry@hmcts.net"));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "duration_hour",
+                        "null",
+                        req.getDurationHours().toString()));
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists",
+                        "duration_minute",
+                        "null",
+                        req.getDurationMinutes().toString()));
+        differenceLogAsserter.assertFieldLogPresent("application_list_date");
+        differenceLogAsserter.assertFieldLogPresent("application_list_time");
 
-        Assertions.assertEquals(13, matches.stream().filter((b) -> b).count());
+        differenceLogAsserter.assertDifference(
+                DifferenceLogAsserter.getAssertionString(
+                        "application_lists", "version", "null", "0"));
+        differenceLogAsserter.assertFieldLogPresent("al_id");
+        differenceLogAsserter.assertFieldLogPresent("changed_date");
+        differenceLogAsserter.assertFieldLogPresent("changed_by");
+        differenceLogAsserter.assertFieldLogPresent("id");
+        differenceLogAsserter.assertFieldLogNotPresent("is_deleted");
+        differenceLogAsserter.assertFieldLogNotPresent("deleted_by");
+        differenceLogAsserter.assertFieldLogNotPresent("deleted_date");
+
+        differenceLogAsserter.assertDiffCount(13);
     }
 
     // --- Validation: XOR rule (both supplied) -------------------------------------------------
@@ -735,5 +827,11 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         null);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    private String getExpectedDiffLog(
+            String tableName, String fieldName, String oldValue, String newValue) {
+        return "Saved data audit record: Difference(tableName=%s, fieldName=%s, oldValue=%s, newValue=%s)"
+                .formatted(tableName, fieldName, oldValue, newValue);
     }
 }
