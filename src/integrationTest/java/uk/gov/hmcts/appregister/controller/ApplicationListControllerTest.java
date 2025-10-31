@@ -267,8 +267,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .status(ApplicationListStatus.CLOSED)
                         .courtLocationCode(VALID_COURT_CODE2)
                         .durationHours(4)
-                        .durationMinutes(32)
-                        .version(2L);
+                        .durationMinutes(32);
 
         Response resp =
                 restAssuredClient.executePutRequest(
@@ -315,8 +314,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .status(ApplicationListStatus.CLOSED)
                         .courtLocationCode(VALID_COURT_CODE2)
                         .durationHours(4)
-                        .durationMinutes(32)
-                        .version(2L);
+                        .durationMinutes(32);
 
         Response resp =
                 restAssuredClient.executePutRequest(
@@ -344,8 +342,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .status(ApplicationListStatus.CLOSED)
                         .courtLocationCode(VALID_COURT_CODE2)
                         .durationHours(4)
-                        .durationMinutes(32)
-                        .version(2L);
+                        .durationMinutes(32);
 
         Response resp =
                 restAssuredClient.executePutRequest(
@@ -394,7 +391,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .otherLocationDescription("Updated other location");
 
         Response resp =
@@ -439,7 +435,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .otherLocationDescription("Updated other location");
 
         Response resp =
@@ -483,7 +478,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .otherLocationDescription("Updated other location");
 
         Response resp =
@@ -511,7 +505,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .otherLocationDescription("Updated other location");
 
         Response resp =
@@ -538,7 +531,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .courtLocationCode(VALID_COURT_CODE2)
                         .otherLocationDescription("Updated other location");
 
@@ -581,7 +573,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .status(ApplicationListStatus.CLOSED)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .courtLocationCode("Unknown")
                         .otherLocationDescription("Updated other location");
 
@@ -612,7 +603,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .status(ApplicationListStatus.CLOSED)
                         .durationHours(4)
                         .durationMinutes(32)
-                        .version(2L)
                         .cjaCode("Unknown")
                         .otherLocationDescription("Updated other location");
 
