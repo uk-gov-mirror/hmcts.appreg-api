@@ -1,7 +1,14 @@
 package uk.gov.hmcts.appregister.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,9 +17,6 @@ import uk.gov.hmcts.appregister.audit.listener.diff.AuditEnabled;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @AuditEnabled(types = {CrudEnum.DELETE})
 @Table(name = "test_entity")

@@ -5,7 +5,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,7 +71,8 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean
     public DataAuditLogger auditDifferentiator(DataAuditRepository dataAuditRepository) {
         return new DataAuditLogger(
-                new ReflectiveAuditDifferentiator(complexDiffEnabled, collectionDiffEnabled), dataAuditRepository);
+                new ReflectiveAuditDifferentiator(complexDiffEnabled, collectionDiffEnabled),
+                dataAuditRepository);
     }
 
     /**
