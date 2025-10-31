@@ -17,3 +17,8 @@ logging:
     org.springframework.security: TRACE
     org.springframework.*: DEBUG
     root: debug
+appreg:
+  audit:
+    diff:
+      enable-complex-diff: true
+      enable-collection-diff: true

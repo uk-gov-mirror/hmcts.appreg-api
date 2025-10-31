@@ -27,5 +27,6 @@ public class AppListEntryTestData
                 .sequenceNumber(Short.MIN_VALUE)
                 .lodgementDate(OffsetDateTime.now(ZoneId.of("UTC")))
                 .entryFeeIds(List.of(new AppListEntryFeeIdTestData().someComplete()));
+
     }
 }
