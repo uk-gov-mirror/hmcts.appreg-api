@@ -98,6 +98,7 @@ public class ApplicationList extends BaseChangeableAndDeletableEntity
 
     @Column(name = "user_name")
     @Size(max = 250)
+    @Audit(action = CrudEnum.DELETE)
     private String createdUser;
 
     @Column(name = "version")

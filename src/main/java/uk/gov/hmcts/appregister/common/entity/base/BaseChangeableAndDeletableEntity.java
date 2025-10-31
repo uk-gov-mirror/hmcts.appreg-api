@@ -8,7 +8,9 @@ import java.time.OffsetDateTime;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import uk.gov.hmcts.appregister.audit.listener.diff.Audit;
 import uk.gov.hmcts.appregister.common.entity.converter.YesNoConverter;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 
 @MappedSuperclass
@@ -21,6 +23,7 @@ public class BaseChangeableAndDeletableEntity implements Changeable, Deletable {
     private String changedBy;
 
     @Column(name = "changed_date", nullable = false)
+    @Audit(action = CrudEnum.DELETE)
     private OffsetDateTime changedDate;
 
     @Column(name = "delete_by")

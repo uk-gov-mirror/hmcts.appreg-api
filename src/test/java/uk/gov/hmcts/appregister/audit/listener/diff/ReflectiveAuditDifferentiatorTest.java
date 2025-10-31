@@ -663,6 +663,33 @@ public class ReflectiveAuditDifferentiatorTest {
         Assertions.assertNotNull(findByField("version", differenceList));
     }
 
+    @Test
+    public void testDeleteOfAnnotatedAppList() {
+        ApplicationList appLst = new AppListTestData().someComplete();
+        appLst.setId(123L);
+
+        ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
+                new ReflectiveAuditDifferentiator(false, false);
+        List<Difference> differenceList =
+                reflectiveAuditDifferentiator.diff(CrudEnum.DELETE, appLst, null);
+        Assertions.assertNotNull(findByField("changed_date", differenceList));
+        Assertions.assertNotNull(findByField("version", differenceList));
+        Assertions.assertNotNull(findByField("user_name", differenceList));
+        Assertions.assertNotNull(findByField("al_id", differenceList));
+
+        Assertions.assertEquals(4, differenceList.size());
+        Assertions.assertEquals(
+                appLst.getChangedDate().toString(),
+                findByField("changed_date", differenceList).getOldValue());
+        Assertions.assertEquals(
+                appLst.getVersion().toString(),
+                findByField("version", differenceList).getOldValue());
+        Assertions.assertEquals(
+                appLst.getCreatedUser(), findByField("user_name", differenceList).getOldValue());
+        Assertions.assertEquals(
+                appLst.getId().toString(), findByField("al_id", differenceList).getOldValue());
+    }
+
     private Difference findByField(String fieldName, List<Difference> differences) {
         for (Difference difference : differences) {
             if (difference.getFieldName().equals(fieldName)) {
