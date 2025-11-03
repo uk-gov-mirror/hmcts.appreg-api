@@ -16,7 +16,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
 import uk.gov.hmcts.appregister.audit.listener.DataAuditLogger;
-import uk.gov.hmcts.appregister.audit.listener.diff.ReflectiveAuditDifferentiator;
+import uk.gov.hmcts.appregister.audit.listener.diff.JaversDifferentiator;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 
 @Configuration
@@ -71,8 +71,7 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean
     public DataAuditLogger auditDifferentiator(DataAuditRepository dataAuditRepository) {
         return new DataAuditLogger(
-                new ReflectiveAuditDifferentiator(complexDiffEnabled, collectionDiffEnabled),
-                dataAuditRepository);
+                new JaversDifferentiator(complexDiffEnabled), dataAuditRepository);
     }
 
     /**

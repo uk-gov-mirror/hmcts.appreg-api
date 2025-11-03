@@ -12,6 +12,8 @@ import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.audit.listener.DataAuditLogger;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.CriminalJusticeTestData;
 import uk.gov.hmcts.appregister.entity.TestEntity2;
@@ -63,44 +65,29 @@ public class AuditOperationServiceImplTest extends BaseIntegration {
         Assert.assertEquals("response", content);
         differenceLogAsserter.assertDifferenceOrDataAuditChange(
                 DifferenceLogAsserter.getDataAuditAssertion(
-                        "random_list",
-                        "lst_entry",
-                        "null",
-                        "e8",
-                        "CREATE",
-                        "Create Application List"));
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "random_list",
-                        "lst_adr_id",
-                        "null",
-                        "3",
-                        "CREATE",
-                        "Create Application List"));
-        Assert.assertEquals("response", content);
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "test_entity",
-                        "entry2",
-                        "null",
-                        "teststring",
-                        "CREATE",
-                        "Create Application List"));
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "test_entity",
-                        "entry2",
-                        "null",
-                        "teststring2",
-                        "CREATE",
-                        "Create Application List"));
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
                         "test_entity",
                         "adr_id",
                         "null",
                         "123",
-                        "CREATE",
-                        "Create Application List"));
+                        CrudEnum.CREATE.name(),
+                        AppListAuditOperation.CREATE_APP_LIST.getEventName()));
+
+        differenceLogAsserter.assertDifferenceOrDataAuditChange(
+                DifferenceLogAsserter.getDataAuditAssertion(
+                        TableNames.CRIMINAL_JUSTICE_AREA,
+                        "cja_code",
+                        "null",
+                        test.getCriminalJusticeArea().getCode(),
+                        CrudEnum.CREATE.name(),
+                        AppListAuditOperation.CREATE_APP_LIST.getEventName()));
+
+        differenceLogAsserter.assertDifferenceOrDataAuditChange(
+                DifferenceLogAsserter.getDataAuditAssertion(
+                        TableNames.CRIMINAL_JUSTICE_AREA,
+                        "cja_description",
+                        "null",
+                        test.getCriminalJusticeArea().getDescription(),
+                        CrudEnum.CREATE.name(),
+                        AppListAuditOperation.CREATE_APP_LIST.getEventName()));
     }
 }

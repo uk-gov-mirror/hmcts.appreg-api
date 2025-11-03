@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.javers.core.metamodel.annotation.ValueObject;
 import uk.gov.hmcts.appregister.common.entity.base.Changeable;
 import uk.gov.hmcts.appregister.common.entity.base.PreCreateUpdateEntityListener;
 import uk.gov.hmcts.appregister.common.entity.converter.CrudConverter;
@@ -37,6 +38,7 @@ import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 @Setter
 @EntityListeners(PreCreateUpdateEntityListener.class)
 @ToString
+@ValueObject
 public class DataAudit implements Changeable {
     @Id
     @Column(name = "data_id", nullable = false, updatable = false)

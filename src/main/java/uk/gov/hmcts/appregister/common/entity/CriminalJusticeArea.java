@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ValueObject;
 import uk.gov.hmcts.appregister.common.entity.base.Identifiable;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 
@@ -27,6 +28,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ValueObject
 public class CriminalJusticeArea implements Identifiable, Keyable {
     @Id
     @Column(name = "cja_id", nullable = false, updatable = false)

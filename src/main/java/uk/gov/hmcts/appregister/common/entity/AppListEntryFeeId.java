@@ -16,6 +16,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ValueObject;
 import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
@@ -34,6 +35,7 @@ import uk.gov.hmcts.appregister.common.entity.compositeid.AppListEntryFeeComposi
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @Getter
 @Setter
+@ValueObject
 public class AppListEntryFeeId extends BaseChangeableEntity implements Accountable, Versionable {
     @Id
     @EqualsAndHashCode.Include

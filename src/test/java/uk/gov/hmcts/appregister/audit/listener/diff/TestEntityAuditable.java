@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.entity;
+package uk.gov.hmcts.appregister.audit.listener.diff;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -11,43 +11,40 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
-import uk.gov.hmcts.appregister.audit.listener.diff.Audit;
-import uk.gov.hmcts.appregister.audit.listener.diff.AuditEnabled;
+import org.javers.core.metamodel.annotation.ValueObject;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 
+@Getter
 @AuditEnabled(types = {CrudEnum.DELETE})
 @Table(name = "test_entity")
-@Getter
-@Setter
-public class TestEntityAuditable implements Keyable {
+@ValueObject
+class TestEntityAuditable implements Keyable {
     @Id
     @Column(name = "adr_id", nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "adr_gen")
     @SequenceGenerator(name = "adr_gen", sequenceName = "adr_id", allocationSize = 1)
     @EqualsAndHashCode.Include
-    private Long id;
+    public Long id;
 
     @Column(name = "line1")
     @Size(max = 35)
-    private CriminalJusticeArea criminalJusticeArea;
+    public CriminalJusticeArea criminalJusticeArea;
 
     @Column(name = "al_entry_resolution_wording", nullable = false)
-    private String resolutionWording;
+    public String resolutionWording;
 
     @Column(name = "myname", nullable = false)
     @Audit(action = CrudEnum.DELETE)
-    private String name;
+    public String name;
 
     @Column(name = "entry", nullable = false)
     @Audit(action = CrudEnum.DELETE)
     @DiffIgnore
-    private List<TestEntity2> entry = new ArrayList<>();
+    public List<ListEntity> entry = new ArrayList<>();
 
     @Column(name = "entry2", nullable = false)
-    @DiffIgnore
-    private List<String> entryStrings = new ArrayList<>();
+    public List<String> entryStrings = new ArrayList<>();
 }

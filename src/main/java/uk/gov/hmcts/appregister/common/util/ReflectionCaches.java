@@ -38,6 +38,17 @@ public class ReflectionCaches {
                 }
             };
 
+    public static MethodData getFieldForProperty(Class type, String property) {
+        ReflectionMeta reflectionMetaData = METHOD_CACHE.get(type);
+        for (MethodData methodData : reflectionMetaData.methods()) {
+            if (methodData.field().getName().equals(property)) {
+                return methodData;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Returns all methods declared in the given class and its superclasses. Includes
      * private/protected/package methods, and avoids duplicates.

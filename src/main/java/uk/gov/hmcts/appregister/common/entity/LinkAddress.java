@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ValueObject;
 import uk.gov.hmcts.appregister.common.entity.base.BaseUnmanagedChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
@@ -34,6 +35,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 @Setter
 @Getter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@ValueObject
 public class LinkAddress extends BaseUnmanagedChangeableEntity implements Versionable, Keyable {
     @Id
     @Column(name = "la_id", nullable = false, updatable = false)

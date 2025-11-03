@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ValueObject;
 import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
@@ -38,6 +39,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 @Setter
 @Getter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@ValueObject
 @SuppressWarnings("javaarchitecture:S7027")
 public class ApplicationListEntry extends BaseChangeableEntity
         implements Accountable, Versionable, Keyable {

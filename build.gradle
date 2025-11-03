@@ -480,6 +480,9 @@ dependencies {
   implementation 'org.mapstruct:mapstruct:1.5.5.Final' // your version
   annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
   testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+  // Reimplement reflection with Javers
+  implementation 'org.javers:javers-core:7.9.0'
 }
 
 bootJar {

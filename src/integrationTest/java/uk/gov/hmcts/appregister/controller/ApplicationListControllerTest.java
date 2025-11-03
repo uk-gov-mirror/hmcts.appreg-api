@@ -187,7 +187,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
-                        .durationMinutes(0);
+                        .durationMinutes(1);
 
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
 
@@ -397,7 +397,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
-                        .durationMinutes(0);
+                        .durationMinutes(1);
 
         // setup a record for deletion
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
@@ -451,7 +451,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
-                        .durationMinutes(0);
+                        .durationMinutes(1);
 
         // setup a record for deletion
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
@@ -560,7 +560,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .status(ApplicationListStatus.OPEN)
                         .courtLocationCode(VALID_COURT_CODE)
                         .durationHours(1)
-                        .durationMinutes(0);
+                        .durationMinutes(1);
 
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
         resp.then().statusCode(HttpStatus.CREATED.value()).contentType(VND_JSON_V1);
@@ -585,7 +585,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .cjaCode(VALID_CJA_CODE)
                         .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
-                        .durationMinutes(0);
+                        .durationMinutes(1);
 
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
         resp.then().statusCode(HttpStatus.CREATED.value()).contentType(VND_JSON_V1);
