@@ -592,7 +592,7 @@ CREATE TABLE IF NOT EXISTS test_support.test_registry (
     );
 
 -- Helper to compare versions using string-to-array
-CREATE OR REPLACE FUNCTION test_support.version_le(v text, w text) 
+CREATE OR REPLACE FUNCTION test_support.version_le(v text, w text)
 RETURNS boolean LANGUAGE sql IMMUTABLE AS $$
 SELECT string_to_array(v, '.')::int[] <= string_to_array(w, '.')::int[];
 $$;
