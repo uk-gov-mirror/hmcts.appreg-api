@@ -4,14 +4,14 @@
 -- V1.0  	Matthew Harman  31/07/2025	Initial Version
 -- V2.0  	Matthew Harman  16/09/2025	Added code for testing script applied
 -- V3.0	    Matthew Harman  17/10/2025  Removed Triggers
---
+-- fail
 
 SET client_encoding TO 'UTF8';
 
 SET check_function_bodies = false;
 
 
-CREATE TABLE addresses1 (
+CREATE TABLE addresses (
 	adr_id bigint NOT NULL,
 	line1 varchar(35),
 	line2 varchar(35),
