@@ -11,7 +11,7 @@ SET client_encoding TO 'UTF8';
 SET check_function_bodies = false;
 
 
-CREATE TABLE addresses (
+CREATE TABLE addresses1 (
 	adr_id bigint NOT NULL,
 	line1 varchar(35),
 	line2 varchar(35),
