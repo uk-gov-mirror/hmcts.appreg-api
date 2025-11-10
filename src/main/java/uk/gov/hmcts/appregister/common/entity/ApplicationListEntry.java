@@ -22,6 +22,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
@@ -128,5 +130,6 @@ public class ApplicationListEntry extends BaseChangeableEntity implements Accoun
     private List<AppListEntryFeeId> entryFeeIds;
 
     @Column(name = "id")
+    @Generated(event = EventType.INSERT)
     private UUID uuid;
 }

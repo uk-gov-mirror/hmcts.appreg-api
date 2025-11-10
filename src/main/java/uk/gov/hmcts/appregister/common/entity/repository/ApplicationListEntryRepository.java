@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.base.EntryCount;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntrySummaryProjection;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 
 public interface ApplicationListEntryRepository extends JpaRepository<ApplicationListEntry, Long> {
     /**
@@ -106,4 +108,32 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
         group by ale.applicationList.uuid
         """)
     List<EntryCount> countByApplicationListUuids(@Param("uuids") List<UUID> uuids);
+
+    /**
+     * Retrieves the paginated results
+     */
+    @Query(
+            """
+        select ale
+        from ApplicationListEntry ale
+        where :dte IS NULL OR :hearingDate=ale.applicationList.date
+                AND :courtName IS NULL OR :courtName=ale.applicationList.courtName
+                AND :otherLocationDescription IS NULL OR :otherLocationDescription=ale.applicationList.otherLocation
+                AND :courtCode IS NULL OR :courtCode=ale.applicationList.courtCode
+                AND :applicantOrganisation IS NULL OR :appOrganisation=ale.anamedaddress.name
+                AND :applicantSurname IS NULL OR :appSurname=ale.anamedaddress.surname
+                AND :standardApplicantCode IS NULL OR :appCode=ale.standardApplicant.applicantCode
+                AND :status IS NULL OR :status=ale.applicationList.status
+                AND :respondentOrganisation IS NULL OR :respOrganisation=ale.rnameaddress.name
+                AND :respondentSurname IS NULL OR :respSurname=ale.rnameaddress.surname
+                AND :respondentPostcode IS NULL OR :respPostcode=ale.rnameaddress.postcode
+                AND :accountReference IS NULL OR :accountReference=ale.caseReference
+        """)
+    Page<ApplicationListEntry> findApplicationList(LocalDate hearingDate, String courtName, String otherLocationDescription,
+                                                   String cjaCode, String applicantOrganisation,
+                                                   String applicantSurname, String standardApplicantCode,
+                                                   ApplicationListStatus status, String respondentOrganisation,
+                                                   String respondentSurname, String respondentPostcode,
+                                                   String accountReference,
+                                                   Pageable pageable);
 }
