@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,10 +49,7 @@ public class DataAuditLoggerTest {
     @Test
     public void testStartOperationTest() {
         StartEvent startEvent =
-                new StartEvent(
-                        AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
-                        "ID",
-                        Optional.empty());
+                new StartEvent(AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT, "ID", null);
 
         new DataAuditLogger(auditDifferentiator, dataAuditRepository).eventPerformed(startEvent);
 
@@ -67,7 +63,7 @@ public class DataAuditLoggerTest {
                 new StartEvent(
                         AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                         "ID",
-                        Optional.of(testData.someComplete()));
+                        testData.someComplete());
         FailEvent auditRequest = new FailEvent(startEvent);
 
         new DataAuditLogger(auditDifferentiator, dataAuditRepository).eventPerformed(auditRequest);
@@ -83,10 +79,8 @@ public class DataAuditLoggerTest {
 
         StartEvent startEvent =
                 new StartEvent(
-                        AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
-                        "ID",
-                        Optional.of(oldCode));
-        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, Optional.of(newCode));
+                        AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT, "ID", oldCode);
+        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, newCode);
         new DataAuditLogger(auditDifferentiator, dataAuditRepository).eventPerformed(auditRequest);
 
         // repo was not called as this is a get operation
@@ -100,9 +94,8 @@ public class DataAuditLoggerTest {
         Long id = 123L;
         newCode.setId(id);
 
-        StartEvent startEvent =
-                new StartEvent(AppListAuditOperation.CREATE_APP_LIST, "ID", Optional.empty());
-        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, Optional.of(newCode));
+        StartEvent startEvent = new StartEvent(AppListAuditOperation.CREATE_APP_LIST, "ID", null);
+        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, newCode);
 
         String tableName = TableNames.APPLICATION_CODES;
         String field = "field";
@@ -150,9 +143,8 @@ public class DataAuditLoggerTest {
         Long id1 = 123L;
         oldCode.setId(id1);
 
-        StartEvent startEvent =
-                new StartEvent(TestAuditOperation.UPDATE, "ID", Optional.of(oldCode));
-        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, Optional.of(newCode));
+        StartEvent startEvent = new StartEvent(TestAuditOperation.UPDATE, "ID", oldCode);
+        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, newCode);
 
         String tableName = TableNames.APPLICATION_CODES;
         String field = "field";
@@ -203,9 +195,8 @@ public class DataAuditLoggerTest {
         Long id1 = 123L;
         oldCode.setId(id1);
 
-        StartEvent startEvent =
-                new StartEvent(TestAuditOperation.DELETE, "ID", Optional.of(oldCode));
-        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, Optional.empty());
+        StartEvent startEvent = new StartEvent(TestAuditOperation.DELETE, "ID", oldCode);
+        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, null);
 
         String tableName = TableNames.APPLICATION_CODES;
         String field = "field";
@@ -271,10 +262,8 @@ public class DataAuditLoggerTest {
         AuditDifferentiable differentiableNew = (AuditDifferentiable) mockNew;
         when(mockNew.getId()).thenReturn(id1);
 
-        StartEvent startEvent =
-                new StartEvent(TestAuditOperation.DELETE, "ID", Optional.of(differentiableOld));
-        CompleteEvent auditRequest =
-                new CompleteEvent(startEvent, null, Optional.of(differentiableNew));
+        StartEvent startEvent = new StartEvent(TestAuditOperation.DELETE, "ID", differentiableOld);
+        CompleteEvent auditRequest = new CompleteEvent(startEvent, null, differentiableNew);
 
         when(differentiableNew.diff(TestAuditOperation.DELETE.getType(), mockOld))
                 .thenReturn(

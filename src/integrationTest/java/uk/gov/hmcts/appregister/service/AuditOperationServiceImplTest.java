@@ -47,12 +47,11 @@ public class AuditOperationServiceImplTest extends BaseIntegration {
 
         Object content =
                 auditOperationService.processAudit(
-                        Optional.empty(),
                         AppListAuditOperation.CREATE_APP_LIST,
                         (event) ->
                                 Optional.of(
                                         AuditableResult.builder()
-                                                .newEntity(Optional.of(test))
+                                                .newEntity(test)
                                                 .resultingValue("response")
                                                 .build()),
                         dataAuditLogger);

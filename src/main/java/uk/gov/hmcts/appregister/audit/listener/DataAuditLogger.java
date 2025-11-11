@@ -2,7 +2,6 @@ package uk.gov.hmcts.appregister.audit.listener;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,8 +68,8 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
      * @return The data id
      */
     private Long getDataId(CompleteEvent event) {
-        Optional<Keyable> val = event.getNewValue();
-        return val.isPresent() ? val.get().getId() : -1L;
+        Keyable val = event.getNewValue();
+        return val != null ? val.getId() : -1L;
     }
 
     @Override
@@ -86,23 +85,21 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
      */
     private List<Difference> performDifference(AuditEvent event) {
         List<Difference> differenceList = new ArrayList<>();
-        Optional<Keyable> newKeyable = event.getNewValue();
-        Optional<Keyable> oldKeyable = event.getOldValue();
-        if (oldKeyable.isPresent()) {
+        Keyable newKeyable = event.getNewValue();
+        Keyable oldKeyable = event.getOldValue();
+        if (oldKeyable != null) {
             // if we dont have an object differentiable then use the generic differentiator
-            if (newKeyable.isPresent() && newKeyable.get() instanceof AuditDifferentiable diff) {
-                Keyable o = oldKeyable.get();
-                differenceList = diff.diff(event.getRequestAction().getType(), o);
+            if (newKeyable != null && newKeyable instanceof AuditDifferentiable diff) {
+                differenceList = diff.diff(event.getRequestAction().getType(), oldKeyable);
             } else {
-                Keyable newVal = newKeyable.orElse(null);
-                Keyable oldVal = oldKeyable.get();
+                Keyable newVal = newKeyable;
+                Keyable oldVal = oldKeyable;
 
                 differenceList =
                         differentiator.diff(event.getRequestAction().getType(), oldVal, newVal);
             }
-        } else if (newKeyable.isPresent()) {
-            differenceList =
-                    differentiator.diff(event.getRequestAction().getType(), newKeyable.get());
+        } else if (newKeyable != null) {
+            differenceList = differentiator.diff(event.getRequestAction().getType(), newKeyable);
         }
         log.debug(
                 "Called the audit differentiator and retrieved the differences. Found count: {}",
