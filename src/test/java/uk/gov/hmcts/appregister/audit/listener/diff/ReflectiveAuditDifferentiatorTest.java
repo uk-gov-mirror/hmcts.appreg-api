@@ -34,7 +34,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.CREATE, test, null);
         Assertions.assertEquals(4, differenceList.size());
@@ -76,7 +76,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.CREATE, null, test);
         Assertions.assertEquals(4, differenceList.size());
@@ -122,7 +122,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test1.id = 201L;
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         Assertions.assertThrows(
                 AppRegistryException.class,
                 () -> reflectiveAuditDifferentiator.diff(CrudEnum.CREATE, test, test1));
@@ -131,7 +131,7 @@ public class ReflectiveAuditDifferentiatorTest {
     @Test
     public void testNewAndOldNull() {
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         Assertions.assertEquals(
                 0, reflectiveAuditDifferentiator.diff(CrudEnum.CREATE, null, null).size());
     }
@@ -143,7 +143,7 @@ public class ReflectiveAuditDifferentiatorTest {
         list.setId(20L);
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, list, list);
 
@@ -163,7 +163,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test1.id = 20L;
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         ;
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, test, test1);
@@ -199,7 +199,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, null, test);
 
@@ -242,7 +242,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test1.criminalJusticeArea.setCode(null);
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, test, test1);
 
@@ -276,7 +276,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList = reflectiveAuditDifferentiator.diff(CrudEnum.READ, test);
         Assertions.assertEquals(4, differenceList.size());
         Assertions.assertEquals(
@@ -311,7 +311,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.name = "myname";
         test.criminalJusticeArea = new CriminalJusticeTestData().someComplete();
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(false, false);
+                new ReflectiveAuditDifferentiator(false);
         List<Difference> differenceList = reflectiveAuditDifferentiator.diff(CrudEnum.READ, test);
 
         Assertions.assertEquals(2, differenceList.size());
@@ -357,11 +357,11 @@ public class ReflectiveAuditDifferentiatorTest {
         test2.entry.add(listEntity2);
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, test, test2);
 
-        Assertions.assertEquals(7, differenceList.size());
+        Assertions.assertEquals(3, differenceList.size());
         Assertions.assertEquals(
                 new Difference(
                         TableNames.CRIMINAL_JUSTICE_AREA,
@@ -379,14 +379,6 @@ public class ReflectiveAuditDifferentiatorTest {
         Assertions.assertEquals(
                 new Difference("test_entity", "al_entry_resolution_wording", "32", "null"),
                 differenceList.get(2));
-        Assertions.assertEquals(
-                new Difference("random_list", "lst_adr_id", "3", "6"), differenceList.get(3));
-        Assertions.assertEquals(
-                new Difference("random_list", "lst_entry", "ee", "ee1"), differenceList.get(4));
-        Assertions.assertEquals(
-                new Difference("random_list", "lst_adr_id", "null", "3"), differenceList.get(5));
-        Assertions.assertEquals(
-                new Difference("random_list", "lst_entry", "null", "e8"), differenceList.get(6));
     }
 
     @Test
@@ -405,22 +397,16 @@ public class ReflectiveAuditDifferentiatorTest {
         test.entryStrings.addAll(List.of("test string", "test string2"));
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(false, true);
+                new ReflectiveAuditDifferentiator(false);
         List<Difference> differenceList = reflectiveAuditDifferentiator.diff(CrudEnum.READ, test);
 
-        Assertions.assertEquals(4, differenceList.size());
+        Assertions.assertEquals(2, differenceList.size());
 
         Assertions.assertEquals(
                 new Difference("test_entity", "adr_id", "null", "123"), differenceList.get(0));
         Assertions.assertEquals(
                 new Difference("test_entity", "al_entry_resolution_wording", "null", "32"),
                 differenceList.get(1));
-        Assertions.assertEquals(
-                new Difference("test_entity", "entry2", "null", "test string"),
-                differenceList.get(2));
-        Assertions.assertEquals(
-                new Difference("test_entity", "entry2", "null", "test string2"),
-                differenceList.get(3));
     }
 
     @Test
@@ -452,11 +438,11 @@ public class ReflectiveAuditDifferentiatorTest {
         test1.entryStrings.addAll(List.of("test string", "test string another 2"));
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, test, test1);
 
-        Assertions.assertEquals(6, differenceList.size());
+        Assertions.assertEquals(3, differenceList.size());
 
         Assertions.assertEquals(
                 new Difference(
@@ -479,24 +465,6 @@ public class ReflectiveAuditDifferentiatorTest {
                         test.resolutionWording,
                         test1.resolutionWording),
                 differenceList.get(2));
-        Assertions.assertEquals(
-                new Difference(
-                        "random_list",
-                        "lst_adr_id",
-                        listEntity.id.toString(),
-                        listEntity1.id.toString()),
-                differenceList.get(3));
-        Assertions.assertEquals(
-                new Difference(
-                        "random_list",
-                        "lst_entry",
-                        listEntity.name.toString(),
-                        listEntity1.name.toString()),
-                differenceList.get(4));
-        Assertions.assertEquals(
-                new Difference(
-                        "test_entity", "entry2", "test string another", "test string another 2"),
-                differenceList.get(5));
     }
 
     @Test
@@ -515,11 +483,11 @@ public class ReflectiveAuditDifferentiatorTest {
         test.entryStrings.addAll(List.of("test string", "test string another"));
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(true, true);
+                new ReflectiveAuditDifferentiator(true);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.READ, test, null);
 
-        Assertions.assertEquals(8, differenceList.size());
+        Assertions.assertEquals(4, differenceList.size());
 
         Assertions.assertEquals(
                 new Difference(
@@ -549,34 +517,6 @@ public class ReflectiveAuditDifferentiatorTest {
                         test.resolutionWording,
                         ReflectiveAuditDifferentiator.EMPTY_VALUE),
                 differenceList.get(3));
-        Assertions.assertEquals(
-                new Difference(
-                        "random_list",
-                        "lst_adr_id",
-                        listEntity.id.toString(),
-                        ReflectiveAuditDifferentiator.EMPTY_VALUE),
-                differenceList.get(4));
-        Assertions.assertEquals(
-                new Difference(
-                        "random_list",
-                        "lst_entry",
-                        listEntity.name.toString(),
-                        ReflectiveAuditDifferentiator.EMPTY_VALUE),
-                differenceList.get(5));
-        Assertions.assertEquals(
-                new Difference(
-                        "test_entity",
-                        "entry2",
-                        "test string",
-                        ReflectiveAuditDifferentiator.EMPTY_VALUE),
-                differenceList.get(6));
-        Assertions.assertEquals(
-                new Difference(
-                        "test_entity",
-                        "entry2",
-                        "test string another",
-                        ReflectiveAuditDifferentiator.EMPTY_VALUE),
-                differenceList.get(7));
     }
 
     @Test
@@ -597,7 +537,7 @@ public class ReflectiveAuditDifferentiatorTest {
         test.entryStrings.addAll(List.of("test string", "test string2"));
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(false, true);
+                new ReflectiveAuditDifferentiator(false);
         List<Difference> differenceList = reflectiveAuditDifferentiator.diff(CrudEnum.DELETE, test);
         Assertions.assertEquals(1, differenceList.size());
         Assertions.assertEquals(
@@ -614,7 +554,7 @@ public class ReflectiveAuditDifferentiatorTest {
         newAppLst.setId(123L);
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(false, true);
+                new ReflectiveAuditDifferentiator(false);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.DELETE, oldAppLst, newAppLst);
         Assertions.assertNotNull(findByField("changed_date", differenceList));
@@ -660,7 +600,7 @@ public class ReflectiveAuditDifferentiatorTest {
         ApplicationList newAppLst = new AppListTestData().someComplete();
 
         ReflectiveAuditDifferentiator reflectiveAuditDifferentiator =
-                new ReflectiveAuditDifferentiator(false, false);
+                new ReflectiveAuditDifferentiator(false);
         List<Difference> differenceList =
                 reflectiveAuditDifferentiator.diff(CrudEnum.DELETE, newAppLst);
         Assertions.assertNotNull(findByField("changed_date", differenceList));

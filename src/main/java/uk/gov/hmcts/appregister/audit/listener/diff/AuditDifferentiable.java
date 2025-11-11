@@ -22,6 +22,6 @@ public interface AuditDifferentiable extends Keyable {
             throw new AppRegistryException(
                     CommonAppError.INTERNAL_SERVER_ERROR, "Usage error. Cant establish diff");
         }
-        return ReflectiveAuditDifferentiator.difference(crudEnum, existing, this, false, false);
+        return ReflectiveAuditDifferentiator.difference(crudEnum, existing, this, false);
     }
 }

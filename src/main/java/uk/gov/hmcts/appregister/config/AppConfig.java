@@ -48,9 +48,6 @@ public class AppConfig implements WebMvcConfigurer {
     @Value("${appreg.audit.diff.enable-complex-diff}")
     private boolean complexDiffEnabled;
 
-    @Value("${appreg.audit.diff.enable-collection-diff}")
-    private boolean collectionDiffEnabled;
-
     /**
      * Defines a audit lifecycle listener that can be called when working with the {@link
      * uk.gov.hmcts.appregister.audit.service.AuditOperationService}.
@@ -75,8 +72,7 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean
     public DataAuditLogger auditDifferentiator(DataAuditRepository dataAuditRepository) {
         return new DataAuditLogger(
-                new ReflectiveAuditDifferentiator(complexDiffEnabled, collectionDiffEnabled),
-                dataAuditRepository);
+                new ReflectiveAuditDifferentiator(complexDiffEnabled), dataAuditRepository);
     }
 
     /**

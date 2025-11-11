@@ -41,11 +41,4 @@ public interface AuditDifferentiator {
      * @return true if it does, false otherwise
      */
     boolean doesRecurseComplexObjects();
-
-    /**
-     * does diff recurse into nested objects.
-     *
-     * @return true if it does, false otherwise
-     */
-    boolean doesRecurseCollectionObjects();
 }

@@ -47,9 +47,6 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
     /** Do we need to recurse nested objects. */
     private final boolean recurseNestedObjects;
 
-    /** Do we need to recurse collections. */
-    private final boolean recurseCollectionObjects;
-
     /** Represents a null value. We default to a null string. */
     public static final String EMPTY_VALUE = "null";
 
@@ -59,18 +56,13 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
     }
 
     @Override
-    public boolean doesRecurseCollectionObjects() {
-        return recurseCollectionObjects;
-    }
-
-    @Override
     public List<Difference> diff(CrudEnum crudEnum, Keyable oldVal, Keyable newVal) {
-        return difference(crudEnum, oldVal, newVal, recurseNestedObjects, recurseCollectionObjects);
+        return difference(crudEnum, oldVal, newVal, recurseNestedObjects);
     }
 
     @Override
     public List<Difference> diff(CrudEnum crudEnum, Keyable newVal) {
-        return difference(crudEnum, null, newVal, recurseNestedObjects, recurseCollectionObjects);
+        return difference(crudEnum, null, newVal, recurseNestedObjects);
     }
 
     /**
@@ -79,14 +71,9 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
      * @param oldVal The old value
      * @param newVal The new value
      * @param recurseNestedObjects Whether we recurse into nested objects
-     * @param recurseCollectionObjects Whether we recurse into collection objects
      */
     public static List<Difference> difference(
-            CrudEnum crudEnum,
-            Keyable oldVal,
-            Keyable newVal,
-            boolean recurseNestedObjects,
-            boolean recurseCollectionObjects) {
+            CrudEnum crudEnum, Keyable oldVal, Keyable newVal, boolean recurseNestedObjects) {
         final List<Difference> diffs = new ArrayList<>();
 
         if (oldVal == null && newVal == null) {
@@ -123,39 +110,10 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
                 diffs,
                 new HashSet<>(),
                 recurseNestedObjects,
-                recurseCollectionObjects,
                 isAuditableAnnotatedForOperation(
                         crudEnum, newVal != null ? newVal.getClass() : oldVal.getClass()));
 
         return diffs;
-    }
-
-    /**
-     * process the differences for the new value against nothing i.e. all contents show up as a
-     * difference
-     *
-     * @param newVal The new value
-     * @param differenceList the captured differences
-     * @param processed The processed method call and the objects that were invoked
-     * @param recurseNestedObjects Whether we recurse into nested objects
-     * @param recurseCollectionObjects Whether we recurse into collection objects
-     */
-    private static void difference(
-            CrudEnum crudEnum,
-            Object newVal,
-            List<Difference> differenceList,
-            Set<String> processed,
-            boolean recurseNestedObjects,
-            boolean recurseCollectionObjects) {
-        difference(
-                crudEnum,
-                null,
-                newVal,
-                differenceList,
-                processed,
-                recurseNestedObjects,
-                recurseCollectionObjects,
-                isAuditableAnnotatedForOperation(crudEnum, newVal.getClass()));
     }
 
     /**
@@ -175,7 +133,6 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
             List<Difference> differenceList,
             Set<String> processed,
             boolean recurseNestedObjects,
-            boolean recurseCollectionObjects,
             boolean useAnnotations) {
         if (newVal != null || oldVal != null) {
 
@@ -205,17 +162,7 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
                     // if collection then iterate and compare contents, if not a collection then
                     // process the complex objects
                     // if we have object reursion turned on
-                    if (isCollection(method.method().getReturnType()) && recurseCollectionObjects) {
-                        processListDiff(
-                                crudEnum,
-                                oldVal,
-                                newVal,
-                                differenceList,
-                                recurseNestedObjects,
-                                useAnnotations,
-                                processed,
-                                method);
-                    } else if (recurseNestedObjects) {
+                    if (!isCollection(method.method().getReturnType()) && recurseNestedObjects) {
                         log.debug("Method {}", method.method().getName());
 
                         Object newValRet =
@@ -240,7 +187,6 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
                                 differenceList,
                                 processed,
                                 recurseNestedObjects,
-                                recurseCollectionObjects,
                                 useAnnotations);
                     }
                 }
@@ -315,140 +261,6 @@ public class ReflectiveAuditDifferentiator implements AuditDifferentiator {
                             oldValRet.toString(),
                             newValRet != null ? newValRet.toString() : EMPTY_VALUE));
         }
-    }
-
-    /**
-     * processes the list difference between the old and new value objects. This method selects
-     * which list is prioritised i.e. if the enew list is larger than the old list we iterate on the
-     * new list
-     *
-     * @param crudEnum The CRUD operation
-     * @param oldVal The old value
-     * @param newVal The new value
-     * @param differenceList The list to build up
-     * @param recurseNestedObjects Whether we recurse into nested objects
-     * @param useAnnotations Whether we use annotations to determine what to audit
-     * @param processed The processed set to avoid infinite recursion
-     * @param method The method data to get the list data
-     */
-    private static void processListDiff(
-            CrudEnum crudEnum,
-            Object oldVal,
-            Object newVal,
-            List<Difference> differenceList,
-            boolean recurseNestedObjects,
-            boolean useAnnotations,
-            Set<String> processed,
-            ReflectionCaches.MethodData method) {
-        List<?> newValRetLst =
-                newVal != null ? (List<?>) invokeMethodForNew(method, newVal, processed) : null;
-        List<?> oldValRetLst =
-                oldVal != null ? (List<?>) invokeMethodForOld(method, oldVal, processed) : null;
-
-        // if the new list is present and it is larger than or equal to the old list then iterate
-        // the new list
-        if ((newValRetLst != null
-                        && oldValRetLst != null
-                        && newValRetLst.size() >= oldValRetLst.size())
-                || (newValRetLst != null && oldValRetLst == null)) {
-            log.debug("Working with new list size {}", newValRetLst);
-
-            processListDiff(
-                    crudEnum,
-                    newValRetLst,
-                    oldValRetLst,
-                    newValRetLst,
-                    processed,
-                    method,
-                    differenceList,
-                    recurseNestedObjects,
-                    useAnnotations);
-        } else if (oldValRetLst != null) {
-            log.debug("Working with old list size {}", newValRetLst);
-            processListDiff(
-                    crudEnum,
-                    oldValRetLst,
-                    oldValRetLst,
-                    newValRetLst,
-                    processed,
-                    method,
-                    differenceList,
-                    recurseNestedObjects,
-                    useAnnotations);
-        }
-    }
-
-    /**
-     * processes the list difference between the old and new value objects.
-     *
-     * @param crudEnum The CRUD operation
-     * @param lstToTraverse The list to traverse
-     * @param oldValRetLst The old value list
-     * @param newValRetLst The new value list
-     * @param processed The processed
-     * @param method The method data to get the list
-     */
-    private static void processListDiff(
-            CrudEnum crudEnum,
-            List<?> lstToTraverse,
-            List<?> oldValRetLst,
-            List<?> newValRetLst,
-            Set<String> processed,
-            ReflectionCaches.MethodData method,
-            List<Difference> differenceList,
-            boolean recurseNestedObjects,
-            boolean useAnnotations) {
-
-        // loop through all values in the list, comparing each in turn
-        for (int i = 0; i < lstToTraverse.size(); i++) {
-            log.debug("Looping through list index {} {}", i, lstToTraverse.get(i));
-            boolean complex = isComplexWrapper(lstToTraverse.get(i).getClass());
-
-            // if the list contains a complex value then iterate and process the values, otherwise
-            // store the difference
-            // based on a difference
-            if (complex && recurseNestedObjects) {
-                log.debug(
-                        "Complex object detected and recursion enabled {} {}",
-                        i,
-                        lstToTraverse.get(i).getClass());
-                difference(
-                        crudEnum,
-                        getFromIndex(oldValRetLst, i),
-                        getFromIndex(newValRetLst, i),
-                        differenceList,
-                        processed,
-                        recurseNestedObjects,
-                        true,
-                        useAnnotations);
-            } else if (!complex) {
-                log.debug("Simple object detected {} {}", i, lstToTraverse.get(i).getClass());
-                storeDifference(
-                        getFromIndex(oldValRetLst, i),
-                        getFromIndex(newValRetLst, i),
-                        differenceList,
-                        method);
-            }
-        }
-    }
-
-    /**
-     * gets an object from a list at the specified index safely and consume the associated
-     * exception.
-     *
-     * @param list The list to get the object from
-     * @param index The index to get
-     * @return The object value or null
-     */
-    private static Object getFromIndex(List<?> list, int index) {
-        if (list != null && list.size() > index) {
-            try {
-                return list.get(index);
-            } catch (IndexOutOfBoundsException e) {
-                log.debug("Index out of bounds {} for list size {}", index, list.size());
-            }
-        }
-        return null;
     }
 
     private static Object invokeMethodForNew(

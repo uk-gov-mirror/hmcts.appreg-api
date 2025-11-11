@@ -12,6 +12,7 @@ import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.audit.listener.DataAuditLogger;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.CriminalJusticeTestData;
 import uk.gov.hmcts.appregister.entity.TestEntity2;
@@ -28,14 +29,16 @@ public class AuditOperationServiceImplTest extends BaseIntegration {
     @Autowired private AuditOperationService auditOperationService;
 
     @Test
-    public void testGetApplicationEntryList() {
+    public void testGetApplicationEntryAudit() {
         when(provider.getUserId()).thenReturn("user");
         when(provider.getEmail()).thenReturn("email");
         when(provider.getRoles()).thenReturn(new String[] {"role"});
 
         TestEntityAuditable test = new TestEntityAuditable();
 
-        test.setCriminalJusticeArea(new CriminalJusticeTestData().someComplete());
+        CriminalJusticeArea criminalJusticeTestData = new CriminalJusticeTestData().someComplete();
+        criminalJusticeTestData.setId(999L);
+        test.setCriminalJusticeArea(criminalJusticeTestData);
         test.setId(123L);
 
         TestEntity2 listEntity2 = new TestEntity2();
@@ -60,45 +63,21 @@ public class AuditOperationServiceImplTest extends BaseIntegration {
 
         // make sure the processing was successful and lists and complex objects were diffed
         Assert.assertEquals("response", content);
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "random_list",
-                        "lst_entry",
-                        "null",
-                        "e8",
-                        "CREATE",
-                        "Create Application List"));
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "random_list",
-                        "lst_adr_id",
-                        "null",
-                        "3",
-                        "CREATE",
-                        "Create Application List"));
-        Assert.assertEquals("response", content);
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "test_entity",
-                        "entry2",
-                        "null",
-                        "teststring",
-                        "CREATE",
-                        "Create Application List"));
-        differenceLogAsserter.assertDifferenceOrDataAuditChange(
-                DifferenceLogAsserter.getDataAuditAssertion(
-                        "test_entity",
-                        "entry2",
-                        "null",
-                        "teststring2",
-                        "CREATE",
-                        "Create Application List"));
+        differenceLogAsserter.assertDiffCount(2);
         differenceLogAsserter.assertDifferenceOrDataAuditChange(
                 DifferenceLogAsserter.getDataAuditAssertion(
                         "test_entity",
                         "adr_id",
                         "null",
                         "123",
+                        "CREATE",
+                        "Create Application List"));
+        differenceLogAsserter.assertDifferenceOrDataAuditChange(
+                DifferenceLogAsserter.getDataAuditAssertion(
+                        "criminal_justice_area",
+                        "cja_id",
+                        "null",
+                        "999",
                         "CREATE",
                         "Create Application List"));
     }
