@@ -51,7 +51,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
                                     .getClass()
                                     .getCanonicalName()
                                     .equals(event.getNewValue().getClass().getCanonicalName()))
-                            || event.getOldValue().getId() != event.getNewValue().getId())) {
+                            || event.getOldValue().getId().equals(event.getNewValue().getId()))) {
                 log.debug(
                         "ENew and old audit values are not the same type and or id{} {}",
                         event.getOldValue().getClass().getCanonicalName(),
