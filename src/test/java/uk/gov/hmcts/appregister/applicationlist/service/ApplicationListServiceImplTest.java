@@ -694,7 +694,15 @@ public class ApplicationListServiceImplTest {
 
         @Override
         public <T, E extends Keyable> T processAudit(
-                Optional<E> oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
+                AuditOperationLifecycleListener... listener) {
+            return processAudit(null, auditType, execution, listener);
+        }
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                E oldValue,
                 AuditOperation auditType,
                 Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
                 AuditOperationLifecycleListener... listener) {
@@ -704,9 +712,9 @@ public class ApplicationListServiceImplTest {
                                     new StartEvent(
                                             AppListAuditOperation.CREATE_APP_LIST,
                                             UUID.randomUUID().toString(),
-                                            Optional.empty()),
+                                            null),
                                     "result",
-                                    Optional.empty()));
+                                    null));
             return optional.get().getResultingValue();
         }
     }
