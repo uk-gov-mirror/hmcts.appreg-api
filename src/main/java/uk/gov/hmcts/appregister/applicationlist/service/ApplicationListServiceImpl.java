@@ -36,6 +36,7 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntrySummaryProjection;
+import uk.gov.hmcts.appregister.common.util.BeanUtil;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
@@ -125,7 +126,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                         dto,
                         (updateDto, success) ->
                                 auditService.processAudit(
-                                        success.getCopyOfApplicationList(),
+                                        BeanUtil.copyBean(success.getApplicationList()),
                                         AppListAuditOperation.UPDATE_APP_LIST,
                                         (evnt) -> {
                                             return success.hasCourt()

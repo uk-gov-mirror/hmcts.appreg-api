@@ -159,7 +159,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
     }
 
     /**
-     * <<<<<<< HEAD finds the new value update for the old auditable data.
+     * finds the new value update for the old auditable data.
      *
      * @param oldData The old auditable data to find the new value for
      * @return the equivalent new auditable data to find for the value

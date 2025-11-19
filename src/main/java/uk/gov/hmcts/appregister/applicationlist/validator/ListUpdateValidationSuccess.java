@@ -3,7 +3,6 @@ package uk.gov.hmcts.appregister.applicationlist.validator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.springframework.beans.BeanUtils;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 
 /**
@@ -16,14 +15,4 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 public class ListUpdateValidationSuccess extends ListLocationValidationSuccess {
     /** The application list being updated. */
     private ApplicationList applicationList;
-
-    public ApplicationList getCopyOfApplicationList() {
-        ApplicationList before = null;
-        if (applicationList != null) {
-            before = org.springframework.beans.BeanUtils.instantiateClass(ApplicationList.class);
-            BeanUtils.copyProperties(applicationList, before);
-        }
-
-        return before;
-    }
 }
