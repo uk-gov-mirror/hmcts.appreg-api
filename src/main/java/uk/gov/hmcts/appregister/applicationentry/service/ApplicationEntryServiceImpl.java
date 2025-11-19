@@ -4,13 +4,11 @@ import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapStructMapper;
-import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
@@ -38,8 +36,10 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
             filterDto,
             pageable);
 
-        Page<ApplicationListEntryGetSummaryProjection> resultPage = applicationListEntryRepository.findApplicationList(
+        Page<ApplicationListEntryGetSummaryProjection> resultPage = applicationListEntryRepository.searchForGetSummary(
+            filterDto.getDate()!=null,
                 filterDto.getDate(),
+                filterDto.getDate().plusDays(1),
                 filterDto.getCourtCode(),
                 filterDto.getOtherLocationDescription(),
                 filterDto.getCjaCode(),
@@ -60,7 +60,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         // Map each entity to a summary DTO and add to the page content
         resultPage.map(
             entry -> {
-                return newPage.addContentItem(mapper.toApplicationListGetSummaryDto(entry));
+                return newPage.addContentItem(mapper.toEntrySummary(entry));
             });
 
         log.debug(

@@ -1,29 +1,25 @@
 package uk.gov.hmcts.appregister.applicationentry.api;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.common.api.SortableOperationEnum;
+import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry_;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList_;
+import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.enumeration.Status;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
 @Getter
 public enum ApplicationEntrySortFieldEnum implements SortableOperationEnum {
-
-
-    DATE("date", "date"),
     CODE("courtCode", "courtCode"),
     LOCATION("otherLocationDescription", "otherLocationDescription"),
+    LEGISLATION("legislation", "legislation"),
     CJA_CODE("cjaCode", "cjaCode"),
-    APPLICANT_ORG("applicantOrganisation", "applicantOrganisation"),
-    APPLICANT_SURNAME("applicantSurname", "applicantSurname"),
-    APPLICANT_CODE("standardApplicantCode", "standardApplicantCode"),
-    RESPONDENT_ORG("respondentOrganisation", "respondentOrganisation"),
-    RESPONDENT_SURNAME("respondentSurname", "respondentSurname"),
-    RESPONENT_POSTCODE("respondentPostcode", "respondentPostcode"),
     ACCOUNT_REFERENCE("accountReference", "accountReference"),
-    STATUS("status", "status");
-
+    STATUS("status", "status"),
+    DATE("hearingDate", "dateOfAl");
     private final String apiValue;
     private final String entityValue;
 

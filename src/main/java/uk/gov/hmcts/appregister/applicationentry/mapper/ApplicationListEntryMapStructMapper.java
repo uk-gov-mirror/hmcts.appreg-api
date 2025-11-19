@@ -61,31 +61,18 @@ public abstract class ApplicationListEntryMapStructMapper {
         return ApplicationListStatus.valueOf(status.getValue());
     }
 
-    @Mapping(target = "id", source = "applicationListEntry.uuid")
-    @Mapping(target = "applicantName", expression = "java(toApplicantName(applicationListEntry))")
-    @Mapping(target = "respondentName", expression = "java(toRespondentName(applicationListEntry))")
+    @Mapping(target = "id", source = "projection.uuid")
+    @Mapping(target = "applicant", expression = "java(toApplicant(projection.getAnameaddress()))")
+    @Mapping(target = "respondent", expression = "java(toApplicant(projection.getRnameaddress()))")
     @Mapping(
             target = "applicationTitle",
-            source = "applicationListEntry.applicationList.description")
+            source = "projection.title")
     @Mapping(
-            target = "isFeeRequired",
-            expression = "java(toFee(applicationListEntry.getApplicationCode().getFeeDue()))")
-    @Mapping(target = "isResulted", expression = "java(toResulted(applicationListEntry))")
-    @Mapping(target = "status", source = "applicationListEntry.applicationList.status")
-    abstract EntryGetSummaryDto toEntrySummary(ApplicationListEntry applicationListEntry);
-
-    public EntryGetSummaryDto toApplicationListGetSummaryDto(ApplicationListEntryGetSummaryProjection projection) {
-        EntryGetSummaryDto entryGetSummaryDto = new EntryGetSummaryDto();
-        entryGetSummaryDto.setApplicant(toApplicant(projection.getAnamedaddress()));
-        entryGetSummaryDto.setRespondent(toApplicant(projection.getRspondentAddress()));
-        entryGetSummaryDto.setStatus(toStatus(projection.getStatus()));
-        entryGetSummaryDto.setApplicationTitle(projection.getApplicationTitle());
-        entryGetSummaryDto.setId(UUID.fromString(projection.getUuid()));
-        entryGetSummaryDto.setIsFeeRequired(projection.isFreeRequired());
-        entryGetSummaryDto.setIsResulted(projection.getResult() != null);
-        entryGetSummaryDto.setLegislation(projection.getLegislation());
-        return null;
-    }
+            target = "isFeeRequired", expression = "java(projection.getFeeRequired().isYes())")
+    @Mapping(target = "status", source = "projection.status")
+    @Mapping(target = "legislation", source = "projection.legislation")
+    @Mapping(target = "isResulted", expression = "java(projection.getResult() != null)")
+    public abstract EntryGetSummaryDto toEntrySummary(ApplicationListEntryGetSummaryProjection projection);
 
     /**
      * A useful mapper to map the applicant details of the standard applicant.

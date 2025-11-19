@@ -1,6 +1,7 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,7 +15,6 @@ import uk.gov.hmcts.appregister.common.entity.base.EntryCount;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntrySummaryProjection;
-import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 
 public interface ApplicationListEntryRepository extends JpaRepository<ApplicationListEntry, Long> {
     /**
@@ -111,72 +111,82 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
         """)
     List<EntryCount> countByApplicationListUuids(@Param("uuids") List<UUID> uuids);
 
+
     /** Retrieves the paginated results */
     @Query(
             """
-        SELECT
+         SELECT
                 ale.uuid AS uuid,
-                ale.applicationList.date AS hearingDate,
                 ale.applicationList.courtCode  AS courtCode,
                 ac.legislation as legislation,
-                CASE WHEN ac.feeDue = "1" THEN true ELSE false END AS feeRequired,
-                aler.resolutionCode AS result,
-                ale.applicationList.cja.code AS cjaCode,
+                ac.feeDue feeRequired,
+                aler.id as result,
+                cja.code AS cjaCode,
                 ale.applicationList.otherLocation AS otherLocationDescription,
-                ale.anamedaddress.name AS appOrganisation,
-                ale.anamedaddress.surname AS appSurname,
-                ale.anamedaddress as anamedaddress,
+                ana as anameaddress,
                 ale.standardApplicant.applicantCode AS standardApplicantCode,
-                ale.rnameaddress.name AS respondentOrganisation,
-                ale.rnameaddress.surname AS respondentSurname,
-                ale.rnameaddress.postcode AS respondentPostcode,
-                ale.rnameaddress as rnameaddress,
-                ale.caseReference AS accountReference,
+                rna as rnameaddress,
                 ale.applicationCode.title as title,
-                status AS status
+                al.status AS status,
+                al.date as dateofal,
+                ale.anamedaddress.name as applicationorganisation,
+                ale.anamedaddress.surname as applicantSurname,
+                ale.rnameaddress.name as respondentOrganisation,
+                ale.rnameaddress.surname as respondentSurname,
+                ale.rnameaddress.postcode as respondentPostcode,
+                ale.caseReference as  accountReference
             from ApplicationListEntry ale
-            LEFT JOIN ale.anamedaddress ana ON ale.applicationList = ale.anamedaddress
-            LEFT JOIN ale.standardApplicant sa ON ale.applicationList = ale.standardApplicant
-            LEFT JOIN ale.rnameaddress rna ON ale.applicationList = ale.rnameaddress
-            LEFT JOIN ale.applicationCode ac  ON ale.applicationList = ale.applicationCode
-            LEFT JOIN AppListEntryResolution aler ON aler.applicationList = ale
-                AND aler.changedDate = (
-                    SELECT MAX(sub.changedDate)
-                    FROM AppListEntryResolution sub
-                    WHERE sub.applicationList = ale
-                )
-            LEFT JOIN ApplicationList al ON ale.applicationList = ale.applicationList
-            LEFT JOIN AppListEntryFeeStatus appstatus ON appstatus.appListEntry = ale
-                AND appstatus.changedDate = (
-                    SELECT MAX(sub.changedDate)
-                    FROM AppListEntryFeeStatus sub
-                    WHERE sub.appListEntry = ale
-                )
-        where :dte IS NULL OR :hearingDate=ale.applicationList.date
-                AND :otherLocationDescription IS NULL OR :otherLocationDescription=ale.applicationList.otherLocation
-                AND :courtCode IS NULL OR :courtCode LIKE '%' + ale.applicationList.courtCode + '%'
-                AND :cjaCode IS NULL OR :cjaCode=ale.applicationList.cja.code
-                AND :applicantOrganisation IS NULL OR :appOrganisation LIKE '%' + ale.anamedaddress.name + '%' AND ale.anamedaddress.code='AP'
-                AND :applicantSurname IS NULL OR :appSurname LIKE '%' + ale.anamedaddress.surname + '%' AND ale.anamedaddress.code='AP'
-                AND :standardApplicantCode IS NULL OR :appCode LIKE '%' + ale.standardApplicant.applicantCode + '%'
-                AND :status IS NULL OR :status=ale.applicationList.status
-                AND :respondentOrganisation IS NULL OR :respOrganisation=ale.rnameaddress.name AND ale.rnameaddress.code='RE'
-                AND :respondentSurname IS NULL OR :respSurname=ale.rnameaddress.surname AND ale.rnameaddress.code='RE'
-                AND :respondentPostcode IS NULL OR :respPostcode=ale.rnameaddress.postcode AND ale.rnameaddress.code='RE'
-                AND :accountReference IS NULL OR :accountReference LIKE '%' + ale.caseReference + '%'
+            LEFT JOIN ale.anamedaddress ana
+            LEFT JOIN ale.standardApplicant sa
+            LEFT JOIN ale.rnameaddress rna
+            LEFT JOIN ale.applicationCode ac
+            LEFT JOIN ale.applicationList al
+            LEFT JOIN CriminalJusticeArea cja ON al.cja = cja
+            LEFT JOIN AppListEntryResolution aler ON aler.applicationList = ale AND aler.id = (SELECT MAX(sub.id)
+                                                                                      FROM AppListEntryResolution sub
+                                                                                      WHERE sub.applicationList = ale)
+        WHERE  (:hasHearingDate = false OR ale.applicationList.date = :hearingDateStart)
+                AND (:otherLocationDescription IS NULL OR ale.applicationList.otherLocation LIKE CONCAT('%', cast(:otherLocationDescription AS string), '%'))
+                AND (:courtCode IS NULL OR ale.applicationList.courtCode = :courtCode)
+                AND (:cjaCode IS NULL OR ale.applicationList.cja.code=:cjaCode)
+                AND (:applicantOrganisation IS NULL OR  ale.anamedaddress.name LIKE CONCAT('%',cast(:applicantOrganisation AS string), '%')
+                        AND ale.anamedaddress.code='AP')
+                AND (:applicantSurname IS NULL OR ale.anamedaddress.surname LIKE CONCAT('%', cast(:applicantSurname AS string) , '%')
+                        AND ale.anamedaddress.code='AP')
+                AND (:standardApplicantCode IS NULL OR ale.standardApplicant.applicantCode LIKE CONCAT('%', cast(:standardApplicantCode AS string), '%'))
+                AND (:status IS NULL OR :status=ale.applicationList.status)
+                AND (:respondentOrganisation IS NULL OR ale.rnameaddress.name LIKE CONCAT('%', cast(:respondentOrganisation AS string), '%') AND ale.rnameaddress.code='RE')
+                AND (:respondentSurname IS NULL OR ale.rnameaddress.surname LIKE CONCAT('%', cast(:respondentSurname AS string), '%') AND ale.rnameaddress.code='RE')
+                AND (:respondentPostcode IS NULL OR ale.rnameaddress.postcode=cast(:respondentPostcode AS string) AND ale.rnameaddress.code='RE')
+                AND (:accountReference IS NULL OR  ale.caseReference LIKE CONCAT('%', cast(:accountReference AS string), '%'))
         """)
-    Page<ApplicationListEntryGetSummaryProjection> findApplicationList(
-            LocalDate hearingDate,
-            String courtCode,
-            String otherLocationDescription,
-            String cjaCode,
-            String applicantOrganisation,
-            String applicantSurname,
-            String standardApplicantCode,
-            Status status,
-            String respondentOrganisation,
-            String respondentSurname,
-            String respondentPostcode,
-            String accountReference,
-            Pageable pageable);
+    Page<ApplicationListEntryGetSummaryProjection> searchForGetSummary(
+        boolean hasHearingDate,
+        @Param("hearingDateStart")
+        LocalDate hearingDateFrom,
+        @Param("hearingDateEnd")
+        LocalDate hearingDateTo,
+        @Param("courtCode")
+        String courtCode,
+        @Param("otherLocationDescription")
+        String otherLocationDescription,
+        @Param("cjaCode")
+        String cjaCode,
+        @Param("applicantOrganisation")
+        String applicantOrganisation,
+        @Param("applicantSurname")
+        String applicantSurname,
+        @Param("standardApplicantCode")
+        String standardApplicantCode,
+        @Param("status")
+        Status status,
+        @Param("respondentOrganisation")
+        String respondentOrganisation,
+        @Param("respondentSurname")
+        String respondentSurname,
+        @Param("respondentPostcode")
+        String respondentPostcode,
+        @Param("accountReference")
+        String accountReference,
+        Pageable pageable);
 }

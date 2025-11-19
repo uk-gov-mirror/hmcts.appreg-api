@@ -10,9 +10,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+
+import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapStructMapperImpl;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
+import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto;
@@ -130,7 +133,7 @@ public class ApplicationListMapperTest {
                             .pk(999L)
                             .uuid(id)
                             .description("Morning session for traffic-related applications")
-                            .status(ApplicationListStatus.OPEN)
+                            .status(Status.fromValue(ApplicationListStatus.OPEN.getValue()))
                             .courtCode("LOC123")
                             .courtName("Bath Magistrates Court")
                             .date(LocalDate.of(2025, 9, 17))
@@ -173,7 +176,7 @@ public class ApplicationListMapperTest {
                     ApplicationList.builder()
                             .uuid(id)
                             .description("Morning session")
-                            .status(ApplicationListStatus.OPEN)
+                            .status(Status.valueOf(ApplicationListStatus.OPEN.getValue()))
                             .date(LocalDate.of(2025, 9, 19))
                             .time(LocalTime.of(9, 0, 0))
                             .build();

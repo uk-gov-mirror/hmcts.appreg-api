@@ -33,7 +33,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Versionable;
  * the database.
  */
 @Entity
-@Table(name = "application_list_entries")
+@Table(name = TableNames.APPLICATION_LISTS_ENTRY)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

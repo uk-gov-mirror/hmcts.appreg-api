@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
+import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
@@ -37,7 +38,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
 
         ApplicationList al =
                 ApplicationList.builder()
-                        .status(ApplicationListStatus.fromValue(status))
+                        .status(Status.valueOf(ApplicationListStatus.fromValue(status).getValue()))
                         .description(description)
                         .otherLocation(otherLocation)
                         .courtName(courtCode != null ? "Court " + courtCode : null)
@@ -61,7 +62,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
 
     private ApplicationList buildEntity() {
         return ApplicationList.builder()
-                .status(ApplicationListStatus.OPEN)
+                .status(Status.valueOf(ApplicationListStatus.OPEN.getValue()))
                 .description("Smoke test list")
                 .courtName("Cardiff Crown Court")
                 .courtCode("CCC003")
