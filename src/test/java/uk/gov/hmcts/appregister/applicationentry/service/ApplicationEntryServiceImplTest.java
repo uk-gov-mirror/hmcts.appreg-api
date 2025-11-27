@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import jakarta.persistence.EntityManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -145,6 +147,8 @@ public class ApplicationEntryServiceImplTest {
 
     @Mock private List<AuditOperationLifecycleListener> auditLifecycleListeners;
 
+    @Mock private EntityManager entityManager;
+
     private ApplicationEntryService service;
 
     @Spy
@@ -178,7 +182,8 @@ public class ApplicationEntryServiceImplTest {
                         appListEntryFeeRepository,
                         applicationListEntryMapStructMapper,
                         applicationListEntryEntityMapper,
-                        auditLifecycleListeners);
+                        auditLifecycleListeners,
+                        entityManager);
     }
 
     @Test
@@ -200,7 +205,8 @@ public class ApplicationEntryServiceImplTest {
                 appListEntryFeeRepository,
                 applicationListEntryMapStructMapper,
                 applicationListEntryEntityMapper,
-                auditLifecycleListeners);
+                auditLifecycleListeners,
+                entityManager);
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
@@ -385,7 +391,7 @@ public class ApplicationEntryServiceImplTest {
         when(applicationListEntryMapStructMapper.toEntryGetDetailDto(applicationListEntry,
                                                                      statusLst,
                                                                      fee,
-                                                                     officialLst)).thenReturn(entryGetDetailDto);
+                                                                     officialLst, null)).thenReturn(entryGetDetailDto);
 
         // run the test
         MatchResponse<EntryGetDetailDto> response = service.createEntry(payload);

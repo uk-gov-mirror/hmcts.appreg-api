@@ -9,6 +9,8 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -111,7 +113,7 @@ public class NameAddress extends BaseChangeableEntity implements Accountable, Ke
     private String userName;
 
     @Column(name = "date_of_birth")
-    private OffsetDateTime dateOfBirth;
+    private LocalDate dateOfBirth;
 
     @Column(name = "dms_id")
     @Size(max = 20)

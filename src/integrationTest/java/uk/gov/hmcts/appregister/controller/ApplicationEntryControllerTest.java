@@ -8,27 +8,43 @@ import io.restassured.specification.RequestSpecification;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+
+import org.instancio.Instancio;
+import org.instancio.settings.Keys;
+import org.instancio.settings.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
+import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodePage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
+import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
+import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
+import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
+import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
+import uk.gov.hmcts.appregister.testutils.util.ApplicantAssertion;
 import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
 
 public class ApplicationEntryControllerTest extends AbstractSecurityControllerTest {
     private static final String WEB_CONTEXT = "application-list-entries";
+
+    private static final String CREATE_ENTRY_CONTEXT = "/application-lists";
 
     @Value("${spring.sql.init.schema-locations}")
     private String sqlInitSchemaLocations;
@@ -41,6 +57,12 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
     // The total app codes inserted by flyway scripts
     private static final int TOTAL_APP_ENTRY_COUNT = 10;
+
+    @Autowired
+    private TransactionalUnitOfWork unitOfWork;
+
+    @Autowired
+    private ApplicationListRepository applicationListRepository;
 
     @Test
     public void testGetApplicationEntriesSearch() throws Exception {
@@ -580,6 +602,139 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         responseSpec.then().statusCode(500);
     }
 
+    @Test
+    public void testCreateListEntryWithAllData() throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
+        EntryCreateDto entryCreateDto =
+            Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        entryCreateDto.getApplicant().setOrganisation(null);
+        entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto.setNumberOfRespondents(10);
+        entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setApplicationCode("MS99007");
+        entryCreateDto.setStandardApplicantCode(null);
+        String surnameToLookup = UUID.randomUUID().toString();
+        entryCreateDto.getApplicant().getPerson().getName().setSurname(surnameToLookup);
+
+        // fill the template with the two parameters
+        entryCreateDto.setWordingFields(List.of("test wording", LocalDate.now().toString()));
+
+        // test the functionality
+        Response responseSpecCreate =
+            restAssuredClient.executePostRequest(
+                getLocalUrl(CREATE_ENTRY_CONTEXT + "/" + getFirstApplicationListId() + "/entries"),
+                tokenGenerator.fetchTokenForRole(),
+                entryCreateDto);
+
+        // assert the response
+        responseSpecCreate.then().statusCode(200);
+
+        EntryGetDetailDto createdDto = responseSpecCreate.as(EntryGetDetailDto.class);
+
+        // validate the response
+        validateEntryCreationResponse(entryCreateDto, createdDto, List.of());
+
+        // Now filter on the entry with the unique surname and assert we get a record back
+        Response responseFindEntrySpec =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(10),
+                Optional.of(0),
+                List.of(),
+                getLocalUrl(WEB_CONTEXT),
+                tokenGenerator.fetchTokenForRole(),
+                new ApplicationEntryFilter(
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.of(surnameToLookup),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()),
+                new OpenApiPageMetaData());
+
+        // assert the response
+        responseFindEntrySpec.then().statusCode(200);
+
+        EntryPage page = responseFindEntrySpec.as(EntryPage.class);
+        PagingAssertionUtil.assertPageDetails(page, 10, 0, 1, 1);
+        Assertions.assertEquals(createdDto.getListId(), page.getContent().get(0).getId());
+    }
+
+    /**
+     * validates the response based on the creation payload
+     * @param entryCreateDto The creation payload
+     * @param response The response to validate
+     * @param expectedWordingFields The expected wording fields
+     */
+    private void validateEntryCreationResponse(EntryCreateDto entryCreateDto, EntryGetDetailDto response,
+                                  List<String> expectedWordingFields) {
+
+        if (entryCreateDto.getApplicant()!=null) {
+            Assertions.assertEquals(
+                entryCreateDto.getApplicant(),
+                response.getApplicant()
+            );
+        } else if (entryCreateDto.getStandardApplicantCode() != null){
+           Assertions.assertNotNull(response.getStandardApplicantCode());
+        }
+
+        if (entryCreateDto.getRespondent()!=null) {
+            Assertions.assertEquals(
+                entryCreateDto.getRespondent(),
+                response.getRespondent()
+            );
+        }
+
+        // validate the response fields
+        Assertions.assertEquals(entryCreateDto.getCaseReference(),
+                                response.getCaseReference());
+        Assertions.assertEquals(entryCreateDto.getNotes(),
+                                response.getNotes());
+        Assertions.assertEquals(entryCreateDto.getAccountNumber(),
+                                response.getAccountNumber());
+        Assertions.assertEquals(expectedWordingFields, response.getWordingFields());
+        Assertions.assertNull(response.getListId());
+        Assertions.assertNull(response.getId());
+        Assertions.assertEquals(entryCreateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
+        Assertions.assertEquals(entryCreateDto.getLodgementDate(), response.getLodgementDate());
+
+        Assertions.assertEquals(entryCreateDto.getHasOffsiteFee(), response.getHasOffsiteFee());
+
+        // ensure the response fees align
+        for (int i=0; i < response.getFeeStatuses().size(); i++) {
+            Assertions.assertEquals(entryCreateDto.getFeeStatuses().get(i).getPaymentReference(),
+                                    response.getFeeStatuses().get(i).getPaymentReference());
+            Assertions.assertEquals(entryCreateDto.getFeeStatuses().get(i).getStatusDate(),
+                                    response.getFeeStatuses().get(i).getStatusDate());
+            Assertions.assertEquals(entryCreateDto.getFeeStatuses().get(i).getPaymentStatus(),
+                                    response.getFeeStatuses().get(i).getPaymentStatus());
+        }
+
+        // ensure the response fees align
+        for (int i=0; i < response.getOfficials().size(); i++) {
+            Assertions.assertEquals(entryCreateDto.getOfficials().get(i).getType(),
+                                    response.getOfficials().get(i).getType());
+            Assertions.assertEquals(entryCreateDto.getOfficials().get(i).getSurname(),
+                                    response.getOfficials().get(i).getSurname());
+            Assertions.assertEquals(entryCreateDto.getOfficials().get(i).getTitle(),
+                                    response.getOfficials().get(i).getTitle());
+            Assertions.assertEquals(entryCreateDto.getOfficials().get(i).getForename(),
+                                    response.getOfficials().get(i).getForename());
+        }
+    }
+
     @Override
     protected Stream<RestEndpointDescription> getDescriptions() throws Exception {
         return Stream.of(
@@ -588,7 +743,23 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                         .method(HttpMethod.GET)
                         .successRole(RoleEnum.USER)
                         .successRole(RoleEnum.ADMIN)
-                        .build());
+                        .build(),
+                RestEndpointDescription.builder()
+                    .url(getLocalUrl(WEB_CONTEXT + "/" + UUID.randomUUID()))
+                    .method(HttpMethod.POST)
+                    .payload(new EntryCreateDto())
+                    .successRole(RoleEnum.USER)
+                    .successRole(RoleEnum.ADMIN)
+                    .build()
+                );
+    }
+
+
+    private UUID getFirstApplicationListId() {
+        return unitOfWork.inTransaction(()-> {
+            ApplicationList applicationList = applicationListRepository.findAll().getFirst();
+            return applicationList.getUuid();
+        });
     }
 
     record ApplicationEntryFilter(

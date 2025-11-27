@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
@@ -21,6 +22,7 @@ import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
+import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
 import uk.gov.hmcts.appregister.data.AppListEntryFeeStatusTestData;
 import uk.gov.hmcts.appregister.data.AppListEntryOfficialTestData;
@@ -36,8 +38,19 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.OfficialType;
 import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
+import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
+import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapperImpl;
 
 class ApplicationListEntryMapStructMapperTest {
+    private ApplicationListEntryMapStructMapperImpl mapper;
+
+    @BeforeEach
+    void beforeEach() {
+        mapper = new ApplicationListEntryMapStructMapperImpl();
+        mapper.setAMapper(new ApplicantMapper());
+        mapper.setOfficialMapper(new OfficialMapper());
+        mapper.setStandardApplicantMapper(new StandardApplicantMapperImpl());
+    }
 
     @Test
     void testToSummaryModel_provideValidData_validModelGenerated() {
@@ -63,7 +76,6 @@ class ApplicationListEntryMapStructMapperTest {
                         .result(result)
                         .build();
 
-        var mapper = new ApplicationListEntryMapStructMapperImpl();
         var model = mapper.toSummaryDto(projection);
 
         assertApplicationListEntrySummary(
@@ -125,7 +137,6 @@ class ApplicationListEntryMapStructMapperTest {
                         .result(result2)
                         .build();
 
-        var mapper = new ApplicationListEntryMapStructMapperImpl();
         List<ApplicationListEntrySummary> list =
                 mapper.toSummaryDtoList(List.of(projection1, projection2));
 
@@ -214,8 +225,6 @@ class ApplicationListEntryMapStructMapperTest {
         UUID uuidForProjection = UUID.randomUUID();
         when(applicationListEntryGetSummaryProjection.getUuid())
                 .thenReturn(uuidForProjection.toString());
-
-        var mapper = new ApplicationListEntryMapStructMapperImpl();
 
         // run test
         EntryGetSummaryDto mappedResult =
@@ -350,13 +359,13 @@ class ApplicationListEntryMapStructMapperTest {
         appListEntryOfficial2.setOfficialType(uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE);
 
         // execute the mapping
-        var mapper = new ApplicationListEntryMapStructMapperImpl();
         mapper.setAMapper(new ApplicantMapper());
         EntryGetDetailDto entryGetDetailDto = mapper
             .toEntryGetDetailDto(appListEntry,
                                  List.of(applicationListStatus, applicationListStatus2),
                                     fee,
-                                    List.of(appListEntryOfficial, appListEntryOfficial2)
+                                    List.of(appListEntryOfficial, appListEntryOfficial2),
+                                 null
                                  );
 
         // assert on the main application list entry data

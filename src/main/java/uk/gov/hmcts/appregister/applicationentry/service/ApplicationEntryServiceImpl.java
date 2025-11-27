@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.applicationentry.service;
 
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeId;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
@@ -66,6 +68,9 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final ApplicationListEntryMapStructMapper applicationListEntryMapStructMapper;
     private final ApplicationListEntryEntityMapper applicationListEntryEntityMapper;
     private final List<AuditOperationLifecycleListener> auditLifecycleListeners;
+
+    // Infrastructure
+    private final EntityManager entityManager;
 
     @Override
     public EntryPage search(EntryGetFilterDto filterDto, Pageable pageable) {
@@ -171,9 +176,9 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                                                 respondentToSave,
                                                                 success.getApplicationCode(),
                                                                 success.getApplicationList());
-                                        listEntryEntity =
-                                                applicationListEntryRepository.save(
-                                                        listEntryEntity);
+
+                                        listEntryEntity = refreshEntity(applicationListEntryRepository.save(
+                                                        listEntryEntity));
                                         log.debug(
                                                 "Created application entry with id: {}",
                                                 listEntryEntity.getId());
@@ -228,7 +233,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                                                 success.getFee(),
                                                                 officialList,
                                                                 success.getSa());
-
+                                        entryGetDetailDto.setHasOffsiteFee(entryCreateDto.getData().getHasOffsiteFee());
 
                                         if (success.getFee() != null) {
                                             // create the link between the entry and the fees
@@ -263,5 +268,16 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         log.debug("Finish: Create Application Entry: {}", entryCreateDto);
 
         return getDetailDto;
+    }
+
+    /**
+     * Reloads the entity so DB-generated fields (e.g. UUID via gen_random_uuid()) are available
+     * immediately after save. Calls: - flush(): force the INSERT - refresh(): reselect the row with
+     * DB defaults/triggers
+     */
+    private ApplicationListEntry refreshEntity(ApplicationListEntry entity) {
+        entityManager.flush();
+        entityManager.refresh(entity);
+        return entity;
     }
 }

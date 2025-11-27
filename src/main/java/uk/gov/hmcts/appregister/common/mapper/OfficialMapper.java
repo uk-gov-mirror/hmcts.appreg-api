@@ -10,7 +10,7 @@ import uk.gov.hmcts.appregister.generated.model.OfficialType;
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public class OfficialMapper {
-    public uk.gov.hmcts.appregister.generated.model.OfficialType toOfficial(
+    public static uk.gov.hmcts.appregister.generated.model.OfficialType toOfficial(
         uk.gov.hmcts.appregister.common.enumeration.OfficialType officialType) {
         if (officialType == uk.gov.hmcts.appregister.common.enumeration.OfficialType.CLERK) {
             return uk.gov.hmcts.appregister.generated.model.OfficialType.CLERK;
@@ -21,7 +21,7 @@ public class OfficialMapper {
         return null;
     }
 
-    public uk.gov.hmcts.appregister.common.enumeration.OfficialType toOfficial(
+    public static uk.gov.hmcts.appregister.common.enumeration.OfficialType toOfficial(
         uk.gov.hmcts.appregister.generated.model.OfficialType officialType) {
         if (officialType == uk.gov.hmcts.appregister.generated.model.OfficialType.CLERK) {
             return uk.gov.hmcts.appregister.common.enumeration.OfficialType.CLERK;

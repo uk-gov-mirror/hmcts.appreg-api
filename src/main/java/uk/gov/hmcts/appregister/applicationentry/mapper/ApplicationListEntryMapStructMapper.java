@@ -163,8 +163,8 @@ public abstract class ApplicationListEntryMapStructMapper {
      */
     @Mapping(
             target = "id",
-            expression = "java(applicationListEntry.getApplicationList().getUuid())")
-    @Mapping(target = "listId", expression = "java(applicationListEntry.getUuid())")
+            expression = "java(applicationListEntry.getUuid())")
+    @Mapping(target = "listId", expression = "java(applicationListEntry.getApplicationList().getUuid())")
     @Mapping(
             target = "standardApplicantCode",
             source = "applicationListEntry.standardApplicant.applicantCode")
@@ -263,6 +263,7 @@ public abstract class ApplicationListEntryMapStructMapper {
                 organisation.setName(applicant.getName());
                 organisation.setContactDetails(contactDetails);
                 respondentDto.setOrganisation(organisation);
+
             } else {
                 Person person = new Person();
                 FullName fullName = aMapper.toFullName(applicant);
@@ -270,6 +271,8 @@ public abstract class ApplicationListEntryMapStructMapper {
                 person.setName(fullName);
                 respondentDto.setPerson(person);
             }
+
+            respondentDto.setDateOfBirth(applicant.getDateOfBirth());
         }
 
         return respondentDto;

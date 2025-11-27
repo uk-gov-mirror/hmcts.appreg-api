@@ -4,6 +4,7 @@ import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
@@ -14,6 +15,8 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
+import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
+import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
@@ -21,16 +24,21 @@ import uk.gov.hmcts.appregister.generated.model.Official;
 import uk.gov.hmcts.appregister.generated.model.OfficialType;
 import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
 import uk.gov.hmcts.appregister.generated.model.Respondent;
+import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapperImpl;
 
 import java.time.LocalDate;
 
 class ApplicationListEntryEntityMapperTest {
 
+    private ApplicationListEntryEntityMapper mapper;
+
+    @BeforeEach
+    void beforeEach() {
+        mapper = new ApplicationListEntryEntityMapperImpl();
+    }
+
     @Test
     void testToApplicationListEntry() {
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-                new ApplicationListEntryEntityMapperImpl();
-
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
         EntryCreateDto entryCreateDto =
             Instancio.of(EntryCreateDto.class).withSettings(settings).create();
@@ -52,7 +60,7 @@ class ApplicationListEntryEntityMapperTest {
 
         // perform the operation
         ApplicationListEntry applicationListEntry =
-            applicationListEntryEntityMapper.toApplicationListEntry(entryCreateDto,
+            mapper.toApplicationListEntry(entryCreateDto,
                                                                     "wording",
                                                                     standardApplicant,
                                                                     applicant,
@@ -75,9 +83,6 @@ class ApplicationListEntryEntityMapperTest {
 
     @Test
     void testToFeeStatus() {
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-            new ApplicationListEntryEntityMapperImpl();
-
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
         ApplicationListEntry applicationList =
             Instancio.of(ApplicationListEntry.class).withSettings(settings).create();
@@ -89,7 +94,7 @@ class ApplicationListEntryEntityMapperTest {
 
         // perform the operation
         AppListEntryFeeStatus appListEntryFeeStatus =
-            applicationListEntryEntityMapper.toFeeStatus(status, applicationList);
+            mapper.toFeeStatus(status, applicationList);
 
         // make the assertion
         Assertions.assertEquals(FeeStatusType.DUE, appListEntryFeeStatus.getAlefsFeeStatus());
@@ -101,9 +106,6 @@ class ApplicationListEntryEntityMapperTest {
     void testToOfficial() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-            new ApplicationListEntryEntityMapperImpl();
-
         ApplicationListEntry applicationList =
             Instancio.of(ApplicationListEntry.class).withSettings(settings).create();
 
@@ -114,7 +116,7 @@ class ApplicationListEntryEntityMapperTest {
         official.forename("forename");
         official.setTitle("title");
 
-        AppListEntryOfficial appListEntryOfficial = applicationListEntryEntityMapper.toOfficial(official, applicationList);
+        AppListEntryOfficial appListEntryOfficial = mapper.toOfficial(official, applicationList);
         Assertions.assertEquals(uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE, appListEntryOfficial.getOfficialType());
         Assertions.assertEquals(official.getForename(), appListEntryOfficial.getForename());
         Assertions.assertEquals(official.getSurname(), appListEntryOfficial.getSurname());
@@ -125,14 +127,11 @@ class ApplicationListEntryEntityMapperTest {
     void testToApplicantPerson() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-            new ApplicationListEntryEntityMapperImpl();
-
          Applicant applicant =
             Instancio.of(Applicant.class).withSettings(settings).create();
         applicant.setOrganisation(null);
 
-        NameAddress nameAddress = applicationListEntryEntityMapper.toApplicant(applicant);
+        NameAddress nameAddress = mapper.toApplicant(applicant);
         Assertions.assertEquals("AP", nameAddress.getCode());
         Assertions.assertEquals(applicant.getPerson().getName().getFirstForename(), nameAddress.getForename1());
         Assertions.assertEquals(applicant.getPerson().getName().getSecondForename(), nameAddress.getForename2());
@@ -152,14 +151,11 @@ class ApplicationListEntryEntityMapperTest {
     void testToApplicantOrganisation() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-            new ApplicationListEntryEntityMapperImpl();
-
         Applicant applicant =
             Instancio.of(Applicant.class).withSettings(settings).create();
         applicant.setPerson(null);
 
-        NameAddress nameAddress = applicationListEntryEntityMapper.toApplicant(applicant);
+        NameAddress nameAddress = mapper.toApplicant(applicant);
         Assertions.assertEquals("AP", nameAddress.getCode());
         Assertions.assertEquals(nameAddress.getName(), applicant.getOrganisation().getName());
         Assertions.assertEquals(applicant.getOrganisation().getContactDetails().getPhone(), nameAddress.getTelephoneNumber());
@@ -176,15 +172,12 @@ class ApplicationListEntryEntityMapperTest {
     void testToRespondentPerson() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-            new ApplicationListEntryEntityMapperImpl();
-
         Respondent respondent =
             Instancio.of(Respondent.class).withSettings(settings).create();
         respondent.setOrganisation(null);
 
-        NameAddress nameAddress = applicationListEntryEntityMapper.toRespondent(respondent);
-        Assertions.assertEquals("AP", nameAddress.getCode());
+        NameAddress nameAddress = mapper.toRespondent(respondent);
+        Assertions.assertEquals("RE", nameAddress.getCode());
         Assertions.assertEquals(respondent.getPerson().getName().getFirstForename(), nameAddress.getForename1());
         Assertions.assertEquals(respondent.getPerson().getName().getSecondForename(), nameAddress.getForename2());
         Assertions.assertEquals(respondent.getPerson().getName().getThirdForename(), nameAddress.getForename3());
@@ -203,17 +196,12 @@ class ApplicationListEntryEntityMapperTest {
     void testToRespondentOrganisation() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        ApplicationListEntryEntityMapper applicationListEntryEntityMapper =
-            new ApplicationListEntryEntityMapperImpl();
-
         Respondent respondent =
             Instancio.of(Respondent.class).withSettings(settings).create();
-        respondent.setOrganisation(null);
-
         respondent.setPerson(null);
 
-        NameAddress nameAddress = applicationListEntryEntityMapper.toRespondent(respondent);
-        Assertions.assertEquals("AP", nameAddress.getCode());
+        NameAddress nameAddress = mapper.toRespondent(respondent);
+        Assertions.assertEquals("RE", nameAddress.getCode());
         Assertions.assertEquals(nameAddress.getName(), respondent.getOrganisation().getName());
         Assertions.assertEquals(respondent.getOrganisation().getContactDetails().getPhone(), nameAddress.getTelephoneNumber());
         Assertions.assertEquals(respondent.getOrganisation().getContactDetails().getEmail(), nameAddress.getEmailAddress());

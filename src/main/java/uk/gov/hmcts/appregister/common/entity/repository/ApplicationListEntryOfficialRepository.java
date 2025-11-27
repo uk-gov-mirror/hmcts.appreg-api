@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
+import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryOfficialPrintProjection;
 
@@ -37,4 +39,14 @@ public interface ApplicationListEntryOfficialRepository
             """)
     List<ApplicationListEntryOfficialPrintProjection> findByApplicationListUuidForPrinting(
             UUID listUuid, Collection<String> codes);
+
+
+    /**
+     * Finds a single application list entries by list ID, ensuring it belongs to the specified application list and
+     * that the list is owned by the given user.
+     *
+     * @param listId The ID of the application list the application is expected to belong to
+     * @return The application, if found and accessible
+     */
+    List<AppListEntryOfficial> findByAppListEntryId(Long listId);
 }

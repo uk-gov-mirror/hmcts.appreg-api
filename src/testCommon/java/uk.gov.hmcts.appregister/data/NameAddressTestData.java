@@ -2,6 +2,7 @@ package uk.gov.hmcts.appregister.data;
 
 import static org.instancio.Select.field;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.instancio.Instancio;
@@ -17,7 +18,7 @@ public class NameAddressTestData
     public NameAddress.NameAddressBuilder someMinimal() {
         UUID uniqueId = UUID.randomUUID();
         NameAddress.NameAddressBuilder data = NameAddress.builder();
-        data.dateOfBirth(OffsetDateTime.now())
+        data.dateOfBirth(LocalDate.now())
                 .mobileNumber("number" + uniqueId)
                 .address1("address1" + uniqueId)
                 .address2("address2" + uniqueId)
@@ -34,7 +35,6 @@ public class NameAddressTestData
                 .title("title" + uniqueId)
                 .surname("surname" + uniqueId)
                 .telephoneNumber("telephoneNumber" + uniqueId)
-                .dateOfBirth(OffsetDateTime.now())
                 .name("name" + uniqueId)
                 .build();
 

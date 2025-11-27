@@ -103,6 +103,7 @@ public abstract class ApplicationListEntryEntityMapper {
     @Mapping(target = "officials", ignore = true)
     @Mapping(target = "entryRescheduled", constant = "N")
     @Mapping(target = "sequenceNumber", constant = "1")
+    @Mapping(target = "uuid", ignore = true)
     public abstract ApplicationListEntry toApplicationListEntry(
             EntryCreateDto entryCreateDto,
             String substituteWording,
@@ -124,9 +125,13 @@ public abstract class ApplicationListEntryEntityMapper {
 
     public NameAddress toRespondentNameAddress(Respondent applicant) {
         if (applicant.getPerson() != null) {
-            return toPerson(applicant.getPerson());
+            NameAddress nameAddress = toPerson(applicant.getPerson());
+            nameAddress.setDateOfBirth(applicant.getDateOfBirth());
+            return nameAddress;
         } else if (applicant.getOrganisation() != null) {
-            return toOrganisation(applicant.getOrganisation());
+            NameAddress nameAddress =  toOrganisation(applicant.getOrganisation());
+            nameAddress.setDateOfBirth(applicant.getDateOfBirth());
+            return nameAddress;
         } else {
             return null;
         }
@@ -167,7 +172,7 @@ public abstract class ApplicationListEntryEntityMapper {
     public abstract AppListEntryFeeStatus toFeeStatus(
             FeeStatus feeStatus, ApplicationListEntry applicationListEntry);
 
-    public FeeStatusType toStatus(PaymentStatus paymentStatus) {
+    public static FeeStatusType toStatus(PaymentStatus paymentStatus) {
         if (paymentStatus == PaymentStatus.DUE) {
             return FeeStatusType.DUE;
         } else if (paymentStatus == PaymentStatus.PAID) {
