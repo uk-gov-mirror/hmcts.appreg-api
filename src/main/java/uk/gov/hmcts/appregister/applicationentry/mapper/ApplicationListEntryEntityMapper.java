@@ -4,7 +4,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
@@ -13,16 +12,11 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
-import uk.gov.hmcts.appregister.common.enumeration.OfficialType;
 import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
-import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.Official;
-import uk.gov.hmcts.appregister.generated.model.Organisation;
 import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
-import uk.gov.hmcts.appregister.generated.model.Person;
-import uk.gov.hmcts.appregister.generated.model.Respondent;
 
 /**
  * Maps ApplicationListEntry related entities to associated entities.
@@ -30,8 +24,7 @@ import uk.gov.hmcts.appregister.generated.model.Respondent;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public abstract class ApplicationListEntryEntityMapper {
 
-    @Autowired
-    OfficialMapper officialMapper;
+    @Autowired OfficialMapper officialMapper;
 
     @Mapping(target = "applicationListEntryWording", source = "substituteWording")
     @Mapping(target = "applicationCode", source = "code")
@@ -67,9 +60,7 @@ public abstract class ApplicationListEntryEntityMapper {
             ApplicationCode code,
             ApplicationList applicationList);
 
-    @Mapping(
-            target = "alefsFeeStatus",
-            expression = "java(toStatus(feeStatus.getPaymentStatus()))")
+    @Mapping(target = "alefsFeeStatus", expression = "java(toStatus(feeStatus.getPaymentStatus()))")
     @Mapping(target = "appListEntry", source = "applicationListEntry")
     @Mapping(target = "alefsFeeStatusDate", source = "feeStatus.statusDate")
     @Mapping(target = "alefsPaymentReference", source = "feeStatus.paymentReference")
@@ -80,6 +71,7 @@ public abstract class ApplicationListEntryEntityMapper {
 
     /**
      * Converts the payment status to fee status type.
+     *
      * @param paymentStatus The payment status
      * @return The fee status type
      */
@@ -100,10 +92,11 @@ public abstract class ApplicationListEntryEntityMapper {
     @Mapping(target = "appListEntry", source = "listEntryEntity")
     @Mapping(target = "forename", source = "official.forename")
     @Mapping(target = "surname", source = "official.surname")
-    @Mapping(target = "officialType", expression = "java(officialMapper.toOfficial(official.getType()))")
+    @Mapping(
+            target = "officialType",
+            expression = "java(officialMapper.toOfficial(official.getType()))")
     @Mapping(target = "createdUser", ignore = true)
     @Mapping(target = "id", ignore = true)
     public abstract AppListEntryOfficial toOfficial(
             Official official, ApplicationListEntry listEntryEntity);
-
 }

@@ -1,10 +1,8 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
-import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
-
-import java.util.List;
 
 public interface AppListEntryOfficialRepository extends JpaRepository<AppListEntryOfficial, Long> {
     /**
@@ -15,5 +13,4 @@ public interface AppListEntryOfficialRepository extends JpaRepository<AppListEnt
      *     value
      */
     List<AppListEntryOfficial> findByIdGreaterThanEqual(Integer value);
-
 }

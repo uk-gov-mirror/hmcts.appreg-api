@@ -6,7 +6,7 @@ import uk.gov.hmcts.appregister.common.exception.ErrorCodeEnum;
 import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 
 /**
- * An enumeration to capture the errors for the application entry list
+ * An enumeration to capture the errors for the application entry list.
  */
 public enum AppListEntryError implements ErrorCodeEnum {
     RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON(
@@ -58,15 +58,15 @@ public enum AppListEntryError implements ErrorCodeEnum {
                     "The application list is not correct to have an entry added for it",
                     "AL-11")),
     RESPONDENT_REQUIRED(
-        DefaultErrorDetail.create(
-            HttpStatus.BAD_REQUEST,
-            "Respondent is expected for the provided application code",
-            "ALE-12")),
+            DefaultErrorDetail.create(
+                    HttpStatus.BAD_REQUEST,
+                    "Respondent is expected for the provided application code",
+                    "ALE-12")),
     NOT_RESPONDENT_REQUIRED(
-        DefaultErrorDetail.create(
-            HttpStatus.BAD_REQUEST,
-            "Respondent not expected for the provided application code",
-            "ALE-13"));
+            DefaultErrorDetail.create(
+                    HttpStatus.BAD_REQUEST,
+                    "Respondent not expected for the provided application code",
+                    "ALE-13"));
 
     private final DefaultErrorDetail defaultErrorCode;
 

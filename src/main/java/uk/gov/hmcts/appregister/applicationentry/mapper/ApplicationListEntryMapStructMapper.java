@@ -2,12 +2,7 @@ package uk.gov.hmcts.appregister.applicationentry.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-
 import lombok.Setter;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -21,7 +16,6 @@ import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
-import uk.gov.hmcts.appregister.common.enumeration.OfficialType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
@@ -50,14 +44,11 @@ import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper
 @Setter
 public abstract class ApplicationListEntryMapStructMapper {
 
-    @Autowired
-    ApplicantMapper aMapper;
+    @Autowired ApplicantMapper applicantMapper;
 
-    @Autowired
-    OfficialMapper officialMapper;
+    @Autowired OfficialMapper officialMapper;
 
-    @Autowired
-    StandardApplicantMapper standardApplicantMapper;
+    @Autowired StandardApplicantMapper standardApplicantMapper;
 
     public abstract ApplicationListEntrySummary toSummaryDto(
             ApplicationListEntrySummaryProjection summaryProjection);
@@ -110,12 +101,10 @@ public abstract class ApplicationListEntryMapStructMapper {
     }
 
     @Mapping(target = "id", source = "projection.uuid")
-    @Mapping(
-            target = "applicant",
-            expression = "java(toApplicant(projection))")
+    @Mapping(target = "applicant", expression = "java(toApplicant(projection))")
     @Mapping(
             target = "respondent",
-            expression = "java(aMapper.toApplicant(projection.getRnameaddress()))")
+            expression = "java(applicantMapper.toApplicant(projection.getRnameaddress()))")
     @Mapping(target = "applicationTitle", source = "projection.title")
     @Mapping(target = "isFeeRequired", expression = "java(projection.getFeeRequired().isYes())")
     @Mapping(target = "status", expression = "java(toStatus(projection.getStatus()))")
@@ -125,15 +114,15 @@ public abstract class ApplicationListEntryMapStructMapper {
             ApplicationListEntryGetSummaryProjection projection);
 
     /**
-     * gets a standard applicant or a named applicant depending on which one exists
+     * gets a standard applicant or a named applicant depending on which one exists.
+     *
      * @param projection The projection
      * @return The applicant mapper
      */
     public Applicant toApplicant(ApplicationListEntryGetSummaryProjection projection) {
         if (projection.getAnameaddress() != null) {
-            return aMapper.toApplicant(projection.getAnameaddress());
-        }
-        else if (projection.getStandardApplicant() != null) {
+            return applicantMapper.toApplicant(projection.getAnameaddress());
+        } else if (projection.getStandardApplicant() != null) {
             return standardApplicantMapper.toApplicant(projection.getStandardApplicant());
         }
 
@@ -141,17 +130,19 @@ public abstract class ApplicationListEntryMapStructMapper {
     }
 
     /**
-     * gets a standard applicant or a named applicant depending on which one exists
+     * gets a standard applicant or a named applicant depending on which one exists.
+     *
      * @param applicationListEntry The app list entry
      * @param standardApplicant The standard applicant to use can be null
      * @return The applicant mapper
      */
-    public Applicant toApplicant(ApplicationListEntry applicationListEntry, StandardApplicant standardApplicant) {
+    public Applicant toApplicant(
+            ApplicationListEntry applicationListEntry, StandardApplicant standardApplicant) {
         if (standardApplicant != null) {
             return standardApplicantMapper.toApplicant(standardApplicant);
         }
 
-        return aMapper.toApplicant(applicationListEntry.getAnamedaddress());
+        return applicantMapper.toApplicant(applicationListEntry.getAnamedaddress());
     }
 
     /**
@@ -160,10 +151,10 @@ public abstract class ApplicationListEntryMapStructMapper {
      * @param applicationListEntry The application list entry
      * @return The entry get detail dto
      */
+    @Mapping(target = "id", expression = "java(applicationListEntry.getUuid())")
     @Mapping(
-            target = "id",
-            expression = "java(applicationListEntry.getUuid())")
-    @Mapping(target = "listId", expression = "java(applicationListEntry.getApplicationList().getUuid())")
+            target = "listId",
+            expression = "java(applicationListEntry.getApplicationList().getUuid())")
     @Mapping(
             target = "standardApplicantCode",
             source = "applicationListEntry.standardApplicant.applicantCode")
@@ -190,7 +181,8 @@ public abstract class ApplicationListEntryMapStructMapper {
             ApplicationListEntry applicationListEntry,
             List<AppListEntryFeeStatus> statusList,
             Fee fee,
-            List<AppListEntryOfficial> officials, StandardApplicant applicant);
+            List<AppListEntryOfficial> officials,
+            StandardApplicant applicant);
 
     public List<Official> toOfficial(List<AppListEntryOfficial> officials) {
         List<Official> retOfficials = new ArrayList<>();
@@ -205,7 +197,12 @@ public abstract class ApplicationListEntryMapStructMapper {
         return retOfficials;
     }
 
-    /** gets the working refreence strings to return */
+    /**
+     * gets the working refreence strings from template code.
+     *
+     * @param code The application code
+     * @return The list of template keys (references)
+     */
     public List<String> getTemplateKeys(ApplicationCode code) {
         return WordingTemplateSentence.with(code.getWording()).getReferences();
     }
@@ -251,7 +248,7 @@ public abstract class ApplicationListEntryMapStructMapper {
      */
     public Respondent toRespondent(NameAddress applicant) {
 
-        ContactDetails contactDetails = aMapper.toContactDetails(applicant);
+        ContactDetails contactDetails = applicantMapper.toContactDetails(applicant);
         Respondent respondentDto = null;
         if (applicant != null) {
             respondentDto = new Respondent();
@@ -265,7 +262,7 @@ public abstract class ApplicationListEntryMapStructMapper {
 
             } else {
                 Person person = new Person();
-                FullName fullName = aMapper.toFullName(applicant);
+                FullName fullName = applicantMapper.toFullName(applicant);
                 person.setContactDetails(contactDetails);
                 person.setName(fullName);
                 respondentDto.setPerson(person);

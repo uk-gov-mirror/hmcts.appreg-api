@@ -22,7 +22,6 @@ import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeId;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
-import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
@@ -135,11 +134,19 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
                                         // save the applicant
                                         NameAddress applicantToSave = null;
-                                        if (entryCreateDto.getData().getApplicant() != null &&
-                                        entryCreateDto.getData().getApplicant().getOrganisation() != null ||
-                                        entryCreateDto.getData().getApplicant().getPerson() != null) {
+                                        if (entryCreateDto.getData().getApplicant() != null
+                                                        && entryCreateDto
+                                                                        .getData()
+                                                                        .getApplicant()
+                                                                        .getOrganisation()
+                                                                != null
+                                                || entryCreateDto
+                                                                .getData()
+                                                                .getApplicant()
+                                                                .getPerson()
+                                                        != null) {
                                             applicantToSave =
-                                                applicantMapper.toApplicant(
+                                                    applicantMapper.toApplicant(
                                                             entryCreateDto
                                                                     .getData()
                                                                     .getApplicant());
@@ -154,11 +161,10 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                         if (entryCreateDto.getData().getRespondent() != null) {
                                             respondentToSave =
                                                     nameAddressRepository.save(
-                                                        applicantMapper
-                                                                    .toRespondent(
-                                                                            entryCreateDto
-                                                                                    .getData()
-                                                                                    .getRespondent()));
+                                                            applicantMapper.toRespondent(
+                                                                    entryCreateDto
+                                                                            .getData()
+                                                                            .getRespondent()));
                                             log.debug(
                                                     "Created respondent with id: {}",
                                                     respondentToSave.getId());
@@ -180,8 +186,10 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                                                 success.getApplicationCode(),
                                                                 success.getApplicationList());
 
-                                        listEntryEntity = refreshEntity(applicationListEntryRepository.save(
-                                                        listEntryEntity));
+                                        listEntryEntity =
+                                                refreshEntity(
+                                                        applicationListEntryRepository.save(
+                                                                listEntryEntity));
                                         log.debug(
                                                 "Created application entry with id: {}",
                                                 listEntryEntity.getId());
@@ -191,42 +199,39 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                         if (entryCreateDto.getData().getFeeStatuses() != null) {
                                             // create the fee statuses and map to entry
                                             for (FeeStatus feeStatus :
-                                                entryCreateDto.getData().getFeeStatuses()) {
+                                                    entryCreateDto.getData().getFeeStatuses()) {
                                                 AppListEntryFeeStatus createdAppListStatus =
-                                                    appListEntryFeeStatusRepository.save(
-                                                        applicationListEntryEntityMapper
-                                                            .toFeeStatus(
-                                                                feeStatus,
-                                                                listEntryEntity
-                                                            ));
+                                                        appListEntryFeeStatusRepository.save(
+                                                                applicationListEntryEntityMapper
+                                                                        .toFeeStatus(
+                                                                                feeStatus,
+                                                                                listEntryEntity));
                                                 statusList.add(createdAppListStatus);
                                                 log.debug(
-                                                    "Fee status created and mapped to application entry with id: {}",
-                                                    createdAppListStatus.getId()
-                                                );
+                                                        "Fee status created and mapped to application "
+                                                                + "entry with id: {}",
+                                                        createdAppListStatus.getId());
                                             }
                                         }
 
                                         List<AppListEntryOfficial> officialList = new ArrayList<>();
 
-                                            if (entryCreateDto.getData().getOfficials() != null) {
-                                                // create the official for the entry
-                                                for (Official official :
+                                        if (entryCreateDto.getData().getOfficials() != null) {
+                                            // create the official for the entry
+                                            for (Official official :
                                                     entryCreateDto.getData().getOfficials()) {
-                                                    AppListEntryOfficial createdOriginal =
+                                                AppListEntryOfficial createdOriginal =
                                                         appListEntryOfficialRepository.save(
-                                                            applicationListEntryEntityMapper
-                                                                .toOfficial(
-                                                                    official,
-                                                                    listEntryEntity
-                                                                ));
-                                                    officialList.add(createdOriginal);
-                                                    log.debug(
+                                                                applicationListEntryEntityMapper
+                                                                        .toOfficial(
+                                                                                official,
+                                                                                listEntryEntity));
+                                                officialList.add(createdOriginal);
+                                                log.debug(
                                                         "Original created and mapped to application entry with id: {}",
-                                                        createdOriginal.getId()
-                                                    );
-                                                }
+                                                        createdOriginal.getId());
                                             }
+                                        }
 
                                         EntryGetDetailDto entryGetDetailDto =
                                                 applicationListEntryMapStructMapper
@@ -236,24 +241,25 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                                                 success.getFee(),
                                                                 officialList,
                                                                 success.getSa());
-                                        entryGetDetailDto.setHasOffsiteFee(entryCreateDto.getData().getHasOffsiteFee());
+                                        entryGetDetailDto.setHasOffsiteFee(
+                                                entryCreateDto.getData().getHasOffsiteFee());
 
                                         if (success.getFee() != null) {
                                             // create the link between the entry and the fees
                                             AppListEntryFeeId appListEntryFeeId =
-                                                new AppListEntryFeeId();
+                                                    new AppListEntryFeeId();
                                             appListEntryFeeId.setAppListEntryId(listEntryEntity);
                                             appListEntryFeeId.setFeeId(success.getFee());
 
                                             appListEntryFeeId =
-                                                appListEntryFeeRepository.save(appListEntryFeeId);
+                                                    appListEntryFeeRepository.save(
+                                                            appListEntryFeeId);
                                             log.debug(
-                                                "Created Fee: {} to Entry: {} mapping: {}",
-                                                appListEntryFeeId.getFeeId(),
-                                                appListEntryFeeId
-                                                    .getAppListEntryId()
-                                                    .getEntryFeeIds()
-                                            );
+                                                    "Created Fee: {} to Entry: {} mapping: {}",
+                                                    appListEntryFeeId.getFeeId(),
+                                                    appListEntryFeeId
+                                                            .getAppListEntryId()
+                                                            .getEntryFeeIds());
                                         }
 
                                         return Optional.of(

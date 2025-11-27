@@ -6,8 +6,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.stereotype.Component;
-
-import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.ContactDetails;
@@ -96,5 +94,4 @@ public abstract class StandardApplicantMapper {
         }
         return contactDetails;
     }
-
 }

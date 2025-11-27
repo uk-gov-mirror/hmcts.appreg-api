@@ -339,8 +339,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                 data.getRnameaddress().getDateOfBirth(),
                 applicationListEntryPrintProjectionsToAssertAgainst
                         .getFirst()
-                        .getRespondentDateOfBirth()
-                        .toLocalDate());
+                        .getRespondentDateOfBirth());
         assertEquals(
                 data.getRnameaddress().getName(),
                 applicationListEntryPrintProjectionsToAssertAgainst.getFirst().getRespondentName());

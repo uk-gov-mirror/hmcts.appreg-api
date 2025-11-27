@@ -24,10 +24,9 @@ import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.template.wording.WordingTemplateSentence;
 import uk.gov.hmcts.appregister.common.validator.Validator;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
-import uk.gov.hmcts.appregister.generated.model.Respondent;
 
 /**
- * Validates the dto for an application entry create
+ * Validates the dto for an application entry create.
  */
 @Component
 @Slf4j
@@ -40,7 +39,6 @@ public class CreateApplicationEntryValidator
     private final FeeRepository feeRepository;
     private final Clock clock;
     private final StandardApplicantRepository standardApplicantRepository;
-
 
     @Override
     public void validate(PayloadForCreate<EntryCreateDto> validatable) {
@@ -136,7 +134,7 @@ public class CreateApplicationEntryValidator
     }
 
     /**
-     * validate the standard applicant code exists for the applicant
+     * validate the standard applicant code exists for the applicant.
      *
      * @param validatable The dto payload to validate
      * @return The standard applicant or null if not applicable
@@ -180,9 +178,17 @@ public class CreateApplicationEntryValidator
         boolean hasCode = dto.getStandardApplicantCode() != null;
 
         int count = 0;
-        if (hasOrganisation) count++;
-        if (hasPerson) count++;
-        if (hasCode) count++;
+        if (hasOrganisation) {
+            count++;
+        }
+
+        if (hasPerson) {
+            count++;
+        }
+
+        if (hasCode) {
+            count++;
+        }
 
         if (count != 1) {
             throw new AppRegistryException(
@@ -203,12 +209,11 @@ public class CreateApplicationEntryValidator
     private void ensureRespondentMutualExclusion(EntryCreateDto dto) {
         if (dto.getRespondent() != null) {
             if (!(dto.getRespondent() != null && dto.getRespondent().getOrganisation() != null)
-                ^ (dto.getRespondent() != null && dto.getRespondent().getPerson() != null)) {
+                    ^ (dto.getRespondent() != null && dto.getRespondent().getPerson() != null)) {
                 throw new AppRegistryException(
-                    AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON,
-                    "The respondent type can only be an organsisation or person %s"
-                        .formatted(dto.getRespondent())
-                );
+                        AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON,
+                        "The respondent type can only be an organsisation or person %s"
+                                .formatted(dto.getRespondent()));
             }
         }
 
@@ -258,8 +263,9 @@ public class CreateApplicationEntryValidator
                     AppListEntryError.FEE_REQUIRED,
                     "Fee required for code %s"
                             .formatted(validatable.getData().getApplicationCode()));
-        } else if (yesOrNo == YesOrNo.NO && validatable.getData().getFeeStatuses()!=null
-            && !validatable.getData().getFeeStatuses().isEmpty()) {
+        } else if (yesOrNo == YesOrNo.NO
+                && validatable.getData().getFeeStatuses() != null
+                && !validatable.getData().getFeeStatuses().isEmpty()) {
             throw new AppRegistryException(
                     AppListEntryError.FEE_NOT_REQUIRED,
                     "Fee is provided but not required for code %s"
@@ -273,8 +279,7 @@ public class CreateApplicationEntryValidator
                             applicationCode.getFeeReference(),
                             LocalDate.now(clock),
                             validatable.getData().getHasOffsiteFee() != null
-                                && validatable.getData().getHasOffsiteFee()
-                    );
+                                    && validatable.getData().getHasOffsiteFee());
 
             if (fees.isEmpty()) {
                 // throw an exception as we have no feeds
@@ -287,7 +292,6 @@ public class CreateApplicationEntryValidator
             feeToReturn = fees.getFirst();
             log.debug("Validated the fee {}", feeToReturn.getId());
         }
-
 
         return feeToReturn;
     }
@@ -303,34 +307,38 @@ public class CreateApplicationEntryValidator
             ApplicationCode applicationCode, PayloadForCreate<EntryCreateDto> validatable) {
 
         // if respondent is required, check that it exists in the payload
-        if (applicationCode.getRequiresRespondent() == YesOrNo.YES && validatable.getData().getRespondent() == null) {
+        if (applicationCode.getRequiresRespondent() == YesOrNo.YES
+                && validatable.getData().getRespondent() == null) {
             throw new AppRegistryException(
-                AppListEntryError.RESPONDENT_REQUIRED,
-                "Respondent required for code %s"
-                    .formatted(validatable.getData().getApplicationCode()));
+                    AppListEntryError.RESPONDENT_REQUIRED,
+                    "Respondent required for code %s"
+                            .formatted(validatable.getData().getApplicationCode()));
         }
 
         // check bulk respondent is off and no respondents are specified in the payload
-        if (applicationCode.getBulkRespondentAllowed() == YesOrNo.NO &&
-            validatable.getData().getNumberOfRespondents()!=null && validatable.getData().getNumberOfRespondents() != 0) {
+        if (applicationCode.getBulkRespondentAllowed() == YesOrNo.NO
+                && validatable.getData().getNumberOfRespondents() != null
+                && validatable.getData().getNumberOfRespondents() != 0) {
             throw new AppRegistryException(
-                AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
-                "Bulk respondent not required for code %s"
-                    .formatted(validatable.getData().getApplicationCode()));
+                    AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
+                    "Bulk respondent not required for code %s"
+                            .formatted(validatable.getData().getApplicationCode()));
         }
 
         // if we do not require a respondent, check that none exists in the payload
-        if (applicationCode.getRequiresRespondent() == YesOrNo.NO && validatable.getData().getRespondent() != null) {
+        if (applicationCode.getRequiresRespondent() == YesOrNo.NO
+                && validatable.getData().getRespondent() != null) {
             throw new AppRegistryException(
-                AppListEntryError.NOT_RESPONDENT_REQUIRED,
-                "Respondent not required for code %s"
-                    .formatted(validatable.getData().getApplicationCode()));
-
+                    AppListEntryError.NOT_RESPONDENT_REQUIRED,
+                    "Respondent not required for code %s"
+                            .formatted(validatable.getData().getApplicationCode()));
         }
 
         // if we are setting multiple respondents, check that the application code allows it
-        if (applicationCode.getBulkRespondentAllowed() == YesOrNo.NO && validatable.getData().getRespondent() != null
-                 && (validatable.getData().getNumberOfRespondents() != null && validatable.getData().getNumberOfRespondents() != 0)) {
+        if (applicationCode.getBulkRespondentAllowed() == YesOrNo.NO
+                && validatable.getData().getRespondent() != null
+                && (validatable.getData().getNumberOfRespondents() != null
+                        && validatable.getData().getNumberOfRespondents() != 0)) {
             throw new AppRegistryException(
                     AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
                     "Bulk respondent not required for code %s"
@@ -338,12 +346,14 @@ public class CreateApplicationEntryValidator
         }
 
         // if we are setting multiple respondents, check that the application code allows it
-        if (applicationCode.getRequiresRespondent() == YesOrNo.YES && validatable.getData().getRespondent() == null
-            || (validatable.getData().getNumberOfRespondents()!=null && validatable.getData().getNumberOfRespondents() == 0)) {
+        if (applicationCode.getRequiresRespondent() == YesOrNo.YES
+                        && validatable.getData().getRespondent() == null
+                || (validatable.getData().getNumberOfRespondents() != null
+                        && validatable.getData().getNumberOfRespondents() == 0)) {
             throw new AppRegistryException(
-                AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
-                "Bulk respondent not required for code %s"
-                    .formatted(validatable.getData().getApplicationCode()));
+                    AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
+                    "Bulk respondent not required for code %s"
+                            .formatted(validatable.getData().getApplicationCode()));
         }
 
         log.debug("Validated the respondent details");

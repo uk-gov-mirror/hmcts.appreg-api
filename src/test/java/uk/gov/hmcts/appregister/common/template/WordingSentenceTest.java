@@ -17,7 +17,8 @@ public class WordingSentenceTest {
     private static final String MULTIPLE_INVALID =
             "Application by {TEXT|Applicant officer|70} for a production ord covering "
                     + "{NoType|No.of accounts|3} accounts(s) requiring the respondent to either produce or "
-                    + "allow access to material that is in their possession or control for the purpose of {IncorrectFormat|} "
+                    + "allow access to material that is in their possession or control for "
+                    + "the purpose of {IncorrectFormat|} "
                     + "a relevant investigation {This is not a valid template} ";
 
     private static final String SINGLE_VALUE_TEMPLATE =

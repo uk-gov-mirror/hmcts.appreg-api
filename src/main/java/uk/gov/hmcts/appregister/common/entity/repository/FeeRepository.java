@@ -43,12 +43,12 @@ public interface FeeRepository extends JpaRepository<Fee, Long> {
      */
     @Query(
             """
-    SELECT f
-    FROM Fee f
-    WHERE (f.reference = :reference) AND
-      ((f.endDate IS NULL OR  f.endDate >= :dateTime)
-              AND f.startDate <= :dateTime) AND f.isOffsite = :offsiteStatus
-    """)
+        SELECT f
+        FROM Fee f
+        WHERE (f.reference = :reference) AND
+        ((f.endDate IS NULL OR  f.endDate >= :dateTime)
+        AND f.startDate <= :dateTime) AND f.isOffsite = :offsiteStatus
+        """)
     List<Fee> findByReferenceBetweenDateWithOffsite(
             String reference, LocalDate dateTime, boolean offsiteStatus);
 

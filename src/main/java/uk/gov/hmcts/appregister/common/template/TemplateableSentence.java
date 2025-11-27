@@ -9,14 +9,14 @@ import java.util.List;
 public interface TemplateableSentence extends List<Templateable> {
 
     /**
-     * gets the erroneous templates that were found if any
+     * gets the erroneous templates that were found if any.
      *
      * @return list of erroneous template strings
      */
     List<String> getErroneousTemplates();
 
     /**
-     * gets all reference names for all templates in the collection
+     * gets all reference names for all templates in the collection.
      *
      * @return list of all template references in he correct order they were processed
      */
@@ -33,7 +33,7 @@ public interface TemplateableSentence extends List<Templateable> {
     String substitute(List<String> values);
 
     /**
-     * Substitutes a single value into a sentence
+     * Substitutes a single value into a sentence.
      *
      * @param values the templateable item to substitute into
      * @return The sentence with the templates substituted with the provided values. NOTE: If the
@@ -42,14 +42,14 @@ public interface TemplateableSentence extends List<Templateable> {
     TemplateableSentence substituteForTemplate(Templateable values, String valueToSubstitute);
 
     /**
-     * Gets the fully substituted string
+     * Gets the fully substituted string.
      *
      * @return the substituted string so far
      */
     String getSubstitutedSentence();
 
     /**
-     * gets the template by the reference
+     * gets the template by the reference.
      *
      * @param referenceValue The reference
      * @return Gets the first reference in the collection if multiple exist

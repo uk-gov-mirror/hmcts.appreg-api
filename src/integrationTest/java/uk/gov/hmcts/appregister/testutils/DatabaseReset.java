@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeStatusRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryOfficialRepository;
@@ -66,17 +65,18 @@ public class DatabaseReset {
         appListEntryFeeRepository.deleteAll();
 
         appListEntryFeeStatusRepository.deleteAll(
-            appListEntryFeeStatusRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+                appListEntryFeeStatusRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
         appListEntryOfficialRepository.deleteAll(
-            appListEntryOfficialRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+                appListEntryOfficialRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
         applicationRegisterRepository.deleteAll(
                 applicationRegisterRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationListEntryRepository.deleteAll(
                 applicationListEntryRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
-        nameAddressRepository.deleteAll(nameAddressRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+        nameAddressRepository.deleteAll(
+                nameAddressRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationCodeRepository.deleteAll(
                 applicationCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationCodeRepository.deleteAll(

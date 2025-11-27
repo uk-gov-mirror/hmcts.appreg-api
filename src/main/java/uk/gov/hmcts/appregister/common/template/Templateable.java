@@ -4,14 +4,16 @@ import uk.gov.hmcts.appregister.common.template.type.DataType;
 
 /**
  * A class that supports a template which values can be substituted into. Templates are assumed to
- * contain data that supports the validity of values that are substituted
+ * contain data that supports the validity of values that are substituted.
  *
- * <p>1) Reference string 2) Data type e.g. text, date, integer etc 3) Length
+ * <p>1) Reference string 2) Data type e.g. text, date, integer etc 3) Length.
  */
 public interface Templateable {
 
     /**
-     * @return The reference string of the template
+     * Gets the reference string of the template.
+     *
+     * @return The reference string of the template.
      */
     String getReference();
 
@@ -19,7 +21,7 @@ public interface Templateable {
     String substitute(String value);
 
     /**
-     * Can subsitute be performed with the given options.
+     * Can substitute be performed with the given options.
      *
      * @throws uk.gov.hmcts.appregister.common.exception.AppRegistryException on failure due to data
      *     validation according to length or data type
@@ -36,12 +38,16 @@ public interface Templateable {
     }
 
     /**
-     * gets the type of the template
+     * gets the type of the template.
      *
      * @return The type of the template
      */
     DataType getType();
 
-    /** */
+    /**
+     * The length of the template restriction.
+     *
+     * @return The length restriction
+     */
     Integer getLength();
 }

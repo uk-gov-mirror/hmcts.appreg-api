@@ -114,7 +114,11 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(7, true);
+        differenceLogAsserter.assertDiffCount(8, true);
+
+        differenceLogAsserter.assertDataAuditChange(
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST, "id", "", null, operation, eventName));
 
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
@@ -223,7 +227,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(8, true);
+        differenceLogAsserter.assertDiffCount(9, true);
 
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
@@ -233,6 +237,11 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         req.getStatus().toString(),
                         operation,
                         eventName));
+
+        differenceLogAsserter.assertDataAuditChange(
+                AuditLogAsserter.getDataAuditAssertion(
+                        "application_lists", "id", null, null, operation, eventName));
+
         differenceLogAsserter.assertFieldLogNotPresent(
                 TableNames.APPICATION_LIST, "courthouse_code", true);
 

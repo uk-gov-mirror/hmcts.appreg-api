@@ -73,8 +73,6 @@ public class CreateApplicationEntryValidatorTest {
 
         AppListTestData appListTestData = new AppListTestData();
         ApplicationCodeTestData applicationCodeTestData = new ApplicationCodeTestData();
-        FeeTestData feeTestData = new FeeTestData();
-        StandardApplicantTestData standardApplicantTestData = new StandardApplicantTestData();
         applicationList = appListTestData.someComplete();
 
         // make sure the application list is open
@@ -84,6 +82,9 @@ public class CreateApplicationEntryValidatorTest {
         applicationCode.setFeeDue(YesOrNo.YES);
         applicationCode.setBulkRespondentAllowed(YesOrNo.YES);
         applicationCode.setRequiresRespondent(YesOrNo.YES);
+
+        FeeTestData feeTestData = new FeeTestData();
+        StandardApplicantTestData standardApplicantTestData = new StandardApplicantTestData();
 
         fee = feeTestData.someComplete();
         standardApplicant = standardApplicantTestData.someComplete();

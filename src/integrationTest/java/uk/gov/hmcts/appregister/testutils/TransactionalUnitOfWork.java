@@ -1,9 +1,6 @@
 package uk.gov.hmcts.appregister.testutils;
 
-import java.util.concurrent.Callable;
-import java.util.function.Function;
 import java.util.function.Supplier;
-
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

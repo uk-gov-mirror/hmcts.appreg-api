@@ -3,7 +3,7 @@ package uk.gov.hmcts.appregister.common.util;
 import java.util.List;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.hmcts.appregister.generated.model.OfficialType;
+import uk.gov.hmcts.appregister.common.enumeration.OfficialType;
 
 @Slf4j
 @UtilityClass
@@ -11,7 +11,8 @@ public final class OfficialTypeUtil {
 
     public static final String MAGISTRATE_CODE = "M";
     public static final String CLERK_CODE = "C";
-    public static final List<String> PRINTABLE_CODES = List.of(MAGISTRATE_CODE, CLERK_CODE);
+    public static final List<OfficialType> PRINTABLE_CODES =
+            List.of(OfficialType.MAGISTRATE, OfficialType.CLERK);
 
     public static OfficialType fromCode(String code) {
         if (code == null) {

@@ -3,18 +3,17 @@ package uk.gov.hmcts.appregister.common.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-import uk.gov.hmcts.appregister.generated.model.OfficialType;
-
 /**
- * A useful mapper to convert officials to and from entities and the front end model
+ * A useful mapper to convert officials to and from entities and the front end model.
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public class OfficialMapper {
     public static uk.gov.hmcts.appregister.generated.model.OfficialType toOfficial(
-        uk.gov.hmcts.appregister.common.enumeration.OfficialType officialType) {
+            uk.gov.hmcts.appregister.common.enumeration.OfficialType officialType) {
         if (officialType == uk.gov.hmcts.appregister.common.enumeration.OfficialType.CLERK) {
             return uk.gov.hmcts.appregister.generated.model.OfficialType.CLERK;
-        } else if (officialType == uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE){
+        } else if (officialType
+                == uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE) {
             return uk.gov.hmcts.appregister.generated.model.OfficialType.MAGISTRATE;
         }
 
@@ -22,10 +21,11 @@ public class OfficialMapper {
     }
 
     public static uk.gov.hmcts.appregister.common.enumeration.OfficialType toOfficial(
-        uk.gov.hmcts.appregister.generated.model.OfficialType officialType) {
+            uk.gov.hmcts.appregister.generated.model.OfficialType officialType) {
         if (officialType == uk.gov.hmcts.appregister.generated.model.OfficialType.CLERK) {
             return uk.gov.hmcts.appregister.common.enumeration.OfficialType.CLERK;
-        } else if (officialType == uk.gov.hmcts.appregister.generated.model.OfficialType.MAGISTRATE){
+        } else if (officialType
+                == uk.gov.hmcts.appregister.generated.model.OfficialType.MAGISTRATE) {
             return uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE;
         }
 

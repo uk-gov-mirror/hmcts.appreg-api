@@ -54,7 +54,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
     @MockitoBean private Clock clock; // replaces Clock bean in Spring context
 
     // The total app codes inserted by flyway scripts. See V6__InitialTestData.sql
-    private static final int TOTAL_APP_CODES_COUNT = 42;
+    private static final int TOTAL_APP_CODES_COUNT = 44;
 
     private static final String FEE_DESCRIPTION = "JP perform function away from court";
     private static final String OFFSITE_FEE_DESCRIPTION =
@@ -384,7 +384,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         // make the assertions
         PagingAssertionUtil.assertPageDetails(
-                response, pageSize, pageNumber, 14, TOTAL_APP_CODES_COUNT);
+                response, pageSize, pageNumber, 15, TOTAL_APP_CODES_COUNT);
 
         // assert the first auth code record
         ApplicationCodeGetSummaryDto firstEntry = response.getContent().getFirst();
@@ -442,7 +442,7 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
 
         // assert the response
         PagingAssertionUtil.assertPageDetails(
-                response, pageSize, pageNumber, 21, TOTAL_APP_CODES_COUNT);
+                response, pageSize, pageNumber, 22, TOTAL_APP_CODES_COUNT);
 
         // assert records are sorted based on the title of the auth codes
         ApplicationCodeGetSummaryDto firstEntry = response.getContent().get(0);

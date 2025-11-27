@@ -28,28 +28,28 @@ import uk.gov.hmcts.appregister.common.util.ReadOnlyList;
 @ToString
 public class WordingTemplateSentence extends ReadOnlyList<Templateable>
         implements TemplateableSentence {
-    /** The starting character */
+    /** The starting character. */
     private static final String START_CHARACTER = "{";
 
-    /** The end character */
+    /** The end character. */
     private static final String END_CHARACTER = "}";
 
-    /** The original template string */
+    /** The original template string. */
     private String template;
 
-    /** The erroneous templates that have been identified */
+    /** The erroneous templates that have been identified. */
     private List<String> erroneous = new ArrayList<>();
 
-    /** The template string with placeholders */
+    /** The template string with placeholders. */
     private String templateWithPositionalPlaceholders = "";
 
     /**
      * The placeholder UUID that is used as a unique placeholder with the template. Without this we
-     * can not guarantee a unique substitution key
+     * can not guarantee a unique substitution key.
      */
     private UUID positionalPlaceholderPrefix = UUID.randomUUID();
 
-    /** The regular expression to identify the template regex */
+    /** The regular expression to identify the template regex. */
     private static final String TEMPLATE_REGEX = "\\" + START_CHARACTER + "(.*?)\\" + END_CHARACTER;
 
     public WordingTemplateSentence(String templateString) {
@@ -92,7 +92,7 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
 
     /**
      * A constructor that copies an existing template collection but uses a different positional
-     * template string
+     * template string.
      *
      * @param templateToCopy The template to copy
      * @param templateWithPlaceholders The processed placeholder string to work with
@@ -107,7 +107,7 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
     }
 
     /**
-     * gets the unique placeholder string in for a positional
+     * gets the unique placeholder string in for a positional.
      *
      * @param position The position in the template
      * @return The unique placeholder for the id position
@@ -234,24 +234,24 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
     /** A wording template that supports substitution. */
     @ToString
     public static class WordingTemplate implements Templateable {
-        /** Then delimiter */
+        /** Then delimiter. */
         private static String DELIMITER = "\\|";
 
-        /** The regex pattern to split the template */
+        /** The regex pattern to split the template. */
         private static final Pattern PATTERN =
                 Pattern.compile(
                         "[^|]+\\" + DELIMITER + "[^|]+\\" + DELIMITER + "[^}]+", Pattern.DOTALL);
 
-        /** The reference that the substitute would happen */
+        /** The reference that the substitute would happen. */
         private String reference;
 
-        /** The data type of the value */
+        /** The data type of the value. */
         private DataType type;
 
-        /** The length of the value */
+        /** The length of the value. */
         private int length;
 
-        /** The template string */
+        /** The template string. */
         private String template;
 
         @Override
@@ -365,7 +365,7 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
         }
 
         /**
-         * substitute the text into the template
+         * substitute the text into the template.
          *
          * @param values The list of options to substitute
          * @return The substituted string or not present if validation failed. NOTE: This method

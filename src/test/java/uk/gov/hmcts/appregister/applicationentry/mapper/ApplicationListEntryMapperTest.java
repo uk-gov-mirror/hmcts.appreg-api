@@ -264,8 +264,7 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(PERSON4_SURNAME, applicant.getName().getSurname());
         Assertions.assertEquals(MRS, respondent.getName().getTitle());
         Assertions.assertEquals(PERSON5_SURNAME, respondent.getName().getSurname());
-        Assertions.assertEquals(
-                PERSON5_DATE_OF_BIRTH.toLocalDate(), dto.getRespondent().getDateOfBirth());
+        Assertions.assertEquals(PERSON5_DATE_OF_BIRTH, dto.getRespondent().getDateOfBirth());
 
         assertApplicationDetailsEqual(dto);
     }

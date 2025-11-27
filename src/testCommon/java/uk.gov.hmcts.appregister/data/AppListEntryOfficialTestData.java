@@ -1,15 +1,11 @@
 package uk.gov.hmcts.appregister.data;
 
+import static org.instancio.Select.field;
+
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
-
-import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
-import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
-import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
-import uk.gov.hmcts.appregister.testutils.data.Persistable;
-import static org.instancio.Select.field;
 
 public class AppListEntryOfficialTestData
         implements uk.gov.hmcts.appregister.testutils.data.Persistable<
@@ -28,5 +24,5 @@ public class AppListEntryOfficialTestData
                 .ignore(field(AppListEntryOfficial::getAppListEntry))
                 .withSettings(settings)
                 .create();
-   }
+    }
 }

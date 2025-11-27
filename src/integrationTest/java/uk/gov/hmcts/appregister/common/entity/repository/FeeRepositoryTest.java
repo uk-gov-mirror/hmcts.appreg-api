@@ -48,12 +48,14 @@ public class FeeRepositoryTest extends BaseRepositoryTest {
     @Test
     public void testSearchForFeeWithoutOffsite() {
         Assertions.assertNotNull(
-            applicationFeeRepository.findByReferenceBetweenDateWithOffsite("CO1.1", LocalDate.now(), false));
+                applicationFeeRepository.findByReferenceBetweenDateWithOffsite(
+                        "CO1.1", LocalDate.now(), false));
     }
 
     @Test
     public void testSearchForFeeWithOffsite() {
         Assertions.assertNotNull(
-            applicationFeeRepository.findByReferenceBetweenDateWithOffsite("CO1.1", LocalDate.now(), true));
+                applicationFeeRepository.findByReferenceBetweenDateWithOffsite(
+                        "CO1.1", LocalDate.now(), true));
     }
 }

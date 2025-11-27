@@ -39,8 +39,8 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
             Long id, Long listId, String userId);
 
     /**
-     * Finds a single application list entries by list ID, ensuring it belongs to the specified application list and
-     * that the list is owned by the given user.
+     * Finds a single application list entries by list ID, ensuring it belongs to the specified
+     * application list and that the list is owned by the given user.
      *
      * @param listId The ID of the application list the application is expected to belong to
      * @return The application, if found and accessible

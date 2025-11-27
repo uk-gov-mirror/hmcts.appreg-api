@@ -22,7 +22,6 @@ import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryOfficialPr
 import uk.gov.hmcts.appregister.common.util.OfficialTypeUtil;
 import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
-import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.util.ApplicationListEntryUtil;
 
 @Transactional
@@ -31,8 +30,6 @@ public class ApplicationListEntryOfficialRepositoryTest extends BaseRepositoryTe
 
     @Autowired
     private ApplicationListEntryOfficialRepository applicationListEntryOfficialRepository;
-
-    @Autowired private TransactionalUnitOfWork transactionalUnitOfWork;
 
     @PersistenceContext private EntityManager entityManager;
 

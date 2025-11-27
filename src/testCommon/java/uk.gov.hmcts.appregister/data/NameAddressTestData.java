@@ -3,7 +3,6 @@ package uk.gov.hmcts.appregister.data;
 import static org.instancio.Select.field;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
@@ -53,36 +52,38 @@ public class NameAddressTestData
     }
 
     /**
-     * generates a person
+     * generates a person.
+     *
      * @return address representing a person
      */
     public NameAddress somePerson() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         return Instancio.of(NameAddress.class)
-            .ignore(field(NameAddress::getId))
-            .ignore(field(NameAddress::getVersion))
-            .ignore(field(NameAddress::getName))
-            .withSettings(settings)
-            .create();
+                .ignore(field(NameAddress::getId))
+                .ignore(field(NameAddress::getVersion))
+                .ignore(field(NameAddress::getName))
+                .withSettings(settings)
+                .create();
     }
 
     /**
-     * generates an organisation
+     * generates an organisation.
+     *
      * @return address representing an organisation
      */
     public NameAddress someOrganisation() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         return Instancio.of(NameAddress.class)
-            .ignore(field(NameAddress::getId))
-            .ignore(field(NameAddress::getVersion))
-            .ignore(field(NameAddress::getTitle))
-            .ignore(field(NameAddress::getSurname))
-            .ignore(field(NameAddress::getForename1))
-            .ignore(field(NameAddress::getForename2))
-            .ignore(field(NameAddress::getForename3))
-            .withSettings(settings)
-            .create();
+                .ignore(field(NameAddress::getId))
+                .ignore(field(NameAddress::getVersion))
+                .ignore(field(NameAddress::getTitle))
+                .ignore(field(NameAddress::getSurname))
+                .ignore(field(NameAddress::getForename1))
+                .ignore(field(NameAddress::getForename2))
+                .ignore(field(NameAddress::getForename3))
+                .withSettings(settings)
+                .create();
     }
 }
