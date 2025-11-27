@@ -147,7 +147,6 @@ public abstract class ApplicationListEntryMapStructMapper {
      * @return The applicant mapper
      */
     public Applicant toApplicant(ApplicationListEntry applicationListEntry, StandardApplicant standardApplicant) {
-
         if (standardApplicant != null) {
             return standardApplicantMapper.toApplicant(standardApplicant);
         }

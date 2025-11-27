@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
+
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
@@ -16,6 +18,7 @@ import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
+import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
@@ -32,9 +35,13 @@ class ApplicationListEntryEntityMapperTest {
 
     private ApplicationListEntryEntityMapper mapper;
 
+    private ApplicantMapper applicantMapper;
+
     @BeforeEach
     void beforeEach() {
         mapper = new ApplicationListEntryEntityMapperImpl();
+        applicantMapper = new ApplicantMapperImpl();
+
     }
 
     @Test
@@ -131,7 +138,7 @@ class ApplicationListEntryEntityMapperTest {
             Instancio.of(Applicant.class).withSettings(settings).create();
         applicant.setOrganisation(null);
 
-        NameAddress nameAddress = mapper.toApplicant(applicant);
+        NameAddress nameAddress = applicantMapper.toApplicant(applicant);
         Assertions.assertEquals("AP", nameAddress.getCode());
         Assertions.assertEquals(applicant.getPerson().getName().getFirstForename(), nameAddress.getForename1());
         Assertions.assertEquals(applicant.getPerson().getName().getSecondForename(), nameAddress.getForename2());
@@ -155,7 +162,7 @@ class ApplicationListEntryEntityMapperTest {
             Instancio.of(Applicant.class).withSettings(settings).create();
         applicant.setPerson(null);
 
-        NameAddress nameAddress = mapper.toApplicant(applicant);
+        NameAddress nameAddress = applicantMapper.toApplicant(applicant);
         Assertions.assertEquals("AP", nameAddress.getCode());
         Assertions.assertEquals(nameAddress.getName(), applicant.getOrganisation().getName());
         Assertions.assertEquals(applicant.getOrganisation().getContactDetails().getPhone(), nameAddress.getTelephoneNumber());
@@ -176,7 +183,7 @@ class ApplicationListEntryEntityMapperTest {
             Instancio.of(Respondent.class).withSettings(settings).create();
         respondent.setOrganisation(null);
 
-        NameAddress nameAddress = mapper.toRespondent(respondent);
+        NameAddress nameAddress = applicantMapper.toRespondent(respondent);
         Assertions.assertEquals("RE", nameAddress.getCode());
         Assertions.assertEquals(respondent.getPerson().getName().getFirstForename(), nameAddress.getForename1());
         Assertions.assertEquals(respondent.getPerson().getName().getSecondForename(), nameAddress.getForename2());
@@ -200,7 +207,7 @@ class ApplicationListEntryEntityMapperTest {
             Instancio.of(Respondent.class).withSettings(settings).create();
         respondent.setPerson(null);
 
-        NameAddress nameAddress = mapper.toRespondent(respondent);
+        NameAddress nameAddress = applicantMapper.toRespondent(respondent);
         Assertions.assertEquals("RE", nameAddress.getCode());
         Assertions.assertEquals(nameAddress.getName(), respondent.getOrganisation().getName());
         Assertions.assertEquals(respondent.getOrganisation().getContactDetails().getPhone(), nameAddress.getTelephoneNumber());

@@ -33,52 +33,6 @@ public abstract class ApplicationListEntryEntityMapper {
     @Autowired
     OfficialMapper officialMapper;
 
-    @Mapping(target = "title", source = "person.name.title")
-    @Mapping(target = "surname", source = "person.name.surname")
-    @Mapping(target = "forename1", source = "person.name.firstForename")
-    @Mapping(target = "forename2", source = "person.name.secondForename")
-    @Mapping(target = "forename3", source = "person.name.thirdForename")
-    @Mapping(target = "address1", source = "person.contactDetails.addressLine1")
-    @Mapping(target = "address2", source = "person.contactDetails.addressLine2")
-    @Mapping(target = "address3", source = "person.contactDetails.addressLine3")
-    @Mapping(target = "address4", source = "person.contactDetails.addressLine4")
-    @Mapping(target = "address5", source = "person.contactDetails.addressLine5")
-    @Mapping(target = "postcode", source = "person.contactDetails.postcode")
-    @Mapping(target = "telephoneNumber", source = "person.contactDetails.phone")
-    @Mapping(target = "mobileNumber", source = "person.contactDetails.mobile")
-    @Mapping(target = "emailAddress", source = "person.contactDetails.email")
-    @Mapping(target = "dateOfBirth", ignore = true)
-    @Mapping(target = "dmsId", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "userName", ignore = true)
-    @Mapping(target = "code", ignore = true)
-    @Mapping(target = "version", ignore = true)
-    @Mapping(target = "name", ignore = true)
-    abstract NameAddress toPerson(Person person);
-
-    @Mapping(target = "name", source = "organisation.name")
-    @Mapping(target = "address1", source = "organisation.contactDetails.addressLine1")
-    @Mapping(target = "address2", source = "organisation.contactDetails.addressLine2")
-    @Mapping(target = "address3", source = "organisation.contactDetails.addressLine3")
-    @Mapping(target = "address4", source = "organisation.contactDetails.addressLine4")
-    @Mapping(target = "address5", source = "organisation.contactDetails.addressLine5")
-    @Mapping(target = "postcode", source = "organisation.contactDetails.postcode")
-    @Mapping(target = "telephoneNumber", source = "organisation.contactDetails.phone")
-    @Mapping(target = "mobileNumber", source = "organisation.contactDetails.mobile")
-    @Mapping(target = "emailAddress", source = "organisation.contactDetails.email")
-    @Mapping(target = "dateOfBirth", ignore = true)
-    @Mapping(target = "dmsId", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "userName", ignore = true)
-    @Mapping(target = "code", ignore = true)
-    @Mapping(target = "version", ignore = true)
-    @Mapping(target = "title", ignore = true)
-    @Mapping(target = "surname", ignore = true)
-    @Mapping(target = "forename1", ignore = true)
-    @Mapping(target = "forename2", ignore = true)
-    @Mapping(target = "forename3", ignore = true)
-    abstract NameAddress toOrganisation(Organisation organisation);
-
     @Mapping(target = "applicationListEntryWording", source = "substituteWording")
     @Mapping(target = "applicationCode", source = "code")
     @Mapping(target = "standardApplicant", source = "standardApplicant")
@@ -113,54 +67,6 @@ public abstract class ApplicationListEntryEntityMapper {
             ApplicationCode code,
             ApplicationList applicationList);
 
-    public NameAddress toApplicantNameAddress(Applicant applicant) {
-        if (applicant.getPerson() != null) {
-            return toPerson(applicant.getPerson());
-        } else if (applicant.getOrganisation() != null) {
-            return toOrganisation(applicant.getOrganisation());
-        } else {
-            return null;
-        }
-    }
-
-    public NameAddress toRespondentNameAddress(Respondent applicant) {
-        if (applicant.getPerson() != null) {
-            NameAddress nameAddress = toPerson(applicant.getPerson());
-            nameAddress.setDateOfBirth(applicant.getDateOfBirth());
-            return nameAddress;
-        } else if (applicant.getOrganisation() != null) {
-            NameAddress nameAddress =  toOrganisation(applicant.getOrganisation());
-            nameAddress.setDateOfBirth(applicant.getDateOfBirth());
-            return nameAddress;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Maps the applicant to a name address
-     *
-     * @param applicant The applicant details
-     * @return The mapped entity
-     */
-    public NameAddress toApplicant(Applicant applicant) {
-        NameAddress nameAddress = toApplicantNameAddress(applicant);
-        nameAddress.setCode(NameAddress.APPLICANT_CODE);
-        return nameAddress;
-    }
-
-    /**
-     * Maps the respondent to a name address
-     *
-     * @param respondent The respondent details
-     * @return The mapped entity
-     */
-    public NameAddress toRespondent(Respondent respondent) {
-        NameAddress nameAddress = toRespondentNameAddress(respondent);
-        nameAddress.setCode(NameAddress.RESPONDENT_CODE);
-        return nameAddress;
-    }
-
     @Mapping(
             target = "alefsFeeStatus",
             expression = "java(toStatus(feeStatus.getPaymentStatus()))")
@@ -172,6 +78,11 @@ public abstract class ApplicationListEntryEntityMapper {
     public abstract AppListEntryFeeStatus toFeeStatus(
             FeeStatus feeStatus, ApplicationListEntry applicationListEntry);
 
+    /**
+     * Converts the payment status to fee status type.
+     * @param paymentStatus The payment status
+     * @return The fee status type
+     */
     public static FeeStatusType toStatus(PaymentStatus paymentStatus) {
         if (paymentStatus == PaymentStatus.DUE) {
             return FeeStatusType.DUE;

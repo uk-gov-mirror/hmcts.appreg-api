@@ -31,6 +31,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryOfficialRep
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
+import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
@@ -66,6 +67,8 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final AppListEntryFeeRepository appListEntryFeeRepository;
 
     private final ApplicationListEntryMapStructMapper applicationListEntryMapStructMapper;
+    private final ApplicantMapper applicantMapper;
+
     private final ApplicationListEntryEntityMapper applicationListEntryEntityMapper;
     private final List<AuditOperationLifecycleListener> auditLifecycleListeners;
 
@@ -136,7 +139,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                         entryCreateDto.getData().getApplicant().getOrganisation() != null ||
                                         entryCreateDto.getData().getApplicant().getPerson() != null) {
                                             applicantToSave =
-                                                    applicationListEntryEntityMapper.toApplicant(
+                                                applicantMapper.toApplicant(
                                                             entryCreateDto
                                                                     .getData()
                                                                     .getApplicant());
@@ -151,7 +154,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                         if (entryCreateDto.getData().getRespondent() != null) {
                                             respondentToSave =
                                                     nameAddressRepository.save(
-                                                            applicationListEntryEntityMapper
+                                                        applicantMapper
                                                                     .toRespondent(
                                                                             entryCreateDto
                                                                                     .getData()

@@ -6,7 +6,7 @@ import org.mapstruct.ReportingPolicy;
 import uk.gov.hmcts.appregister.generated.model.OfficialType;
 
 /**
- * A useful mapper to convert standard applicant to applicant Dto.
+ * A useful mapper to convert officials to and from entities and the front end model
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public class OfficialMapper {

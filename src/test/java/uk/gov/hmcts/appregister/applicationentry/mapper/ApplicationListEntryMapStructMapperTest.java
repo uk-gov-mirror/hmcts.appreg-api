@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
@@ -22,6 +24,7 @@ import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
+import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
 import uk.gov.hmcts.appregister.data.AppListEntryFeeStatusTestData;
@@ -47,7 +50,7 @@ class ApplicationListEntryMapStructMapperTest {
     @BeforeEach
     void beforeEach() {
         mapper = new ApplicationListEntryMapStructMapperImpl();
-        mapper.setAMapper(new ApplicantMapper());
+        mapper.setAMapper(new ApplicantMapperImpl());
         mapper.setOfficialMapper(new OfficialMapper());
         mapper.setStandardApplicantMapper(new StandardApplicantMapperImpl());
     }
@@ -359,7 +362,7 @@ class ApplicationListEntryMapStructMapperTest {
         appListEntryOfficial2.setOfficialType(uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE);
 
         // execute the mapping
-        mapper.setAMapper(new ApplicantMapper());
+        mapper.setAMapper(new ApplicantMapperImpl());
         EntryGetDetailDto entryGetDetailDto = mapper
             .toEntryGetDetailDto(appListEntry,
                                  List.of(applicationListStatus, applicationListStatus2),

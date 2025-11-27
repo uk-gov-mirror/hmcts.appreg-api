@@ -27,8 +27,6 @@ public enum AppListEntryError implements ErrorCodeEnum {
                     "The supplied application code does not exist",
                     "ALE-3")),
 
-    REQUIRES_RESPONDENT(
-            DefaultErrorDetail.create(HttpStatus.BAD_REQUEST, "Code requires respondent", "AL-4")),
     FEE_REQUIRED(
             DefaultErrorDetail.create(HttpStatus.BAD_REQUEST, "The code requires a fee", "ALE-5")),
 

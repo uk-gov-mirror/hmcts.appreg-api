@@ -7,6 +7,9 @@ import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.generated.model.Organisation;
 import uk.gov.hmcts.appregister.generated.model.Person;
 
+/**
+ * A utility that allows us to compare between a payload and entity
+ */
 public class ApplicantAssertion {
     public static void validatePerson(Person applicant,
                                            StandardApplicant standardApplicant) {

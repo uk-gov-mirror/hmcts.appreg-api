@@ -76,6 +76,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
+import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
@@ -149,6 +150,8 @@ public class ApplicationEntryServiceImplTest {
 
     @Mock private EntityManager entityManager;
 
+    @Mock private ApplicantMapper applicantMapper;
+
     private ApplicationEntryService service;
 
     @Spy
@@ -181,6 +184,7 @@ public class ApplicationEntryServiceImplTest {
                         appListEntryOfficialRepository,
                         appListEntryFeeRepository,
                         applicationListEntryMapStructMapper,
+                        applicantMapper,
                         applicationListEntryEntityMapper,
                         auditLifecycleListeners,
                         entityManager);
@@ -190,7 +194,7 @@ public class ApplicationEntryServiceImplTest {
     public void testSearchForGetSummary() {
         ApplicationListEntryMapStructMapperImpl mapStructMapper
             = new ApplicationListEntryMapStructMapperImpl();
-        mapStructMapper.setAMapper(new ApplicantMapper());
+        mapStructMapper.setAMapper(new ApplicantMapperImpl());
         service =
             new ApplicationEntryServiceImpl(
                 mapStructMapper,
@@ -204,6 +208,7 @@ public class ApplicationEntryServiceImplTest {
                 appListEntryOfficialRepository,
                 appListEntryFeeRepository,
                 applicationListEntryMapStructMapper,
+                applicantMapper,
                 applicationListEntryEntityMapper,
                 auditLifecycleListeners,
                 entityManager);
@@ -313,7 +318,7 @@ public class ApplicationEntryServiceImplTest {
         sa.setId(-1L);
         fee.setId(-1L);
 
-        // genearte feds for each of payload fee
+        // generate fees for each of payload fee
         for (FeeStatus feeStatus : entryCreateDto.getFeeStatuses()) {
             AppListEntryFeeStatus appStatus = appListEntryFeeStatusTestData.someComplete();
 
@@ -354,11 +359,11 @@ public class ApplicationEntryServiceImplTest {
                                                                      )).thenReturn(applicationListEntry);
 
         when(applicationListRepository.findByUuid(payload.getId())).thenReturn(Optional.of(appList));
-        when(applicationListEntryEntityMapper.toApplicant(entryCreateDto.getApplicant()))
+        when(applicantMapper.toApplicant(entryCreateDto.getApplicant()))
                 .thenReturn(applicant);
 
 
-        when(applicationListEntryEntityMapper.toRespondent(entryCreateDto.getRespondent()))
+        when(applicantMapper.toRespondent(entryCreateDto.getRespondent()))
                 .thenReturn(respondent);
 
         when(nameAddressRepository.save(applicant)).thenReturn(applicant);
@@ -391,7 +396,8 @@ public class ApplicationEntryServiceImplTest {
         when(applicationListEntryMapStructMapper.toEntryGetDetailDto(applicationListEntry,
                                                                      statusLst,
                                                                      fee,
-                                                                     officialLst, null)).thenReturn(entryGetDetailDto);
+                                                                     officialLst, sa)).thenReturn(entryGetDetailDto);
+
 
         // run the test
         MatchResponse<EntryGetDetailDto> response = service.createEntry(payload);
