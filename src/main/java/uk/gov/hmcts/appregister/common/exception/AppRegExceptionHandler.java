@@ -19,12 +19,27 @@ public class AppRegExceptionHandler {
         log.error("A app register exception occurred", exception);
 
         ProblemDetail problemDetail =
-                ProblemDetail.forStatusAndDetail(
-                        error.getCode().getHttpCode(), error.getCode().getMessage());
+                ProblemDetail.forStatusAndDetail(error.getCode().getHttpCode(), "");
 
         // map the type and title if we have a code
         if (error.getCode().getType().isPresent()) {
             problemDetail.setType(error.getCode().getType().get());
+        }
+
+        // if the exception has properties, add them to the problem detail as they should be exposed
+        if (exception.getDetails() != null && !exception.getDetails().isEmpty()) {
+            for (String key : exception.getDetails().keySet()) {
+                // add to the map
+                problemDetail.setDetail(
+                        problemDetail.getDetail()
+                                + key
+                                + "="
+                                + exception.getDetails().get(key)
+                                + System.lineSeparator());
+            }
+        } else {
+            // set the detail to the message code message
+            problemDetail.setDetail(error.getCode().getMessage());
         }
 
         if (error.getCode().getMessage() != null) {

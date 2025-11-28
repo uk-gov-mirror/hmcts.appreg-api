@@ -9,8 +9,8 @@ import uk.gov.hmcts.appregister.common.enumeration.OfficialType;
 @UtilityClass
 public final class OfficialTypeUtil {
 
-    public static final String MAGISTRATE_CODE = "M";
-    public static final String CLERK_CODE = "C";
+    public static final String MAGISTRATE_CODE = OfficialType.MAGISTRATE.getValue();
+    public static final String CLERK_CODE = OfficialType.CLERK.getValue();
     public static final List<OfficialType> PRINTABLE_CODES =
             List.of(OfficialType.MAGISTRATE, OfficialType.CLERK);
 
@@ -20,13 +20,12 @@ public final class OfficialTypeUtil {
             return OfficialType.MAGISTRATE;
         }
 
-        return switch (code) {
-            case MAGISTRATE_CODE -> OfficialType.MAGISTRATE;
-            case CLERK_CODE -> OfficialType.CLERK;
-            default -> {
-                log.warn("Invalid official type code: {}. Defaulting to MAGISTRATE.", code);
-                yield OfficialType.MAGISTRATE;
-            }
-        };
+        try {
+            OfficialType type = OfficialType.fromValue(code);
+            return type;
+        } catch (IllegalArgumentException e) {
+            log.warn("Received invalid official type code: {}. Defaulting to MAGISTRATE.", code);
+            return OfficialType.MAGISTRATE;
+        }
     }
 }

@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
-import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapStructMapper;
+import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
@@ -46,8 +46,6 @@ import uk.gov.hmcts.appregister.generated.model.Official;
 @Slf4j
 public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
-    private final ApplicationListEntryMapStructMapper mapper;
-
     private final ApplicationListEntryRepository applicationListEntryRepository;
 
     private final PageMapper pageMapper;
@@ -65,7 +63,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final AppListEntryOfficialRepository appListEntryOfficialRepository;
     private final AppListEntryFeeRepository appListEntryFeeRepository;
 
-    private final ApplicationListEntryMapStructMapper applicationListEntryMapStructMapper;
+    private final ApplicationListEntryMapper applicationListEntryMapStructMapper;
     private final ApplicantMapper applicantMapper;
 
     private final ApplicationListEntryEntityMapper applicationListEntryEntityMapper;
@@ -76,7 +74,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
     @Override
     public EntryPage search(EntryGetFilterDto filterDto, Pageable pageable) {
-        Status status = ApplicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
+        Status status = applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
 
         log.debug(
                 "Started: Find Application Entry for criteria: {} with paging: {}",
@@ -107,7 +105,8 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         // Map each entity to a summary DTO and add to the page content
         resultPage.map(
                 entry -> {
-                    return newPage.addContentItem(mapper.toEntrySummary(entry));
+                    return newPage.addContentItem(
+                            applicationListEntryMapStructMapper.toEntrySummary(entry));
                 });
 
         log.debug(

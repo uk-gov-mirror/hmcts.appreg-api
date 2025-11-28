@@ -42,7 +42,8 @@ public class AppRegistryException extends RuntimeException {
      *
      * @param code The core code entry that we will use to respond to the user.
      * @param detail The detailed message. Used for logging only
-     * @param details A map of additional details
+     * @param details A map of additional details that will be thrown from the edge of the API so be
+     *     careful what you put in here.
      */
     public AppRegistryException(ErrorCodeEnum code, String detail, Map<String, String> details) {
         super(detail, null);

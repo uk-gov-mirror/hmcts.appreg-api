@@ -7,6 +7,7 @@ import static uk.gov.hmcts.appregister.util.TestConstants.PERSON1_SURNAME;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.common.mapper.OfficialMapperImpl;
 import uk.gov.hmcts.appregister.generated.model.OfficialType;
 
 class ApplicationListOfficialMapperTest {
@@ -22,6 +23,7 @@ class ApplicationListOfficialMapperTest {
                         .build();
 
         var mapper = new ApplicationListOfficialMapperImpl();
+        mapper.setOfficialMapper(new OfficialMapperImpl());
         var dto = mapper.toOfficialDto(projection);
 
         Assertions.assertEquals(OfficialType.MAGISTRATE, dto.getType());

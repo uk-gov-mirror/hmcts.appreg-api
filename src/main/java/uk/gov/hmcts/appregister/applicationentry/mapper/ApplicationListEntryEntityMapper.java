@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.applicationentry.mapper;
 
+import lombok.Setter;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -22,6 +23,7 @@ import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
  * Maps ApplicationListEntry related entities to associated entities.
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Setter
 public abstract class ApplicationListEntryEntityMapper {
 
     @Autowired OfficialMapper officialMapper;

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.applicationlist.mapper;
 
+import lombok.Setter;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryOfficialPr
 import uk.gov.hmcts.appregister.generated.model.Official;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Setter
 public abstract class ApplicationListOfficialMapper {
 
     @Autowired OfficialMapper officialMapper;

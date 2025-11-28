@@ -17,6 +17,7 @@ import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
+import uk.gov.hmcts.appregister.common.mapper.OfficialMapperImpl;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
@@ -35,6 +36,7 @@ class ApplicationListEntryEntityMapperTest {
     void beforeEach() {
         mapper = new ApplicationListEntryEntityMapperImpl();
         applicantMapper = new ApplicantMapperImpl();
+        mapper.setOfficialMapper(new OfficialMapperImpl());
     }
 
     @Test

@@ -33,7 +33,7 @@ public abstract class StandardApplicantMapper {
      * @param applicant The database applicant name and address
      * @return The applicant Dto
      */
-    public static Applicant toApplicant(StandardApplicant applicant) {
+    public Applicant toApplicant(StandardApplicant applicant) {
         ContactDetails contactDetails = toContactDetails(applicant);
         Applicant applicantDto = null;
         if (applicant != null) {
@@ -63,7 +63,7 @@ public abstract class StandardApplicantMapper {
      * @param applicant The standard applicant name and address
      * @return The full name
      */
-    public static FullName toFullName(StandardApplicant applicant) {
+    public FullName toFullName(StandardApplicant applicant) {
         FullName fullName = new FullName();
         fullName.setTitle(applicant.getApplicantTitle());
         fullName.setFirstForename(applicant.getApplicantForename1());
@@ -79,7 +79,7 @@ public abstract class StandardApplicantMapper {
      * @param applicant The standard applicant name address
      * @return The contact details
      */
-    public static ContactDetails toContactDetails(StandardApplicant applicant) {
+    public ContactDetails toContactDetails(StandardApplicant applicant) {
         ContactDetails contactDetails = new ContactDetails();
         if (applicant != null) {
             contactDetails.setAddressLine1(applicant.getAddressLine1());

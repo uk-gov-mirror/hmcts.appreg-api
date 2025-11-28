@@ -124,7 +124,7 @@ public class ReflectiveAuditor implements Auditor {
      * @param val The value to check
      * @return The class to use
      */
-    private static Class getClassForType(Object val) {
+    private static Class<?> getClassForType(Object val) {
         if (val instanceof HibernateProxy proxy) {
             return proxy.getHibernateLazyInitializer().getPersistentClass();
         }

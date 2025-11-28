@@ -36,8 +36,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapperImpl;
-import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapStructMapper;
-import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapStructMapperImpl;
+import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
+import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapperImpl;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
@@ -120,7 +120,7 @@ public class ApplicationEntryServiceImplTest {
 
     @Mock private Clock clock;
 
-    @Mock private ApplicationListEntryMapStructMapper mapper;
+    @Mock private ApplicationListEntryMapper mapper;
 
     private CreateApplicationEntryValidationSuccess success;
 
@@ -140,7 +140,7 @@ public class ApplicationEntryServiceImplTest {
     @Spy
     private final AuditOperationService auditOperationService = new DummyAuditOperationService();
 
-    @Mock private ApplicationListEntryMapStructMapper applicationListEntryMapStructMapper;
+    @Mock private ApplicationListEntryMapper applicationListEntryMapStructMapper;
 
     @Mock private ApplicationListEntryEntityMapper applicationListEntryEntityMapper;
 
@@ -171,7 +171,6 @@ public class ApplicationEntryServiceImplTest {
     void setUp() {
         service =
                 new ApplicationEntryServiceImpl(
-                        mapper,
                         applicationListEntryRepository,
                         pageMapper,
                         createApplicationEntryValidator,
@@ -190,12 +189,10 @@ public class ApplicationEntryServiceImplTest {
 
     @Test
     public void testSearchForGetSummary() {
-        ApplicationListEntryMapStructMapperImpl mapStructMapper =
-                new ApplicationListEntryMapStructMapperImpl();
+        ApplicationListEntryMapper mapStructMapper = new ApplicationListEntryMapperImpl();
         mapStructMapper.setApplicantMapper(new ApplicantMapperImpl());
         service =
                 new ApplicationEntryServiceImpl(
-                        mapStructMapper,
                         applicationListEntryRepository,
                         pageMapper,
                         createApplicationEntryValidator,
@@ -205,7 +202,7 @@ public class ApplicationEntryServiceImplTest {
                         nameAddressRepository,
                         appListEntryOfficialRepository,
                         appListEntryFeeRepository,
-                        applicationListEntryMapStructMapper,
+                        mapStructMapper,
                         applicantMapper,
                         applicationListEntryEntityMapper,
                         auditLifecycleListeners,

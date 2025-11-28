@@ -26,12 +26,12 @@ import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeStatusRe
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryOfficialRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
+import uk.gov.hmcts.appregister.common.mapper.OfficialMapperImpl;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
-import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
+import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapperImpl;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
@@ -234,7 +234,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                             applicationListEntry,
                             response.getPayload(),
                             "Application for a warrant to ente"
-                                    + "r premises at test wording for date 2025-11-27",
+                                    + "r premises at test wording for date "
+                                    + LocalDate.now(),
                             List.of("Premises Address", "Premises Date"));
                 });
     }
@@ -356,7 +357,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                         entryCreateDto.getOfficials().get(i).getSurname(),
                         originals.get(i).getSurname());
                 Assertions.assertEquals(
-                        OfficialMapper.toOfficial(entryCreateDto.getOfficials().get(i).getType()),
+                        new OfficialMapperImpl()
+                                .toOfficial(entryCreateDto.getOfficials().get(i).getType()),
                         originals.get(i).getOfficialType());
             }
         }
@@ -364,8 +366,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         // validate applicant in response
         if (entryCreateDto.getStandardApplicantCode() != null) {
             Applicant applicant =
-                    StandardApplicantMapper.toApplicant(
-                            applicationListEntry.getStandardApplicant());
+                    new StandardApplicantMapperImpl()
+                            .toApplicant(applicationListEntry.getStandardApplicant());
             if (applicant.getPerson() != null) {
                 ApplicantAssertion.validatePerson(
                         response.getApplicant().getPerson(),

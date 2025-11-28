@@ -26,6 +26,7 @@ import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodePage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
@@ -1051,6 +1052,94 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         Assertions.assertEquals(
                 AppListEntryError.NOT_RESPONDENT_REQUIRED.getCode().getType().get(),
                 problemDetail.getType());
+    }
+
+    @Test
+    public void testWordingTemplateIncorrectFields() throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
+        entryCreateDto.setWordingFields(List.of("only one field", "extra field", "too many"));
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                CommonAppError.WORDING_SUBSTITUTE_SIZE_MISMATCH.getCode().getType().get(),
+                problemDetail.getType());
+    }
+
+    @Test
+    public void testWordingLengthFailure() throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
+        entryCreateDto.setWordingFields(
+                List.of("only one field that exceeds length", "extra field"));
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                CommonAppError.WORDING_LENGTH_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
+        Assertions.assertEquals(
+                "Premises Address=only one field that exceeds length",
+                problemDetail.getDetail().trim());
+    }
+
+    @Test
+    public void testWordingDataTypeFailure() throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
+        entryCreateDto.setWordingFields(List.of("value", "extra field not a date"));
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+
+        Assertions.assertEquals(
+                CommonAppError.WORDING_DATA_TYPE_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
+        Assertions.assertEquals(
+                "Premises Date=extra field not a date", problemDetail.getDetail().trim());
     }
 
     /**
