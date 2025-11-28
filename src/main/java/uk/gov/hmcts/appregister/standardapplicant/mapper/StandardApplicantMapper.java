@@ -1,10 +1,13 @@
 package uk.gov.hmcts.appregister.standardapplicant.mapper;
 
+import java.time.LocalDate;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
@@ -12,6 +15,8 @@ import uk.gov.hmcts.appregister.generated.model.ContactDetails;
 import uk.gov.hmcts.appregister.generated.model.FullName;
 import uk.gov.hmcts.appregister.generated.model.Organisation;
 import uk.gov.hmcts.appregister.generated.model.Person;
+import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetSummaryDto;
 import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
 
 /**
@@ -24,6 +29,20 @@ import uk.gov.hmcts.appregister.standardapplicant.dto.StandardApplicantDto;
         nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public abstract class StandardApplicantMapper {
+
+    @Mapping(target = "code", source = "applicantCode")
+    @Mapping(target = "applicant", expression = "java(toApplicant(entity))")
+    @Mapping(target = "startDate", source = "applicantStartDate")
+    @Mapping(target = "endDate", source = "applicantEndDate", qualifiedByName = "toEndDate")
+    public abstract StandardApplicantGetSummaryDto toReadGetSummaryDto(StandardApplicant entity);
+
+    @Mapping(target = "code", source = "applicantCode")
+    @Mapping(target = "applicant", expression = "java(toApplicant(entity))")
+    @Mapping(target = "startDate", source = "applicantStartDate")
+    @Mapping(target = "endDate", source = "applicantEndDate", qualifiedByName = "toEndDate")
+    public abstract StandardApplicantGetDetailDto toReadGetDto(StandardApplicant entity);
+
+    @Deprecated
     @Mapping(target = "applicantName", source = "name")
     public abstract StandardApplicantDto toReadDto(StandardApplicant entity);
 
@@ -83,7 +102,7 @@ public abstract class StandardApplicantMapper {
         ContactDetails contactDetails = new ContactDetails();
         if (applicant != null) {
             contactDetails.setAddressLine1(applicant.getAddressLine1());
-            contactDetails.setAddressLine2(applicant.getAddressLine3());
+            contactDetails.setAddressLine2(applicant.getAddressLine2());
             contactDetails.setAddressLine3(applicant.getAddressLine3());
             contactDetails.setAddressLine4(applicant.getAddressLine4());
             contactDetails.setAddressLine5(applicant.getAddressLine5());
@@ -93,5 +112,14 @@ public abstract class StandardApplicantMapper {
             contactDetails.setPostcode(applicant.getPostcode());
         }
         return contactDetails;
+    }
+
+    @Named("toEndDate")
+    static JsonNullable<LocalDate> toEndDate(LocalDate date) {
+        if (date != null) {
+            return JsonNullable.of(date);
+        } else {
+            return JsonNullable.undefined();
+        }
     }
 }

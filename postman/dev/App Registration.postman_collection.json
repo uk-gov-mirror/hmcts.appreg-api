@@ -554,6 +554,129 @@
 			"name": "criminal-justice-areas",
 			"item": []
 		},
+    {
+      "name": "application_list_entries",
+      "item": [
+        {
+          "name": "Get Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/application-list-entries?date=2024-04-21&cjaCode=CJ&courtCode=RCJ001&applicantSurname=rn&status=OPEN&respondentOrganisation=ah%20Johnson&respondentPostcode=XY9%208ZZ&accountReference=323232&standardApplicantCode=APP0",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "application-list-entries"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-04-21"
+                },
+                {
+                  "key": "cjaCode",
+                  "value": "CJ"
+                },
+                {
+                  "key": "courtCode",
+                  "value": "RCJ001"
+                },
+                {
+                  "key": "applicantSurname",
+                  "value": "rn"
+                },
+                {
+                  "key": "status",
+                  "value": "OPEN"
+                },
+                {
+                  "key": "respondentOrganisation",
+                  "value": "ah%20Johnson"
+                },
+                {
+                  "key": "respondentPostcode",
+                  "value": "XY9%208ZZ"
+                },
+                {
+                  "key": "accountReference",
+                  "value": "323232"
+                },
+                {
+                  "key": "standardApplicantCode",
+                  "value": "APP0"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+		{
+			"name": "Standard Applicants",
+			"item": [
+				{
+					"name": "Get Standard Applicant By Code And Date",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let now = new Date();\r",
+									"let isoString = now.toISOString();   // e.g. 2025-11-06T15:24:17.843Z\r",
+									"let dateOnly = isoString.split('T')[0];\r",
+									"\r",
+									"pm.environment.set(\"now\", dateOnly);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{APP_REG_HOST}}/standard-applicants/APP001?date={{now}}",
+							"host": [
+								"{{APP_REG_HOST}}"
+							],
+							"path": [
+								"standard-applicants",
+								"APP001"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{now}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Standard Applicant Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{APP_REG_HOST}}/standard-applicants",
+							"host": [
+								"{{APP_REG_HOST}}"
+							],
+							"path": [
+								"standard-applicants"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
 		{
 			"name": "application_list_entries",
 			"item": [

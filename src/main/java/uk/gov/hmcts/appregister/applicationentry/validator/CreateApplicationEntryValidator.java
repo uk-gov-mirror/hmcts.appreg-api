@@ -144,9 +144,11 @@ public class CreateApplicationEntryValidator
         String standardApplicantCode = validatable.getData().getStandardApplicantCode();
 
         // validate the standard applicant code if provided
-        Optional<StandardApplicant> saCode;
+        List<StandardApplicant> saCode;
         if (standardApplicantCode != null) {
-            saCode = standardApplicantRepository.findByApplicantCode(standardApplicantCode);
+            saCode =
+                    standardApplicantRepository.findStandardApplicantByCodeAndDate(
+                            standardApplicantCode, LocalDate.now(clock));
 
             if (saCode.isEmpty()) {
                 // throw exception we expect a valid standard applicant code
@@ -158,7 +160,7 @@ public class CreateApplicationEntryValidator
 
             log.debug("Validated standard applicant {}", standardApplicantCode);
 
-            return saCode.get();
+            return saCode.getFirst();
         }
 
         return null;

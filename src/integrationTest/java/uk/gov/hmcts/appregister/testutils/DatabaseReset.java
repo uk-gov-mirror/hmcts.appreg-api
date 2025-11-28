@@ -19,6 +19,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationRegisterRepo
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
 
 /**
  * A global persistence class that knows how to persist objects. Specifically ones that have been
@@ -48,6 +49,8 @@ public class DatabaseReset {
     @Autowired private final DataAuditRepository dataAuditRepository;
 
     @Autowired private final ApplicationRegisterRepository applicationRegisterRepository;
+
+    @Autowired private final StandardApplicantRepository standardApplicantRepository;
 
     @Value("${spring.sql.init.schema-locations}")
     private String sqlInitSchema;
@@ -85,6 +88,8 @@ public class DatabaseReset {
                 applicationListRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         criminalJusticeAreaRepository.deleteAll(
                 criminalJusticeAreaRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+        standardApplicantRepository.deleteAll(
+                standardApplicantRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         dataAuditRepository.deleteAll();
     }
 

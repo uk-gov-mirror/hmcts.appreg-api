@@ -415,8 +415,8 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         assertEquals(10, page.getContent().size());
 
         EntryGetSummaryDto entryGetSummaryDto = page.getContent().get(0);
-        assertThat(entryGetSummaryDto.getApplicant().getOrganisation().getName())
-                .isEqualTo("John Smith");
+        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getSurname())
+                .isEqualTo("Smith");
         assertThat(entryGetSummaryDto.getRespondent().getOrganisation().getName())
                 .isEqualTo("Jack Turner");
         assertThat(

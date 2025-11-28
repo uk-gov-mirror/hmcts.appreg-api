@@ -19,9 +19,9 @@ public class ApplicantAssertion {
         Assertions.assertEquals(
                 applicant.getName().getThirdForename(), standardApplicant.getApplicantForename3());
         Assertions.assertEquals(
-                applicant.getName().getFirstForename(), standardApplicant.getApplicantForename2());
+                applicant.getName().getSecondForename(), standardApplicant.getApplicantForename2());
         Assertions.assertEquals(
-                applicant.getName().getSecondForename(), standardApplicant.getApplicantForename3());
+                applicant.getName().getFirstForename(), standardApplicant.getApplicantForename1());
         Assertions.assertEquals(
                 applicant.getContactDetails().getPostcode(), standardApplicant.getPostcode());
         Assertions.assertEquals(

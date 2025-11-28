@@ -107,6 +107,8 @@ public class ApplicationListServiceImplTest {
     @Mock private NationalCourtHouseRepository courtHouseRepository;
     @Mock private CriminalJusticeAreaRepository cjaRepository;
     @Mock private ApplicationListMapper mapper;
+    @Mock private ApplicationListEntryMapper entryListMapper;
+
     @Mock private ApplicationListOfficialMapper officalMapper;
 
     @Spy
@@ -124,6 +126,7 @@ public class ApplicationListServiceImplTest {
             new DummyApplicationListGetValidator(repository, courtHouseRepository, cjaRepository);
 
     @Mock private PageMapper pageMapper;
+
     @Mock private ApplicationListEntryMapper entryMapper;
 
     @Mock private EntityManager entityManager;
@@ -440,6 +443,8 @@ public class ApplicationListServiceImplTest {
                         .date(DEFAULT_DATE)
                         .time(DEFAULT_TIME);
 
+        when(entryMapper.toStatus(ApplicationListStatus.CLOSED)).thenReturn(Status.CLOSED);
+
         // When
         ApplicationListPage result = service.getPage(filter, pageable);
 
@@ -467,6 +472,8 @@ public class ApplicationListServiceImplTest {
         row.setCja(cja);
 
         Pageable pageable = mock(Pageable.class);
+
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
 
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
@@ -555,6 +562,8 @@ public class ApplicationListServiceImplTest {
         Pageable pageable = mock(Pageable.class);
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
                         eq(Status.OPEN),
@@ -628,6 +637,7 @@ public class ApplicationListServiceImplTest {
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
 
         Pageable pageable = mock(Pageable.class);
+
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
                         eq(Status.OPEN),

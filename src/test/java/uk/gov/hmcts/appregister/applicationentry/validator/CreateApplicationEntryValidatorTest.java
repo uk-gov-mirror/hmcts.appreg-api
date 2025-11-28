@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
@@ -105,9 +106,9 @@ public class CreateApplicationEntryValidatorTest {
                         eq(entryCreateDto.getHasOffsiteFee())))
                 .thenReturn(List.of(fee));
 
-        when(standardApplicantRepository.findByApplicantCode(
-                        entryCreateDto.getStandardApplicantCode()))
-                .thenReturn(Optional.of(standardApplicant));
+        when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
+                        entryCreateDto.getStandardApplicantCode(), LocalDate.now(clock)))
+                .thenReturn(List.of(standardApplicant));
     }
 
     @Test
@@ -283,9 +284,9 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto.getApplicant().setPerson(null);
 
-        when(standardApplicantRepository.findByApplicantCode(
-                        entryCreateDto.getStandardApplicantCode()))
-                .thenReturn(Optional.empty());
+        when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
+                        entryCreateDto.getStandardApplicantCode(), LocalDate.now(clock)))
+                .thenReturn(List.of());
 
         PayloadForCreate<EntryCreateDto> payload =
                 PayloadForCreate.<EntryCreateDto>builder()

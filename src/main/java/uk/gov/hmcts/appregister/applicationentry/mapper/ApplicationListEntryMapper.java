@@ -47,8 +47,8 @@ import uk.gov.hmcts.appregister.generated.model.Respondent;
 import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
-@Setter
 @Slf4j
+@Setter
 public abstract class ApplicationListEntryMapper {
 
     @Autowired ApplicantMapper applicantMapper;

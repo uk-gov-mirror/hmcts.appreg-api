@@ -253,7 +253,6 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
             EntryGetDetailDto response,
             String assertWording,
             List<String> expectedWordingFields) {
-
         // validate applicant
         if (entryCreateDto.getStandardApplicantCode() != null) {
             // make sure the list is mapped to the code
