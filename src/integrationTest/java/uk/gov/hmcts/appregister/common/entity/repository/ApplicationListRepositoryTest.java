@@ -265,7 +265,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
-                        null,
+                        false,
                         null,
                         null,
                         page);
@@ -296,7 +296,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
-                        null,
+                        false,
                         null,
                         null,
                         PageRequest.of(0, 10));
@@ -325,7 +325,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
-                        null,
+                        false,
                         "SESSION",
                         null,
                         PageRequest.of(0, 10));
@@ -352,7 +352,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
-                        null,
+                        false,
                         null,
                         "hall",
                         PageRequest.of(0, 10));
@@ -370,8 +370,8 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
         LocalTime nineAm = LocalTime.of(9, 0);
 
         // Soft deleted row -> should NOT match
-        ApplicationList applicationList = save("OPEN", "CCC003", null, targetDay, nineAm,
-                                               "soft deleted", "west");
+        ApplicationList applicationList =
+                save("OPEN", "CCC003", null, targetDay, nineAm, "soft deleted", "west");
         applicationList.setDeleted(YES);
         repository.saveAndFlush(applicationList);
 
@@ -379,17 +379,17 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
 
         // When: filter ONLY by date and time; leave other filters null
         Page<ApplicationList> result =
-            repository.findAllByFilter(
-                null, // status
-                null, // courtCode
-                null, // cja
-                targetDay, // date
-                null, // time
-                null, // end time
-                false, // wraps midnight
-                "soft deleted", // description
-                null, // other location
-                page);
+                repository.findAllByFilter(
+                        null, // status
+                        null, // courtCode
+                        null, // cja
+                        targetDay, // date
+                        null, // time
+                        null, // end time
+                        false, // wraps midnight
+                        "soft deleted", // description
+                        null, // other location
+                        page);
 
         // Then
         assertThat(result.getTotalElements()).isEqualTo(0);
@@ -415,7 +415,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
-                        null,
+                        false,
                         null,
                         null,
                         PageRequest.of(
@@ -430,7 +430,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
-                        null,
+                        false,
                         null,
                         null,
                         PageRequest.of(
