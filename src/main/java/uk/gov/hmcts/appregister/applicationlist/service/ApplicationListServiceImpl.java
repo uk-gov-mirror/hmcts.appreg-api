@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.applicationlist.service;
 
 import jakarta.persistence.EntityManager;
-
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;

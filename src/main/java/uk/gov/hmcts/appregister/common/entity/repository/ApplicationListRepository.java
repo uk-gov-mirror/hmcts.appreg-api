@@ -63,9 +63,9 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * <p>All filter parameters are optional; if a parameter is {@code null}, it will be ignored in
      * the filtering process.
      *
-     * <p>Can filter by minute while ignoring seconds. match times >= start and < end. Special case: if
-     * end is midnight, the service passes a flag to indicate that only the >= start condition should be
-     * applied because the < end condition would return nothing.
+     * <p>Can filter by minute while ignoring seconds. match times >= start and < end. Special case:
+     * if end is midnight, the service passes a flag to indicate that only the >= start condition
+     * should be applied because the < end condition would return nothing.
      *
      * @param status the application list status to filter by, or {@code null} to include all
      *     statuses
@@ -74,8 +74,8 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * @param onDate the specific date to filter by, or {@code null} to include all dates
      * @param start the start of the minute-based time range, or {@code null} for no time filter
      * @param end the exclusive upper bound of the minute range, or {@code null} for no time filter
-     * @param wrapsMidnight a flag indicating whether the computed minute range crosses
-     *                      midnight (e.g., 23:59 -> 00:00).
+     * @param wrapsMidnight a flag indicating whether the computed minute range crosses midnight
+     *     (e.g., 23:59 -> 00:00).
      * @param description the description text to search within application descriptions, or {@code
      *     null} for no filter
      * @param otherDesc the text to search within the {@code otherLocation} field, or {@code null}
@@ -94,10 +94,10 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
           AND (:cja IS NULL OR al.cja = :cja)
           AND (al.date = COALESCE(:onDate, al.date))
           AND (
-                 COALESCE(:atTimeStart, NULL) IS NULL
+                 COALESCE(:start, NULL) IS NULL
                  OR (
-                   (:wrapsMidnight = TRUE  AND al.time >= :atTimeStart)
-                   OR (:wrapsMidnight = FALSE AND al.time >= :atTimeStart AND al.time < :atTimeEnd)
+                   (:wrapsMidnight = TRUE AND al.time >= :start)
+                   OR (:wrapsMidnight = FALSE AND al.time >= :start AND al.time < :end)
                  )
                )
           AND (:description IS NULL OR lower(al.description) LIKE concat('%', lower(cast(:description AS string)), '%'))
