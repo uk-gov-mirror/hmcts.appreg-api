@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.applicationlist.mapper;
 
+import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -7,9 +8,16 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
+
+import org.instancio.Instancio;
+import org.instancio.settings.Keys;
+import org.instancio.settings.Settings;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+
+import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
@@ -30,6 +38,50 @@ public class ApplicationListMapperTest {
     private final ApplicationListMapper mapper = Mappers.getMapper(ApplicationListMapper.class);
 
     // ---------- Mapping: toCreateEntityWithCourt ----------
+
+    @Test
+    void testToCreateEntityWithCja() {
+        // Given
+        var dto =
+            Instancio.of(ApplicationListCreateDto.class)
+                .create();
+        var criminalJusticeArea = Instancio.of(CriminalJusticeArea.class)
+            .create();
+
+        // When
+        ApplicationList entity = mapper.toCreateEntityWithCja(dto, criminalJusticeArea);
+
+        // Then
+        Assertions.assertEquals(criminalJusticeArea, entity.getCja());
+        Assertions.assertEquals(dto.getOtherLocationDescription(), entity.getOtherLocation());
+        Assertions.assertEquals(dto.getDescription(), entity.getDescription());
+        Assertions.assertEquals(criminalJusticeArea, entity.getCja());
+        Assertions.assertEquals(dto.getTime(), entity.getTime());
+        Assertions.assertEquals(dto.getDate(), entity.getDate());
+    }
+
+    @Test
+    void testToCreateEntityWithCourt() {
+        // Given
+        var dto =
+            Instancio.of(ApplicationListCreateDto.class)
+                .create();
+        var nationalCourtHouse = Instancio.of(NationalCourtHouse.class)
+            .create();
+
+        // When
+        ApplicationList entity = mapper.toCreateEntityWithCourt(dto, nationalCourtHouse);
+
+        // Then
+        Assertions.assertEquals(nationalCourtHouse.getCourtLocationCode(), entity.getCourtCode());
+        Assertions.assertEquals(nationalCourtHouse.getName(), entity.getCourtName());
+        Assertions.assertEquals(dto.getDescription(), entity.getDescription());
+        Assertions.assertEquals(dto.getTime(), entity.getTime());
+        Assertions.assertEquals(dto.getDate(), entity.getDate());
+        Assertions.assertEquals(dto.getDurationHours(), entity.getDurationHours());
+        Assertions.assertEquals(dto.getDurationMinutes(), entity.getDurationMinutes());
+    }
+
 
     @Nested
     class ToCreateEntityWithCourtTests {
