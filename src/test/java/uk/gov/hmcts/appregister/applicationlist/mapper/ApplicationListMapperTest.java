@@ -133,7 +133,7 @@ public class ApplicationListMapperTest {
                             .id(999L)
                             .uuid(id)
                             .description("Morning session for traffic-related applications")
-                            .status(Status.fromValue(ApplicationListStatus.OPEN.getValue()))
+                            .status(Status.OPEN)
                             .courtCode("LOC123")
                             .courtName("Bath Magistrates Court")
                             .date(LocalDate.of(2025, 9, 17))
@@ -176,7 +176,7 @@ public class ApplicationListMapperTest {
                     ApplicationList.builder()
                             .uuid(id)
                             .description("Morning session")
-                            .status(Status.valueOf(ApplicationListStatus.OPEN.getValue()))
+                            .status(Status.OPEN)
                             .date(LocalDate.of(2025, 9, 19))
                             .time(LocalTime.of(9, 0, 0))
                             .build();
