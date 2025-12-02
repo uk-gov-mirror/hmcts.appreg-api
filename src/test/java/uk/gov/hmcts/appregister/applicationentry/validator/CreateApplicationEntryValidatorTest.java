@@ -73,12 +73,13 @@ public class CreateApplicationEntryValidatorTest {
         when(clock.withZone(org.mockito.ArgumentMatchers.any(ZoneId.class))).thenReturn(clock);
 
         AppListTestData appListTestData = new AppListTestData();
-        ApplicationCodeTestData applicationCodeTestData = new ApplicationCodeTestData();
         applicationList = appListTestData.someComplete();
+        applicationList.setDeleted(null);
 
         // make sure the application list is open
         applicationList.setStatus(Status.OPEN);
 
+        ApplicationCodeTestData applicationCodeTestData = new ApplicationCodeTestData();
         applicationCode = applicationCodeTestData.someComplete();
         applicationCode.setFeeDue(YesOrNo.YES);
         applicationCode.setBulkRespondentAllowed(YesOrNo.YES);
@@ -257,6 +258,36 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.getApplicant().setOrganisation(null);
 
         applicationList.setStatus(Status.CLOSED);
+        when(applicationListRepository.findByUuid(appListUuid))
+                .thenReturn(Optional.of(applicationList));
+
+        PayloadForCreate<EntryCreateDto> payload =
+                PayloadForCreate.<EntryCreateDto>builder()
+                        .id(appListUuid)
+                        .data(entryCreateDto)
+                        .build();
+
+        // validate the payload
+        AppRegistryException appRegistryException =
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> createApplicationEntryValidator.validate(payload));
+        Assertions.assertEquals(
+                AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
+                        .getCode()
+                        .getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
+    }
+
+    @Test
+    void testApplicantListDeleted() {
+        entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.setStandardApplicantCode(null);
+        entryCreateDto.getApplicant().setOrganisation(null);
+
+        applicationList.setStatus(Status.OPEN);
+        applicationList.setDeleted(YesOrNo.YES);
+
         when(applicationListRepository.findByUuid(appListUuid))
                 .thenReturn(Optional.of(applicationList));
 

@@ -62,6 +62,9 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
     // The total app codes inserted by flyway scripts
     private static final int TOTAL_APP_ENTRY_COUNT = 10;
 
+    // The deleted list that has been inserted by the flyway scripts
+    private static final long DELETED_LIST_PK = 12;
+
     @Autowired private TransactionalUnitOfWork unitOfWork;
 
     @Autowired private ApplicationListRepository applicationListRepository;
@@ -921,6 +924,35 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
     }
 
     @Test
+    public void testApplicantDeletedList() throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getDeletedIdApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
+                        .getCode()
+                        .getType()
+                        .get(),
+                problemDetail.getType());
+    }
+
+    @Test
     public void testApplicantNoCodeExists() throws Exception {
         // create the token
         TokenGenerator tokenGenerator =
@@ -1284,6 +1316,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         return unitOfWork.inTransaction(
                 () -> {
                     ApplicationList applicationList = applicationListRepository.findAll().get(2);
+                    return applicationList.getUuid();
+                });
+    }
+
+    private UUID getDeletedIdApplicationListId() {
+        return unitOfWork.inTransaction(
+                () -> {
+                    ApplicationList applicationList =
+                            applicationListRepository.findById(DELETED_LIST_PK).get();
                     return applicationList.getUuid();
                 });
     }
