@@ -7,11 +7,15 @@ class FeeStatusTypeTest {
 
     @Test
     void testFromDisplayName() {
-        Assertions.assertEquals(FeeStatusType.DUE, FeeStatusType.fromDisplayName(FeeStatusType.DUE.getDisplayName()));
+        Assertions.assertEquals(
+                FeeStatusType.DUE,
+                FeeStatusType.fromDisplayName(FeeStatusType.DUE.getDisplayName()));
     }
 
     @Test
     void testFromDisplayNameFail() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FeeStatusType.fromDisplayName("Non Existing"));
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> FeeStatusType.fromDisplayName("Non Existing"));
     }
 }
