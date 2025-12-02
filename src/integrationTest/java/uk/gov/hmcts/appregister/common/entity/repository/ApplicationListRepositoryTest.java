@@ -1,6 +1,7 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.gov.hmcts.appregister.common.enumeration.YesOrNo.YES;
 
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
@@ -26,7 +27,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
     private static final LocalDate DEFAULT_DATE = LocalDate.of(2025, 1, 2);
     private static final LocalTime DEFAULT_TIME = LocalTime.of(9, 0);
 
-    private void save(
+    private ApplicationList save(
             String status,
             String courtCode,
             CriminalJusticeArea cja,
@@ -49,6 +50,7 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
                         .durationMinutes((short) 0)
                         .build();
         repository.saveAndFlush(al);
+        return al;
     }
 
     private CriminalJusticeArea saveCja(String code, String desc) {
@@ -358,6 +360,39 @@ class ApplicationListRepositoryTest extends BaseRepositoryTest {
         // Then
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().getFirst().getOtherLocation()).isEqualTo("Town Hall");
+    }
+
+    @Test
+    @DisplayName("findAllByFilter: does not match soft deleted list")
+    void findAllByFilter_softDeletedList_noMatch() {
+        // Given
+        LocalDate targetDay = LocalDate.of(2025, 1, 2);
+        LocalTime nineAm = LocalTime.of(9, 0);
+
+        // Soft deleted row -> should NOT match
+        ApplicationList applicationList = save("OPEN", "CCC003", null, targetDay, nineAm,
+                                               "soft deleted", "west");
+        applicationList.setDeleted(YES);
+        repository.saveAndFlush(applicationList);
+
+        Pageable page = PageRequest.of(0, 10);
+
+        // When: filter ONLY by date and time; leave other filters null
+        Page<ApplicationList> result =
+            repository.findAllByFilter(
+                null, // status
+                null, // courtCode
+                null, // cja
+                targetDay, // date
+                null, // time
+                null, // end time
+                false, // wraps midnight
+                "soft deleted", // description
+                null, // other location
+                page);
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(0);
     }
 
     @Test

@@ -1490,6 +1490,42 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
     }
 
     @Test
+    @DisplayName("GET: does not return soft deleted list")
+    void givenDefaults_whenGet_then200AndNoSoftDeletedSlot() throws Exception {
+
+        // setup a record for deletion
+        String prefix = uniquePrefix("soft-deleted");
+        ApplicationListGetDetailDto dto =
+            createWithCourt(prefix + " - Zebra", LocalDate.of(2025, 10, 15),
+                            LocalTime.of(10, 30));
+        UUID id = dto.getId();
+
+        var userToken =
+            getATokenWithValidCredentials()
+                .roles(List.of(RoleEnum.USER))
+                .build()
+                .fetchTokenForRole();
+
+        Response resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), userToken);
+        resp.then().statusCode(HttpStatus.NO_CONTENT.value());
+
+        resp =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.empty(),
+                Optional.empty(),
+                List.of(), // Rely on default sort
+                getLocalUrl(WEB_CONTEXT),
+                userToken,
+                rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
+                null);
+
+        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
+        ApplicationListPage page = resp.as(ApplicationListPage.class);
+
+        assertThat(page.getContent()).hasSize(0);
+    }
+
+    @Test
     @DisplayName("GET: allowed sort (date,desc & time,desc)")
     void givenAllowedSort_thenSorted() throws Exception {
 
