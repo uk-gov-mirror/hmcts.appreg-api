@@ -1,8 +1,14 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
+import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 
 public interface AppListEntryFeeStatusRepository
         extends JpaRepository<AppListEntryFeeStatus, Long> {
@@ -23,4 +29,17 @@ public interface AppListEntryFeeStatusRepository
      * @return The application, if found and accessible
      */
     List<AppListEntryFeeStatus> findByAppListEntryId(Long listId);
+
+    /**
+     * gets the fee status for an entry id
+     * @param entryId the uuid of the entry
+     * @return the official entry
+     */
+    @Query(
+        """
+            SELECT appStatus
+            FROM AppListEntryFeeStatus appStatus
+            WHERE appStatus.appListEntry.uuid = :entryId
+        """)
+    List<AppListEntryFeeStatus> getFeeStatusByEntryUuid(UUID entryId);
 }

@@ -38,8 +38,11 @@ import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEnti
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapperImpl;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapperImpl;
+import uk.gov.hmcts.appregister.applicationentry.model.PayloadForUpdateEntry;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidator;
+import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidationSuccess;
+import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
 import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
@@ -124,6 +127,8 @@ public class ApplicationEntryServiceImplTest {
 
     private CreateApplicationEntryValidationSuccess success;
 
+    private UpdateApplicationEntryValidationSuccess updateSuccess;
+
     // A null match provider that returns a null etag
     private static MatchProvider NULL_MATCH_PROVIDER =
             new MatchProvider() {
@@ -153,19 +158,30 @@ public class ApplicationEntryServiceImplTest {
     private ApplicationEntryService service;
 
     @Spy
-    private DummyCreateApplicationEntryValidator createApplicationEntryValidator =
-            new DummyCreateApplicationEntryValidator(
-                    applicationListRepository,
-                    applicationCodeRepository,
-                    feeRepository,
-                    clock,
-                    standardApplicantRepository);
-
-    @Spy
     private final ApplicationListEntryEntityMapper entryEntityMapper =
             new ApplicationListEntryEntityMapperImpl();
 
     @Spy private final PageMapper pageMapper = new PageMapper();
+
+    @Spy
+    private DummyCreateApplicationEntryValidator createApplicationEntryValidator =
+        new DummyCreateApplicationEntryValidator(
+            applicationListRepository,
+            applicationCodeRepository,
+            feeRepository,
+            clock,
+            standardApplicantRepository);
+
+    @Spy
+    private DummyUpdateApplicationEntryValidator updateApplicationEntryValidator =
+        new DummyUpdateApplicationEntryValidator(
+            applicationListRepository,
+            applicationCodeRepository,
+            feeRepository,
+            clock,
+            standardApplicantRepository,
+            applicationListEntryRepository);
+
 
     @BeforeEach
     void setUp() {
@@ -174,6 +190,7 @@ public class ApplicationEntryServiceImplTest {
                         applicationListEntryRepository,
                         pageMapper,
                         createApplicationEntryValidator,
+                        updateApplicationEntryValidator,
                         matchService,
                         auditOperationService,
                         appListEntryFeeStatusRepository,
@@ -189,6 +206,9 @@ public class ApplicationEntryServiceImplTest {
 
     @Test
     public void testSearchForGetSummary() {
+
+        // capture the mocked callback and execute it
+
         ApplicationListEntryMapper mapStructMapper = new ApplicationListEntryMapperImpl();
         mapStructMapper.setApplicantMapper(new ApplicantMapperImpl());
         service =
@@ -196,6 +216,7 @@ public class ApplicationEntryServiceImplTest {
                         applicationListEntryRepository,
                         pageMapper,
                         createApplicationEntryValidator,
+                        updateApplicationEntryValidator,
                         matchService,
                         auditOperationService,
                         appListEntryFeeStatusRepository,
@@ -509,6 +530,34 @@ public class ApplicationEntryServiceImplTest {
                                     "result",
                                     null));
             return optional.get().getResultingValue();
+        }
+    }
+
+    class DummyUpdateApplicationEntryValidator extends UpdateApplicationEntryValidator {
+        public DummyUpdateApplicationEntryValidator(ApplicationListRepository applicationListRepository,
+                                                    ApplicationCodeRepository applicationCodeRepository,
+                                                    FeeRepository feeRepository, Clock clock,
+                                                    StandardApplicantRepository standardApplicantRepository,
+                                                    ApplicationListEntryRepository applicationListEntryRepository) {
+            super(
+                applicationListRepository,
+                applicationCodeRepository,
+                feeRepository,
+                clock,
+                standardApplicantRepository,
+                applicationListEntryRepository
+            );
+        }
+
+        @Override
+        public <R> R validate(
+            PayloadForUpdateEntry validatable,
+            BiFunction<
+                PayloadForUpdateEntry,
+                UpdateApplicationEntryValidationSuccess,
+                R>
+                validateSuccess) {
+            return validateSuccess.apply(validatable, updateSuccess);
         }
     }
 }

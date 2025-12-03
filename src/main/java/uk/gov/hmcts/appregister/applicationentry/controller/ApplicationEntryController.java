@@ -23,6 +23,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
+import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 
 @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
 @Controller
@@ -76,6 +77,11 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                 .body(entryGetDetailDto.getPayload());
     }
 
+    @Override
+    public ResponseEntity<EntryGetDetailDto> updateApplicationListEntry(UUID listId, UUID entryId, EntryUpdateDto entryUpdateDto) {
+        return ApplicationListEntriesApi.super.updateApplicationListEntry(listId, entryId, entryUpdateDto);
+    }
+
     private List<String> toEntitySort(List<String> sort) {
         if (sort == null || sort.isEmpty()) {
             return List.of();
@@ -84,4 +90,5 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                 SortableField.of(sort.toArray(new String[0])),
                 ApplicationEntrySortFieldEnum::getEntityValue);
     }
+
 }
