@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.Accountable;
 import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.base.Versionable;
 import uk.gov.hmcts.appregister.common.entity.compositeid.AppListEntryFeeCompositeId;
 
@@ -34,18 +35,14 @@ import uk.gov.hmcts.appregister.common.entity.compositeid.AppListEntryFeeComposi
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @Getter
 @Setter
-public class AppListEntryFeeId extends BaseChangeableEntity implements Accountable, Versionable {
+public class AppListEntryFeeId extends BaseChangeableEntity implements Accountable, Versionable, Keyable {
     @Id
-    @EqualsAndHashCode.Include
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ale_ale_id", nullable = false)
-    private ApplicationListEntry appListEntryId;
+    @Column(name = "ale_ale_id", nullable = false)
+    private Long appListEntryId;
 
     @Id
-    @EqualsAndHashCode.Include
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fee_fee_id", nullable = false)
-    private Fee feeId;
+    @Column(name = "fee_fee_id", nullable = false)
+    private Long feeId;
 
     @Column(name = "version", nullable = false)
     @Version
@@ -54,4 +51,9 @@ public class AppListEntryFeeId extends BaseChangeableEntity implements Accountab
     @Column(name = "user_name", nullable = false)
     @Size(max = 250)
     private String createdUser;
+
+    @Override
+    public Long getId() {
+        return -1L;
+    }
 }

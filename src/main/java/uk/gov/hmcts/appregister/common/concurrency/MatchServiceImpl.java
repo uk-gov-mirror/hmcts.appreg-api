@@ -29,7 +29,7 @@ public class MatchServiceImpl implements MatchService {
     public <T> MatchResponse<T> matchOnRequest(
             Supplier<MatchResponse<T>> supplier, List<Keyable> entities) {
         // Apply the match etag from the request to the entity
-        if (request.getEtag() != null) {
+        if (request != null && request.getEtag() != null) {
             // Assuming the entity has a setEtag method
             String generateEtag = EtagUtil.generateEtag(entities);
 

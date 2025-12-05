@@ -199,7 +199,6 @@ public class ApplicationEntryServiceImplTest {
                         applicationListEntryMapStructMapper,
                         applicantMapper,
                         applicationListEntryEntityMapper,
-                        auditLifecycleListeners,
                         entityManager);
     }
 
@@ -225,7 +224,6 @@ public class ApplicationEntryServiceImplTest {
                         mapStructMapper,
                         applicantMapper,
                         applicationListEntryEntityMapper,
-                        auditLifecycleListeners,
                         entityManager);
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
@@ -506,11 +504,21 @@ public class ApplicationEntryServiceImplTest {
     class DummyAuditOperationService implements AuditOperationService {
 
         @Override
+        public <T, E extends Keyable> T processAudit(E oldValue, AuditOperation auditType, Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(oldValue, auditType, execution, null);
+        }
+
+        @Override
+        public <T, E extends Keyable> T processAudit(AuditOperation auditType, Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(auditType, execution, null);
+        }
+
+        @Override
         public <T, E extends Keyable> T processAudit(
-                AuditOperation auditType,
-                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
-                AuditOperationLifecycleListener... listener) {
-            return processAudit(null, auditType, execution, listener);
+            AuditOperation auditType,
+            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
+            AuditOperationLifecycleListener... listener) {
+            return processAudit(auditType, execution, listener);
         }
 
         @Override

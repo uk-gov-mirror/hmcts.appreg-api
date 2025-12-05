@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.common.entity.repository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 
@@ -35,11 +36,12 @@ public interface AppListEntryOfficialRepository extends JpaRepository<AppListEnt
      *
      * @param entryId The entry id that the officials map to
      */
+    @Modifying(clearAutomatically = true)
     @Query(
             """
         DELETE
         FROM AppListEntryOfficial off
-        WHERE off.appListEntry.uuid = :entryId
+        WHERE off.appListEntry.id = :entryId
         """)
-    void deleteAllForEntryUuid(UUID entryId);
+    void deleteAllForEntryId(Long entryId);
 }

@@ -134,7 +134,7 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
     public String substitute(List<String> values) {
         String returnedString = templateWithPositionalPlaceholders;
 
-        if (values == null || values.isEmpty()) {
+        if ((values == null || values.isEmpty()) && size() == 0) {
             log.debug("No substitution values provided, returning original template");
             return returnedString;
         }

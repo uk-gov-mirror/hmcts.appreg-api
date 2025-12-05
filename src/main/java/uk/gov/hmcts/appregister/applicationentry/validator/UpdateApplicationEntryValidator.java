@@ -74,8 +74,8 @@ public class UpdateApplicationEntryValidator
         if (entry.isEmpty()) {
             throw new AppRegistryException(
                     AppListEntryError.ENTRY_IS_NOT_WITHIN_LIST,
-                    "The application list does not exist %s"
-                            .formatted(getApplicationListUuid(validatable)));
+                    "The application list entry does not exist %s"
+                            .formatted(getApplicationListEntryUuid(validatable)));
         }
 
         log.debug(
@@ -132,6 +132,11 @@ public class UpdateApplicationEntryValidator
     protected UUID getApplicationListUuid(PayloadForUpdateEntry validatable) {
         return validatable.getId();
     }
+
+    protected UUID getApplicationListEntryUuid(PayloadForUpdateEntry validatable) {
+        return validatable.getEntryId();
+    }
+
 
     @Override
     protected String getStandardApplicantCode(PayloadForUpdateEntry validatable) {

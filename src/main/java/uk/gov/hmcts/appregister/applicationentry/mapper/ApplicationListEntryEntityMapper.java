@@ -65,7 +65,7 @@ public abstract class ApplicationListEntryEntityMapper {
             ApplicationList applicationList);
 
     @Mapping(target = "applicationListEntryWording", source = "substituteWording")
-    @Mapping(target = "applicationCode", ignore = true)
+    @Mapping(target = "applicationCode", source = "code")
     @Mapping(target = "standardApplicant", source = "standardApplicant")
     @Mapping(target = "anamedaddress", ignore = true)
     @Mapping(target = "rnameaddress", ignore = true)
