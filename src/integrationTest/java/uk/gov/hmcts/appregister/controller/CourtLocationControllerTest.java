@@ -26,7 +26,6 @@ import uk.gov.hmcts.appregister.testutils.util.AuditAssertUtil;
 import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 
-@Ignore
 public class CourtLocationControllerTest extends AbstractSecurityControllerTest {
 
     private static final String WEB_CONTEXT = "court-locations";

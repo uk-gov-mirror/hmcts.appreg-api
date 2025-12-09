@@ -24,7 +24,6 @@ import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.util.AuditAssertUtil;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 
-@Ignore
 public class ResultCodeControllerTest extends AbstractSecurityControllerTest {
 
     private static final String WEB_CONTEXT = "result-codes";

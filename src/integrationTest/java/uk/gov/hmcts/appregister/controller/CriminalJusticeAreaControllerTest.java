@@ -26,7 +26,6 @@ import uk.gov.hmcts.appregister.testutils.util.AuditAssertUtil;
 import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 
-@Ignore
 public class CriminalJusticeAreaControllerTest extends AbstractSecurityControllerTest {
     private static final String WEB_CONTEXT = "criminal-justice-areas";
     // expectations based on the flyway test data

@@ -41,7 +41,6 @@ import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.util.AuditLogAsserter;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 
-@Ignore
 public class ApplicationListControllerTest extends AbstractSecurityControllerTest {
 
     private static final String WEB_CONTEXT = "application-lists";

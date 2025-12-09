@@ -512,7 +512,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
 
     @Test
     @Transactional
-    public void testBulkMoveByUuidAndSourqceList_movesOnlyMatchingEntriesAndReturnsCount() {
+    public void testBulkMoveByUuidAndSourceList_movesOnlyMatchingEntriesAndReturnsCount() {
         // Given: source, target and other lists
         ApplicationList sourceList = new AppListTestData().someMinimal().build();
         persistance.save(sourceList);
