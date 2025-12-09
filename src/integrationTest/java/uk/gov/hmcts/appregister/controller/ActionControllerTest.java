@@ -38,7 +38,6 @@ import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerT
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
-@Disabled
 public class ActionControllerTest extends AbstractSecurityControllerTest {
     @Autowired private EntityManager entityManager;
     @MockitoBean private UserProvider provider;
