@@ -11,6 +11,8 @@ import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -506,5 +508,54 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         assertThat(page0.getContent().get(0).getLegislation())
                 .isEqualTo("Section 111 Magistrates' Courts Act 1980");
         assertThat(page0.getContent().get(0).getStandardApplicantCode()).isEqualTo("APP001");
+    }
+
+    @Test
+    @Transactional
+    public void testBulkMoveByUuidAndSourqceList_movesOnlyMatchingEntriesAndReturnsCount() {
+        // Given: source, target and other lists
+        ApplicationList sourceList = new AppListTestData().someMinimal().build();
+        persistance.save(sourceList);
+
+        ApplicationList targetList = new AppListTestData().someMinimal().build();
+        persistance.save(targetList);
+
+        ApplicationList otherList = new AppListTestData().someMinimal().build();
+        persistance.save(otherList);
+
+        // Create entries:
+        // - two entries in the source list that we expect to be moved
+        // - one entry in the source list that is NOT in the uuid set (should not move)
+        // - one entry in a different list that is included in the uuid set but must NOT move
+        UUID moveUuid1 = saveEntryInSourceList(sourceList).getUuid();
+        UUID moveUuid2 = saveEntryInSourceList(sourceList).getUuid();
+        saveEntryInSourceList(sourceList);
+        UUID wrongListUuid = saveEntryInSourceList(otherList).getUuid();
+
+        // When: call the repository bulk-move with a set that includes moveUuid1, moveUuid2 and
+        // wrongListUuid
+        Set<UUID> uuidsToMove = Set.of(moveUuid1, moveUuid2, wrongListUuid);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        int updatedCount =
+                applicationListEntryRepository.bulkMoveByUuidAndSourceList(
+                        uuidsToMove, targetList, sourceList.getUuid());
+
+        // Then: only the two entries in the source list are moved, and the method returns 2
+        assertEquals(
+                2,
+                updatedCount,
+                "Should report two rows updated (only entries in source list moved)");
+    }
+
+    private ApplicationListEntry saveEntryInSourceList(ApplicationList sourceList) {
+        ApplicationListEntry moveEntry1 = new AppListEntryTestData().someMinimal().build();
+        moveEntry1.setApplicationList(sourceList);
+        persistance.save(moveEntry1);
+        entityManager.refresh(moveEntry1);
+
+        return moveEntry1;
     }
 }

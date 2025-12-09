@@ -554,7 +554,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole());
         // assert the response
-        responseSpec.then().statusCode(500);
+        responseSpec.then().statusCode(400);
     }
 
     // NOTE: Spring defaults the page size to the max size if we try and increase it beyond. This
@@ -580,7 +580,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                         tokenGenerator.fetchTokenForRole());
 
         // assert the response
-        responseSpec.then().statusCode(500);
+        responseSpec.then().statusCode(400);
     }
 
     @Override
