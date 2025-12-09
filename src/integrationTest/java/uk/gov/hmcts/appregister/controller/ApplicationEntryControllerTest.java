@@ -51,7 +51,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         // test the functionality
         Response responseSpec =
                 restAssuredClient.executeGetRequestWithPaging(
-                        Optional.of(10),
+                        Optional.of(20),
                         Optional.of(0),
                         List.of(),
                         getLocalUrl(WEB_CONTEXT),
@@ -61,11 +61,12 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         responseSpec.then().statusCode(200);
 
         EntryPage page = responseSpec.as(EntryPage.class);
-        PagingAssertionUtil.assertPageDetails(page, 10, 0, 1, TOTAL_APP_ENTRY_COUNT);
+        PagingAssertionUtil.assertPageDetails(page, 20, 0, 1, TOTAL_APP_ENTRY_COUNT);
         assertEquals(10, page.getContent().size());
 
         EntryGetSummaryDto entryGetSummaryDto = page.getContent().get(0);
         assertThat(entryGetSummaryDto.getStatus()).isEqualTo(ApplicationListStatus.OPEN);
+
         assertThat(entryGetSummaryDto.getRespondent().getOrganisation().getName())
                 .isEqualTo("Sarah Johnson");
         assertThat(

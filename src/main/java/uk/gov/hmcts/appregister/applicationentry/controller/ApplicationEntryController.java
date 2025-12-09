@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.applicationentry.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,10 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                 pageableMapper.from(
                         page,
                         size,
-                        entitySortFields,
+                        !entitySortFields.isEmpty()
+                                ? entitySortFields
+                                : Arrays.stream(ApplicationEntrySortFieldEnum.CODE.getEntityValue())
+                                        .toList(),
                         ApplicationEntrySortFieldEnum.CODE.getEntityValue()[0],
                         Sort.Direction.ASC);
 
