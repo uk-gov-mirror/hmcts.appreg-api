@@ -36,7 +36,7 @@ public interface AppListEntryOfficialRepository extends JpaRepository<AppListEnt
      *
      * @param entryId The entry id that the officials map to
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying
     @Query(
             """
         DELETE

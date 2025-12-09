@@ -9,7 +9,7 @@ public class BeanUtil {
      * before any updates are made to it. This is useful when using the Audit API {@link
      * uk.gov.hmcts.appregister.audit.service.AuditOperationService}
      *
-     * This method handles Hibernate proxies by instantiating the underlying class.
+     * <p>This method handles Hibernate proxies by instantiating the underlying class.
      *
      * @param beanToCopy The bean to copy
      * @return The bean copy
@@ -20,8 +20,7 @@ public class BeanUtil {
         if (beanToCopy != null) {
             Class<?> classToInstantiate = getProxyClass(beanToCopy);
 
-            before =
-                    (T) org.springframework.beans.BeanUtils.instantiateClass(classToInstantiate);
+            before = (T) org.springframework.beans.BeanUtils.instantiateClass(classToInstantiate);
             BeanUtils.copyProperties(beanToCopy, before);
         }
 
@@ -29,9 +28,10 @@ public class BeanUtil {
     }
 
     /**
-     * gets the underlying class of a hibernate proxy or the class itself. This is useful when
-     * we need to have reflective access to the values of a class as opposed to the proxy. This is useful
-     * when copying data. See {@link #copyBean(Object)}
+     * gets the underlying class of a hibernate proxy or the class itself. This is useful when we
+     * need to have reflective access to the values of a class as opposed to the proxy. This is
+     * useful when copying data. See {@link #copyBean(Object)}
+     *
      * @param bean The bean to check. Typically a hibernate proxy but can be any class
      * @return The class of the underlying bean or the class that was passed in if not a proxy
      */

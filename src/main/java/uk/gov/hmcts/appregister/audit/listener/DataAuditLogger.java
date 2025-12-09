@@ -53,7 +53,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
                                     .equals(event.getNewValue().getClass().getCanonicalName()))
                             || !event.getOldValue().getId().equals(event.getNewValue().getId()))) {
                 log.debug(
-                        "ENew and old audit values are not the same type and or id{} {}",
+                        "New and old audit values are not the same type and or id{} {}",
                         event.getOldValue().getClass().getCanonicalName(),
                         event.getNewValue().getClass().getCanonicalName());
                 throw new AppRegistryException(
@@ -94,7 +94,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             }
 
             auditDiff(event, oldDifferenceList, null, true);
-        // if both new and old values are present
+            // if both new and old values are present
         } else if (oldNew == AuditOldNewEnum.BOTH) {
             List<AuditableData> oldDifferenceList;
             List<AuditableData> newDifferenceList;
@@ -121,14 +121,17 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
                     oldDifferenceList.size() >= newDifferenceList.size()
                             ? oldDifferenceList
                             : newDifferenceList;
-            List<AuditableData> secondaryList = oldDifferenceList.size() >= newDifferenceList.size()
-                    ? newDifferenceList
-                    : oldDifferenceList;
+            List<AuditableData> secondaryList =
+                    oldDifferenceList.size() >= newDifferenceList.size()
+                            ? newDifferenceList
+                            : oldDifferenceList;
 
-            auditDiff(event, primaryList, secondaryList, oldDifferenceList.size() >= newDifferenceList.size());
-        }
-        // process just new values
-        else {
+            auditDiff(
+                    event,
+                    primaryList,
+                    secondaryList,
+                    oldDifferenceList.size() >= newDifferenceList.size());
+        } else {
             List<AuditableData> newDifferenceList;
             if (event.getNewValue() instanceof Auditable auditDifferentiable) {
                 newDifferenceList =
@@ -155,7 +158,8 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
     private void auditDiff(
             CompleteEvent event,
             List<AuditableData> primaryList,
-            List<AuditableData> secondaryList, boolean primaryOld) {
+            List<AuditableData> secondaryList,
+            boolean primaryOld) {
         for (int i = 0; i < primaryList.size(); i++) {
             AuditableData diff = primaryList.get(i);
             DataAudit audit = new DataAudit();
@@ -167,7 +171,8 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             audit.setSchemaName(schemaName);
 
             // store the new and old values based on the state
-            setNewAndOldAuditValues(audit, diff, getCorrespondingData(diff, secondaryList), event, primaryOld);
+            setNewAndOldAuditValues(
+                    audit, diff, getCorrespondingData(diff, secondaryList), event, primaryOld);
             // save the audit record
             dataAuditRepository.save(audit);
 
@@ -197,8 +202,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
     }
 
     /**
-     * Sets the new and old audit values on the data audit record based on
-     * the event state.
+     * Sets the new and old audit values on the data audit record based on the event state.
      *
      * @param audit The data audit record
      * @param primaryDiff The primary audit data
@@ -209,7 +213,8 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             DataAudit audit,
             AuditableData primaryDiff,
             AuditableData secondaryDiff,
-            CompleteEvent event, boolean primaryOld) {
+            CompleteEvent event,
+            boolean primaryOld) {
         if (primaryOld && secondaryDiff == null) {
             audit.setRelatedKey(event.getOldValue() != null ? event.getOldValue().getId() : -1L);
             audit.setNewValue(EMPTY_VALUE);
@@ -222,16 +227,18 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             audit.setOldValue(EMPTY_VALUE);
             log.debug("Saving data audit new: {}", primaryDiff);
         } else {
-            log.debug("Saving data audit old: {}", primaryDiff);
-            log.debug("Saving data audit new: {}", secondaryDiff);
             audit.setRelatedKey(event.getOldValue() != null ? event.getNewValue().getId() : -1L);
 
             if (primaryOld) {
                 audit.setOldValue(primaryDiff.getValue());
                 audit.setNewValue(secondaryDiff.getValue());
+                log.debug("Saving data audit old: {}", primaryDiff);
+                log.debug("Saving data audit new: {}", secondaryDiff);
             } else {
                 audit.setOldValue(secondaryDiff.getValue());
                 audit.setNewValue(primaryDiff.getValue());
+                log.debug("Saving data audit new: {}", primaryDiff);
+                log.debug("Saving data audit old: {}", secondaryDiff);
             }
         }
     }

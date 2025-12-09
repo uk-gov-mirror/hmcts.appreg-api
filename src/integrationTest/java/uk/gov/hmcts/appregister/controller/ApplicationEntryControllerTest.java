@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -1222,9 +1221,9 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         final EntryUpdateDto updateDto =
-            Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
 
-        List<Official> officials = Instancio.ofList(Official.class).size(4).create();
+        final List<Official> officials = Instancio.ofList(Official.class).size(4).create();
 
         updateDto.getApplicant().setPerson(null);
         updateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA1 12B");
@@ -1241,6 +1240,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         // use the applicant standard applicant
         updateDto.setNumberOfRespondents(null);
         updateDto.setApplicationCode("ZS99007");
+        updateDto.setHasOffsiteFee(true);
         updateDto.setWordingFields(List.of("test wording", LocalDate.now().toString()));
         return updateDto;
     }
@@ -1251,7 +1251,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1260,10 +1260,10 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         differenceLogAsserter.assertNoErrors();
         // test the functionality
         Response responseSpecUpdate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(responseSpecCreate),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
 
         // assert the response
         responseSpecCreate.then().statusCode(201);
@@ -1273,30 +1273,39 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         EntryGetDetailDto createDDto = responseSpecCreate.as(EntryGetDetailDto.class);
 
         // validate the update response
-        validateEntryUpdateResponse(entryUpdateDto, updatedDto, List.of("Premises Address","Premises Date"), createDDto.getFeeStatuses());
+        validateEntryUpdateResponse(
+                entryUpdateDto,
+                updatedDto,
+                List.of("Premises Address", "Premises Date"),
+                createDDto.getFeeStatuses());
 
         // Now filter on the entry with the unique surname and assert we get a record back
         Response responseFindEntrySpec =
-            restAssuredClient.executeGetRequestWithPaging(
-                Optional.of(10),
-                Optional.of(0),
-                List.of(),
-                getLocalUrl(WEB_CONTEXT),
-                tokenGenerator.fetchTokenForRole(),
-                new ApplicationEntryFilter(
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.of(updatedDto.getRespondent().getPerson().getName().getSurname()),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty()),
-                new OpenApiPageMetaData());
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        new ApplicationEntryFilter(
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(
+                                        updatedDto
+                                                .getRespondent()
+                                                .getPerson()
+                                                .getName()
+                                                .getSurname()),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()),
+                        new OpenApiPageMetaData());
 
         // assert the response
         responseFindEntrySpec.then().statusCode(200);
@@ -1308,134 +1317,142 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         differenceLogAsserter.assertNoErrors();
 
-        //assert the application entry update audit logs
+        // assert the application entry update audit logs
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.CRIMINAL_JUSTICE_AREA,
-                "cja_id",
-                "",
-                "1",
-                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getType().name(),
-                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName()));
-
-        differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLICATION_LISTS_ENTRY,
-                "ale_id",
-                "",
-                null,
-                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getType().name(),
-                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.CRIMINAL_JUSTICE_AREA,
+                        "cja_id",
+                        "",
+                        "1",
+                        AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getType().name(),
+                        AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.NAME_ADDRESS,
-                "na_id",
-                null,
-                null,
-                AppListEntryAuditOperation.CREATE_APPLICANT.getType().name(),
-                AppListEntryAuditOperation.CREATE_APPLICANT.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPLICATION_LISTS_ENTRY,
+                        "ale_id",
+                        "",
+                        null,
+                        AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getType().name(),
+                        AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.NAME_ADDRESS,
-                "na_id",
-                null,
-                null,
-                AppListEntryAuditOperation.DELETE_APPLICANT.getType().name(),
-                AppListEntryAuditOperation.DELETE_APPLICANT.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.NAME_ADDRESS,
+                        "na_id",
+                        null,
+                        null,
+                        AppListEntryAuditOperation.CREATE_APPLICANT.getType().name(),
+                        AppListEntryAuditOperation.CREATE_APPLICANT.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.NAME_ADDRESS,
-                "na_id",
-                null,
-                null,
-                AppListEntryAuditOperation.CREATE_RESPONDENT.getType().name(),
-                AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.NAME_ADDRESS,
+                        "na_id",
+                        null,
+                        null,
+                        AppListEntryAuditOperation.DELETE_APPLICANT.getType().name(),
+                        AppListEntryAuditOperation.DELETE_APPLICANT.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.NAME_ADDRESS,
-                "na_id",
-                null,
-                null,
-                AppListEntryAuditOperation.CREATE_RESPONDENT.getType().name(),
-                AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName()));
-
-        Assertions.assertEquals(entryUpdateDto.getFeeStatuses().size(), differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLICATION_LISTS_FEE_STATUS,
-                "alefs_id",
-                null,
-                null,
-                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY.getType().name(),
-                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY.getEventName())));
-
-        Assertions.assertEquals(entryUpdateDto.getOfficials().size(), differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
-                "aleo_id",
-                null,
-                null,
-                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getType().name(),
-                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getEventName())));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.NAME_ADDRESS,
+                        "na_id",
+                        null,
+                        null,
+                        AppListEntryAuditOperation.CREATE_RESPONDENT.getType().name(),
+                        AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
-                "aleo_id",
-                null,
-                null,
-                AppListEntryAuditOperation.DELETE_OFFICIAL_ENTRY.getType().name(),
-                AppListEntryAuditOperation.DELETE_OFFICIAL_ENTRY.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.NAME_ADDRESS,
+                        "na_id",
+                        null,
+                        null,
+                        AppListEntryAuditOperation.CREATE_RESPONDENT.getType().name(),
+                        AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName()));
 
-        Assertions.assertEquals(1, differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLCATION_LISTS_ENTRY_FEE_ID,
-                "ale_ale_id",
-                null,
-                null,
-                AppListEntryAuditOperation.CREATE_FEE_ENTRY.getType().name(),
-                AppListEntryAuditOperation.CREATE_FEE_ENTRY.getEventName())));
+        Assertions.assertEquals(
+                entryUpdateDto.getFeeStatuses().size(),
+                differenceLogAsserter.assertDataAuditChange(
+                        AuditLogAsserter.getDataAuditAssertion(
+                                TableNames.APPLICATION_LISTS_FEE_STATUS,
+                                "alefs_id",
+                                null,
+                                null,
+                                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY.getType().name(),
+                                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY
+                                        .getEventName())));
+
+        Assertions.assertEquals(
+                entryUpdateDto.getOfficials().size(),
+                differenceLogAsserter.assertDataAuditChange(
+                        AuditLogAsserter.getDataAuditAssertion(
+                                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
+                                "aleo_id",
+                                null,
+                                null,
+                                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getType().name(),
+                                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getEventName())));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLCATION_LISTS_ENTRY_FEE_ID,
-                "ale_ale_id",
-                null,
-                null,
-                AppListEntryAuditOperation.DELETE_FEE_ENTRY.getType().name(),
-                AppListEntryAuditOperation.DELETE_FEE_ENTRY.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
+                        "aleo_id",
+                        null,
+                        null,
+                        AppListEntryAuditOperation.DELETE_OFFICIAL_ENTRY.getType().name(),
+                        AppListEntryAuditOperation.DELETE_OFFICIAL_ENTRY.getEventName()));
+
+        Assertions.assertEquals(
+                1,
+                differenceLogAsserter.assertDataAuditChange(
+                        AuditLogAsserter.getDataAuditAssertion(
+                                TableNames.APPLCATION_LISTS_ENTRY_FEE_ID,
+                                "ale_ale_id",
+                                null,
+                                null,
+                                AppListEntryAuditOperation.CREATE_FEE_ENTRY.getType().name(),
+                                AppListEntryAuditOperation.CREATE_FEE_ENTRY.getEventName())));
+
+        differenceLogAsserter.assertDataAuditChange(
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPLCATION_LISTS_ENTRY_FEE_ID,
+                        "ale_ale_id",
+                        null,
+                        null,
+                        AppListEntryAuditOperation.DELETE_FEE_ENTRY.getType().name(),
+                        AppListEntryAuditOperation.DELETE_FEE_ENTRY.getEventName()));
     }
 
     @Test
     public void testUpdateWithUnknownEntry() throws Exception {
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
 
         // test the functionality
         Response responseSpecUpdate =
-            restAssuredClient.executePutRequest(
-                getLocalUrl(CREATE_ENTRY_CONTEXT
-                    + "/"
-                    + UUID.randomUUID()
-                    + "/entries/"
-                    + UUID.randomUUID()),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + UUID.randomUUID()
+                                        + "/entries/"
+                                        + UUID.randomUUID()),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
 
         // assert the response
         responseSpecUpdate.then().statusCode(404);
         ProblemDetail problemDetail = responseSpecUpdate.as(ProblemDetail.class);
 
         Assertions.assertEquals(
-            AppListEntryError.ENTRY_DOES_NOT_EXIST.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.ENTRY_DOES_NOT_EXIST.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1445,29 +1462,30 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
 
         // test the functionality
         Response responseSpecUpdate =
-            restAssuredClient.executePutRequest(
-                getLocalUrl(CREATE_ENTRY_CONTEXT
-                                + "/"
-                                + UUID.randomUUID()
-                                + "/entries/"
-                                + createdData.getId()),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + UUID.randomUUID()
+                                        + "/entries/"
+                                        + createdData.getId()),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
 
         // assert the response
         responseSpecUpdate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecUpdate.as(ProblemDetail.class);
 
         Assertions.assertEquals(
-            AppListEntryError.ENTRY_IS_NOT_WITHIN_LIST.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.ENTRY_IS_NOT_WITHIN_LIST.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1476,65 +1494,46 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
 
         // update entry
         Response responseSpecUpdate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(responseSpecCreate),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
 
         responseSpecUpdate.then().statusCode(200);
 
         // update with an old etag
         entryUpdateDto = getCorrectUpdateDataDto();
 
-        responseSpecUpdate = restAssuredClient.executePutRequest(
-            HeaderUtil.getLocation(responseSpecCreate),
-            tokenGenerator.fetchTokenForRole(),
-            entryUpdateDto,
-            HeaderUtil.getETag(responseSpecCreate));
+        responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto,
+                        HeaderUtil.getETag(responseSpecCreate));
 
         // assert the response
         responseSpecUpdate.then().statusCode(412);
         ProblemDetail problemDetail = responseSpecUpdate.as(ProblemDetail.class);
 
         Assertions.assertEquals(
-            CommonAppError.MATCH_ETAG_FAILURE.getCode().getType().get(),
-            problemDetail.getType());
+                CommonAppError.MATCH_ETAG_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @Test
     public void testUpdateEntryWithApplicantMutualExclusiveWithTwoApplicants() throws Exception {
-        Response entryResponse = createListEntryWithAllData();
+        final Response entryResponse = createListEntryWithAllData();
 
         // create the token
-        TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+        final TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1542,53 +1541,52 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         entryUpdateDto.getApplicant().setPerson(null);
         entryUpdateDto.getApplicant().setOrganisation(null);
 
-        entryUpdateDto
-            .setStandardApplicantCode("MS99007");
+        entryUpdateDto.setStandardApplicantCode("MS99007");
 
         entryUpdateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
         entryUpdateDto
-            .getApplicant()
-            .getOrganisation()
-            .getContactDetails()
-            .setEmail("APPLICANT@TEST.COM");
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail("APPLICANT@TEST.COM");
         entryUpdateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA1 1AA");
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
 
         Assertions.assertEquals(
-            AppListEntryError.APPLICANT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
-                .getCode()
-                .getType()
-                .get(),
-            problemDetail.getType());
+                AppListEntryError.APPLICANT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
+                        .getCode()
+                        .getType()
+                        .get(),
+                problemDetail.getType());
     }
 
     @Test
     public void testUpdateEntryWithApplicantMutualExclusiveWithAllRespondent() throws Exception {
-        Response entryResponse = createListEntryWithAllData();
+        final Response entryResponse = createListEntryWithAllData();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
         entryUpdateDto.getRespondent().setOrganisation(Instancio.create(Organisation.class));
         entryUpdateDto
-            .getRespondent()
-            .getOrganisation()
-            .getContactDetails()
-            .setEmail("APPLICANT@TEST.COM");
+                .getRespondent()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail("APPLICANT@TEST.COM");
         entryUpdateDto.getRespondent().getOrganisation().getContactDetails().setPostcode("AA1 1AA");
         entryUpdateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
         entryUpdateDto
-            .getRespondent()
-            .getPerson()
-            .getContactDetails()
-            .setEmail("RESPONDENT@TEST.COM");
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setEmail("RESPONDENT@TEST.COM");
 
         entryUpdateDto.setNumberOfRespondents(10);
         entryUpdateDto.setNumberOfRespondents(null);
@@ -1600,22 +1598,22 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
-                .getCode()
-                .getType()
-                .get(),
-            problemDetail.getType());
+                AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
+                        .getCode()
+                        .getType()
+                        .get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1624,7 +1622,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
 
@@ -1633,15 +1631,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(404);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.APPLICATION_CODE_DOES_NOT_EXIST.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.APPLICATION_CODE_DOES_NOT_EXIST.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1650,7 +1648,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1658,14 +1656,14 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-               HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.FEE_REQUIRED.getCode().getType().get(), problemDetail.getType());
+                AppListEntryError.FEE_REQUIRED.getCode().getType().get(), problemDetail.getType());
     }
 
     @Test
@@ -1674,7 +1672,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1682,15 +1680,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.RESPONDENT_REQUIRED.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.RESPONDENT_REQUIRED.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1699,7 +1697,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1707,15 +1705,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.RESPONDENT_REQUIRED.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.RESPONDENT_REQUIRED.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1724,7 +1722,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1732,15 +1730,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.NOT_RESPONDENT_REQUIRED.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.NOT_RESPONDENT_REQUIRED.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1749,7 +1747,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1757,15 +1755,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            CommonAppError.WORDING_SUBSTITUTE_SIZE_MISMATCH.getCode().getType().get(),
-            problemDetail.getType());
+                CommonAppError.WORDING_SUBSTITUTE_SIZE_MISMATCH.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -1774,27 +1772,27 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
         entryUpdateDto.setWordingFields(
-            List.of("only one field that exceeds length", "extra field"));
+                List.of("only one field that exceeds length", "extra field"));
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            CommonAppError.WORDING_LENGTH_FAILURE.getCode().getType().get(),
-            problemDetail.getType());
+                CommonAppError.WORDING_LENGTH_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
         Assertions.assertEquals(
-            "Premises Address=only one field that exceeds length",
-            problemDetail.getDetail().trim());
+                "Premises Address=only one field that exceeds length",
+                problemDetail.getDetail().trim());
     }
 
     @Test
@@ -1803,7 +1801,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1811,18 +1809,18 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                    entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(400);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
 
         Assertions.assertEquals(
-            CommonAppError.WORDING_DATA_TYPE_FAILURE.getCode().getType().get(),
-            problemDetail.getType());
+                CommonAppError.WORDING_DATA_TYPE_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
         Assertions.assertEquals(
-            "Premises Date=extra field not a date", problemDetail.getDetail().trim());
+                "Premises Date=extra field not a date", problemDetail.getDetail().trim());
     }
 
     @Test
@@ -1831,7 +1829,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
@@ -1840,15 +1838,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePutRequest(
-                HeaderUtil.getLocation(entryResponse),
-                tokenGenerator.fetchTokenForRole(),
-                entryUpdateDto);
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(entryResponse),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
         responseSpecCreate.then().statusCode(404);
         ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
         Assertions.assertEquals(
-            AppListEntryError.STANDARD_APPLICANT_DOES_NOT_EXIST.getCode().getType().get(),
-            problemDetail.getType());
+                AppListEntryError.STANDARD_APPLICANT_DOES_NOT_EXIST.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Override
@@ -1873,20 +1871,19 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                         .successRole(RoleEnum.ADMIN)
                         .build(),
                 RestEndpointDescription.builder()
-                    .url(
-                        getLocalUrl(
-                            CREATE_ENTRY_CONTEXT
-                                + "/"
-                                + UUID.randomUUID()
-                                + "/entries/"
-                                + UUID.randomUUID()))
-                    .method(HttpMethod.PUT)
-                    .payload(getCorrectCreateEntryDto())
-                    .successRole(RoleEnum.USER)
-                    .successRole(RoleEnum.ADMIN)
-                    .build());
+                        .url(
+                                getLocalUrl(
+                                        CREATE_ENTRY_CONTEXT
+                                                + "/"
+                                                + UUID.randomUUID()
+                                                + "/entries/"
+                                                + UUID.randomUUID()))
+                        .method(HttpMethod.PUT)
+                        .payload(getCorrectCreateEntryDto())
+                        .successRole(RoleEnum.USER)
+                        .successRole(RoleEnum.ADMIN)
+                        .build());
     }
-
 
     private UUID getOpenApplicationListId() {
         return unitOfWork.inTransaction(
@@ -1984,15 +1981,15 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         }
     }
 
-
     /**
      * creates a list entry with a respondent, applicant, fees, officials and wording fields.
+     *
      * @return The url to the created entry
      */
     public Response createListEntryWithAllData() throws Exception {
         // create the token
         TokenGenerator tokenGenerator =
-            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
         EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
@@ -2001,14 +1998,14 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // test the functionality
         Response responseSpecCreate =
-            restAssuredClient.executePostRequest(
-                getLocalUrl(
-                    CREATE_ENTRY_CONTEXT
-                        + "/"
-                        + getOpenApplicationListId()
-                        + "/entries"),
-                tokenGenerator.fetchTokenForRole(),
-                entryCreateDto);
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
 
         // assert the response
         responseSpecCreate.then().statusCode(201);
@@ -2017,30 +2014,30 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
 
         // validate the response
         validateEntryCreationResponse(
-            entryCreateDto, createdDto, List.of("Premises Address", "Premises Date"));
+                entryCreateDto, createdDto, List.of("Premises Address", "Premises Date"));
 
         // Now filter on the entry with the unique surname and assert we get a record back
         Response responseFindEntrySpec =
-            restAssuredClient.executeGetRequestWithPaging(
-                Optional.of(10),
-                Optional.of(0),
-                List.of(),
-                getLocalUrl(WEB_CONTEXT),
-                tokenGenerator.fetchTokenForRole(),
-                new ApplicationEntryFilter(
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.of(surnameToLookup),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty()),
-                new OpenApiPageMetaData());
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        new ApplicationEntryFilter(
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(surnameToLookup),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()),
+                        new OpenApiPageMetaData());
 
         // assert the response
         responseFindEntrySpec.then().statusCode(200);
@@ -2050,39 +2047,37 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         Assertions.assertEquals(createdDto.getId(), page.getContent().get(0).getId());
 
         differenceLogAsserter.assertNoErrors();
-//        differenceLogAsserter.assertDiffCount(10, true);
+        //        differenceLogAsserter.assertDiffCount(10, true);
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "id",
-                "",
-                null,
-                AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getType().name(),
-                AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "id",
+                        "",
+                        null,
+                        AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getType().name(),
+                        AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.CRIMINAL_JUSTICE_AREA,
-                "cja_id",
-                null,
-                "1",
-                AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getType().name(),
-                AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.CRIMINAL_JUSTICE_AREA,
+                        "cja_id",
+                        null,
+                        "1",
+                        AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getType().name(),
+                        AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPLICATION_LISTS_ENTRY,
-                "ale_id",
-                "",
-                null,
-                AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getType().name(),
-                AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPLICATION_LISTS_ENTRY,
+                        "ale_id",
+                        "",
+                        null,
+                        AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getType().name(),
+                        AppListEntryAuditOperation.CREATE_APP_ENTRY_LIST.getEventName()));
 
         return responseSpecCreate;
     }
-
-
 
     /**
      * validates the response based on the creation payload.
@@ -2092,9 +2087,9 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
      * @param expectedWordingFields The expected wording fields
      */
     private void validateEntryCreationResponse(
-        EntryCreateDto entryCreateDto,
-        EntryGetDetailDto response,
-        List<String> expectedWordingFields) {
+            EntryCreateDto entryCreateDto,
+            EntryGetDetailDto response,
+            List<String> expectedWordingFields) {
 
         if (entryCreateDto.getApplicant() != null) {
             Assertions.assertEquals(entryCreateDto.getApplicant(), response.getApplicant());
@@ -2114,7 +2109,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         Assertions.assertNotNull(response.getListId());
         Assertions.assertNotNull(response.getId());
         Assertions.assertEquals(
-            entryCreateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
+                entryCreateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
         Assertions.assertEquals(entryCreateDto.getLodgementDate(), response.getLodgementDate());
 
         Assertions.assertEquals(entryCreateDto.getHasOffsiteFee(), response.getHasOffsiteFee());
@@ -2122,30 +2117,30 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         // ensure the response fees align
         for (int i = 0; i < response.getFeeStatuses().size(); i++) {
             Assertions.assertEquals(
-                entryCreateDto.getFeeStatuses().get(i).getPaymentReference(),
-                response.getFeeStatuses().get(i).getPaymentReference());
+                    entryCreateDto.getFeeStatuses().get(i).getPaymentReference(),
+                    response.getFeeStatuses().get(i).getPaymentReference());
             Assertions.assertEquals(
-                entryCreateDto.getFeeStatuses().get(i).getStatusDate(),
-                response.getFeeStatuses().get(i).getStatusDate());
+                    entryCreateDto.getFeeStatuses().get(i).getStatusDate(),
+                    response.getFeeStatuses().get(i).getStatusDate());
             Assertions.assertEquals(
-                entryCreateDto.getFeeStatuses().get(i).getPaymentStatus(),
-                response.getFeeStatuses().get(i).getPaymentStatus());
+                    entryCreateDto.getFeeStatuses().get(i).getPaymentStatus(),
+                    response.getFeeStatuses().get(i).getPaymentStatus());
         }
 
         // ensure the response fees align
         for (int i = 0; i < response.getOfficials().size(); i++) {
             Assertions.assertEquals(
-                entryCreateDto.getOfficials().get(i).getType(),
-                response.getOfficials().get(i).getType());
+                    entryCreateDto.getOfficials().get(i).getType(),
+                    response.getOfficials().get(i).getType());
             Assertions.assertEquals(
-                entryCreateDto.getOfficials().get(i).getSurname(),
-                response.getOfficials().get(i).getSurname());
+                    entryCreateDto.getOfficials().get(i).getSurname(),
+                    response.getOfficials().get(i).getSurname());
             Assertions.assertEquals(
-                entryCreateDto.getOfficials().get(i).getTitle(),
-                response.getOfficials().get(i).getTitle());
+                    entryCreateDto.getOfficials().get(i).getTitle(),
+                    response.getOfficials().get(i).getTitle());
             Assertions.assertEquals(
-                entryCreateDto.getOfficials().get(i).getForename(),
-                response.getOfficials().get(i).getForename());
+                    entryCreateDto.getOfficials().get(i).getForename(),
+                    response.getOfficials().get(i).getForename());
         }
     }
 
@@ -2158,10 +2153,10 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
      * @param existingFees The existing fees before the update
      */
     private void validateEntryUpdateResponse(
-        EntryUpdateDto entryUpdateDto,
-        EntryGetDetailDto response,
-        List<String> expectedWordingFields,
-        List<FeeStatus> existingFees) {
+            EntryUpdateDto entryUpdateDto,
+            EntryGetDetailDto response,
+            List<String> expectedWordingFields,
+            List<FeeStatus> existingFees) {
 
         if (entryUpdateDto.getApplicant() != null) {
             Assertions.assertEquals(entryUpdateDto.getApplicant(), response.getApplicant());
@@ -2181,7 +2176,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         Assertions.assertNotNull(response.getListId());
         Assertions.assertNotNull(response.getId());
         Assertions.assertEquals(
-            entryUpdateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
+                entryUpdateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
         Assertions.assertEquals(entryUpdateDto.getLodgementDate(), response.getLodgementDate());
 
         Assertions.assertEquals(entryUpdateDto.getHasOffsiteFee(), response.getHasOffsiteFee());
@@ -2189,44 +2184,46 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         // ensure the existing feeds are present in the correct order
         for (int i = 0; i < existingFees.size(); i++) {
             Assertions.assertEquals(
-                existingFees.get(i).getPaymentReference(),
-                response.getFeeStatuses().get(i).getPaymentReference());
+                    existingFees.get(i).getPaymentReference(),
+                    response.getFeeStatuses().get(i).getPaymentReference());
             Assertions.assertEquals(
-                existingFees.get(i).getStatusDate(),
-                response.getFeeStatuses().get(i).getStatusDate());
+                    existingFees.get(i).getStatusDate(),
+                    response.getFeeStatuses().get(i).getStatusDate());
             Assertions.assertEquals(
-                existingFees.get(i).getPaymentStatus(),
-                response.getFeeStatuses().get(i).getPaymentStatus());
+                    existingFees.get(i).getPaymentStatus(),
+                    response.getFeeStatuses().get(i).getPaymentStatus());
         }
 
         // ensure the response fees align
         for (int i = existingFees.size(); i < response.getFeeStatuses().size(); i++) {
             Assertions.assertEquals(
-                entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getPaymentReference(),
-                response.getFeeStatuses().get(i).getPaymentReference());
+                    entryUpdateDto
+                            .getFeeStatuses()
+                            .get(i - existingFees.size())
+                            .getPaymentReference(),
+                    response.getFeeStatuses().get(i).getPaymentReference());
             Assertions.assertEquals(
-                entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getStatusDate(),
-                response.getFeeStatuses().get(i).getStatusDate());
+                    entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getStatusDate(),
+                    response.getFeeStatuses().get(i).getStatusDate());
             Assertions.assertEquals(
-                entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getPaymentStatus(),
-                response.getFeeStatuses().get(i).getPaymentStatus());
+                    entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getPaymentStatus(),
+                    response.getFeeStatuses().get(i).getPaymentStatus());
         }
 
         // ensure the response fees align
         for (int i = 0; i < response.getOfficials().size(); i++) {
             Assertions.assertEquals(
-                entryUpdateDto.getOfficials().get(i).getType(),
-                response.getOfficials().get(i).getType());
+                    entryUpdateDto.getOfficials().get(i).getType(),
+                    response.getOfficials().get(i).getType());
             Assertions.assertEquals(
-                entryUpdateDto.getOfficials().get(i).getSurname(),
-                response.getOfficials().get(i).getSurname());
+                    entryUpdateDto.getOfficials().get(i).getSurname(),
+                    response.getOfficials().get(i).getSurname());
             Assertions.assertEquals(
-                entryUpdateDto.getOfficials().get(i).getTitle(),
-                response.getOfficials().get(i).getTitle());
+                    entryUpdateDto.getOfficials().get(i).getTitle(),
+                    response.getOfficials().get(i).getTitle());
             Assertions.assertEquals(
-                entryUpdateDto.getOfficials().get(i).getForename(),
-                response.getOfficials().get(i).getForename());
+                    entryUpdateDto.getOfficials().get(i).getForename(),
+                    response.getOfficials().get(i).getForename());
         }
     }
-
 }

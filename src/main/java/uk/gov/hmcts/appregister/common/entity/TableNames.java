@@ -22,5 +22,4 @@ public class TableNames {
     public static final String APPLICATION_LISTS_FEE_STATUS = "app_list_entry_fee_status";
     public static final String APPLCATION_LISTS_ENTRY_OFFICIAL = "app_list_entry_official";
     public static final String APPLCATION_LISTS_ENTRY_FEE_ID = "app_list_entry_fee_id";
-
 }

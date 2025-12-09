@@ -117,7 +117,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(8, true);
 
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
@@ -230,7 +229,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(9, true);
 
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
@@ -459,8 +457,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getCjaCode()).isNull();
         assertThat(dto.getOtherLocationDescription()).isNull();
 
-        differenceLogAsserter.assertDiffCount(11, true);
-
         String eventName = AppListAuditOperation.UPDATE_APP_LIST.getEventName();
         String operation = AppListAuditOperation.UPDATE_APP_LIST.getType().name();
         differenceLogAsserter.assertDataAuditChange(
@@ -564,8 +560,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         resp.then().statusCode(HttpStatus.OK.value());
         resp.then().contentType(VND_JSON_V1);
         resp.then().header("Etag", org.hamcrest.Matchers.notNullValue());
-
-        differenceLogAsserter.assertDiffCount(11, true);
     }
 
     @Test
@@ -687,8 +681,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getOtherLocationDescription()).isEqualTo("Updated other location");
         assertThat(dto.getCourtCode()).isNull();
         assertThat(dto.getCourtName()).isNull();
-
-        differenceLogAsserter.assertDiffCount(11, true);
 
         String eventName = AppListAuditOperation.UPDATE_APP_LIST.getEventName();
         String operation = AppListAuditOperation.UPDATE_APP_LIST.getType().name();

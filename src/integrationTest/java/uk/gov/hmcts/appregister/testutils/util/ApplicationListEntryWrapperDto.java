@@ -1,5 +1,7 @@
 package uk.gov.hmcts.appregister.testutils.util;
 
+import java.time.LocalDate;
+import java.util.List;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
@@ -7,11 +9,9 @@ import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.Official;
 import uk.gov.hmcts.appregister.generated.model.Respondent;
 
-import java.time.LocalDate;
-import java.util.List;
-
 /**
- * Defines a common class for
+ * Defines a common class that wraps a EntryCreateDto or a EntryUpdateDto to provide a unified
+ * interface for accessing their properties. Can be used with {@link ApplicationListEntryAssertion}.
  */
 public class ApplicationListEntryWrapperDto {
     private EntryCreateDto entryCreateDto;
@@ -33,7 +33,6 @@ public class ApplicationListEntryWrapperDto {
         }
     }
 
-
     public Applicant getApplicant() {
         if (entryCreateDto != null) {
             return entryCreateDto.getApplicant();
@@ -41,7 +40,6 @@ public class ApplicationListEntryWrapperDto {
             return entryUpdateDto.getApplicant();
         }
     }
-
 
     public Respondent getRespondent() {
         if (entryCreateDto != null) {

@@ -21,9 +21,9 @@ public class MatchResponse<T> {
     /**
      * Factory method to create a MatchResponse instance.
      *
-     * @param payload  the payload to be included in the response
+     * @param payload the payload to be included in the response
      * @param entities the list of entities used to generate the ETag
-     * @param <T>      the type of the payload
+     * @param <T> the type of the payload
      * @return a new MatchResponse instance
      */
     public static <T> MatchResponse<T> of(T payload, List<Keyable> entities) {

@@ -1,13 +1,12 @@
 package uk.gov.hmcts.appregister.common.template;
 
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.template.type.DateType;
 import uk.gov.hmcts.appregister.common.template.wording.WordingTemplateSentence;
-
-import java.util.List;
 
 public class WordingTemplateTest {
     private static final String DATE_TEMPLATE =
@@ -65,11 +64,10 @@ public class WordingTemplateTest {
     public void testParameterSizeMismatch() {
         WordingTemplateSentence collection = WordingTemplateSentence.with(DATE_TEMPLATE);
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> collection.substitute(List.of()));
+                Assertions.assertThrows(
+                        AppRegistryException.class, () -> collection.substitute(List.of()));
         Assertions.assertEquals(
-            CommonAppError.WORDING_SUBSTITUTE_SIZE_MISMATCH, appRegistryException.getCode());
+                CommonAppError.WORDING_SUBSTITUTE_SIZE_MISMATCH, appRegistryException.getCode());
     }
 
     @Test

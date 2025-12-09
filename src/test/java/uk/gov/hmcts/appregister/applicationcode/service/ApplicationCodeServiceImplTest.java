@@ -53,8 +53,8 @@ public class ApplicationCodeServiceImplTest {
     @Spy private final List<AuditOperationLifecycleListener> auditLifecycleListeners = List.of();
 
     @Spy
-    private final AuditOperationService auditService = new AuditOperationServiceImpl(objectMapper,
-                                                                                     auditLifecycleListeners);
+    private final AuditOperationService auditService =
+            new AuditOperationServiceImpl(objectMapper, auditLifecycleListeners);
 
     @Spy private final PageMapper pageMapper = new PageMapper();
 
@@ -265,13 +265,19 @@ public class ApplicationCodeServiceImplTest {
 
     class DummyAuditOperationService implements AuditOperationService {
         @Override
-        public <T, E extends Keyable> T processAudit(E oldValue, AuditOperation auditType, Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
-            return processAudit(oldValue, auditType, execution, null);
+        public <T, E extends Keyable> T processAudit(
+                E oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(
+                    oldValue, auditType, execution, (AuditOperationLifecycleListener) null);
         }
 
         @Override
-        public <T, E extends Keyable> T processAudit(AuditOperation auditType, Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
-            return processAudit(auditType, execution, null);
+        public <T, E extends Keyable> T processAudit(
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(auditType, execution);
         }
 
         @Override

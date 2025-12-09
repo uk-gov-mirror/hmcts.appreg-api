@@ -56,9 +56,9 @@ public interface AuditOperationService {
      *     of the operation
      */
     <T, E extends Keyable> T processAudit(
-        E oldValue,
-        AuditOperation auditType,
-        Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution);
+            E oldValue,
+            AuditOperation auditType,
+            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution);
 
     /**
      * process a command within the context of the audit. The call assumes no old value so this
@@ -69,6 +69,6 @@ public interface AuditOperationService {
      *     of the operation
      */
     <T, E extends Keyable> T processAudit(
-        AuditOperation auditType,
-        Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution);
+            AuditOperation auditType,
+            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution);
 }

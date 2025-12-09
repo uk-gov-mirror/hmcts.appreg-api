@@ -2,11 +2,8 @@ package uk.gov.hmcts.appregister.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.Size;
@@ -39,7 +36,8 @@ import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 @Getter
 @Setter
 @AuditEnabled(types = {CrudEnum.CREATE, CrudEnum.DELETE})
-public class AppListEntryFeeId extends BaseChangeableEntity implements Accountable, Versionable, Keyable {
+public class AppListEntryFeeId extends BaseChangeableEntity
+        implements Accountable, Versionable, Keyable {
     @Id
     @Column(name = "ale_ale_id", nullable = false)
     @Audit(action = {CrudEnum.CREATE, CrudEnum.DELETE})

@@ -1,15 +1,15 @@
 package uk.gov.hmcts.appregister.testutils.util;
 
 import io.restassured.response.Response;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
 public class HeaderUtil {
-
     /**
-     * gets the location header value for the given resource.
+     * gets the location header value for the given response.
+     *
+     * @param response The response to get the location header from
      * @return The location header
      * @throws MalformedURLException if the location header is not a valid URL
      */
@@ -18,7 +18,9 @@ public class HeaderUtil {
     }
 
     /**
-     * gets the etag header value for the given resource.
+     * gets the etag header value for the given response.
+     *
+     * @param response The response to get the etag header from
      * @return The etag header
      */
     public static String getETag(Response response) {

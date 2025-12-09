@@ -508,20 +508,26 @@ public class ApplicationEntryServiceImplTest {
     class DummyAuditOperationService implements AuditOperationService {
 
         @Override
-        public <T, E extends Keyable> T processAudit(E oldValue, AuditOperation auditType, Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
-            return processAudit(oldValue, auditType, execution, null);
-        }
-
-        @Override
-        public <T, E extends Keyable> T processAudit(AuditOperation auditType, Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
-            return processAudit(null, auditType, execution, null);
+        public <T, E extends Keyable> T processAudit(
+                E oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(
+                    oldValue, auditType, execution, (AuditOperationLifecycleListener) null);
         }
 
         @Override
         public <T, E extends Keyable> T processAudit(
-            AuditOperation auditType,
-            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
-            AuditOperationLifecycleListener... listener) {
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(null, auditType, execution);
+        }
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution,
+                AuditOperationLifecycleListener... listener) {
             return processAudit(null, auditType, execution, listener);
         }
 

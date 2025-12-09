@@ -2,7 +2,6 @@ package uk.gov.hmcts.appregister.audit.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -42,19 +41,25 @@ public class AuditOperationServiceImpl implements AuditOperationService {
 
     @Override
     public <T, E extends Keyable> T processAudit(
-        AuditOperation auditType,
-        Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
-        return processAudit(null, auditType, execution, auditLifecycleListeners.toArray(
-            new AuditOperationLifecycleListener[0]));
+            AuditOperation auditType,
+            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+        return processAudit(
+                null,
+                auditType,
+                execution,
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
     public <T, E extends Keyable> T processAudit(
-        E oldValue,
-        AuditOperation auditType,
-        Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
-        return processAudit(oldValue, auditType, execution, auditLifecycleListeners.toArray(
-            new AuditOperationLifecycleListener[0]));
+            E oldValue,
+            AuditOperation auditType,
+            Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+        return processAudit(
+                oldValue,
+                auditType,
+                execution,
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override

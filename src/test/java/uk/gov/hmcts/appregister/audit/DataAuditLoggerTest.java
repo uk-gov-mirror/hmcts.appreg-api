@@ -91,7 +91,8 @@ public class DataAuditLoggerTest {
     }
 
     /**
-     * This is a programmatic error as both new and old audit values should NEVER be different types.
+     * This is a programmatic error as both new and old audit values should NEVER be different
+     * types.
      */
     @Test
     public void testFailOldAndNewEntityDifferentTypes() {
@@ -295,17 +296,17 @@ public class DataAuditLoggerTest {
         String oneValue1 = "ovalue2";
 
         when(auditDifferentiator.extractAuditData(eq(CrudEnum.UPDATE), refEq(oldCode)))
-            .thenReturn(
-                List.of(
-                    new AuditableData(tableName, field, newValue),
-                    new AuditableData(tableName, field1, newValue1),
-                    new AuditableData(tableName, field2, newValue2)));
+                .thenReturn(
+                        List.of(
+                                new AuditableData(tableName, field, newValue),
+                                new AuditableData(tableName, field1, newValue1),
+                                new AuditableData(tableName, field2, newValue2)));
 
         when(auditDifferentiator.extractAuditData(eq(CrudEnum.UPDATE), refEq(newCode)))
-            .thenReturn(
-                List.of(
-                    new AuditableData(tableName, field, oneValue),
-                    new AuditableData(tableName, field1, oneValue1)));
+                .thenReturn(
+                        List.of(
+                                new AuditableData(tableName, field, oneValue),
+                                new AuditableData(tableName, field1, oneValue1)));
 
         new DataAuditLogger(auditDifferentiator, dataAuditRepository).eventPerformed(auditRequest);
 

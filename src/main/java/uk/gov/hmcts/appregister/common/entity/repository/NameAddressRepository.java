@@ -1,8 +1,6 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
 import java.util.List;
-import java.util.UUID;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +15,7 @@ public interface NameAddressRepository extends JpaRepository<NameAddress, Long> 
      *
      * @param value the minimum ID value (inclusive)
      * @return a list of NameAddress entry entities with IDs greater than or equal to the specified
-     * value
+     *     value
      */
     List<NameAddress> findByIdGreaterThanEqual(Integer value);
 
@@ -26,11 +24,10 @@ public interface NameAddressRepository extends JpaRepository<NameAddress, Long> 
      *
      * @param id The entry id that the officials map to
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying
     @Query(
-        """
-        DELETE FROM NameAddress na
-            WHERE na.id = :id
-    """)
+            """
+        DELETE FROM NameAddress na WHERE na.id = :id
+        """)
     void deleteForId(Long id);
-    }
+}

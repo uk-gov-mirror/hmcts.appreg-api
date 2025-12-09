@@ -1,5 +1,16 @@
 package uk.gov.hmcts.appregister.applicationentry.validator;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.when;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
@@ -12,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.applicationentry.model.PayloadForUpdateEntry;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
@@ -28,32 +38,17 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
-import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.data.ApplicationCodeTestData;
 import uk.gov.hmcts.appregister.data.FeeTestData;
 import uk.gov.hmcts.appregister.data.StandardApplicantTestData;
-import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class UpdateApplicationEntryValidatorTest {
-    @Mock
-    private ApplicationListRepository applicationListRepository;
+    @Mock private ApplicationListRepository applicationListRepository;
 
     @Mock private ApplicationCodeRepository applicationCodeRepository;
 
@@ -65,8 +60,7 @@ public class UpdateApplicationEntryValidatorTest {
 
     @Mock private ApplicationListEntryRepository applicationListEntryRepository;
 
-    @InjectMocks
-    private UpdateApplicationEntryValidator updateApplicationEntryValidator;
+    @InjectMocks private UpdateApplicationEntryValidator updateApplicationEntryValidator;
 
     // data to be used in tests
     private EntryUpdateDto entryUpdateDto;
@@ -76,7 +70,6 @@ public class UpdateApplicationEntryValidatorTest {
     private ApplicationList applicationList;
     private UUID appListUuid;
     private UUID appListEntryUuid;
-
 
     @BeforeEach
     void setUp() {
@@ -110,23 +103,25 @@ public class UpdateApplicationEntryValidatorTest {
         appListEntryUuid = UUID.randomUUID();
 
         when(applicationListRepository.findByUuid(appListUuid))
-            .thenReturn(Optional.of(applicationList));
+                .thenReturn(Optional.of(applicationList));
         when(applicationCodeRepository.findByCodeAndDate(
-            eq(entryUpdateDto.getApplicationCode()), notNull()))
-            .thenReturn(List.of(applicationCode));
+                        eq(entryUpdateDto.getApplicationCode()), notNull()))
+                .thenReturn(List.of(applicationCode));
         when(feeRepository.findByReferenceBetweenDateWithOffsite(
-            eq(applicationCode.getFeeReference()),
-            notNull(),
-            eq(entryUpdateDto.getHasOffsiteFee())))
-            .thenReturn(List.of(fee));
+                        eq(applicationCode.getFeeReference()),
+                        notNull(),
+                        eq(entryUpdateDto.getHasOffsiteFee())))
+                .thenReturn(List.of(fee));
 
         when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
-            entryUpdateDto.getStandardApplicantCode(), LocalDate.now(clock)))
-            .thenReturn(List.of(standardApplicant));
+                        entryUpdateDto.getStandardApplicantCode(), LocalDate.now(clock)))
+                .thenReturn(List.of(standardApplicant));
 
-        when(applicationListEntryRepository.findByUuid(eq(appListEntryUuid))).thenReturn(Optional.of(new ApplicationListEntry()));
-        when(applicationListEntryRepository.findByEntryUuidWithinListUuid(eq(appListUuid), eq(appListEntryUuid)))
-            .thenReturn(Optional.of(new ApplicationListEntry()));
+        when(applicationListEntryRepository.findByUuid(eq(appListEntryUuid)))
+                .thenReturn(Optional.of(new ApplicationListEntry()));
+        when(applicationListEntryRepository.findByEntryUuidWithinListUuid(
+                        eq(appListUuid), eq(appListEntryUuid)))
+                .thenReturn(Optional.of(new ApplicationListEntry()));
     }
 
     @Test
@@ -139,8 +134,8 @@ public class UpdateApplicationEntryValidatorTest {
         // set the respondent to null for the organisation so we use the person
         entryUpdateDto.getRespondent().setOrganisation(null);
 
-
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         updateApplicationEntryValidator.validate(payload);
@@ -156,17 +151,20 @@ public class UpdateApplicationEntryValidatorTest {
         // set the respondent to null for the organisation so we use the person
         entryUpdateDto.getRespondent().setOrganisation(null);
 
-        when(applicationListEntryRepository.findByUuid(eq(appListEntryUuid))).thenReturn(Optional.empty());
+        when(applicationListEntryRepository.findByUuid(eq(appListEntryUuid)))
+                .thenReturn(Optional.empty());
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
-        AppRegistryException appRegistryException = Assertions.assertThrows(AppRegistryException.class,
-                                                                            ()
-                                                                                -> updateApplicationEntryValidator
-                                                                                .validate(payload));
-        Assertions.assertEquals(AppListEntryError.ENTRY_DOES_NOT_EXIST.getCode().getType(),
-                                appRegistryException.getCode().getCode().getType());
+        AppRegistryException appRegistryException =
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
+        Assertions.assertEquals(
+                AppListEntryError.ENTRY_DOES_NOT_EXIST.getCode().getType(),
+                appRegistryException.getCode().getCode().getType());
     }
 
     @Test
@@ -179,52 +177,57 @@ public class UpdateApplicationEntryValidatorTest {
         // set the respondent to null for the organisation so we use the person
         entryUpdateDto.getRespondent().setOrganisation(null);
 
-        when(applicationListEntryRepository.findByEntryUuidWithinListUuid(eq(appListUuid), eq(appListEntryUuid)))
-            .thenReturn(Optional.empty());
+        when(applicationListEntryRepository.findByEntryUuidWithinListUuid(
+                        eq(appListUuid), eq(appListEntryUuid)))
+                .thenReturn(Optional.empty());
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
-        AppRegistryException appRegistryException = Assertions.assertThrows(AppRegistryException.class,
-                                                                            ()
-                                                                                -> updateApplicationEntryValidator
-                                                                                .validate(payload));
-        Assertions.assertEquals(AppListEntryError.ENTRY_IS_NOT_WITHIN_LIST.getCode().getType(),
-                                appRegistryException.getCode().getCode().getType());
+        AppRegistryException appRegistryException =
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
+        Assertions.assertEquals(
+                AppListEntryError.ENTRY_IS_NOT_WITHIN_LIST.getCode().getType(),
+                appRegistryException.getCode().getCode().getType());
     }
 
     @Test
     void testRespondentMutualExclusiveFail() {
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
-                .getCode()
-                .getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
+                        .getCode()
+                        .getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
     void testApplicantMutualExclusiveFail() {
         entryUpdateDto.getRespondent().setOrganisation(null);
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.APPLICANT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
-                .getCode()
-                .getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.APPLICANT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
+                        .getCode()
+                        .getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
@@ -238,17 +241,17 @@ public class UpdateApplicationEntryValidatorTest {
         entryUpdateDto.setStandardApplicantCode(null);
         entryUpdateDto.getApplicant().setOrganisation(null);
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
-
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.FEE_NOT_REQUIRED.getCode().getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.FEE_NOT_REQUIRED.getCode().getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
@@ -261,16 +264,17 @@ public class UpdateApplicationEntryValidatorTest {
         entryUpdateDto.setStandardApplicantCode(null);
         entryUpdateDto.getApplicant().setOrganisation(null);
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.FEE_REQUIRED.getCode().getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.FEE_REQUIRED.getCode().getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
@@ -281,16 +285,17 @@ public class UpdateApplicationEntryValidatorTest {
 
         when(applicationListRepository.findByUuid(appListUuid)).thenReturn(Optional.empty());
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.APPLICATION_LIST_DOES_NOT_EXIST.getCode().getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.APPLICATION_LIST_DOES_NOT_EXIST.getCode().getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
@@ -301,20 +306,21 @@ public class UpdateApplicationEntryValidatorTest {
 
         applicationList.setStatus(Status.CLOSED);
         when(applicationListRepository.findByUuid(appListUuid))
-            .thenReturn(Optional.of(applicationList));
+                .thenReturn(Optional.of(applicationList));
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
-                .getCode()
-                .getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
+                        .getCode()
+                        .getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
@@ -327,20 +333,21 @@ public class UpdateApplicationEntryValidatorTest {
         applicationList.setDeleted(YesOrNo.YES);
 
         when(applicationListRepository.findByUuid(appListUuid))
-            .thenReturn(Optional.of(applicationList));
+                .thenReturn(Optional.of(applicationList));
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
-                .getCode()
-                .getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
+                        .getCode()
+                        .getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 
     @Test
@@ -350,18 +357,19 @@ public class UpdateApplicationEntryValidatorTest {
         entryUpdateDto.getApplicant().setPerson(null);
 
         when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
-            entryUpdateDto.getStandardApplicantCode(), LocalDate.now(clock)))
-            .thenReturn(List.of());
+                        entryUpdateDto.getStandardApplicantCode(), LocalDate.now(clock)))
+                .thenReturn(List.of());
 
-        PayloadForUpdateEntry payload = new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
+        PayloadForUpdateEntry payload =
+                new PayloadForUpdateEntry(entryUpdateDto, appListUuid, appListEntryUuid);
 
         // validate the payload
         AppRegistryException appRegistryException =
-            Assertions.assertThrows(
-                AppRegistryException.class,
-                () -> updateApplicationEntryValidator.validate(payload));
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () -> updateApplicationEntryValidator.validate(payload));
         Assertions.assertEquals(
-            AppListEntryError.STANDARD_APPLICANT_DOES_NOT_EXIST.getCode().getAppCode(),
-            appRegistryException.getCode().getCode().getAppCode());
+                AppListEntryError.STANDARD_APPLICANT_DOES_NOT_EXIST.getCode().getAppCode(),
+                appRegistryException.getCode().getCode().getAppCode());
     }
 }

@@ -142,7 +142,6 @@ public class UpdateApplicationEntryValidator
         return validatable.getEntryId();
     }
 
-
     @Override
     protected String getStandardApplicantCode(PayloadForUpdateEntry validatable) {
         return validatable.getData().getStandardApplicantCode();
