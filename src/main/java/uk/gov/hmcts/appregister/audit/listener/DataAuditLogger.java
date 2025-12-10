@@ -34,6 +34,9 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
 
     private final DataAuditRepository dataAuditRepository;
 
+    private static final String SAVING_OLD_AUDIT_MESSAGE = "Saving data audit old: {}";
+    private static final String SAVING_NEW_AUDIT_MESSAGE = "Saving data audit new: {}";
+
     @Override
     protected void started(StartEvent event) {
         log.info("Starting data audit operation for {}", event);
@@ -81,19 +84,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
 
         // if we just have old gather the old data difference
         if (oldNew == AuditOldNewEnum.OLD) {
-            List<AuditableData> oldDifferenceList;
-
-            // prioritise the extract audit data from Auditable if implemented
-            if (event.getOldValue() instanceof Auditable auditDifferentiable) {
-                oldDifferenceList =
-                        auditDifferentiable.extractAuditData(event.getRequestAction().getType());
-            } else {
-                oldDifferenceList =
-                        auditor.extractAuditData(
-                                event.getRequestAction().getType(), event.getOldValue());
-            }
-
-            auditDiff(event, oldDifferenceList, null, true);
+            processOld(event);
             // if both new and old values are present
         } else if (oldNew == AuditOldNewEnum.BOTH) {
             List<AuditableData> oldDifferenceList;
@@ -132,18 +123,48 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
                     secondaryList,
                     oldDifferenceList.size() >= newDifferenceList.size());
         } else {
-            List<AuditableData> newDifferenceList;
-            if (event.getNewValue() instanceof Auditable auditDifferentiable) {
-                newDifferenceList =
-                        auditDifferentiable.extractAuditData(event.getRequestAction().getType());
-            } else {
-                newDifferenceList =
-                        auditor.extractAuditData(
-                                event.getRequestAction().getType(), event.getNewValue());
-            }
-
-            auditDiff(event, newDifferenceList, null, false);
+            processNew(event);
         }
+    }
+
+    /**
+     * process the auditing for the old data.
+     *
+     * @param event The completed event.
+     */
+    private void processOld(CompleteEvent event) {
+        List<AuditableData> oldDifferenceList;
+
+        // prioritise the extract audit data from Auditable if implemented
+        if (event.getOldValue() instanceof Auditable auditDifferentiable) {
+            oldDifferenceList =
+                    auditDifferentiable.extractAuditData(event.getRequestAction().getType());
+        } else {
+            oldDifferenceList =
+                    auditor.extractAuditData(
+                            event.getRequestAction().getType(), event.getOldValue());
+        }
+
+        auditDiff(event, oldDifferenceList, null, true);
+    }
+
+    /**
+     * process the auditing for the new data.
+     *
+     * @param event The completed event.
+     */
+    private void processNew(CompleteEvent event) {
+        List<AuditableData> newDifferenceList;
+        if (event.getNewValue() instanceof Auditable auditDifferentiable) {
+            newDifferenceList =
+                    auditDifferentiable.extractAuditData(event.getRequestAction().getType());
+        } else {
+            newDifferenceList =
+                    auditor.extractAuditData(
+                            event.getRequestAction().getType(), event.getNewValue());
+        }
+
+        auditDiff(event, newDifferenceList, null, false);
     }
 
     /**
@@ -216,29 +237,28 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             CompleteEvent event,
             boolean primaryOld) {
         if (primaryOld && secondaryDiff == null) {
+            log.debug(SAVING_OLD_AUDIT_MESSAGE, primaryDiff);
             audit.setRelatedKey(event.getOldValue() != null ? event.getOldValue().getId() : -1L);
             audit.setNewValue(EMPTY_VALUE);
             audit.setOldValue(primaryDiff.getValue());
-            log.debug("Saving data audit old: {}", primaryDiff);
         } else if (!primaryOld && secondaryDiff == null) {
-            log.debug("Saving data audit new: {}", primaryDiff);
+            log.debug(SAVING_NEW_AUDIT_MESSAGE, primaryDiff);
             audit.setRelatedKey(event.getNewValue() != null ? event.getNewValue().getId() : -1L);
             audit.setNewValue(primaryDiff.getValue());
             audit.setOldValue(EMPTY_VALUE);
-            log.debug("Saving data audit new: {}", primaryDiff);
         } else {
             audit.setRelatedKey(event.getOldValue() != null ? event.getNewValue().getId() : -1L);
 
             if (primaryOld) {
                 audit.setOldValue(primaryDiff.getValue());
                 audit.setNewValue(secondaryDiff.getValue());
-                log.debug("Saving data audit old: {}", primaryDiff);
-                log.debug("Saving data audit new: {}", secondaryDiff);
+                log.debug(SAVING_OLD_AUDIT_MESSAGE, primaryDiff);
+                log.debug(SAVING_NEW_AUDIT_MESSAGE, secondaryDiff);
             } else {
                 audit.setOldValue(secondaryDiff.getValue());
                 audit.setNewValue(primaryDiff.getValue());
-                log.debug("Saving data audit new: {}", primaryDiff);
-                log.debug("Saving data audit old: {}", secondaryDiff);
+                log.debug(SAVING_NEW_AUDIT_MESSAGE, primaryDiff);
+                log.debug(SAVING_OLD_AUDIT_MESSAGE, secondaryDiff);
             }
         }
     }

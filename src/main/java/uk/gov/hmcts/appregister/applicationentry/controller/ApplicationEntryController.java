@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,7 +64,7 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
 
         log.info("Retrieved Application Entry Lists");
         return ResponseEntity.ok()
-                .varyBy("Accept")
+                .varyBy(HttpHeaders.ACCEPT)
                 .contentType(VND_JSON_V1)
                 .body(applicationEntryService.search(filter, pageInfo));
     }
@@ -80,7 +81,7 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                                 .build());
         log.info("Create Application List Entry");
         return ResponseEntity.created(locationOf(entryGetDetailDto.getPayload().getId()))
-                .varyBy("Accept")
+                .varyBy(HttpHeaders.ACCEPT)
                 .contentType(VND_JSON_V1)
                 .eTag(entryGetDetailDto.getEtag())
                 .body(entryGetDetailDto.getPayload());
@@ -97,7 +98,7 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                 applicationEntryService.updateEntry(payloadForUpdateEntry);
         log.info("Update Application List Entry");
         return ResponseEntity.ok()
-                .varyBy("Accept")
+                .varyBy(HttpHeaders.ACCEPT)
                 .contentType(VND_JSON_V1)
                 .headers(h -> h.setLocation(locationOf(entryGetDetailDto.getPayload().getId())))
                 .eTag(entryGetDetailDto.getEtag())

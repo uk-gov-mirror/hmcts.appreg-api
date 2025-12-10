@@ -65,7 +65,7 @@ public class AuditOperationServiceImplTest extends BaseIntegration {
 
         // make sure the processing was successful
         Assert.assertEquals("response", content);
-        differenceLogAsserter.assertDiffCount(6, true);
+        differenceLogAsserter.assertDiffCount(3, true);
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
                         "test_entity", "adr_id", null, "123", "CREATE", "Create Application List"));

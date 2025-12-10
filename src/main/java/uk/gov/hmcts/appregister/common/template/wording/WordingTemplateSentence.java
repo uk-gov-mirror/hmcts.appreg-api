@@ -43,6 +43,8 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
     /** The template string with placeholders. */
     private String templateWithPositionalPlaceholders = "";
 
+    private static final String PARSING_LOG_MESSAGE = "Parsing wording template: {}";
+
     /**
      * The placeholder UUID that is used as a unique placeholder with the template. Without this we
      * can not guarantee a unique substitution key.
@@ -59,12 +61,12 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
         Pattern p = Pattern.compile(TEMPLATE_REGEX, Pattern.DOTALL);
         Matcher m = p.matcher(templateString);
 
-        log.debug("Parsing wording template: {}", templateString);
+        log.debug(PARSING_LOG_MESSAGE, templateString);
 
         int positionIndex = 0;
         while (m.find()) {
             String grp = m.group(1);
-            log.debug("Parsing wording template: {}", grp);
+            log.debug(PARSING_LOG_MESSAGE, grp);
 
             try {
                 WordingTemplate wordingTemplate = new WordingTemplate(grp);
@@ -309,7 +311,7 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
             Pattern p = Pattern.compile(TEMPLATE_REGEX, Pattern.DOTALL);
             Matcher m = p.matcher(template);
 
-            log.debug("Parsing wording template: {}", template);
+            log.debug(PARSING_LOG_MESSAGE, template);
 
             boolean found = m.find();
             if (!found) {
@@ -318,7 +320,7 @@ public class WordingTemplateSentence extends ReadOnlyList<Templateable>
             }
 
             String grp = m.group(1);
-            log.debug("Parsing wording template: {}", grp);
+            log.debug(PARSING_LOG_MESSAGE, grp);
 
             return new WordingTemplate(grp);
         }

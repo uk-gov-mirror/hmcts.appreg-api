@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -189,7 +190,8 @@ class AppRegExceptionHandlerTest {
         String content = "test";
 
         // setup
-        HttpMessageNotReadableException exception = new HttpMessageNotReadableException(content);
+        HttpMessageNotReadableException exception =
+                new HttpMessageNotReadableException(content, (HttpInputMessage) null);
 
         // execute
         ResponseEntity<Object> problemDetail =
@@ -201,8 +203,7 @@ class AppRegExceptionHandlerTest {
         Assertions.assertTrue(problemDetail.getBody() instanceof ProblemDetail);
 
         Assertions.assertEquals(400, ((ProblemDetail) problemDetail.getBody()).getStatus());
-        Assertions.assertEquals(
-                content, ((ProblemDetail) (ProblemDetail) problemDetail.getBody()).getDetail());
+        Assertions.assertEquals(content, ((ProblemDetail) problemDetail.getBody()).getDetail());
         Assertions.assertEquals(
                 CommonAppError.NOT_READABLE_ERROR.getCode().getType().get(),
                 ((ProblemDetail) problemDetail.getBody()).getType());
@@ -221,7 +222,7 @@ class AppRegExceptionHandlerTest {
 
         // setup
         HttpMessageNotReadableException exception =
-                new HttpMessageNotReadableException(content, dateTimeParseException);
+                new HttpMessageNotReadableException(content, dateTimeParseException, null);
 
         // execute
         ResponseEntity<Object> problemDetail =

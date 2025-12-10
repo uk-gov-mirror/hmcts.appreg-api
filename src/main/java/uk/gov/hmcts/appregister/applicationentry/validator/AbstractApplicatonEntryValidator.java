@@ -35,6 +35,9 @@ public abstract class AbstractApplicatonEntryValidator<T, O> implements Validato
     private final Clock clock;
     private final StandardApplicantRepository standardApplicantRepository;
 
+    private static final String BULK_RESPONDENT_NOT_REQUIRED_MESSAGE =
+            "Bulk respondent not required for code %s";
+
     public void validate(T validatable) {
         validate(validatable, null);
     }
@@ -407,8 +410,8 @@ public abstract class AbstractApplicatonEntryValidator<T, O> implements Validato
                 && getNumberOfRespondents(validatable) != 0) {
             throw new AppRegistryException(
                     AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
-                    "Bulk respondent not required for code %s"
-                            .formatted(getApplicationCode(validatable)));
+                    BULK_RESPONDENT_NOT_REQUIRED_MESSAGE.formatted(
+                            getApplicationCode(validatable)));
         }
 
         // if we do not require a respondent, check that none exists in the payload
@@ -416,8 +419,8 @@ public abstract class AbstractApplicatonEntryValidator<T, O> implements Validato
                 && getRespondent(validatable) != null) {
             throw new AppRegistryException(
                     AppListEntryError.NOT_RESPONDENT_REQUIRED,
-                    "Respondent not required for code %s"
-                            .formatted(getApplicationCode(validatable)));
+                    BULK_RESPONDENT_NOT_REQUIRED_MESSAGE.formatted(
+                            getApplicationCode(validatable)));
         }
 
         // if we are setting multiple respondents, check that the application code allows it
@@ -427,8 +430,8 @@ public abstract class AbstractApplicatonEntryValidator<T, O> implements Validato
                         && getNumberOfRespondents(validatable) != 0)) {
             throw new AppRegistryException(
                     AppListEntryError.BULK_RESPONDENT_NOT_EXPECTED,
-                    "Bulk respondent not required for code %s"
-                            .formatted(getApplicationCode(validatable)));
+                    BULK_RESPONDENT_NOT_REQUIRED_MESSAGE.formatted(
+                            getApplicationCode(validatable)));
         }
 
         // if we are setting multiple respondents, check that the application code allows it
