@@ -317,23 +317,20 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Transactional
     public void delete(UUID idToDelete) {
         log.debug("Start: Deleting Application List with id: {}", idToDelete);
-        deletionValidator.validate(idToDelete);
-        Optional<ApplicationList> applicationList = repository.findByUuid(idToDelete);
 
-        auditService.processAudit(
-                applicationList.get(),
-                AppListAuditOperation.DELETE_APP_LIST,
-                req -> {
-                    if (applicationList.isPresent()) {
-                        applicationList.get().setDeleted(true);
-                        repository.save(applicationList.get());
-                    }
+        deletionValidator.validate(
+                idToDelete,
+                (id, success) -> {
+                    auditService.processAudit(
+                            BeanUtil.copyBean(success.getApplicationList()),
+                            AppListAuditOperation.DELETE_APP_LIST,
+                            (ev) -> Optional.of(performDelete(success.getApplicationList())),
+                            auditLifecycleListeners.toArray(
+                                    new AuditOperationLifecycleListener[0]));
+                    return null;
+                });
 
-                    AuditableResult<String, ApplicationList> result =
-                            new AuditableResult<>(null, null);
-                    return Optional.of(result);
-                },
-                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+        log.debug("Finish: Deleted Application List with id: {}", idToDelete);
     }
 
     /**
@@ -387,7 +384,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                 (getDto, success) -> {
                     final Page<ApplicationList> dbPage =
                             repository.findAllByFilter(
-                                    dto.getStatus(),
+                                    entryMapper.toStatus(dto.getStatus()),
                                     dto.getCourtLocationCode(),
                                     success.getCriminalJusticeArea(),
                                     dto.getDate(),
@@ -528,5 +525,30 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         }
 
         return new TimeWindow(null, null, false);
+    }
+
+    /**
+     * Delete an Application List.
+     *
+     * @param applicationList the application list entity to delete
+     * @return an AuditableResult containing a MatchResponse with the soft-deleted ApplicationList
+     */
+    private AuditableResult<MatchResponse<Void>, ApplicationList> performDelete(
+            ApplicationList applicationList) {
+
+        // mark entity as soft-deleted
+        applicationList.setDeleted(true);
+
+        return new AuditableResult<>(
+                matchService.matchOnRequest(
+                        applicationList.getUuid(),
+                        applicationList,
+                        () -> {
+                            var savedEntity = repository.save(applicationList);
+                            var hydrated = refreshEntity(savedEntity);
+
+                            return MatchResponse.of(hydrated.getUuid(), hydrated, null);
+                        }),
+                applicationList);
     }
 }
