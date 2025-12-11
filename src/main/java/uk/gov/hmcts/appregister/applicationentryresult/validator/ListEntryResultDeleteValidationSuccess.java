@@ -14,5 +14,5 @@ import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 @Setter
 public class ListEntryResultDeleteValidationSuccess {
     /** The application list entry result being deleted. */
-    private AppListEntryResolution appListEntryResolution;
+    private AppListEntryResolution appListEntryResult;
 }

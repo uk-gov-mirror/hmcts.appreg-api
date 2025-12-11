@@ -13,19 +13,6 @@ import uk.gov.hmcts.appregister.generated.api.ApplicationListEntryResultsApi;
 
 /**
  * REST controller for managing Application List Entry Results.
- *
- * <p>This controller provides an endpoints for deleting application list entry results. It
- * leverages {@link ApplicationEntryResultService} for business logic and ensures authorization via
- * Spring Security annotations.
- *
- * <p>Annotations:
- *
- * <ul>
- *   <li>{@code @RestController} - Marks this as a REST controller.
- *   <li>{@code @Validated} - Enables validation on method parameters.
- *   <li>{@code @RequiredArgsConstructor} - Generates a constructor for final fields.
- *   <li>{@code @Slf4j} - Provides logging support.
- * </ul>
  */
 @RestController
 @Validated

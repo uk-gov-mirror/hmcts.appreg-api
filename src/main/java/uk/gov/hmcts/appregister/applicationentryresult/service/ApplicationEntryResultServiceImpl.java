@@ -17,7 +17,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionR
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
 
 /**
- * Service implementation for managing Application List Entry Results.
+ * Service implementation for managing application list entry results.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -46,10 +46,10 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
         deletionValidator.validate(
                 args,
                 (id, success) -> {
-                    repository.delete(success.getAppListEntryResolution());
+                    repository.delete(success.getAppListEntryResult());
 
                     auditService.processAudit(
-                            BeanUtil.copyBean(success.getAppListEntryResolution()),
+                            BeanUtil.copyBean(success.getAppListEntryResult()),
                             AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT,
                             ev -> Optional.empty(),
                             auditLifecycleListeners.toArray(

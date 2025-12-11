@@ -17,7 +17,8 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.validator.Validator;
 
 /**
- * This class represents a validator for deleting an application list entry result.
+ * Validator responsible for ensuring that an application list, list entry, and entry result
+ * exist and are in a valid state before a delete operation for an entry result is performed.
  */
 @RequiredArgsConstructor
 @Component
@@ -58,10 +59,10 @@ public class ApplicationEntryResultDeletionValidator
                                 new AppRegistryException(
                                         ApplicationListEntryError.LIST_ENTRY_NOT_FOUND,
                                         ("No application list entry was found for UUID '%s' that belongs to the"
-                                                        + "specified list")
+                                                        + " specified list")
                                                 .formatted(args.entryId())));
 
-        AppListEntryResolution appListEntryResolution =
+        AppListEntryResolution appListEntryResult =
                 appListEntryResolutionRepository
                         .findByUuidAndApplicationList_Uuid(args.resultId(), args.entryId())
                         .orElseThrow(
@@ -69,14 +70,14 @@ public class ApplicationEntryResultDeletionValidator
                                         new AppRegistryException(
                                                 ApplicationListEntryResultError
                                                         .LIST_ENTRY_RESULT_NOT_FOUND,
-                                                ("No application list entry resolution was found for UUID '%s' that"
-                                                                + "belongs to the specified entry")
+                                                ("No application list entry result was found for UUID '%s' that"
+                                                                + " belongs to the specified entry")
                                                         .formatted(args.resultId())));
 
         // Build success object and pass it into the caller-supplied function
         ListEntryResultDeleteValidationSuccess success =
                 new ListEntryResultDeleteValidationSuccess();
-        success.setAppListEntryResolution(appListEntryResolution);
+        success.setAppListEntryResult(appListEntryResult);
 
         return createSupplier.apply(args, success);
     }
