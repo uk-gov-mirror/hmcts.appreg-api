@@ -384,7 +384,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                 (getDto, success) -> {
                     final Page<ApplicationList> dbPage =
                             repository.findAllByFilter(
-                                    dto.getStatus(),
+                                    entryMapper.toStatus(dto.getStatus()),
                                     dto.getCourtLocationCode(),
                                     success.getCriminalJusticeArea(),
                                     dto.getDate(),

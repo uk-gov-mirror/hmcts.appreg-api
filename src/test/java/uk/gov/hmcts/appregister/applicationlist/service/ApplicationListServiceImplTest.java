@@ -76,6 +76,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRep
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
+import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForUpdate;
@@ -127,6 +128,7 @@ public class ApplicationListServiceImplTest {
             new DummyApplicationDeleteListValidator(repository);
 
     @Mock private PageMapper pageMapper;
+
     @Mock private ApplicationListEntryMapper entryMapper;
 
     @Mock private EntityManager entityManager;
@@ -370,10 +372,12 @@ public class ApplicationListServiceImplTest {
         row.setCja(cja);
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
         Pageable pageable = mock(Pageable.class);
         LocalTime expectedEndTime = DEFAULT_TIME.plusMinutes(1);
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         eq(cja),
                         eq(DEFAULT_DATE),
@@ -439,7 +443,7 @@ public class ApplicationListServiceImplTest {
         LocalTime expectedEndTime = DEFAULT_TIME.plusMinutes(1);
 
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.CLOSED),
+                        eq(Status.CLOSED),
                         eq("LOC123"),
                         isNull(),
                         eq(DEFAULT_DATE),
@@ -463,6 +467,8 @@ public class ApplicationListServiceImplTest {
                         .cjaCode(null)
                         .date(DEFAULT_DATE)
                         .time(DEFAULT_TIME);
+
+        when(entryMapper.toStatus(ApplicationListStatus.CLOSED)).thenReturn(Status.CLOSED);
 
         // When
         ApplicationListPage result = service.getPage(filter, pageable);
@@ -492,9 +498,11 @@ public class ApplicationListServiceImplTest {
 
         Pageable pageable = mock(Pageable.class);
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         eq(cja),
                         isNull(),
@@ -534,9 +542,11 @@ public class ApplicationListServiceImplTest {
         ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
         getValidator.setSuccess(success);
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
         Page<ApplicationList> dbPage = Page.empty();
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         isNull(),
                         isNull(),
@@ -578,9 +588,11 @@ public class ApplicationListServiceImplTest {
 
         Pageable pageable = mock(Pageable.class);
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         isNull(),
                         isNull(),
@@ -615,10 +627,12 @@ public class ApplicationListServiceImplTest {
         row.setUuid(UUID.randomUUID());
         row.setCourtName("Some Court");
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         Pageable pageable = mock(Pageable.class);
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         isNull(),
                         isNull(),
@@ -646,17 +660,19 @@ public class ApplicationListServiceImplTest {
     @Test
     void getPage_noCourtOrCja_derivesLocation_usesFallback() {
 
-        Pageable pageable = mock(Pageable.class);
-
         ListLocationValidationSuccess success = new ListUpdateValidationSuccess();
         getValidator.setSuccess(success);
 
         ApplicationList row = new ApplicationList();
         row.setUuid(UUID.randomUUID());
 
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
+        Pageable pageable = mock(Pageable.class);
+
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         isNull(),
                         isNull(),
@@ -700,8 +716,10 @@ public class ApplicationListServiceImplTest {
         Pageable pageable = mock(Pageable.class);
         LocalTime time = LocalTime.of(23, 59);
         LocalTime expectedEndTime = LocalTime.of(0, 0);
+
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
         when(repository.findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         eq(cja),
                         eq(DEFAULT_DATE),
@@ -744,7 +762,7 @@ public class ApplicationListServiceImplTest {
         // Then
         verify(repository)
                 .findAllByFilter(
-                        eq(ApplicationListStatus.OPEN),
+                        eq(Status.OPEN),
                         isNull(),
                         eq(cja),
                         eq(DEFAULT_DATE),
