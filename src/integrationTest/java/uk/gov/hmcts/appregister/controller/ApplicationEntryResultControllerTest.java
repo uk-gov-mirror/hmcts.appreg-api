@@ -1,7 +1,15 @@
 package uk.gov.hmcts.appregister.controller;
 
+import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.appregister.common.enumeration.Status.CLOSED;
+import static uk.gov.hmcts.appregister.common.enumeration.Status.OPEN;
+
 import com.nimbusds.jose.JOSEException;
 import io.restassured.response.Response;
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,19 +35,9 @@ import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerT
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
-
-import static org.mockito.Mockito.when;
-import static uk.gov.hmcts.appregister.common.enumeration.Status.CLOSED;
-import static uk.gov.hmcts.appregister.common.enumeration.Status.OPEN;
-
 public class ApplicationEntryResultControllerTest extends AbstractSecurityControllerTest {
 
-    @MockitoBean
-    private UserProvider provider;
+    @MockitoBean private UserProvider provider;
 
     private static final String WEB_CONTEXT = "application-lists";
 
@@ -54,7 +52,7 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
     @DisplayName("Delete Application List Entry Result: 204 when valid IDs")
     void givenValidIds_whenDelete_then204() throws Exception {
         var list = createAndSaveList(OPEN);
-        var entry = createAndSaveEntry(list);
+        var entry = createEntry(list);
 
         var resolutionCode = new ResolutionCodeTestData().someComplete();
         var entryResult = createAndSaveResolution(entry, resolutionCode);
@@ -79,7 +77,8 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.NOT_FOUND.value());
-        assertProblemDetailType(resp, ApplicationListError.ENTRY_RESULT_LIST_NOT_FOUND.getCode().getAppCode());
+        assertProblemDetailType(
+                resp, ApplicationListError.ENTRY_RESULT_LIST_NOT_FOUND.getCode().getAppCode());
     }
 
     @Test
@@ -95,14 +94,15 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertProblemDetailType(resp, ApplicationListError.INVALID_ENTRY_RESULT_LIST_STATUS.getCode().getAppCode());
+        assertProblemDetailType(
+                resp, ApplicationListError.INVALID_ENTRY_RESULT_LIST_STATUS.getCode().getAppCode());
     }
 
     @Test
     @DisplayName("Delete Application List Entry Result: 400 when entry not in list")
     void givenEntryNotInList_whenDelete_then400() throws Exception {
         var list = createAndSaveList(OPEN);
-        var entry = createAndSaveEntry(list);
+        var entry = createEntry(list);
         persistance.save(entry);
 
         UUID listId = list.getUuid();
@@ -113,83 +113,94 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertProblemDetailType(resp, ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode().getAppCode());
+        assertProblemDetailType(
+                resp,
+                ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode().getAppCode());
     }
 
     @Test
     @DisplayName("Delete Application List Entry Result: 400 when entry result not related to entry")
-    void givenEntryResultNotRelatedToEntry_whenDelete_then400() throws Exception {
+    void givenUnrelatedEntry_whenDelete_then400() throws Exception {
         var list = createAndSaveList(OPEN);
-        var entry = createAndSaveEntry(list);
-        persistance.save(entry);
-        var unrelatedEntry = createAndSaveEntry(list);
+        var unrelatedEntry = createEntry(list);
+        persistance.save(unrelatedEntry);
+        var entry = createEntry(list);
 
         var resolutionCode = new ResolutionCodeTestData().someComplete();
-        var entryResult = createAndSaveResolution(unrelatedEntry, resolutionCode);
+        var entryResult = createAndSaveResolution(entry, resolutionCode);
 
         UUID listId = list.getUuid();
-        UUID entryId = entry.getUuid();
+        UUID entryId = unrelatedEntry.getUuid();
         UUID resultId = entryResult.getUuid();
         var token = getToken();
 
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertProblemDetailType(resp, ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode().getAppCode());
+        assertProblemDetailType(
+                resp,
+                ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode().getAppCode());
     }
 
     @Override
     protected Stream<RestEndpointDescription> getDescriptions() throws Exception {
         return Stream.of(
-            RestEndpointDescription.builder()
-                .url(getLocalUrl(WEB_CONTEXT + "/" + UUID.randomUUID()
-                                     + "/entries/" + UUID.randomUUID()
-                                     + "/results/" + UUID.randomUUID()))
-                .method(HttpMethod.DELETE)
-                .successRole(RoleEnum.USER)
-                .successRole(RoleEnum.ADMIN)
-                .build()
-        );
+                RestEndpointDescription.builder()
+                        .url(
+                                getLocalUrl(
+                                        WEB_CONTEXT
+                                                + "/"
+                                                + UUID.randomUUID()
+                                                + "/entries/"
+                                                + UUID.randomUUID()
+                                                + "/results/"
+                                                + UUID.randomUUID()))
+                        .method(HttpMethod.DELETE)
+                        .successRole(RoleEnum.USER)
+                        .successRole(RoleEnum.ADMIN)
+                        .build());
     }
 
     private TokenAndJwksKey getToken() throws JOSEException {
         return getATokenWithValidCredentials()
-            .roles(List.of(RoleEnum.USER))
-            .build()
-            .fetchTokenForRole();
+                .roles(List.of(RoleEnum.USER))
+                .build()
+                .fetchTokenForRole();
     }
 
     private Response deleteResult(UUID listId, UUID entryId, UUID resultId, TokenAndJwksKey token)
-        throws MalformedURLException {
+            throws MalformedURLException {
         return restAssuredClient.executeDeleteRequest(
-            getLocalUrl(WEB_CONTEXT + "/" + listId + "/entries/" + entryId + "/results/" + resultId),
-            token);
+                getLocalUrl(
+                        WEB_CONTEXT
+                                + "/"
+                                + listId
+                                + "/entries/"
+                                + entryId
+                                + "/results/"
+                                + resultId),
+                token);
     }
 
     private ApplicationList createAndSaveList(Status status) {
-        var list = new AppListTestData()
-            .someMinimal()
-            .status(status)
-            .build();
+        var list = new AppListTestData().someMinimal().status(status).build();
         persistance.save(list);
         return list;
     }
 
-    private ApplicationListEntry createAndSaveEntry(ApplicationList list) {
-        return new AppListEntryTestData()
-            .someMinimal()
-            .applicationList(list)
-            .build();
+    private ApplicationListEntry createEntry(ApplicationList list) {
+        return new AppListEntryTestData().someMinimal().applicationList(list).build();
     }
 
-    private AppListEntryResolution createAndSaveResolution(ApplicationListEntry entry,
-                                                           ResolutionCode resolutionCode) {
-        var resolution = new AppListEntryResolutionTestData()
-            .someMinimal()
-            .resolutionWording(AppListEntryResolutionTestData.WORDING_1)
-            .applicationList(entry)
-            .resolutionCode(resolutionCode)
-            .build();
+    private AppListEntryResolution createAndSaveResolution(
+            ApplicationListEntry entry, ResolutionCode resolutionCode) {
+        var resolution =
+                new AppListEntryResolutionTestData()
+                        .someMinimal()
+                        .resolutionWording(AppListEntryResolutionTestData.WORDING_1)
+                        .applicationList(entry)
+                        .resolutionCode(resolutionCode)
+                        .build();
         return persistance.save(resolution);
     }
 

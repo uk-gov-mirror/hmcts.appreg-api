@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
@@ -63,9 +61,9 @@ public class DatabaseReset {
         applicationRegisterRepository.deleteAll(
                 applicationRegisterRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         appListEntryResolutionRepository.deleteAll(
-            appListEntryResolutionRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
-        resolutionCodeRepository.deleteAll(resolutionCodeRepository
-                                               .findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+                appListEntryResolutionRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+        resolutionCodeRepository.deleteAll(
+                resolutionCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationListEntryRepository.deleteAll(
                 applicationListEntryRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationCodeRepository.deleteAll(

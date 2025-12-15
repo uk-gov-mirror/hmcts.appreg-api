@@ -62,7 +62,8 @@ public enum ApplicationListError implements ErrorCodeEnum {
     INVALID_ENTRY_RESULT_LIST_STATUS(
             DefaultErrorDetail.create(
                     HttpStatus.BAD_REQUEST,
-                    "Cannot delete the entry result because the list has a CLOSED 'status'", "AL-16")),
+                    "Cannot delete the entry result because the list has a CLOSED 'status'",
+                    "AL-16")),
     INVALID_NEW_LIST_STATUS(
             DefaultErrorDetail.create(
                     HttpStatus.BAD_REQUEST,

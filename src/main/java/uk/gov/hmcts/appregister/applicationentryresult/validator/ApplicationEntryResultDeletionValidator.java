@@ -17,8 +17,8 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.validator.Validator;
 
 /**
- * Validator responsible for ensuring that an application list, list entry, and entry result
- * exist and are in a valid state before a delete operation for an entry result is performed.
+ * Validator responsible for ensuring that an application list, list entry, and entry result exist
+ * and are in a valid state before a delete operation for an entry result is performed.
  */
 @RequiredArgsConstructor
 @Component
