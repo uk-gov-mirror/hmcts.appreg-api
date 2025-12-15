@@ -26,12 +26,13 @@ import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeStatusRe
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryOfficialRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
+import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.common.mapper.OfficialMapperImpl;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
-import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapperImpl;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
@@ -46,6 +47,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
     @Autowired private AppListEntryFeeStatusRepository appListEntryFeeStatusRepository;
 
     @Autowired private ApplicationListEntryRepository applicationListEntryRepository;
+
+    @Autowired private FeeRepository feeRepository;
 
     @Autowired
     private ApplicationListEntryOfficialRepository applicationListEntryOfficialRepository;
@@ -309,7 +312,10 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         if (entryCreateDto.getFeeStatuses() != null && !entryCreateDto.getFeeStatuses().isEmpty()) {
             Assertions.assertEquals(
                     entryCreateDto.getHasOffsiteFee(),
-                    applicationListEntry.getEntryFeeIds().get(0).getFeeId().isOffsite());
+                    feeRepository
+                            .findById(applicationListEntry.getEntryFeeIds().get(0).getFeeId())
+                            .get()
+                            .isOffsite());
         }
 
         // make sure the core data is part of the entry
@@ -365,8 +371,11 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         // validate applicant in response
         if (entryCreateDto.getStandardApplicantCode() != null) {
             Applicant applicant =
-                    new StandardApplicantMapperImpl()
-                            .toApplicant(applicationListEntry.getStandardApplicant());
+                    new ApplicantMapperImpl()
+                            .toApplicant(
+                                    new ApplicantMapperImpl()
+                                            .toApplicantEntity(
+                                                    applicationListEntry.getStandardApplicant()));
             if (applicant.getPerson() != null) {
                 ApplicantAssertion.validatePerson(
                         response.getApplicant().getPerson(),

@@ -188,9 +188,13 @@ public class ApplicationListServiceImplTest {
         validator.setSuccess(success);
 
         ApplicationList entityToSave = new ApplicationList();
+
         when(mapper.toCreateEntityWithCourt(dto, court)).thenReturn(entityToSave);
 
         ApplicationList saved = new ApplicationList();
+        saved.setId(2L);
+        saved.setVersion(3L);
+
         when(repository.save(entityToSave)).thenReturn(saved);
 
         ApplicationListGetDetailDto expected = new ApplicationListGetDetailDto();
@@ -226,6 +230,8 @@ public class ApplicationListServiceImplTest {
         ApplicationList entityToSave = new ApplicationList();
 
         ApplicationList saved = new ApplicationList();
+        saved.setId(2L);
+        saved.setVersion(3L);
         when(repository.save(entityToSave)).thenReturn(saved);
 
         ApplicationListGetDetailDto expectedDto = new ApplicationListGetDetailDto();
@@ -264,6 +270,9 @@ public class ApplicationListServiceImplTest {
         when(mapper.toCreateEntityWithCja(dto, cja)).thenReturn(entityToSave);
 
         ApplicationList saved = new ApplicationList();
+        saved.setId(2L);
+        saved.setVersion(3L);
+
         when(repository.save(entityToSave)).thenReturn(saved);
 
         ApplicationListGetDetailDto expected = new ApplicationListGetDetailDto();
@@ -301,6 +310,8 @@ public class ApplicationListServiceImplTest {
         ApplicationList entityToSave = new ApplicationList();
 
         ApplicationList saved = new ApplicationList();
+        saved.setId(2L);
+        saved.setVersion(3L);
         when(repository.save(entityToSave)).thenReturn(saved);
 
         ApplicationListGetDetailDto expected = new ApplicationListGetDetailDto();
@@ -902,6 +913,22 @@ public class ApplicationListServiceImplTest {
     }
 
     class DummyAuditOperationService implements AuditOperationService {
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                E oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(
+                    oldValue, auditType, execution, (AuditOperationLifecycleListener) null);
+        }
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(null, auditType, execution);
+        }
 
         @Override
         public <T, E extends Keyable> T processAudit(

@@ -298,7 +298,7 @@ public class ApplicationEntryServiceImplTest {
 
         FeeTestData feeTestData = new FeeTestData();
         Fee fee = feeTestData.someComplete();
-        fee.setId(-1L);
+        fee.setId(-2L);
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
@@ -393,8 +393,8 @@ public class ApplicationEntryServiceImplTest {
                         .build();
 
         AppListEntryFeeId appListFee = new AppListEntryFeeId();
-        appListFee.setAppListEntryId(applicationListEntry);
-        appListFee.setFeeId(fee);
+        appListFee.setAppListEntryId(applicationListEntry.getId());
+        appListFee.setFeeId(fee.getId());
 
         ArgumentCaptor<AppListEntryFeeId> captor = ArgumentCaptor.forClass(AppListEntryFeeId.class);
         when(appListEntryFeeRepository.save(captor.capture())).thenReturn(appListFee);
@@ -438,8 +438,8 @@ public class ApplicationEntryServiceImplTest {
         verify(appListEntryOfficialRepository, times(entryCreateDto.getOfficials().size()))
                 .save(appListOfficialCaptor.capture());
 
-        Assertions.assertEquals(applicationListEntry, captor.getValue().getAppListEntryId());
-        Assertions.assertEquals(fee, captor.getValue().getFeeId());
+        Assertions.assertEquals(-1, captor.getValue().getAppListEntryId());
+        Assertions.assertEquals(-2, captor.getValue().getFeeId());
 
         Assertions.assertEquals(applicant, appCaptorName.getAllValues().get(0));
         Assertions.assertEquals(respondent, appCaptorName.getAllValues().get(1));
@@ -484,6 +484,22 @@ public class ApplicationEntryServiceImplTest {
     }
 
     class DummyAuditOperationService implements AuditOperationService {
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                E oldValue,
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(
+                    oldValue, auditType, execution, (AuditOperationLifecycleListener) null);
+        }
+
+        @Override
+        public <T, E extends Keyable> T processAudit(
+                AuditOperation auditType,
+                Function<BaseAuditEvent, Optional<AuditableResult<T, E>>> execution) {
+            return processAudit(null, auditType, execution);
+        }
 
         @Override
         public <T, E extends Keyable> T processAudit(

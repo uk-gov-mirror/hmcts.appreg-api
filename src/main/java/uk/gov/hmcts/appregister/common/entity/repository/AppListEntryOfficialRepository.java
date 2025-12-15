@@ -1,7 +1,9 @@
 package uk.gov.hmcts.appregister.common.entity.repository;
 
 import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 
 public interface AppListEntryOfficialRepository extends JpaRepository<AppListEntryOfficial, Long> {
@@ -13,4 +15,18 @@ public interface AppListEntryOfficialRepository extends JpaRepository<AppListEnt
      *     value
      */
     List<AppListEntryOfficial> findByIdGreaterThanEqual(Integer value);
+
+    /**
+     * gets the official record for an entry id.
+     *
+     * @param entryId the uuid of the entry
+     * @return the official entry
+     */
+    @Query(
+            """
+        SELECT off
+        FROM AppListEntryOfficial off
+        WHERE off.appListEntry.uuid = :entryId
+        """)
+    List<AppListEntryOfficial> getOfficialByEntryUuid(UUID entryId);
 }
