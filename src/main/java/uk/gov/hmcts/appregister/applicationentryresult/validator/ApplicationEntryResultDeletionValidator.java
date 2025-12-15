@@ -28,7 +28,7 @@ public class ApplicationEntryResultDeletionValidator
 
     private final ApplicationListRepository applicationListRepository;
     private final ApplicationListEntryRepository applicationListEntryRepository;
-    private final AppListEntryResolutionRepository appListEntryResolutionRepository;
+    private final AppListEntryResolutionRepository appListEntryResultRepository;
 
     @Override
     public void validate(ListEntryResultDeleteArgs args) {
@@ -63,7 +63,7 @@ public class ApplicationEntryResultDeletionValidator
                                                 .formatted(args.entryId())));
 
         AppListEntryResolution appListEntryResult =
-                appListEntryResolutionRepository
+                appListEntryResultRepository
                         .findByUuidAndApplicationList_Uuid(args.resultId(), args.entryId())
                         .orElseThrow(
                                 () ->
