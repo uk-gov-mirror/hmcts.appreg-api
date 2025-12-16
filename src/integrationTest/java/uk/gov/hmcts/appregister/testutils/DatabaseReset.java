@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeStatusRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryOfficialRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
@@ -16,6 +19,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListReposito
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationRegisterRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
 
@@ -27,6 +31,14 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 @RequiredArgsConstructor
 public class DatabaseReset {
     private final EntityManagerFactory entityManagerFactory;
+
+    @Autowired private final NameAddressRepository nameAddressRepository;
+
+    @Autowired private final AppListEntryFeeRepository appListEntryFeeRepository;
+
+    @Autowired private final AppListEntryOfficialRepository appListEntryOfficialRepository;
+
+    @Autowired private final AppListEntryFeeStatusRepository appListEntryFeeStatusRepository;
 
     @Autowired private final ApplicationCodeRepository applicationCodeRepository;
 
@@ -58,6 +70,15 @@ public class DatabaseReset {
     @Transactional
     public void resetDbData() {
         resetSequences();
+
+        appListEntryFeeRepository.deleteAll();
+
+        appListEntryFeeStatusRepository.deleteAll(
+                appListEntryFeeStatusRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
+        appListEntryOfficialRepository.deleteAll(
+                appListEntryOfficialRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
         applicationRegisterRepository.deleteAll(
                 applicationRegisterRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         appListEntryResolutionRepository.deleteAll(
@@ -66,6 +87,9 @@ public class DatabaseReset {
                 resolutionCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationListEntryRepository.deleteAll(
                 applicationListEntryRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
+        nameAddressRepository.deleteAll(
+                nameAddressRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationCodeRepository.deleteAll(
                 applicationCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
         applicationCodeRepository.deleteAll(
