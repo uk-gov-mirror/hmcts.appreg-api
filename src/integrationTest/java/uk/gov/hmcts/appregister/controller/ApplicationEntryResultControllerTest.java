@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.controller;
 import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.appregister.common.enumeration.Status.CLOSED;
 import static uk.gov.hmcts.appregister.common.enumeration.Status.OPEN;
+import static uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil.assertEquals;
 
 import com.nimbusds.jose.JOSEException;
 import io.restassured.response.Response;
@@ -10,20 +11,19 @@ import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.hmcts.appregister.applicationentryresult.audit.AppListEntryResultAuditOperation;
 import uk.gov.hmcts.appregister.applicationentryresult.exception.ApplicationListEntryResultError;
-import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
+import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
@@ -34,6 +34,7 @@ import uk.gov.hmcts.appregister.data.ResolutionCodeTestData;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
+import uk.gov.hmcts.appregister.testutils.util.AuditLogAsserter;
 
 public class ApplicationEntryResultControllerTest extends AbstractSecurityControllerTest {
 
@@ -64,6 +65,30 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         // assert success
         resp.then().statusCode(HttpStatus.NO_CONTENT.value());
+
+        differenceLogAsserter.assertDataAuditChange(
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                        "version",
+                        null,
+                        null,
+                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                                .getType()
+                                .name(),
+                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                                .getEventName()));
+
+        differenceLogAsserter.assertDataAuditChange(
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                        "aler_id",
+                        null,
+                        null,
+                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                                .getType()
+                                .name(),
+                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                                .getEventName()));
     }
 
     @Test
@@ -76,9 +101,8 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         Response resp = deleteResult(listId, entryId, resultId, token);
 
-        resp.then().statusCode(HttpStatus.NOT_FOUND.value());
-        assertProblemDetailType(
-                resp, ApplicationListError.ENTRY_RESULT_LIST_NOT_FOUND.getCode().getAppCode());
+        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        assertEquals(ApplicationListEntryResultError.ENTRY_RESULT_LIST_NOT_FOUND.getCode(), resp);
     }
 
     @Test
@@ -94,8 +118,8 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertProblemDetailType(
-                resp, ApplicationListError.INVALID_ENTRY_RESULT_LIST_STATUS.getCode().getAppCode());
+        assertEquals(
+                ApplicationListEntryResultError.INVALID_ENTRY_RESULT_LIST_STATUS.getCode(), resp);
     }
 
     @Test
@@ -113,9 +137,7 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertProblemDetailType(
-                resp,
-                ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode().getAppCode());
+        assertEquals(ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode(), resp);
     }
 
     @Test
@@ -137,9 +159,7 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         Response resp = deleteResult(listId, entryId, resultId, token);
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertProblemDetailType(
-                resp,
-                ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode().getAppCode());
+        assertEquals(ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode(), resp);
     }
 
     @Override
@@ -202,10 +222,5 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
                         .resolutionCode(resolutionCode)
                         .build();
         return persistance.save(resolution);
-    }
-
-    private void assertProblemDetailType(Response resp, String expectedAppCode) {
-        ProblemDetail problemDetail = resp.as(ProblemDetail.class);
-        Assertions.assertEquals(expectedAppCode, problemDetail.getType().toString());
     }
 }

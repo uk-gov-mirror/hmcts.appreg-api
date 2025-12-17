@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.applicationentryresult.exception.ApplicationListEntryResultError;
 import uk.gov.hmcts.appregister.applicationentryresult.model.ListEntryResultDeleteArgs;
-import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
@@ -69,7 +68,8 @@ class ApplicationEntryResultDeletionValidatorTest {
         ListEntryResultDeleteArgs args = new ListEntryResultDeleteArgs(listId, entryId, resultId);
         AppRegistryException ex =
                 Assertions.assertThrows(AppRegistryException.class, () -> validator.validate(args));
-        Assertions.assertEquals(ApplicationListError.ENTRY_RESULT_LIST_NOT_FOUND, ex.getCode());
+        Assertions.assertEquals(
+                ApplicationListEntryResultError.ENTRY_RESULT_LIST_NOT_FOUND, ex.getCode());
     }
 
     @Test
@@ -89,7 +89,7 @@ class ApplicationEntryResultDeletionValidatorTest {
         AppRegistryException ex =
                 Assertions.assertThrows(AppRegistryException.class, () -> validator.validate(args));
         Assertions.assertEquals(
-                ApplicationListError.INVALID_ENTRY_RESULT_LIST_STATUS, ex.getCode());
+                ApplicationListEntryResultError.INVALID_ENTRY_RESULT_LIST_STATUS, ex.getCode());
     }
 
     @Test

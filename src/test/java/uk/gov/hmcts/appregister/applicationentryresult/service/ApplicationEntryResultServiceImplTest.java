@@ -19,6 +19,9 @@ import uk.gov.hmcts.appregister.applicationentryresult.validator.ApplicationEntr
 import uk.gov.hmcts.appregister.applicationentryresult.validator.ListEntryResultDeleteValidationSuccess;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import uk.gov.hmcts.appregister.common.concurrency.MatchProvider;
+import uk.gov.hmcts.appregister.common.concurrency.MatchService;
+import uk.gov.hmcts.appregister.common.concurrency.MatchServiceImpl;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
@@ -30,7 +33,6 @@ class ApplicationEntryResultServiceImplTest {
     @Mock private ApplicationListRepository applicationListRepository;
     @Mock private ApplicationListEntryRepository applicationListEntryRepository;
     @Mock private AppListEntryResolutionRepository appListEntryResolutionRepository;
-    @Mock private uk.gov.hmcts.appregister.common.concurrency.MatchService matchService;
     @Mock private AuditOperationService auditOperationService;
     @Mock private AuditOperationLifecycleListener auditOperationLifecycleListener;
 
@@ -40,6 +42,11 @@ class ApplicationEntryResultServiceImplTest {
                     applicationListRepository,
                     applicationListEntryRepository,
                     appListEntryResolutionRepository);
+
+    // A null match provider that returns a null etag
+    private static final MatchProvider NULL_MATCH_PROVIDER = () -> null;
+
+    @Spy private MatchService matchService = new MatchServiceImpl(NULL_MATCH_PROVIDER);
 
     private ApplicationEntryResultServiceImpl service;
 
@@ -56,11 +63,9 @@ class ApplicationEntryResultServiceImplTest {
 
     @Test
     void delete_validArgs_deletesEntryResult() {
-        UUID listId = UUID.randomUUID();
-        UUID entryId = UUID.randomUUID();
-        UUID resultId = UUID.randomUUID();
-
         AppListEntryResolution appListEntryResolution = new AppListEntryResolution();
+        appListEntryResolution.setId(1L);
+        appListEntryResolution.setVersion(1L);
 
         ListEntryResultDeleteValidationSuccess success =
                 new ListEntryResultDeleteValidationSuccess();
@@ -68,6 +73,9 @@ class ApplicationEntryResultServiceImplTest {
 
         deletionValidator.setSuccess(success);
 
+        UUID listId = UUID.randomUUID();
+        UUID entryId = UUID.randomUUID();
+        UUID resultId = UUID.randomUUID();
         ListEntryResultDeleteArgs args = new ListEntryResultDeleteArgs(listId, entryId, resultId);
         service.delete(args);
 

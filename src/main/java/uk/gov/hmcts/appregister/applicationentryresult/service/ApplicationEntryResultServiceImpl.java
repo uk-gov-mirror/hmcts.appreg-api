@@ -11,6 +11,7 @@ import uk.gov.hmcts.appregister.applicationentryresult.model.ListEntryResultDele
 import uk.gov.hmcts.appregister.applicationentryresult.validator.ApplicationEntryResultDeletionValidator;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
@@ -43,10 +44,28 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
         deletionValidator.validate(
                 args,
                 (id, success) -> {
-                    repository.delete(success.getAppListEntryResult());
+                    var entity = success.getAppListEntryResult();
 
+                    // Perform an etag match as part of the request. If the client's etag doesn't
+                    // match
+                    // the current server state, matchService.matchOnRequest(...) should fail/throw
+                    // and
+                    // the delete will not be applied.
+                    matchService.matchOnRequest(
+                            () -> {
+                                // actual delete happens here (inside supplier)
+                                repository.delete(entity);
+                                // return a MatchResponse indicating there is no 'new' object
+                                // (deleted)
+                                // but include the pre-change entity for etag calculation/matching.
+                                return MatchResponse.of(null, List.of(entity));
+                            },
+                            // list of resources to be used for ETag calculation / checking
+                            List.of(entity));
+
+                    // Only audit after matchService returned successfully (i.e. match succeeded)
                     auditService.processAudit(
-                            BeanUtil.copyBean(success.getAppListEntryResult()),
+                            BeanUtil.copyBean(entity),
                             AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT,
                             ev -> Optional.empty(),
                             auditLifecycleListeners.toArray(

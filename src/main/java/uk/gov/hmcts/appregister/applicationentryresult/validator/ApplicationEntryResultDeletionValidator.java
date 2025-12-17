@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.applicationentryresult.exception.ApplicationListEntryResultError;
 import uk.gov.hmcts.appregister.applicationentryresult.model.ListEntryResultDeleteArgs;
-import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
@@ -46,7 +45,8 @@ public class ApplicationEntryResultDeletionValidator
                         .orElseThrow(
                                 () ->
                                         new AppRegistryException(
-                                                ApplicationListError.ENTRY_RESULT_LIST_NOT_FOUND,
+                                                ApplicationListEntryResultError
+                                                        .ENTRY_RESULT_LIST_NOT_FOUND,
                                                 "No application list found for UUID '%s'"
                                                         .formatted(args.listId())));
 
@@ -91,7 +91,7 @@ public class ApplicationEntryResultDeletionValidator
             log.warn("List validation failed. {}", msg);
 
             throw new AppRegistryException(
-                    ApplicationListError.INVALID_ENTRY_RESULT_LIST_STATUS, msg);
+                    ApplicationListEntryResultError.INVALID_ENTRY_RESULT_LIST_STATUS, msg);
         }
     }
 }
