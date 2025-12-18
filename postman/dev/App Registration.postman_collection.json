@@ -851,13 +851,13 @@
               }
             },
             "url": {
-              "raw": "{{APP_REG_HOST}}/application-lists/4e87812d-d307-40a1-a127-6d038a7462e4/entries/7913172a-28a4-4fb6-ac3b-16e269856960/results/4d34eb41-de4d-4707-aba1-2602c113abfc",
+              "raw": "{{APP_REG_HOST}}/application-lists/{{created_id}}/entries/7913172a-28a4-4fb6-ac3b-16e269856960/results/4d34eb41-de4d-4707-aba1-2602c113abfc",
               "host": [
                 "{{APP_REG_HOST}}"
               ],
               "path": [
                 "application-lists",
-                "4e87812d-d307-40a1-a127-6d038a7462e4",
+                "{{created_id}}",
                 "entries",
                 "7913172a-28a4-4fb6-ac3b-16e269856960",
                 "results",
