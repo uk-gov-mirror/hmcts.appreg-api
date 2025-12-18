@@ -7,6 +7,7 @@ import static uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil.assertEq
 
 import io.restassured.response.Response;
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,8 +24,10 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
+import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
+import uk.gov.hmcts.appregister.common.util.EtagUtil;
 import uk.gov.hmcts.appregister.data.AppListEntryResolutionTestData;
 import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.data.AppListTestData;
@@ -52,41 +55,52 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
     void givenValidIds_whenDelete_then204() throws Exception {
         var list = createAndSaveList(OPEN);
         var entry = createEntry(list);
+        persistance.save(entry);
 
         var resolutionCode = new ResolutionCodeTestData().someComplete();
         var entryResult = createAndSaveResolution(entry, resolutionCode);
 
         var token = getToken();
 
-        // fire test
-        Response resp = deleteResult(list.getUuid(), entry.getUuid(), entryResult.getUuid(), token);
+        // --- compute the server-side ETag for the entity so we can match it in the request ---
+        // EtagUtil.generateEtag expects a List<Keyable> just like the service uses.
+        String expectedEtag = EtagUtil.generateEtag(List.of(entryResult));
+
+        // fire test (supply correct If-Match header so delete passes the match)
+        Response resp =
+            deleteResult(
+                list.getUuid(),
+                entry.getUuid(),
+                entryResult.getUuid(),
+                token,
+                expectedEtag);
 
         // assert success
         resp.then().statusCode(HttpStatus.NO_CONTENT.value());
 
         differenceLogAsserter.assertDataAuditChange(
-                AuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
-                        "version",
-                        null,
-                        null,
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getType()
-                                .name(),
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getEventName()));
+            AuditLogAsserter.getDataAuditAssertion(
+                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                "version",
+                null,
+                null,
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                    .getType()
+                    .name(),
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                    .getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-                AuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
-                        "aler_id",
-                        null,
-                        null,
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getType()
-                                .name(),
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getEventName()));
+            AuditLogAsserter.getDataAuditAssertion(
+                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                "aler_id",
+                null,
+                null,
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                    .getType()
+                    .name(),
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
+                    .getEventName()));
     }
 
     @Test
@@ -160,6 +174,28 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         assertEquals(ApplicationListEntryResultError.LIST_ENTRY_RESULT_NOT_FOUND.getCode(), resp);
     }
 
+    @Test
+    @DisplayName("Delete Application List Entry Result: 412 when If-Match ETag does not match")
+    void givenEtagMismatch_whenDelete_then412() throws Exception {
+        // arrange - create list, entry and a saved resolution (same pattern as other tests)
+        var list = createAndSaveList(OPEN);
+        var entry = createEntry(list);
+        persistance.save(entry);
+
+        var resolutionCode = new ResolutionCodeTestData().someComplete();
+        var entryResult = createAndSaveResolution(entry, resolutionCode);
+
+        var token = getToken();
+
+        // act - call delete with an ETag value that will never match the generated ETag
+        Response resp =
+            deleteResult(list.getUuid(), entry.getUuid(), entryResult.getUuid(), token, "never going to match");
+
+        // assert - server should reject the request with 412 and MATCH_ETAG_FAILURE problem code
+        resp.then().statusCode(HttpStatus.PRECONDITION_FAILED.value());
+        assertEquals(CommonAppError.MATCH_ETAG_FAILURE.getCode(), resp);
+    }
+
     @Override
     protected Stream<RestEndpointDescription> getDescriptions() throws Exception {
         return Stream.of(
@@ -180,17 +216,32 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
     }
 
     private Response deleteResult(UUID listId, UUID entryId, UUID resultId, TokenAndJwksKey token)
-            throws MalformedURLException {
+        throws MalformedURLException {
         return restAssuredClient.executeDeleteRequest(
-                getLocalUrl(
-                        WEB_CONTEXT
-                                + "/"
-                                + listId
-                                + "/entries/"
-                                + entryId
-                                + "/results/"
-                                + resultId),
-                token);
+            getLocalUrl(
+                WEB_CONTEXT
+                    + "/"
+                    + listId
+                    + "/entries/"
+                    + entryId
+                    + "/results/"
+                    + resultId),
+            token);
+    }
+
+    private Response deleteResult(UUID listId, UUID entryId, UUID resultId, TokenAndJwksKey token, String ifMatch)
+        throws MalformedURLException {
+        return restAssuredClient.executeDeleteRequest(
+            getLocalUrl(
+                WEB_CONTEXT
+                    + "/"
+                    + listId
+                    + "/entries/"
+                    + entryId
+                    + "/results/"
+                    + resultId),
+            token,
+            ifMatch);
     }
 
     private ApplicationList createAndSaveList(Status status) {
