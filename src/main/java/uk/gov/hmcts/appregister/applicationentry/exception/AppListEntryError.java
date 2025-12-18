@@ -86,7 +86,13 @@ public enum AppListEntryError implements ErrorCodeEnum {
 
     MULTIPLE_STANDARD_APPLICANT_EXIST(
             DefaultErrorDetail.create(
-                    HttpStatus.CONFLICT, "Multiple Standard applicant exists for code", "ALE-17"));
+                    HttpStatus.CONFLICT, "Multiple Standard applicant exists for code", "ALE-17")),
+
+    LIST_ENTRY_NOT_FOUND(
+            DefaultErrorDetail.create(
+                    HttpStatus.BAD_REQUEST,
+                    "No application list entry was found that belongs to " + " the specified list",
+                    "ALE-18"));
 
     private final DefaultErrorDetail defaultErrorCode;
 
