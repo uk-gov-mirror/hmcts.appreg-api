@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
@@ -1807,9 +1808,9 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // setup the payload
+        String stringExceedLength = RandomStringUtils.insecure().nextAlphanumeric(201);
         EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
-        entryUpdateDto.setWordingFields(
-                List.of("only one field that exceeds length", "extra field"));
+        entryUpdateDto.setWordingFields(List.of(stringExceedLength, "extra field"));
 
         // test the functionality
         Response responseSpecCreate =
@@ -1823,8 +1824,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                 CommonAppError.WORDING_LENGTH_FAILURE.getCode().getType().get(),
                 problemDetail.getType());
         Assertions.assertEquals(
-                "Premises Address=only one field that exceeds length",
-                problemDetail.getDetail().trim());
+                "Premises Address=" + stringExceedLength, problemDetail.getDetail().trim());
     }
 
     @Test

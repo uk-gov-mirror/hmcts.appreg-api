@@ -393,7 +393,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                 appListEntryFeeRepository.getFeeForEntryId(applicationListEntry.get().getId());
         Assertions.assertEquals(1, fees.size());
         Assertions.assertEquals(
-                "Other appeal where no fee specified", fees.get(0).getDescription());
+                "Application to state a case for the High Court", fees.get(0).getDescription());
 
         // make sure we do not recognise the officials that existing before
         Assertions.assertEquals(
