@@ -12,8 +12,8 @@ import com.tngtech.archunit.junit.ArchTest;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Entity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import uk.gov.hmcts.appregister.arch.rules.DatabaseClassCondition;
-import uk.gov.hmcts.appregister.arch.rules.NoInterfaceOrInnerPredicate;
+import uk.gov.hmcts.appregister.arch.condition.DatabaseClassCondition;
+import uk.gov.hmcts.appregister.arch.predicate.NoInterfaceOrInnerPredicate;
 
 /**
  * Rules around database.

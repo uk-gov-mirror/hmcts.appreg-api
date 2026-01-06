@@ -15,7 +15,7 @@ import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
-import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeOperation;
+import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeAuditOperation;
 import uk.gov.hmcts.appregister.resultcode.exception.ResultCodeError;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
@@ -39,9 +39,9 @@ public class ResultCodeControllerTest extends AbstractSecurityControllerTest {
 
     // Audit event names
     private static final String AUDIT_GET_ONE =
-            ResultCodeOperation.GET_RESULT_CODE_AUDIT_EVENT.getEventName();
+            ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT.getEventName();
     private static final String AUDIT_GET_PAGE =
-            ResultCodeOperation.GET_RESULT_CODES_AUDIT_EVENT.getEventName();
+            ResultCodeAuditOperation.GET_RESULT_CODES_AUDIT_EVENT.getEventName();
 
     private static final int DEFAULT_PAGE_SIZE = 10;
 

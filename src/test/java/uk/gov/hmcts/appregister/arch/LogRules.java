@@ -6,7 +6,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import uk.gov.hmcts.appregister.arch.rules.LoggingCondition;
+import uk.gov.hmcts.appregister.arch.condition.LoggingCondition;
 
 /**
  * The rules around logging.

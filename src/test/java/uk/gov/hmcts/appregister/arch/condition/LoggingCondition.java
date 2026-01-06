@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.arch.rules;
+package uk.gov.hmcts.appregister.arch.condition;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.lang.ArchCondition;

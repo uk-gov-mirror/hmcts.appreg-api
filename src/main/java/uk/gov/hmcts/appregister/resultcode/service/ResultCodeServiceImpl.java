@@ -22,7 +22,7 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
-import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeOperation;
+import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeAuditOperation;
 import uk.gov.hmcts.appregister.resultcode.exception.ResultCodeError;
 import uk.gov.hmcts.appregister.resultcode.mapper.ResultCodeMapper;
 
@@ -77,7 +77,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
     @Transactional(readOnly = true)
     public ResultCodeGetDetailDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
-                ResultCodeOperation.GET_RESULT_CODE_AUDIT_EVENT,
+                ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT,
                 unused -> {
                     log.debug("Start: Find active Result Code using code: {} date: {}", code, date);
                     final List<ResolutionCode> rows =
@@ -123,7 +123,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
         var todayUk = LocalDate.now(clock.withZone(ukZone));
 
         return auditService.processAudit(
-                ResultCodeOperation.GET_RESULT_CODES_AUDIT_EVENT,
+                ResultCodeAuditOperation.GET_RESULT_CODES_AUDIT_EVENT,
                 unused -> {
                     log.debug(
                             "Start: Find active Result Codes filtered by code: {} and title: {}",

@@ -33,7 +33,7 @@ import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
-import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeOperation;
+import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeAuditOperation;
 import uk.gov.hmcts.appregister.resultcode.exception.ResultCodeError;
 import uk.gov.hmcts.appregister.resultcode.mapper.ResultCodeMapper;
 
@@ -90,7 +90,9 @@ public class ResultCodeServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        eq(ResultCodeOperation.GET_RESULT_CODE_AUDIT_EVENT), notNull(), notNull());
+                        eq(ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -111,7 +113,9 @@ public class ResultCodeServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        eq(ResultCodeOperation.GET_RESULT_CODE_AUDIT_EVENT), notNull(), notNull());
+                        eq(ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -135,7 +139,9 @@ public class ResultCodeServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        eq(ResultCodeOperation.GET_RESULT_CODE_AUDIT_EVENT), notNull(), notNull());
+                        eq(ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -179,7 +185,9 @@ public class ResultCodeServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        eq(ResultCodeOperation.GET_RESULT_CODES_AUDIT_EVENT), notNull(), notNull());
+                        eq(ResultCodeAuditOperation.GET_RESULT_CODES_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 
     /**
@@ -216,6 +224,8 @@ public class ResultCodeServiceImplTest {
 
         verify(auditOperationService)
                 .processAudit(
-                        eq(ResultCodeOperation.GET_RESULT_CODES_AUDIT_EVENT), notNull(), notNull());
+                        eq(ResultCodeAuditOperation.GET_RESULT_CODES_AUDIT_EVENT),
+                        notNull(),
+                        notNull());
     }
 }

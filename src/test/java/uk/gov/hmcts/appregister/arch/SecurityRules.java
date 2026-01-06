@@ -6,7 +6,7 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.hmcts.appregister.arch.rules.PreAuthorizeCondition;
+import uk.gov.hmcts.appregister.arch.condition.PreAuthorizeCondition;
 
 /**
  * Rules around security annotations.

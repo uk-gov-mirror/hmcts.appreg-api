@@ -7,9 +7,9 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import org.springframework.context.annotation.Configuration;
-import uk.gov.hmcts.appregister.arch.rules.BeanCondition;
-import uk.gov.hmcts.appregister.arch.rules.MethodOwnerNoInterfaceOrInnerPredicate;
-import uk.gov.hmcts.appregister.arch.rules.NoInnerPredicate;
+import uk.gov.hmcts.appregister.arch.condition.BeanCondition;
+import uk.gov.hmcts.appregister.arch.predicate.MethodOwnerNoInterfaceOrInnerPredicate;
+import uk.gov.hmcts.appregister.arch.predicate.NoInnerPredicate;
 
 /**
  * Rules around the confohg package.

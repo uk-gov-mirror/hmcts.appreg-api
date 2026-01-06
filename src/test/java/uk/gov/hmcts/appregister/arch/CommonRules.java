@@ -5,7 +5,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
-import uk.gov.hmcts.appregister.arch.rules.NoEndingWithImplPredicate;
+import uk.gov.hmcts.appregister.arch.predicate.NoEndingWithImplPredicate;
 
 /**
  * Rules around common package.

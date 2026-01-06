@@ -14,7 +14,8 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.library.dependencies.SliceRule;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.appregister.arch.rules.NoInnerPredicate;
+import uk.gov.hmcts.appregister.arch.predicate.NoInnerPredicate;
+import uk.gov.hmcts.appregister.common.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.common.validator.Validator;
 
 /**
@@ -133,6 +134,20 @@ public class LayeredRules extends BaseRules {
                     .beAssignableTo(Validator.class)
                     .andShould()
                     .haveSimpleNameEndingWith("Validator");
+
+    @ArchTest
+    static final com.tngtech.archunit.lang.ArchRule audit_format_rule =
+            classes()
+                    .that()
+                    .resideInAPackage(BASE_PACKAGE + ".(*).audit..")
+                    .and(not(resideInAPackage(BASE_PACKAGE + "..common..")))
+                    .and(new NoInnerPredicate())
+                    .should()
+                    .haveSimpleNameContaining("AuditOperation")
+                    .andShould()
+                    .beAssignableTo(AuditOperation.class)
+                    .andShould()
+                    .beAssignableTo(Enum.class);
 
     // TODO: We need to correct the mapper classes before enabling this rule
     /*
