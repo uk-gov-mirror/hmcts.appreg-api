@@ -9,9 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditableResult;
-import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import org.springframework.transaction.annotation.Transactional;
+
+import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
+import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
+import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
@@ -63,6 +65,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
      * @throws AppRegistryException if no match or multiple matches are found
      */
     @Override
+    @Transactional(readOnly = true)
     public CourtLocationGetDetailDto findByCodeAndDate(String code, LocalDate date) {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT,
@@ -105,6 +108,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
      * @return a page of Court Location summaries
      */
     @Override
+    @Transactional(readOnly = true)
     public CourtLocationPage getPage(String nameFilter, String codeFilter, Pageable pageable) {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT,

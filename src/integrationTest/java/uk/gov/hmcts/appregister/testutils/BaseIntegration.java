@@ -13,7 +13,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
+import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationSlf4jLogger;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.testutils.client.RestAssuredClient;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;

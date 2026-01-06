@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.applicationentry.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -10,14 +9,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidator;
-import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditableResult;
-import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
+import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
+import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeId;
@@ -76,6 +77,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final EntityManager entityManager;
 
     @Override
+    @Transactional(readOnly = true)
     public EntryPage search(EntryGetFilterDto filterDto, Pageable pageable) {
         Status status = applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
 

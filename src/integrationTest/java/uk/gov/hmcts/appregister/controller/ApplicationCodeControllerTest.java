@@ -27,7 +27,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.appregister.applicationcode.exception.ApplicationCodeError;
 import uk.gov.hmcts.appregister.applicationcode.service.ApplicationCodeServiceImpl;
-import uk.gov.hmcts.appregister.audit.event.OperationStatus;
+import uk.gov.hmcts.appregister.common.audit.event.OperationStatus;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodeGetDetailDto;

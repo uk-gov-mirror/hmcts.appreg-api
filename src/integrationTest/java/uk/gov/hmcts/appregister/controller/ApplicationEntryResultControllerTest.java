@@ -22,7 +22,7 @@ import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
-import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.base.TableNames;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;

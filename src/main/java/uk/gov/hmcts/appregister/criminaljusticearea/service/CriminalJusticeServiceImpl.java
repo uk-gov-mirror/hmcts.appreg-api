@@ -6,9 +6,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditableResult;
-import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import org.springframework.transaction.annotation.Transactional;
+
+import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
+import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
+import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
@@ -30,6 +32,7 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
     private final LocationLookupService locationLookupService;
 
     @Override
+    @Transactional(readOnly = true)
     public CriminalJusticeAreaGetDto findByCode(String code) {
         return auditService.processAudit(
                 CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDIT_EVENT,
@@ -45,6 +48,7 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CriminalJusticeAreaPage findAll(String code, String description, Pageable pageable) {
         return auditService.processAudit(
                 CriminalJusticeAuditOperation.GET_CRIMINAL_JUSTICE_AUDITS_EVENT,

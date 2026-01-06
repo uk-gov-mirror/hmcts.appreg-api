@@ -2,6 +2,8 @@ package uk.gov.hmcts.appregister.criminaljusticearea.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +22,7 @@ import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
  */
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class CriminalJusticeAreaController implements CriminalJusticeAreasApi {
     private final CriminalJusticeService criminalJusticeService;
     private final PageableMapper appRegPageable;

@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
@@ -33,6 +35,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
     private final StandardApplicantExistsValidator validator;
 
     @Override
+    @Transactional(readOnly = true)
     public StandardApplicantPage findAll(String code, String name, Pageable pageable) {
         // Use today's date to ensure we only return Result Codes that are currently active.
         var todayUk = LocalDate.now(clock.withZone(ukZone));
@@ -59,6 +62,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public StandardApplicantGetDetailDto findByCode(String code, LocalDate date) {
         log.debug("Start: Find Standard Applicant By Code for: app code: {} date: {}", code, date);
 

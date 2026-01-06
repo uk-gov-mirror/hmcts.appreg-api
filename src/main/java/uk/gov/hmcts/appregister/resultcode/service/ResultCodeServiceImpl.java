@@ -12,9 +12,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
-import uk.gov.hmcts.appregister.audit.model.AuditableResult;
-import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
+import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
+import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
+import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
@@ -74,6 +74,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
      * @throws AppRegistryException if no match or multiple matches are found
      */
     @Override
+    @Transactional(readOnly = true)
     public ResultCodeGetDetailDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
                 ResultCodeOperation.GET_RESULT_CODE_AUDIT_EVENT,
@@ -115,6 +116,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
      * @return a page of Result Code summaries
      */
     @Override
+    @Transactional(readOnly = true)
     public ResultCodePage findAll(String codeFilter, String titleFilter, Pageable pageable) {
 
         // Use today's date to ensure we only return Result Codes that are currently active.

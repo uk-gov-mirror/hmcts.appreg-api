@@ -483,6 +483,8 @@ dependencies {
 
   testImplementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-contract-stub-runner', version: '4.3.0'
   testImplementation 'org.instancio:instancio-junit:5.5.1'
+  testImplementation "com.tngtech.archunit:archunit-junit5:1.4.1"
+
   rewrite group: 'org.openrewrite.recipe', name: 'rewrite-static-analysis', version: '2.16.0'
 
   // Updated Third-Party Dependencies
@@ -494,6 +496,8 @@ dependencies {
   implementation 'org.mapstruct:mapstruct:1.6.3' // your version
   annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
   testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+  testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.12.2"
 }
 
 bootJar {

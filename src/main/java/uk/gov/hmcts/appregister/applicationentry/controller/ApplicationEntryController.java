@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
 import uk.gov.hmcts.appregister.applicationentry.service.ApplicationEntryService;
@@ -29,7 +30,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 
 @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
-@Controller
+@RestController
 @RequiredArgsConstructor
 @Slf4j
 public class ApplicationEntryController implements ApplicationListEntriesApi {
