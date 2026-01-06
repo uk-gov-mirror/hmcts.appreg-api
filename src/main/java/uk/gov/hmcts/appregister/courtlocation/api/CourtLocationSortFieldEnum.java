@@ -7,7 +7,7 @@ import uk.gov.hmcts.appregister.common.api.SortableOperationEnum;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse_;
 
 @Getter
-public enum CourtLocationSortFieldMapper implements SortableOperationEnum {
+public enum CourtLocationSortFieldEnum implements SortableOperationEnum {
     TITLE("name", NationalCourtHouse_.NAME),
     CODE("code", NationalCourtHouse_.COURT_LOCATION_CODE);
 
@@ -16,7 +16,7 @@ public enum CourtLocationSortFieldMapper implements SortableOperationEnum {
     private final String apiValue;
     private final String[] entityValue;
 
-    CourtLocationSortFieldMapper(String apiValue, String... entityValue) {
+    CourtLocationSortFieldEnum(String apiValue, String... entityValue) {
         this.apiValue = apiValue;
         this.entityValue = entityValue;
     }

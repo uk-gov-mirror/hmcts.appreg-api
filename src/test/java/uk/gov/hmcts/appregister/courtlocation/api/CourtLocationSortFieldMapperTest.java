@@ -12,30 +12,30 @@ public class CourtLocationSortFieldMapperTest {
 
     @Test
     void lookupByApiValue_nameReturnsTitle() {
-        SortableOperationEnum actual = CourtLocationSortFieldMapper.getEntityValue("name");
-        assertSame(CourtLocationSortFieldMapper.TITLE, actual);
+        SortableOperationEnum actual = CourtLocationSortFieldEnum.getEntityValue("name");
+        assertSame(CourtLocationSortFieldEnum.TITLE, actual);
     }
 
     @Test
     void lookupByApiValue_codeReturnsCode() {
-        SortableOperationEnum actual = CourtLocationSortFieldMapper.getEntityValue("code");
-        assertSame(CourtLocationSortFieldMapper.CODE, actual);
+        SortableOperationEnum actual = CourtLocationSortFieldEnum.getEntityValue("code");
+        assertSame(CourtLocationSortFieldEnum.CODE, actual);
     }
 
     @Test
     void lookupByApiValue_unknownReturnsNull() {
-        assertNull(CourtLocationSortFieldMapper.getEntityValue("unknown"));
+        assertNull(CourtLocationSortFieldEnum.getEntityValue("unknown"));
     }
 
     @Test
     void fieldsMatchExpectedContract() {
-        assertEquals("name", CourtLocationSortFieldMapper.TITLE.getApiValue());
+        assertEquals("name", CourtLocationSortFieldEnum.TITLE.getApiValue());
         assertEquals(
-                NationalCourtHouse_.NAME, CourtLocationSortFieldMapper.TITLE.getEntityValue()[0]);
+            NationalCourtHouse_.NAME, CourtLocationSortFieldEnum.TITLE.getEntityValue()[0]);
 
-        assertEquals("code", CourtLocationSortFieldMapper.CODE.getApiValue());
+        assertEquals("code", CourtLocationSortFieldEnum.CODE.getApiValue());
         assertEquals(
-                NationalCourtHouse_.COURT_LOCATION_CODE,
-                CourtLocationSortFieldMapper.CODE.getEntityValue()[0]);
+            NationalCourtHouse_.COURT_LOCATION_CODE,
+            CourtLocationSortFieldEnum.CODE.getEntityValue()[0]);
     }
 }

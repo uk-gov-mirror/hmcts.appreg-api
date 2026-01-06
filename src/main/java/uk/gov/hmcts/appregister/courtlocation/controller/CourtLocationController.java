@@ -14,7 +14,7 @@ import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse_;
 import uk.gov.hmcts.appregister.common.mapper.PageableMapper;
 import uk.gov.hmcts.appregister.common.mapper.SortMapper;
 import uk.gov.hmcts.appregister.common.security.RoleNames;
-import uk.gov.hmcts.appregister.courtlocation.api.CourtLocationSortFieldMapper;
+import uk.gov.hmcts.appregister.courtlocation.api.CourtLocationSortFieldEnum;
 import uk.gov.hmcts.appregister.courtlocation.service.CourtLocationService;
 import uk.gov.hmcts.appregister.generated.api.CourtLocationsApi;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
@@ -112,7 +112,7 @@ public class CourtLocationController implements CourtLocationsApi {
             return List.of();
         }
         return sortMapper.map(
-                SortableField.of(sort.toArray(new String[0])),
-                CourtLocationSortFieldMapper::getEntityValue);
+            SortableField.of(sort.toArray(new String[0])),
+            CourtLocationSortFieldEnum::getEntityValue);
     }
 }

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
@@ -20,7 +21,7 @@ import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class CriminalJusticeServiceImpl implements CriminalJusticeService {

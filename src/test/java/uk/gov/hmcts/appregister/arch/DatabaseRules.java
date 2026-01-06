@@ -11,6 +11,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
+import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.transaction.Transactional;
@@ -54,6 +55,35 @@ public class DatabaseRules {
             .resideInAPackage(BASE_PACKAGE + ".(*).service..")
             .and(new ClassMethodCheck())
             .should().beAnnotatedWith(org.springframework.transaction.annotation.Transactional.class);
+
+    @ArchTest
+    static final com.tngtech.archunit.lang.ArchRule converter =
+        classes()
+            .that().resideInAPackage(BASE_PACKAGE + ".common.entity.converter")
+            .should().haveSimpleNameEndingWith("Converter")
+            .andShould().beAssignableTo(AttributeConverter.class);
+
+
+    @ArchTest
+    static final com.tngtech.archunit.lang.ArchRule ALL_ENTITIES =
+        classes()
+            .that().resideInAPackage(BASE_PACKAGE + "..").and()
+            .areAnnotatedWith(Entity.class)
+            .should().resideInAPackage(BASE_PACKAGE + ".common.entity");
+
+    @ArchTest
+    static final com.tngtech.archunit.lang.ArchRule ALL_REPOS=
+        classes()
+            .that().resideInAPackage(BASE_PACKAGE + "..").and()
+            .areAssignableTo(JpaRepository.class)
+            .should().resideInAPackage(BASE_PACKAGE + ".common.entity.repository");
+
+    @ArchTest
+    static final com.tngtech.archunit.lang.ArchRule ALL_CONVERTERS=
+        classes()
+            .that().resideInAPackage(BASE_PACKAGE + "..").and()
+            .areAssignableTo(AttributeConverter.class)
+            .should().resideInAPackage(BASE_PACKAGE + ".common.entity.converter");
 
     static class DatabaseCheck extends ArchCondition<JavaClass> {
         public DatabaseCheck() {
