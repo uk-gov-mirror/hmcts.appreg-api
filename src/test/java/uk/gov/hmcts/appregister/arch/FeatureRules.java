@@ -14,6 +14,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.library.dependencies.SliceRule;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.arch.predicate.NoInnerPredicate;
 import uk.gov.hmcts.appregister.common.audit.operation.AuditOperation;
 import uk.gov.hmcts.appregister.common.validator.Validator;
@@ -24,7 +25,7 @@ import uk.gov.hmcts.appregister.common.validator.Validator;
 @AnalyzeClasses(
         packages = BaseRules.BASE_PACKAGE,
         importOptions = {ImportOption.DoNotIncludeTests.class})
-public class LayeredRules extends BaseRules {
+public class FeatureRules extends BaseRules {
     @ArchTest
     public static final com.tngtech.archunit.lang.ArchRule feature_internal_layers =
             layeredArchitecture()
@@ -112,6 +113,19 @@ public class LayeredRules extends BaseRules {
                     .beAnnotatedWith(org.springframework.web.bind.annotation.RestController.class);
 
     @ArchTest
+    public static final com.tngtech.archunit.lang.ArchRule controller_always_in_featyre_package =
+            classes()
+                    .that()
+                    .resideInAPackage(BASE_PACKAGE + "..")
+                    .and(new NoInnerPredicate())
+                    .and()
+                    .areAnnotatedWith(RestController.class)
+                    .and(not(simpleNameEndingWith("Success")))
+                    .and(not(resideInAPackage(BASE_PACKAGE + "..common..")))
+                    .should()
+                    .resideInAPackage(BASE_PACKAGE + "..(*).controller..");
+
+    @ArchTest
     static final com.tngtech.archunit.lang.ArchRule service_format_rule =
             classes()
                     .that()
@@ -123,6 +137,19 @@ public class LayeredRules extends BaseRules {
                     .beAnnotatedWith(Service.class);
 
     @ArchTest
+    public static final com.tngtech.archunit.lang.ArchRule service_always_in_featyre_package =
+            classes()
+                    .that()
+                    .resideInAPackage(BASE_PACKAGE + "..")
+                    .and(new NoInnerPredicate())
+                    .and()
+                    .areAnnotatedWith(Service.class)
+                    .and(not(simpleNameEndingWith("Success")))
+                    .and(not(resideInAPackage(BASE_PACKAGE + "..common..")))
+                    .should()
+                    .resideInAPackage(BASE_PACKAGE + "..(*).service..");
+
+    @ArchTest
     public static final com.tngtech.archunit.lang.ArchRule feature_validator_formatting =
             classes()
                     .that()
@@ -132,6 +159,21 @@ public class LayeredRules extends BaseRules {
                     .and(not(resideInAPackage(BASE_PACKAGE + "..common..")))
                     .should()
                     .beAssignableTo(Validator.class)
+                    .andShould()
+                    .haveSimpleNameEndingWith("Validator");
+
+    @ArchTest
+    public static final com.tngtech.archunit.lang.ArchRule validator_always_in_feature_package =
+            classes()
+                    .that()
+                    .resideInAPackage(BASE_PACKAGE + "..")
+                    .and(new NoInnerPredicate())
+                    .and()
+                    .areAssignableTo(Validator.class)
+                    .and(not(simpleNameEndingWith("Success")))
+                    .and(not(resideInAPackage(BASE_PACKAGE + "..common..")))
+                    .should()
+                    .resideInAPackage(BASE_PACKAGE + "..(*).validator..")
                     .andShould()
                     .haveSimpleNameEndingWith("Validator");
 
@@ -148,6 +190,19 @@ public class LayeredRules extends BaseRules {
                     .beAssignableTo(AuditOperation.class)
                     .andShould()
                     .beAssignableTo(Enum.class);
+
+    @ArchTest
+    public static final com.tngtech.archunit.lang.ArchRule audit_always_in_feature_package =
+            classes()
+                    .that()
+                    .resideInAPackage(BASE_PACKAGE + "..")
+                    .and(new NoInnerPredicate())
+                    .and()
+                    .areAssignableTo(AuditOperation.class)
+                    .and(not(simpleNameEndingWith("Success")))
+                    .and(not(resideInAPackage(BASE_PACKAGE + "..common..")))
+                    .should()
+                    .resideInAPackage(BASE_PACKAGE + "..(*).audit..");
 
     // TODO: We need to correct the mapper classes before enabling this rule
     /*
