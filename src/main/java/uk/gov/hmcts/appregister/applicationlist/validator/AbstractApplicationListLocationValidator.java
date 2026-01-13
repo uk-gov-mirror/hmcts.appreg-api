@@ -130,8 +130,8 @@ public abstract class AbstractApplicationListLocationValidator<
             // double-check to make sure other description has not been included
             if (hasOther) {
                 throw new AppRegistryException(
-                    ApplicationListError.INVALID_LOCATION_COMBINATION,
-                    "Provide either 'courtLocation', or both a 'cja code' and a 'otherLocationDescription'.");
+                        ApplicationListError.INVALID_LOCATION_COMBINATION,
+                        "Provide either 'courtLocation', or both a 'cja code' and a 'otherLocationDescription'.");
             }
             validateCourt(dto, createApplication);
         } else {

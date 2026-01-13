@@ -387,22 +387,22 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
     @Test
     void givenInvalidLocationCombination_cjaMissingOtherDescriptionIncluded_whenCreate_then400()
-        throws Exception {
+            throws Exception {
         var token =
-            getATokenWithValidCredentials()
-                .roles(List.of(RoleEnum.USER))
-                .build()
-                .fetchTokenForRole();
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
 
         var req =
-            new ApplicationListCreateDto()
-                .date(TEST_DATE)
-                .time(TEST_TIME)
-                .description("Invalid XOR: both")
-                .status(ApplicationListStatus.OPEN)
-                .courtLocationCode(VALID_COURT_CODE)
-                .cjaCode(null)
-                .otherLocationDescription(VALID_OTHER_LOCATION);
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("Invalid XOR: both")
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(null)
+                        .otherLocationDescription(VALID_OTHER_LOCATION);
 
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
 
@@ -410,10 +410,10 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // AL-1 (INVALID_LOCATION_COMBINATION)
         ProblemAssertUtil.assertEquals(
-            uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError
-                .INVALID_LOCATION_COMBINATION
-                .getCode(),
-            resp);
+                uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError
+                        .INVALID_LOCATION_COMBINATION
+                        .getCode(),
+                resp);
     }
 
     // --- Not found: court ---------------------------------------------------------------------
