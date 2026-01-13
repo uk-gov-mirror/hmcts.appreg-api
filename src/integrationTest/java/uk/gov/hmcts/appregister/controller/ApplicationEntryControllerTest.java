@@ -37,6 +37,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.Official;
 import uk.gov.hmcts.appregister.generated.model.Organisation;
+import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.annotation.StabilityTest;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
@@ -641,6 +642,16 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         // assert we have a location header
         Assertions.assertNotNull(HeaderUtil.getETag(responseSpecCreate));
 
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("test wording");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue(LocalDate.now().toString());
+
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
+
         EntryGetDetailDto createdDto = responseSpecCreate.as(EntryGetDetailDto.class);
 
         // validate the response
@@ -748,8 +759,16 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         String surnameToLookup = UUID.randomUUID().toString();
         entryCreateDto.getApplicant().getPerson().getName().setSurname(surnameToLookup);
 
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("test wording");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue(LocalDate.now().toString());
+
         // fill the template with the two parameters
-        entryCreateDto.setWordingFields(List.of("test wording", LocalDate.now().toString()));
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
 
         // create the token
         TokenGenerator tokenGenerator =
@@ -857,8 +876,16 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         String surnameToLookup = UUID.randomUUID().toString();
         entryCreateDto.getApplicant().getPerson().getName().setSurname(surnameToLookup);
 
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("test wording");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue(LocalDate.now().toString());
+
         // fill the template with the two parameters
-        entryCreateDto.setWordingFields(List.of("test wording", LocalDate.now().toString()));
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
 
         // create the token
         TokenGenerator tokenGenerator =
@@ -1111,13 +1138,26 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
     public void
             givenAnInvalidCreateEntryRequest_whenWordingTemplateFieldsNotSufficient_400IsReturned()
                     throws Exception {
-        // create the token
-        TokenGenerator tokenGenerator =
-                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("value");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue("extra field not a date");
+
+        TemplateSubstitution substitution2 = new TemplateSubstitution();
+        substitution2.setKey("too many");
+        substitution2.setValue("val");
 
         // setup the payload
         EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
-        entryCreateDto.setWordingFields(List.of("only one field", "extra field", "too many"));
+
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1, substitution2));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // test the functionality
         Response responseSpecCreate =
@@ -1139,14 +1179,22 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
     @Test
     public void givenAnInvalidCreateEntryRequest_whenWordingLengthNotSufficient_400IsReturned()
             throws Exception {
-        // create the token
-        TokenGenerator tokenGenerator =
-                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("only one field that exceeds length");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue("extra field");
 
         // setup the payload
         EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
-        entryCreateDto.setWordingFields(
-                List.of("only one field that exceeds length", "extra field"));
+
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // test the functionality
         Response responseSpecCreate =
@@ -1171,13 +1219,21 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
     @Test
     public void givenAnInvalidCreateEntryRequest_whenWordingDataTypeFailure_400IsReturned()
             throws Exception {
-        // create the token
-        TokenGenerator tokenGenerator =
-                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("value");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue("extra field not a date");
 
         // setup the payload
         EntryCreateDto entryCreateDto = getCorrectCreateEntryDto();
-        entryCreateDto.setWordingFields(List.of("value", "extra field not a date"));
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
         // test the functionality
         Response responseSpecCreate =
@@ -1235,8 +1291,16 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
         String surnameToLookup = UUID.randomUUID().toString();
         entryCreateDto.getApplicant().getPerson().getName().setSurname(surnameToLookup);
 
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("test wording");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue(LocalDate.now().toString());
+
         // fill the template with the two parameters
-        entryCreateDto.setWordingFields(List.of("test wording", LocalDate.now().toString()));
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
         return entryCreateDto;
     }
 

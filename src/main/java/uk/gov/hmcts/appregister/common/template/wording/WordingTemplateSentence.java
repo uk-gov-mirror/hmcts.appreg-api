@@ -13,6 +13,10 @@ import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.template.Templateable;
 import uk.gov.hmcts.appregister.common.template.TemplateableSentence;
 import uk.gov.hmcts.appregister.common.template.type.DataType;
+import uk.gov.hmcts.appregister.generated.model.TemplateConstraint;
+import uk.gov.hmcts.appregister.generated.model.TemplateDetail;
+import uk.gov.hmcts.appregister.generated.model.TemplateKeyWithConstraint;
+import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 
 /**
  * A class that allows us to parse a Wording Templates sentence containing multiple work templates
@@ -37,11 +41,16 @@ public class WordingTemplateSentence implements TemplateableSentence {
     /** The original template string. */
     private String template;
 
+    /** The original template string. */
+    private String sanitisedTemplate;
+
     /** The erroneous templates that have been identified. */
     private List<String> erroneous = new ArrayList<>();
 
     /** The template string with placeholders. */
-    private String templateWithPositionalPlaceholders = "";
+    private String templateWithProcessedPlaceholders = "";
+
+    private TemplateDetail templateDetail;
 
     /**
      * The placeholder UUID that is used as a unique placeholder with the template. Without this we
@@ -56,7 +65,11 @@ public class WordingTemplateSentence implements TemplateableSentence {
 
     public WordingTemplateSentence(String templateString) {
         this.template = templateString;
-        templateWithPositionalPlaceholders = template;
+        sanitisedTemplate = template;
+
+        templateDetail = new TemplateDetail();
+
+        templateWithProcessedPlaceholders = template;
         Pattern p = Pattern.compile(TEMPLATE_REGEX, Pattern.DOTALL);
         Matcher m = p.matcher(templateString);
 
@@ -69,14 +82,31 @@ public class WordingTemplateSentence implements TemplateableSentence {
 
             try {
                 WordingTemplate wordingTemplate = new WordingTemplate(grp);
-                log.debug("Parsed wording template: {}", wordingTemplate.getReference());
+
+                // add the template detail to the collection detail
+                templateDetail.addSubstitutionKeyConstraintsItem(wordingTemplate.getDetail());
+
+                log.debug("Parsed wording template: {}", wordingTemplate.getDetail().getKey());
                 contents.add(wordingTemplate);
 
-                // replace the pattern with a placeholder
-                templateWithPositionalPlaceholders =
-                        templateWithPositionalPlaceholders.replaceFirst(
+                // create a sanitised template with positional placeholders that can be returned
+                // from the API
+                sanitisedTemplate =
+                        sanitisedTemplate.replaceFirst(
                                 "\\" + START_CHARACTER + Pattern.quote(grp) + "\\" + END_CHARACTER,
-                                getPlaceholderForPosition(positionIndex));
+                                START_CHARACTER
+                                        + START_CHARACTER
+                                        + wordingTemplate.getDetail().getKey()
+                                        + END_CHARACTER
+                                        + END_CHARACTER);
+
+                // replace the pattern with a placeholder
+                templateWithProcessedPlaceholders =
+                        templateWithProcessedPlaceholders.replaceFirst(
+                                "\\" + START_CHARACTER + Pattern.quote(grp) + "\\" + END_CHARACTER,
+                                START_CHARACTER
+                                        + wordingTemplate.getDetail().getKey()
+                                        + END_CHARACTER);
                 positionIndex = positionIndex + 1;
             } catch (AppRegistryException ex) {
                 log.warn("Failing to parse template %s".formatted(grp), ex);
@@ -86,9 +116,11 @@ public class WordingTemplateSentence implements TemplateableSentence {
             }
         }
 
+        templateDetail.setTemplate(sanitisedTemplate);
+
         log.debug(
                 "Created template with positional placeholders: {}",
-                templateWithPositionalPlaceholders);
+                templateWithProcessedPlaceholders);
     }
 
     /**
@@ -97,16 +129,23 @@ public class WordingTemplateSentence implements TemplateableSentence {
      *
      * @param templateToCopy The template to copy
      * @param templateWithPlaceholders The processed placeholder string to work with
+     * @param contents The contents remaining to be substituted
      */
     WordingTemplateSentence(
             WordingTemplateSentence templateToCopy,
             String templateWithPlaceholders,
             List<Templateable> contents) {
-        this.templateWithPositionalPlaceholders = templateWithPlaceholders;
+        this.templateWithProcessedPlaceholders = templateWithPlaceholders;
         this.erroneous = templateToCopy.erroneous;
         this.positionalPlaceholderPrefix = templateToCopy.positionalPlaceholderPrefix;
         this.template = templateToCopy.template;
         this.contents = contents;
+        this.sanitisedTemplate = templateToCopy.sanitisedTemplate;
+    }
+
+    @Override
+    public TemplateDetail getDetail() {
+        return templateDetail;
     }
 
     @Override
@@ -114,33 +153,9 @@ public class WordingTemplateSentence implements TemplateableSentence {
         return contents.toArray(new Templateable[0]);
     }
 
-    /**
-     * gets the unique placeholder string in for a positional.
-     *
-     * @param position The position in the template
-     * @return The unique placeholder for the id position
-     */
-    private String getPlaceholderForPosition(int position) {
-        return positionalPlaceholderPrefix.toString() + position;
-    }
-
     @Override
-    public List<String> getReferences() {
-        List<String> references = new ArrayList<>();
-        for (int i = 0; i < contents.size(); i++) {
-            references.add(contents.get(i).getReference());
-        }
-        return references;
-    }
-
-    @Override
-    public String getSentenceTemplate() {
-        return template;
-    }
-
-    @Override
-    public String substitute(List<String> values) {
-        String returnedString = templateWithPositionalPlaceholders;
+    public String substitute(List<TemplateSubstitution> values) {
+        String returnedString = templateWithProcessedPlaceholders;
 
         if (values == null || values.isEmpty()) {
             log.debug("No substitution values provided, returning original template");
@@ -157,14 +172,24 @@ public class WordingTemplateSentence implements TemplateableSentence {
         }
 
         for (int i = 0; i < values.size(); i++) {
-            // if we have a value to substitute then substitute it into one of the valid templates
-            log.debug("Substituting options into template: {}", contents.get(i).toString());
+            if (values.get(i).getKey().equals(contents.get(i).getDetail().getKey())) {
+                // if we have a value to substitute then substitute it into one of the valid
+                // templates
+                log.debug("Substituting options into template: {}", contents.get(i).toString());
 
-            String subs = contents.get(i).substitute(values.get(i));
+                String subs = contents.get(i).substitute(values.get(i).getValue());
 
-            // replace the template placeholder with the template value
-            returnedString = returnedString.replace(getPlaceholderForPosition(i), subs);
+                // replace the template placeholder with the template value
+                returnedString =
+                        returnedString.replace(
+                                START_CHARACTER
+                                        + contents.get(i).getDetail().getKey()
+                                        + END_CHARACTER,
+                                subs);
+            }
         }
+
+        templateWithProcessedPlaceholders = returnedString;
 
         log.debug("Substituted value: {}", returnedString);
         return returnedString;
@@ -187,20 +212,24 @@ public class WordingTemplateSentence implements TemplateableSentence {
 
     @Override
     public TemplateableSentence substituteForTemplate(Templateable values, String value) {
-        String returnedString = templateWithPositionalPlaceholders;
+        String returnedString = templateWithProcessedPlaceholders;
 
         // find the template to substitute
         for (int i = 0; i < contents.size(); i++) {
 
             // find the matching template reference
             if (contents.get(i).equals(values)) {
-
                 String sub = contents.get(i).substitute(value);
 
                 log.debug("Substituted value into template: {}", contents.get(i).toString());
 
                 // replace the template placeholder with the template value
-                returnedString = returnedString.replace(getPlaceholderForPosition(i), sub);
+                returnedString =
+                        returnedString.replace(
+                                START_CHARACTER
+                                        + contents.get(i).getDetail().getKey()
+                                        + END_CHARACTER,
+                                sub);
 
                 log.debug("Substituted value into the sentence: {}", contents.get(i).toString());
 
@@ -225,13 +254,13 @@ public class WordingTemplateSentence implements TemplateableSentence {
 
     @Override
     public String getSubstitutedSentence() {
-        return templateWithPositionalPlaceholders;
+        return templateWithProcessedPlaceholders;
     }
 
     @Override
     public Templateable getTemplateForReference(String referenceValue) {
         for (int i = 0; i < contents.size(); i++) {
-            if (contents.get(i).getReference().equals(referenceValue)) {
+            if (contents.get(i).getDetail().getKey().equals(referenceValue)) {
                 return contents.get(i);
             }
         }
@@ -250,31 +279,12 @@ public class WordingTemplateSentence implements TemplateableSentence {
                 Pattern.compile(
                         "[^|]+\\" + DELIMITER + "[^|]+\\" + DELIMITER + "[^}]+", Pattern.DOTALL);
 
-        /** The reference that the substitute would happen. */
-        private String reference;
-
-        /** The data type of the value. */
-        private DataType type;
-
-        /** The length of the value. */
-        private int length;
-
         /** The template string. */
-        private String template;
+        private TemplateKeyWithConstraint templateKeyWithConstraint;
 
         @Override
-        public String getReference() {
-            return reference;
-        }
-
-        @Override
-        public DataType getType() {
-            return type;
-        }
-
-        @Override
-        public Integer getLength() {
-            return length;
+        public TemplateKeyWithConstraint getDetail() {
+            return templateKeyWithConstraint;
         }
 
         public WordingTemplate(String templateString) {
@@ -284,7 +294,7 @@ public class WordingTemplateSentence implements TemplateableSentence {
                         CommonAppError.WORDING_TEMPLATE_FORMAT_FAILURE, "Invalid template string");
             }
 
-            this.template = templateString;
+            templateKeyWithConstraint = new TemplateKeyWithConstraint();
 
             String[] parts = getPartsOfTemplate(templateString);
 
@@ -294,17 +304,27 @@ public class WordingTemplateSentence implements TemplateableSentence {
                         CommonAppError.WORDING_TEMPLATE_FORMAT_FAILURE, "Invalid template string");
             }
 
+            templateKeyWithConstraint = new TemplateKeyWithConstraint();
+            TemplateConstraint constraint = new TemplateConstraint();
+            templateKeyWithConstraint.setConstraint(constraint);
+
             // split the template stringand store the meta data parts
-            reference = parts[1];
-            length = Integer.parseInt(parts[2]);
+            String reference = parts[1];
+            Integer length = Integer.parseInt(parts[2]);
+
+            templateKeyWithConstraint.setKey(reference);
+            constraint.setLength(length);
 
             // validates the data type
-            type = validateDataType(parts[0]);
+            DataType type = validateDataType(parts[0]);
 
             if (type == null) {
                 throw new AppRegistryException(
                         CommonAppError.WORDING_DATA_TYPE_FAILURE, "Invalid data type in template");
             }
+
+            // validates the data type
+            constraint.setType(TemplateConstraint.TypeEnum.valueOf(parts[0]));
         }
 
         /**
@@ -331,8 +351,7 @@ public class WordingTemplateSentence implements TemplateableSentence {
             return new WordingTemplate(grp);
         }
 
-        private DataType validateDataType(String type) {
-            WordingDataTypes matchingType = null;
+        public static DataType validateDataType(String type) {
             // check the data types is correct in the template
             for (WordingDataTypes types : WordingDataTypes.values()) {
                 if (types.getValue().equals(type)) {
@@ -354,21 +373,21 @@ public class WordingTemplateSentence implements TemplateableSentence {
 
         @Override
         public void canValueBeSubstituted(String value) {
-
+            DataType type = validateDataType(this.getDetail().getConstraint().getType().getValue());
             log.debug("Validating value '{}' for template: {}", value, this);
             if (!type.validateForType(value)) {
                 throw new AppRegistryException(
                         CommonAppError.WORDING_DATA_TYPE_FAILURE,
                         "Invalid data type value in template",
-                        Map.of(getReference(), value));
+                        Map.of(this.getDetail().getKey(), value));
             }
 
             log.debug("Validating value length '{}' for template: {}", value.length(), this);
-            if (value.length() > length) {
+            if (value.length() > this.getDetail().getConstraint().getLength()) {
                 throw new AppRegistryException(
                         CommonAppError.WORDING_LENGTH_FAILURE,
                         "Invalid length type in template",
-                        Map.of(getReference(), value));
+                        Map.of(this.getDetail().getKey(), value));
             }
         }
 

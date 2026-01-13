@@ -1,6 +1,6 @@
 package uk.gov.hmcts.appregister.common.template;
 
-import uk.gov.hmcts.appregister.common.template.type.DataType;
+import uk.gov.hmcts.appregister.generated.model.TemplateKeyWithConstraint;
 
 /**
  * A class that supports a template which values can be substituted into. Templates are assumed to
@@ -15,7 +15,7 @@ public interface Templateable {
      *
      * @return The reference string of the template.
      */
-    String getReference();
+    TemplateKeyWithConstraint getDetail();
 
     /** Substitutes the given value into the template. */
     String substitute(String value);
@@ -36,18 +36,4 @@ public interface Templateable {
             return false;
         }
     }
-
-    /**
-     * gets the type of the template.
-     *
-     * @return The type of the template
-     */
-    DataType getType();
-
-    /**
-     * The length of the template restriction.
-     *
-     * @return The length restriction
-     */
-    Integer getLength();
 }

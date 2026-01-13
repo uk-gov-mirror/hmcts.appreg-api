@@ -33,6 +33,7 @@ import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
@@ -127,6 +128,10 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         final EntryCreateDto entryCreateDto =
                 Instancio.of(EntryCreateDto.class).withSettings(settings).create();
 
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Reference");
+        substitution.setValue("test wording");
+
         // set the organisation and person applicant to null so we use the standard applicant
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto.getApplicant().setPerson(null);
@@ -134,12 +139,13 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         entryCreateDto.getRespondent().setOrganisation(null);
         entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
         entryCreateDto.setNumberOfRespondents(0);
+        entryCreateDto.setWordingFields(List.of(substitution));
 
         // use the applicant standard applicant
         entryCreateDto.setStandardApplicantCode("APP001");
         entryCreateDto.setNumberOfRespondents(null);
         entryCreateDto.setApplicationCode("CT99002");
-        entryCreateDto.setWordingFields(List.of("test wording"));
+        entryCreateDto.setWordingFields(List.of(substitution));
 
         MatchResponse<EntryGetDetailDto> response;
 
@@ -200,8 +206,16 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         entryCreateDto.setApplicationCode("MS99007");
         entryCreateDto.setStandardApplicantCode(null);
 
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("test wording");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue(LocalDate.now().toString());
+
         // fill the template with the two parameters
-        entryCreateDto.setWordingFields(List.of("test wording", LocalDate.now().toString()));
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
 
         MatchResponse<EntryGetDetailDto> response;
 

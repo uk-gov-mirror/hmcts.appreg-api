@@ -43,6 +43,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 
 @Component
 @RequiredArgsConstructor
@@ -199,6 +200,15 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         log.debug("Finish: Create Application Entry: {}", entryCreateDto);
 
         return getDetailDto;
+    }
+
+    private List<String> getTemplateValues(EntryCreateDto entryCreateDto) {
+        ArrayList<String> valuesLst = new ArrayList();
+        for (TemplateSubstitution substitution : entryCreateDto.getWordingFields()) {
+            valuesLst.add(substitution.getValue());
+        }
+
+        return valuesLst;
     }
 
     /**

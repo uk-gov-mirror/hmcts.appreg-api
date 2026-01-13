@@ -51,9 +51,13 @@ public class WordingTemplateTest {
         WordingTemplateSentence.WordingTemplate wordingTemplate =
                 WordingTemplateSentence.WordingTemplate.with(DATE_TEMPLATE);
 
-        Assertions.assertEquals("Applicant officer", wordingTemplate.getReference());
-        Assertions.assertEquals(10, wordingTemplate.getLength());
-        Assertions.assertEquals(DateType.class, wordingTemplate.getType().getClass());
+        Assertions.assertEquals("Applicant officer", wordingTemplate.getDetail().getKey());
+        Assertions.assertEquals(10, wordingTemplate.getDetail().getConstraint().getLength());
+        Assertions.assertEquals(
+                DateType.class,
+                WordingTemplateSentence.WordingTemplate.validateDataType(
+                                wordingTemplate.getDetail().getConstraint().getType().getValue())
+                        .getClass());
 
         Assertions.assertTrue(wordingTemplate.doesSubstitute("2024-12-31"));
         Assertions.assertEquals("2024-12-31", wordingTemplate.substitute("2024-12-31"));

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.template.wording.WordingTemplateSentence;
+import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 
 public class WordingSentenceTest {
     private static final String MULTIPLE_VALUE_TEMPLATE =
@@ -30,10 +31,28 @@ public class WordingSentenceTest {
 
         Assertions.assertEquals(2, collection.getTemplateableContents().length);
 
-        Assertions.assertEquals("Applicant officer", collection.getReferences().get(0));
-        Assertions.assertEquals("No.of accounts", collection.getReferences().get(1));
+        Assertions.assertEquals(
+                "Application by {{Applicant officer}} for a "
+                        + "production ord covering {{No.of accounts}} accounts(s) requiring the respondent to "
+                        + "either produce or allow access to material that is in their possession or control for the "
+                        + "purpose of a relevant investigation",
+                collection.getDetail().getTemplate());
+        Assertions.assertEquals(
+                "Applicant officer",
+                collection.getDetail().getSubstitutionKeyConstraints().get(0).getKey());
+        Assertions.assertEquals(
+                "No.of accounts",
+                collection.getDetail().getSubstitutionKeyConstraints().get(1).getKey());
 
-        java.lang.String result = collection.substitute(List.of("My Test", "2025-03-17"));
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Applicant officer");
+        substitution.setValue("My Test");
+
+        TemplateSubstitution substitution2 = new TemplateSubstitution();
+        substitution2.setKey("No.of accounts");
+        substitution2.setValue("2025-03-17");
+
+        java.lang.String result = collection.substitute(List.of(substitution, substitution2));
         Assertions.assertEquals(
                 "Application by My Test for a production ord covering 2025-03-17 accounts(s) "
                         + "requiring the respondent to either produce or allow access to material that is in their "
@@ -48,9 +67,27 @@ public class WordingSentenceTest {
 
         Assertions.assertEquals(1, collection.getTemplateableContents().length);
 
-        java.lang.String result = collection.substitute(List.of("2025-03-17"));
+        Assertions.assertEquals(
+                "Applicant officer",
+                collection
+                        .getTemplateForReference(
+                                collection
+                                        .getDetail()
+                                        .getSubstitutionKeyConstraints()
+                                        .get(0)
+                                        .getKey())
+                        .getDetail()
+                        .getKey());
+
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Applicant officer");
+        substitution.setValue("2025-03-17");
+
+        java.lang.String result = collection.substitute(List.of(substitution));
         Assertions.assertEquals("This is a test 2025-03-17 with a date", result);
         Assertions.assertTrue(collection.getErroneousTemplates().isEmpty());
+        Assertions.assertEquals(
+                "This is a test 2025-03-17 with a date", collection.getSubstitutedSentence());
     }
 
     @Test
@@ -72,9 +109,25 @@ public class WordingSentenceTest {
     @Test
     public void testGetReferences() {
         WordingTemplateSentence collection = WordingTemplateSentence.with(MULTIPLE_VALUE_TEMPLATE);
-        Assertions.assertEquals(2, collection.getReferences().size());
-        Assertions.assertEquals("Applicant officer", collection.getReferences().get(0));
-        Assertions.assertEquals("No.of accounts", collection.getReferences().get(1));
+        Assertions.assertEquals(2, collection.getDetail().getSubstitutionKeyConstraints().size());
+        Assertions.assertEquals(
+                "Applicant officer",
+                collection.getDetail().getSubstitutionKeyConstraints().get(0).getKey());
+        Assertions.assertEquals(
+                "No.of accounts",
+                collection.getDetail().getSubstitutionKeyConstraints().get(1).getKey());
+    }
+
+    @Test
+    public void testGetTemplate() {
+        WordingTemplateSentence collection = WordingTemplateSentence.with(MULTIPLE_VALUE_TEMPLATE);
+        Assertions.assertEquals(
+                "Application by {{Applicant officer}} for a production "
+                        + "ord covering {{No.of accounts}} accounts(s) "
+                        + "requiring the respondent to either produce or "
+                        + "allow access to material that is in their possession "
+                        + "or control for the purpose of a relevant investigation",
+                collection.getDetail().getTemplate());
     }
 
     @Test
@@ -115,5 +168,40 @@ public class WordingSentenceTest {
                                         "this value exceeds length"));
         Assertions.assertEquals(
                 CommonAppError.WORDING_LENGTH_FAILURE, appRegistryException.getCode());
+    }
+
+    @Test
+    public void testInvalidNumberOfArguments() {
+        WordingTemplateSentence collection = WordingTemplateSentence.with(MULTIPLE_VALUE_TEMPLATE);
+
+        Assertions.assertEquals(2, collection.getTemplateableContents().length);
+
+        Assertions.assertEquals(
+                "Applicant officer",
+                collection.getDetail().getSubstitutionKeyConstraints().get(0).getKey());
+        Assertions.assertEquals(
+                "No.of accounts",
+                collection.getDetail().getSubstitutionKeyConstraints().get(1).getKey());
+
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Applicant officer");
+        substitution.setValue("My Test");
+
+        TemplateSubstitution substitution2 = new TemplateSubstitution();
+        substitution2.setKey("No.of accounts");
+        substitution2.setValue("2025-03-17");
+
+        TemplateSubstitution substitution3 = new TemplateSubstitution();
+        substitution3.setKey("invalid");
+        substitution3.setValue("2025-03-17");
+
+        AppRegistryException appRegistryException =
+                Assertions.assertThrows(
+                        AppRegistryException.class,
+                        () ->
+                                collection.substitute(
+                                        List.of(substitution, substitution2, substitution3)));
+        Assertions.assertEquals(
+                CommonAppError.WORDING_SUBSTITUTE_SIZE_MISMATCH, appRegistryException.getCode());
     }
 }

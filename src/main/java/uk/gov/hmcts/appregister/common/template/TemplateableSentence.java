@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.common.template;
 
 import java.util.List;
+import uk.gov.hmcts.appregister.generated.model.TemplateDetail;
+import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 
 /**
  * A templateable sentence that can have its multiple templateable items substituted. This interface
@@ -27,7 +29,7 @@ public interface TemplateableSentence {
      *
      * @return list of all template references in he correct order they were processed
      */
-    List<String> getReferences();
+    TemplateDetail getDetail();
 
     /**
      * Substitutes the templates in the sentence with the provided options.
@@ -37,7 +39,7 @@ public interface TemplateableSentence {
      * @throws uk.gov.hmcts.appregister.common.exception.AppRegistryException The first error that
      *     is seen
      */
-    String substitute(List<String> values);
+    String substitute(List<TemplateSubstitution> values);
 
     /**
      * Substitutes a single value into a sentence.
@@ -62,11 +64,4 @@ public interface TemplateableSentence {
      * @return Gets the first reference in the collection if multiple exist
      */
     Templateable getTemplateForReference(String referenceValue);
-
-    /**
-     * The sentence template with placeholders for the templates.
-     *
-     * @return the template with placeholders
-     */
-    String getSentenceTemplate();
 }
