@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "25b35594-05ec-4278-84c8-efef6a0b80a2",
+		"_postman_id": "9fb891a5-de95-4fcb-b62b-3047ab8dd5ef",
 		"name": "App Registration",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "15829068",
-		"_collection_link": "https://speeding-resonance-716248.postman.co/workspace/darts-workspace2~8cfe3af4-319e-46ad-920e-2ba6cc1f253b/collection/15829068-25b35594-05ec-4278-84c8-efef6a0b80a2?action=share&source=collection_link&creator=15829068"
+		"_collection_link": "https://speeding-resonance-716248.postman.co/workspace/darts-workspace2~8cfe3af4-319e-46ad-920e-2ba6cc1f253b/collection/15829068-9fb891a5-de95-4fcb-b62b-3047ab8dd5ef?action=share&source=collection_link&creator=15829068"
 	},
 	"item": [
 		{
@@ -60,7 +60,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"date\": \"2025-10-16\",\r\n  \"time\": \"10:30:00\",\r\n  \"description\": \"Wills test List.\",\r\n  \"status\": \"OPEN\",\r\n  \"otherLocationDescription\": \"Temporary Courtroom at Town Hall\",\r\n  \"courtLocationCode\": \"RCJ001\",\r\n  \"cjaCode\": \"02\",\r\n  \"durationHours\": 2,\r\n  \"durationMinutes\": 30\r\n}",
+							"raw": "{\r\n  \"date\": \"2025-10-16\",\r\n  \"time\": \"10:30\",\r\n  \"description\": \"Wills test List.\",\r\n  \"status\": \"OPEN\",\r\n  \"otherLocationDescription\": \"Temporary Courtroom at Town Hall\",\r\n  \"courtLocationCode\": \"RCJ001\",\r\n  \"cjaCode\": \"02\",\r\n  \"durationHours\": 2,\r\n  \"durationMinutes\": 30\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
