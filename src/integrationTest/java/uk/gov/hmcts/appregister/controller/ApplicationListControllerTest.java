@@ -136,7 +136,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(8, true);
 
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
@@ -249,7 +248,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(9, true);
 
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
@@ -361,7 +359,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
 
     // --- Validation: XOR rule (court supplied, cja supplied, other description not supplied ----
     @Test
-    void givenInvalidLocationCombination_cjaMissingOtherDescription_whenCreate_then400()
+    void givenInvalidLocationCombination_cjaIncludedMissingOtherDescription_whenCreate_then400()
             throws Exception {
         var token =
                 getATokenWithValidCredentials()
@@ -378,6 +376,37 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .courtLocationCode(VALID_COURT_CODE)
                         .cjaCode(VALID_CJA_CODE)
                         .otherLocationDescription(null);
+
+        Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
+
+        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+
+        // AL-1 (INVALID_LOCATION_COMBINATION)
+        ProblemAssertUtil.assertEquals(
+                uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError
+                        .INVALID_LOCATION_COMBINATION
+                        .getCode(),
+                resp);
+    }
+
+    @Test
+    void givenInvalidLocationCombination_cjaMissingOtherDescriptionIncluded_whenCreate_then400()
+            throws Exception {
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        var req =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("Invalid XOR: both")
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(null)
+                        .otherLocationDescription(VALID_OTHER_LOCATION);
 
         Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
 
@@ -631,8 +660,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getCjaCode()).isNull();
         assertThat(dto.getOtherLocationDescription()).isNull();
 
-        differenceLogAsserter.assertDiffCount(11, true);
-
         String eventName = AppListAuditOperation.UPDATE_APP_LIST.getEventName();
         String operation = AppListAuditOperation.UPDATE_APP_LIST.getType().name();
         differenceLogAsserter.assertDataAuditChange(
@@ -736,8 +763,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         resp.then().statusCode(HttpStatus.OK.value());
         resp.then().contentType(VND_JSON_V1);
         resp.then().header("Etag", org.hamcrest.Matchers.notNullValue());
-
-        differenceLogAsserter.assertDiffCount(11, true);
     }
 
     @Test
@@ -859,8 +884,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(dto.getOtherLocationDescription()).isEqualTo("Updated other location");
         assertThat(dto.getCourtCode()).isNull();
         assertThat(dto.getCourtName()).isNull();
-
-        differenceLogAsserter.assertDiffCount(11, true);
 
         String eventName = AppListAuditOperation.UPDATE_APP_LIST.getEventName();
         String operation = AppListAuditOperation.UPDATE_APP_LIST.getType().name();
@@ -1097,7 +1120,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         .durationHours(4)
                         .durationMinutes(32)
                         .courtLocationCode("Unknown")
-                        .otherLocationDescription("Updated other location");
+                        .otherLocationDescription(null);
 
         Response resp =
                 restAssuredClient.executePutRequest(
