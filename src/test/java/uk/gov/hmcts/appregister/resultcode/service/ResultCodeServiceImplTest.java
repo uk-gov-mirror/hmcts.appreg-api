@@ -31,6 +31,8 @@ import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
+import uk.gov.hmcts.appregister.common.mapper.SortableFieldMapper;
+import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
 import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeAuditOperation;
@@ -162,6 +164,7 @@ public class ResultCodeServiceImplTest {
         when(repository.findActiveOnDate(eq(codeFilter), eq(titleFilter), any(), eq(pageable)))
                 .thenReturn(dbPage);
 
+        PagingWrapper wrapper = PagingWrapper.of(SortableFieldMapper.of("id,asc"), pageable);
         // Simulate page meta copy so assertions have values
         doAnswer(
                         inv -> {
@@ -173,9 +176,9 @@ public class ResultCodeServiceImplTest {
                             return null;
                         })
                 .when(pageMapper)
-                .toPage(eq(dbPage), any(ResultCodePage.class));
+                .toPage(eq(dbPage), any(ResultCodePage.class), eq(wrapper.getSortStrings()));
 
-        ResultCodePage pageDto = service.findAll(codeFilter, titleFilter, pageable);
+        ResultCodePage pageDto = service.findAll(codeFilter, titleFilter, wrapper);
 
         Assertions.assertEquals(5, pageDto.getTotalElements());
         Assertions.assertEquals(3, pageDto.getTotalPages());
@@ -201,7 +204,7 @@ public class ResultCodeServiceImplTest {
         Page<ResolutionCode> emptyPage = new PageImpl<>(List.of(), pageable, 0);
         when(repository.findActiveOnDate(eq(null), eq(null), any(), eq(pageable)))
                 .thenReturn(emptyPage);
-
+        PagingWrapper wrapper = PagingWrapper.of(SortableFieldMapper.of("id,asc"), pageable);
         doAnswer(
                         inv -> {
                             ResultCodePage out = inv.getArgument(1);
@@ -212,9 +215,9 @@ public class ResultCodeServiceImplTest {
                             return null;
                         })
                 .when(pageMapper)
-                .toPage(eq(emptyPage), any(ResultCodePage.class));
+                .toPage(eq(emptyPage), any(ResultCodePage.class), eq(wrapper.getSortStrings()));
 
-        ResultCodePage pageDto = service.findAll(null, null, pageable);
+        ResultCodePage pageDto = service.findAll(null, null, wrapper);
 
         Assertions.assertEquals(0, pageDto.getTotalElements());
         Assertions.assertEquals(0, pageDto.getTotalPages());

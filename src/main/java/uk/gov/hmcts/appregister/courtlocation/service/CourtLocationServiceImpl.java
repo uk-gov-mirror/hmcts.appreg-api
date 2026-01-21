@@ -7,7 +7,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
@@ -17,6 +16,7 @@ import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
+import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.courtlocation.audit.CourtLocationAuditOperation;
 import uk.gov.hmcts.appregister.courtlocation.exception.CourtLocationError;
 import uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper;
@@ -108,7 +108,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
      */
     @Override
     @Transactional(readOnly = true)
-    public CourtLocationPage getPage(String nameFilter, String codeFilter, Pageable pageable) {
+    public CourtLocationPage getPage(String nameFilter, String codeFilter, PagingWrapper pageable) {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT,
                 unused -> {
@@ -118,7 +118,8 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                             codeFilter,
                             pageable);
                     final Page<NationalCourtHouse> dbPage =
-                            repository.findAllActiveCourts(codeFilter, nameFilter, pageable);
+                            repository.findAllActiveCourts(
+                                    codeFilter, nameFilter, pageable.getPageable());
 
                     var responsePage = new CourtLocationPage();
 
@@ -126,7 +127,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                         responsePage.setContent(new ArrayList<>());
                     }
 
-                    pageMapper.toPage(dbPage, responsePage);
+                    pageMapper.toPage(dbPage, responsePage, pageable.getSortStrings());
 
                     dbPage.forEach(
                             court -> responsePage.addContentItem(mapper.toSummaryDto(court)));
