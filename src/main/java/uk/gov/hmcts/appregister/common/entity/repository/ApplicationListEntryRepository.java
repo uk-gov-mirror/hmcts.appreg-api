@@ -97,7 +97,7 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
             rna.name AS respondent,
             rna.postcode AS postCode,
             ac.title AS applicationTitle,
-            CASE WHEN ac.feeDue = "1" THEN true ELSE false END AS feeRequired,
+            CASE WHEN ac.feeDue = "Y" THEN true ELSE false END AS feeRequired,
             rc.resultCode AS result
         FROM ApplicationListEntry ale
         LEFT JOIN ale.anamedaddress ana
