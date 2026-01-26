@@ -202,8 +202,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                                 "No application list found for UUID '%s'"
                                                         .formatted(id)));
 
-        List<ApplicationListEntrySummary> summaries =
-                getApplicationListEntrySummary(id, pageable.toOptional());
+        List<ApplicationListEntrySummary> summaries = getApplicationListEntrySummary(id, pageable);
 
         // Fetch the number of entries linked to this list.
         // Avoids running a separate count query later when mapping to a DTO.
@@ -527,7 +526,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
 
         for (ApplicationList al : appLists) {
             List<ApplicationListEntrySummary> summaries =
-                    getApplicationListEntrySummary(al.getUuid(), Optional.empty());
+                    getApplicationListEntrySummary(al.getUuid(), null);
             long entryCount = entriesPerListCounter.getOrDefault(al.getUuid(), ZERO_ENTITIES);
             String location = deriveLocation(al);
             responsePage.addContentItem(
@@ -586,12 +585,12 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     }
 
     private List<ApplicationListEntrySummary> getApplicationListEntrySummary(
-            UUID id, Optional<Pageable> pageable) {
+            UUID id, Pageable pageable) {
         List<ApplicationListEntrySummary> summaries = new ArrayList<>();
 
         // Fetch results from the repository using pagination
         Page<ApplicationListEntrySummaryProjection> dbPage =
-                aleRepository.findSummariesById(id, pageable.orElse(null));
+                aleRepository.findSummariesById(id, pageable);
 
         dbPage.forEach(
                 projection -> {

@@ -412,6 +412,7 @@ public class ApplicationListServiceImplTest {
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
 
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
 
         Pageable pageable = mock(Pageable.class);
         LocalTime expectedEndTime = DEFAULT_TIME.plusMinutes(1);
@@ -495,7 +496,7 @@ public class ApplicationListServiceImplTest {
                         isNull(),
                         eq(pageable)))
                 .thenReturn(dbPage);
-
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
         when(aleRepository.countByApplicationListUuids(List.of(row.getUuid())))
                 .thenReturn(List.of());
         doAnswer(inv -> null)
@@ -543,6 +544,7 @@ public class ApplicationListServiceImplTest {
         PagingWrapper wrapper = PagingWrapper.of(List.of(), pageable);
 
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
 
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
@@ -638,6 +640,7 @@ public class ApplicationListServiceImplTest {
         Pageable pageable = mock(Pageable.class);
 
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
 
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         when(repository.findAllByFilter(
@@ -680,6 +683,7 @@ public class ApplicationListServiceImplTest {
         row.setCourtName("Some Court");
 
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
 
         Page<ApplicationList> dbPage = new PageImpl<>(List.of(row));
         Pageable pageable = mock(Pageable.class);
@@ -722,6 +726,7 @@ public class ApplicationListServiceImplTest {
         row.setUuid(UUID.randomUUID());
 
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
 
         Pageable pageable = mock(Pageable.class);
         PagingWrapper wrapper = PagingWrapper.of(List.of(), pageable);
@@ -775,6 +780,7 @@ public class ApplicationListServiceImplTest {
         LocalTime expectedEndTime = LocalTime.of(0, 0);
 
         when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+        when(aleRepository.findSummariesById(any(UUID.class), any())).thenReturn(Page.empty());
         when(repository.findAllByFilter(
                         eq(Status.OPEN),
                         isNull(),
