@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.openapitools.jackson.nullable.JsonNullable;
+
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
@@ -233,9 +235,21 @@ public class ApplicationListMapperTest {
             long entryCount = 5L;
             String location = "Bath Magistrates Court";
 
+            var entrySummaryList = new ApplicationListEntrySummary();
+            entrySummaryList.setAccountNumber(JsonNullable.of("123456789"));
+            entrySummaryList.setApplicationTitle("Copy Documents");
+            entrySummaryList.setRespondent(JsonNullable.of("Test Respondant"));
+            entrySummaryList.setFeeRequired(true);
+            entrySummaryList.setPostCode(JsonNullable.of("SW1A 1AA"));
+            entrySummaryList.setSequenceNumber(1);
+            entrySummaryList.setResult(JsonNullable.of("APPC"));
+            entrySummaryList.setUuid(UUID.randomUUID());
+
+            List<ApplicationListEntrySummary> entries = List.of(entrySummaryList);
+
             // When
             ApplicationListGetSummaryDto dto =
-                    mapper.toGetSummaryDto(appList, entryCount, location);
+                    mapper.toGetSummaryDto(appList, entryCount, location, entries);
 
             // Then
             assertNotNull(dto);

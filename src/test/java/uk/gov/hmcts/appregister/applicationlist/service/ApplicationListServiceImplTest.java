@@ -463,7 +463,7 @@ public class ApplicationListServiceImplTest {
         assertThat(result.getContent().size()).isEqualTo(1);
 
         verify(aleRepository).countByApplicationListUuids(List.of(row.getUuid()));
-        verify(mapper).toGetSummaryDto(eq(row), eq(0L), anyString());
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), anyString(), any());
     }
 
     @Test
@@ -522,7 +522,7 @@ public class ApplicationListServiceImplTest {
         assertThat(result.getContent().size()).isEqualTo(1);
 
         verify(aleRepository).countByApplicationListUuids(List.of(row.getUuid()));
-        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Central Court"));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Central Court"), any());
     }
 
     @Test
@@ -577,7 +577,7 @@ public class ApplicationListServiceImplTest {
         assertThat(result.getContent()).isNotNull();
         assertThat(result.getContent().size()).isEqualTo(1);
 
-        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("CJA Desc"));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("CJA Desc"), any());
     }
 
     @Test
@@ -619,7 +619,7 @@ public class ApplicationListServiceImplTest {
         assertThat(result.getContent()).isEmpty();
 
         verify(aleRepository, never()).countByApplicationListUuids(any());
-        verify(mapper, never()).toGetSummaryDto(any(), anyLong(), anyString());
+        verify(mapper, never()).toGetSummaryDto(any(), anyLong(), anyString(), any());
     }
 
     @Test
@@ -666,7 +666,7 @@ public class ApplicationListServiceImplTest {
         ApplicationListPage result = service.getPage(filter, wrapper);
 
         assertThat(result.getContent()).isNotNull().hasSize(1);
-        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("CJA Name"));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("CJA Name"), any());
     }
 
     @Test
@@ -709,7 +709,7 @@ public class ApplicationListServiceImplTest {
         ApplicationListPage result = service.getPage(filter, wrapper);
 
         assertThat(result.getContent()).isNotNull().hasSize(1);
-        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Some Court"));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Some Court"), any());
     }
 
     @Test
@@ -750,7 +750,7 @@ public class ApplicationListServiceImplTest {
         ApplicationListPage result = service.getPage(filter, wrapper);
 
         assertThat(result.getContent()).isNotNull().hasSize(1);
-        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Location not set"));
+        verify(mapper).toGetSummaryDto(eq(row), eq(0L), eq("Location not set"), any());
     }
 
     @Test

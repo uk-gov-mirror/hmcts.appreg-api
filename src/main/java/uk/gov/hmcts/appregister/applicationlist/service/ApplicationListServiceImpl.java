@@ -202,17 +202,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                                 "No application list found for UUID '%s'"
                                                         .formatted(id)));
 
-        // Fetch results from the repository using pagination
-        Page<ApplicationListEntrySummaryProjection> dbPage =
-                aleRepository.findSummariesById(id, pageable);
-
-        List<ApplicationListEntrySummary> summaries = new ArrayList<>();
-
-        // Map each projection to a summary model
-        dbPage.forEach(
-                projection -> {
-                    summaries.add(entryMapper.toSummaryDto(projection));
-                });
+        List<ApplicationListEntrySummary> summaries =
+                getApplicationListEntrySummary(id, pageable.toOptional());
 
         // Fetch the number of entries linked to this list.
         // Avoids running a separate count query later when mapping to a DTO.
@@ -535,9 +526,12 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         }
 
         for (ApplicationList al : appLists) {
+            List<ApplicationListEntrySummary> summaries =
+                    getApplicationListEntrySummary(al.getUuid(), Optional.empty());
             long entryCount = entriesPerListCounter.getOrDefault(al.getUuid(), ZERO_ENTITIES);
             String location = deriveLocation(al);
-            responsePage.addContentItem(mapper.toGetSummaryDto(al, entryCount, location));
+            responsePage.addContentItem(
+                    mapper.toGetSummaryDto(al, entryCount, location, summaries));
         }
         return responsePage;
     }
@@ -589,5 +583,20 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                         },
                         List.of(applicationList)),
                 applicationList);
+    }
+
+    private List<ApplicationListEntrySummary> getApplicationListEntrySummary(
+            UUID id, Optional<Pageable> pageable) {
+        List<ApplicationListEntrySummary> summaries = new ArrayList<>();
+
+        // Fetch results from the repository using pagination
+        Page<ApplicationListEntrySummaryProjection> dbPage =
+                aleRepository.findSummariesById(id, pageable.orElse(null));
+
+        dbPage.forEach(
+                projection -> {
+                    summaries.add(entryMapper.toSummaryDto(projection));
+                });
+        return summaries;
     }
 }
