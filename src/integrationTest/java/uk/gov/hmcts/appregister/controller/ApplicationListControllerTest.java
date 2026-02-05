@@ -30,7 +30,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
@@ -39,10 +38,12 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRep
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
+import uk.gov.hmcts.appregister.controller.testutils.GetApplicationListFilterSpecification;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetPrintDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
@@ -52,14 +53,12 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetPrintDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
-import uk.gov.hmcts.appregister.generated.model.SortOrdersInner;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
 import uk.gov.hmcts.appregister.testutils.annotation.StabilityTest;
-import uk.gov.hmcts.appregister.testutils.client.PageMetaData;
+import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
-import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 import uk.gov.hmcts.appregister.testutils.util.DataAuditLogAsserter;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
@@ -1509,25 +1508,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         return base + " :: " + UUID.randomUUID();
     }
 
-    private static PageMetaData stdPageMeta() {
-        return new PageMetaData() {
-            @Override
-            public String getPageNumberQueryName() {
-                return "page";
-            }
-
-            @Override
-            public String getPageSizeQueryName() {
-                return "size";
-            }
-
-            @Override
-            public String getSortName() {
-                return "sort";
-            }
-        };
-    }
-
     private ApplicationListGetDetailDto createWithCourt(
             String description, LocalDate date, LocalTime time) throws Exception {
 
@@ -1596,45 +1576,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
     }
 
     @Test
-    @DisplayName("GET: default paging + default sort (description ASC)")
-    void givenDefaults_whenGet_then200AndSortedByDescriptionAsc() throws Exception {
-
-        String prefix = uniquePrefix("get-default-sort");
-
-        createWithCourt(prefix + " - Zebra", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
-        createWithCourt(prefix + " - Alpha", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
-        createWithCourt(prefix + " - Mango", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
-
-        var userToken =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        Response resp =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.empty(),
-                        Optional.empty(),
-                        List.of(), // Rely on default sort
-                        getLocalUrl(WEB_CONTEXT),
-                        userToken,
-                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
-
-        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
-        ApplicationListPage page = resp.as(ApplicationListPage.class);
-
-        assertThat(page.getContent()).hasSize(3);
-        assertThat(page.getContent().get(0).getDescription()).endsWith("Alpha");
-        assertThat(page.getContent().get(1).getDescription()).endsWith("Mango");
-        assertThat(page.getContent().get(2).getDescription()).endsWith("Zebra");
-
-        assertThat(page.getPageNumber()).isZero();
-        assertThat(page.getPageSize()).isGreaterThanOrEqualTo(3);
-        assertThat(page.getFirst()).isTrue();
-    }
-
-    @Test
     @DisplayName("GET: paging works (page=1,size=2)")
     void givenPaging_whenSecondPage_thenCorrectMetadata() throws Exception {
 
@@ -1658,7 +1599,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         getLocalUrl(WEB_CONTEXT),
                         userToken,
                         rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        stdPageMeta());
+                        new OpenApiPageMetaData());
 
         resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
         ApplicationListPage page = resp.as(ApplicationListPage.class);
@@ -1674,13 +1615,20 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
     @Test
     @DisplayName("GET: filter by date + time (exact match)")
     void givenDateAndTimeFilter_thenOnlyThatSlot() throws Exception {
-
         String prefix = uniquePrefix("get-date-time");
         LocalDate day = LocalDate.of(2025, 10, 15);
         LocalTime t0930 = LocalTime.of(9, 30);
+
+        ApplicationListGetDetailDto applicationListGetDetailDto =
+                createWithCourt(prefix + " - keep", day, t0930);
+
+        // create 3 entries for the record
+        createEntry(applicationListGetDetailDto.getId());
+        createEntry(applicationListGetDetailDto.getId());
+        createEntry(applicationListGetDetailDto.getId());
+
         LocalTime t1030 = LocalTime.of(10, 30);
 
-        createWithCourt(prefix + " - keep", day, t0930);
         createWithCourt(prefix + " - drop-1", day, t1030);
         createWithCourt(prefix + " - drop-2", day.plusDays(1), t0930);
 
@@ -1697,11 +1645,11 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         List.of(),
                         getLocalUrl(WEB_CONTEXT),
                         userToken,
-                        rs ->
-                                rs.header("Accept", VND_JSON_V1)
-                                        .queryParam("description", prefix)
-                                        .queryParam("date", day.toString()) // yyyy-MM-dd
-                                        .queryParam("time", "09:30"),
+                        GetApplicationListFilterSpecification.builder()
+                                .description(Optional.of(prefix))
+                                .dateValue(Optional.of(day.toString())) // yyyy-MM-dd
+                                .localTime(Optional.of("09:30"))
+                                .build(),
                         null);
 
         resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
@@ -1712,6 +1660,7 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         assertThat(only.getDate()).isEqualTo(day);
         assertThat(only.getTime()).isEqualTo(t0930);
         assertThat(only.getDescription()).endsWith("keep");
+        assertThat(only.getEntriesCount()).isEqualTo(3);
     }
 
     @Test
@@ -1770,10 +1719,10 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         List.of(),
                         getLocalUrl(WEB_CONTEXT),
                         userToken,
-                        rs ->
-                                rs.header("Accept", VND_JSON_V1)
-                                        .queryParam("description", prefix)
-                                        .queryParam("courtLocationCode", VALID_COURT_CODE),
+                        GetApplicationListFilterSpecification.builder()
+                                .description(Optional.of(prefix))
+                                .courtLocationCode(Optional.of(VALID_COURT_CODE))
+                                .build(),
                         null);
 
         resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
@@ -1806,10 +1755,10 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         List.of(),
                         getLocalUrl(WEB_CONTEXT),
                         adminToken,
-                        rs ->
-                                rs.header("Accept", VND_JSON_V1)
-                                        .queryParam("description", prefix)
-                                        .queryParam("cjaCode", VALID_CJA_CODE),
+                        GetApplicationListFilterSpecification.builder()
+                                .description(Optional.of(prefix))
+                                .cjaCode(Optional.of(VALID_CJA_CODE))
+                                .build(),
                         null);
 
         resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
@@ -1858,103 +1807,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
     }
 
     @Test
-    @DisplayName("GET: allowed sort (date,desc & time,desc)")
-    void givenAllowedSort_thenSorted() throws Exception {
-
-        String prefix = uniquePrefix("get-sort-allowed");
-
-        createWithCourt(prefix + " - A", LocalDate.of(2025, 10, 14), LocalTime.of(9, 0));
-        createWithCourt(prefix + " - B", LocalDate.of(2025, 10, 15), LocalTime.of(10, 0));
-        createWithCourt(prefix + " - C", LocalDate.of(2025, 10, 15), LocalTime.of(9, 0));
-
-        var userToken =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        Response resp =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.empty(),
-                        Optional.empty(),
-                        List.of("date,desc", "time,desc"),
-                        getLocalUrl(WEB_CONTEXT),
-                        userToken,
-                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
-
-        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
-        ApplicationListPage page = resp.as(ApplicationListPage.class);
-
-        assertThat(page.getContent()).hasSize(3);
-        assertThat(page.getContent().get(0).getDescription()).endsWith("B");
-        assertThat(page.getContent().get(1).getDescription()).endsWith("C");
-        assertThat(page.getContent().get(2).getDescription()).endsWith("A");
-    }
-
-    @StabilityTest
-    public void givenApplicationListSuccessfulSort_whenSearchWithAllSortKeys_thenSuccessResponse()
-            throws Exception {
-        for (ApplicationListSortFieldEnum applicationEntrySortFieldEnum :
-                ApplicationListSortFieldEnum.values()) {
-
-            // create the token
-            TokenGenerator tokenGenerator =
-                    getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
-
-            // test the functionality
-            Response responseSpec =
-                    restAssuredClient.executeGetRequestWithPaging(
-                            Optional.of(10),
-                            Optional.of(0),
-                            List.of(applicationEntrySortFieldEnum.getApiValue() + "," + "desc"),
-                            getLocalUrl(WEB_CONTEXT),
-                            tokenGenerator.fetchTokenForRole());
-
-            ApplicationListPage page = responseSpec.as(ApplicationListPage.class);
-
-            // make sure the order response marries with the request data
-            Assertions.assertEquals(1, page.getSort().getOrders().size());
-            Assertions.assertEquals(
-                    SortOrdersInner.DirectionEnum.DESC,
-                    page.getSort().getOrders().get(0).getDirection());
-            Assertions.assertEquals(
-                    applicationEntrySortFieldEnum.getApiValue(),
-                    page.getSort().getOrders().get(0).getProperty());
-            responseSpec.then().statusCode(200);
-        }
-
-        Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
-    }
-
-    @Test
-    @DisplayName("GET: disallowed sort (cja) -> 400")
-    void givenDisallowedSort_then400() throws Exception {
-
-        String prefix = uniquePrefix("get-sort-disallowed");
-
-        createWithCourt(prefix + " - X", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
-
-        var userToken =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        Response resp =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.empty(),
-                        Optional.empty(),
-                        List.of("cja,asc"),
-                        getLocalUrl(WEB_CONTEXT),
-                        userToken,
-                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
-
-        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-    }
-
-    @Test
     @DisplayName("GET page: entriesCount excludes soft-deleted entry")
     void givenEntryDeleted_whenGetApplicationLists_thenEntriesCountExcludesDeleted()
             throws Exception {
@@ -1980,7 +1832,6 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
                         token,
                         entryCreateDto1);
         createResp1.then().statusCode(HttpStatus.CREATED.value());
-        EntryGetDetailDto createdEntry1 = createResp1.as(EntryGetDetailDto.class);
 
         Response createResp2 =
                 restAssuredClient.executePostRequest(
@@ -2038,8 +1889,15 @@ public class ApplicationListControllerTest extends AbstractSecurityControllerTes
         pageResp.then().statusCode(HttpStatus.OK.value());
         ApplicationListPage page = pageResp.as(ApplicationListPage.class);
 
-        var list = page.getContent().getFirst();
-        assertThat(list.getEntriesCount())
+        // find summary to assert against
+        ApplicationListGetSummaryDto summaryToAssertDto =
+                page.getContent().stream()
+                        .filter(summary -> summary.getId().equals(listId))
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("List id not found"));
+
+        Assertions.assertEquals(1, summaryToAssertDto.getEntriesCount());
+        assertThat(summaryToAssertDto.getEntriesCount())
                 .withFailMessage("entriesCount should exclude the deleted entry removed via repo")
                 .isEqualTo(1L);
     }

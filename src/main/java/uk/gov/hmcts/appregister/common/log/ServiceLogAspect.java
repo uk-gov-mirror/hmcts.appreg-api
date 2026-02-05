@@ -16,15 +16,16 @@ import org.springframework.stereotype.Component;
 public class ServiceLogAspect extends AbstractOperationDurationAspect {
     @Around("(within(uk.gov.hmcts.appregister..service..*))")
     public Object logDuration(ProceedingJoinPoint pjp) throws Throwable {
-        log.debug("Start: Executing {} ", getLogStringForInputs(pjp));
 
         Object ret =
                 invokeOperationMDC(
-                        (name, duration) -> {
+                        operation -> log.debug("Start: Executing {} ", getLogStringForInputs(pjp)),
+                        (name, duration, result) -> {
                             log.debug("Duration of {} operation {} ms", name, duration);
+                            log.debug("Finish: Executed {} ", getLogStringForOutputObject(result));
                         },
                         pjp);
-        log.debug("Finish: Executed {} ", getLogStringForOutputObject(ret));
+
         return ret;
     }
 }

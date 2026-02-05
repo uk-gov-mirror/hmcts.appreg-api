@@ -1,11 +1,14 @@
 package uk.gov.hmcts.appregister.common.log;
 
 import java.util.Arrays;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.slf4j.MDC;
+import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.appregister.common.util.ObfuscationUtil;
+import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 
 /**
  * An aspect that stores the operation name in the MDC for logging purposes. The class logs the
@@ -19,11 +22,17 @@ public class AbstractOperationDurationAspect {
     /**
      * invoke the operation and store the operation name in the MDC and capture duration.
      *
-     * @param callable The function to call with operation name and duration
+     * @param startCallback Signifies the operation has been applied to the MDC so we can begin
+     *     logging
+     * @param afterCallback The function to call with operation name and duration when the join
+     *     point has been executed
      * @param pjp The join point being executed
      * @return The object that has been returned from the join point
      */
-    protected Object invokeOperationMDC(BiConsumer<String, Long> callable, ProceedingJoinPoint pjp)
+    protected Object invokeOperationMDC(
+            Consumer<String> startCallback,
+            TriConsumer<String, Long, Object> afterCallback,
+            ProceedingJoinPoint pjp)
             throws Throwable {
         String operation =
                 pjp.getSignature().getDeclaringType().getSimpleName()
@@ -34,13 +43,15 @@ public class AbstractOperationDurationAspect {
         MDC.put(OPERATION, operation);
         long start = System.nanoTime();
 
+        startCallback.accept(operation);
+
         Object result = null;
         try {
             result = pjp.proceed();
             long durationMs = (System.nanoTime() - start) / 1_000_000;
 
             // call the custom function to perform some specific functionality
-            callable.accept(operation, durationMs);
+            afterCallback.accept(operation, durationMs, result);
 
             return result;
         } catch (Throwable t) {
@@ -71,14 +82,38 @@ public class AbstractOperationDurationAspect {
      * @return The arguments to log excluding any pageable arguments
      */
     private Object[] getIgnorePageArguments(ProceedingJoinPoint proceedingJoinPoint) {
-        return Arrays.stream(proceedingJoinPoint.getArgs())
-                .filter(
-                        arg ->
-                                !(arg instanceof org.springframework.data.domain.Pageable)
-                                        && !(arg
-                                                instanceof
-                                                uk.gov.hmcts.appregister.common.util.PagingWrapper))
+        return Arrays.stream(
+                        Arrays.stream(proceedingJoinPoint.getArgs())
+                                .filter(
+                                        arg ->
+                                                !(arg instanceof Pageable)
+                                                        && !(arg instanceof PagingWrapper))
+                                // ensure that the non primitive objects are obfuscated to avoid
+                                // logging PII information
+                                .toArray())
+                .map(
+                        o -> {
+                            if (isPrimitiveOrString(o)) {
+                                return o;
+                            } else {
+                                return ObfuscationUtil.getObfuscatedString(o);
+                            }
+                        })
                 .toArray();
+    }
+
+    public static boolean isPrimitiveOrString(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        Class<?> clazz = obj.getClass();
+
+        return clazz.isPrimitive()
+                || obj instanceof String
+                || obj instanceof Number
+                || obj instanceof Boolean
+                || obj instanceof Character;
     }
 
     /**

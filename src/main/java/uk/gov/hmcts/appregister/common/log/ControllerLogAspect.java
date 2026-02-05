@@ -16,7 +16,11 @@ public class ControllerLogAspect extends AbstractOperationDurationAspect {
     @Around("(within(uk.gov.hmcts.appregister..controller..*))")
     public Object logDuration(ProceedingJoinPoint pjp) throws Throwable {
         return invokeOperationMDC(
-                (name, duration) -> {
+                (op) -> {
+                    // Dont do anything here as we want to log
+                    // the duration in the after callback
+                },
+                (name, duration, result) -> {
                     log.debug("Duration of {} operation {} ms", name, duration);
                     log.info("Finished Executing {} ", getLogStringForInputs(pjp));
                 },
