@@ -37,7 +37,7 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                     var cja = locationLookupService.getCjaOrThrow(code);
 
                     AuditableResult<CriminalJusticeAreaGetDto, CriminalJusticeArea> result =
-                            new AuditableResult<>(criminalJusticeMapper.toDto(cja), null);
+                            new AuditableResult<>(criminalJusticeMapper.toDto(cja), cja);
 
                     return Optional.of(result);
                 },
@@ -65,8 +65,14 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                                             criminalJusticeAreaPage.addContentItem(
                                                     criminalJusticeMapper.toDto(entry)));
 
+                    // Creating an audit result with the provided parameters to capture them in the
+                    // audit event, even though they might not be used in the result.
+                    var auditCJA = new CriminalJusticeArea();
+                    auditCJA.setCode(code);
+                    auditCJA.setDescription(description);
+
                     AuditableResult<CriminalJusticeAreaPage, CriminalJusticeArea> result =
-                            new AuditableResult<>(criminalJusticeAreaPage, null);
+                            new AuditableResult<>(criminalJusticeAreaPage, auditCJA);
 
                     return Optional.of(result);
                 },

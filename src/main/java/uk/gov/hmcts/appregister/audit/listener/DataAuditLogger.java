@@ -44,9 +44,7 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
 
     @Override
     protected void finished(CompleteEvent event) {
-
-        // data audit for all operations. Ignores get operations
-        if (!event.getRequestAction().getType().isRead()) {
+        try {
             // make sure if we are comparing old or new then the types match
             if (event.getOldValue() != null
                     && event.getNewValue() != null
@@ -69,6 +67,9 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             }
 
             auditDataBasedOnCompleteEventState(event);
+        } catch (NullPointerException e) {
+            log.warn("Error processing data audit for event: {}", event, e);
+            log.warn("will continue without auditing for event: {}", event);
         }
     }
 

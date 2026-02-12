@@ -94,46 +94,58 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
     @Override
     public EntryPage search(EntryGetFilterDto filterDto, PagingWrapper pageable) {
-        Status status = applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
-
         log.debug(
                 "Started: Find Application Entry for criteria: {} with paging: {}",
                 filterDto,
                 pageable);
 
-        Page<ApplicationListEntryGetSummaryProjection> resultPage =
-                applicationListEntryRepository.searchForGetSummary(
-                        filterDto.getDate() != null,
-                        filterDto.getDate(),
-                        filterDto.getCourtCode(),
-                        filterDto.getOtherLocationDescription(),
-                        filterDto.getCjaCode(),
-                        filterDto.getApplicantOrganisation(),
-                        filterDto.getApplicantSurname(),
-                        filterDto.getStandardApplicantCode(),
-                        status,
-                        filterDto.getRespondentOrganisation(),
-                        filterDto.getRespondentSurname(),
-                        filterDto.getRespondentPostcode(),
-                        filterDto.getAccountReference(),
-                        pageable.getPageable());
+        return auditService.processAudit(
+                null,
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST,
+                req -> {
+                    Status status =
+                            applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
 
-        // breaks name into individual and/or organisation parts
-        EntryPage newPage = new EntryPage();
-        pageMapper.toPage(resultPage, newPage, pageable.getSortStrings());
+                    Page<ApplicationListEntryGetSummaryProjection> resultPage =
+                            applicationListEntryRepository.searchForGetSummary(
+                                    filterDto.getDate() != null,
+                                    filterDto.getDate(),
+                                    filterDto.getCourtCode(),
+                                    filterDto.getOtherLocationDescription(),
+                                    filterDto.getCjaCode(),
+                                    filterDto.getApplicantOrganisation(),
+                                    filterDto.getApplicantSurname(),
+                                    filterDto.getStandardApplicantCode(),
+                                    status,
+                                    filterDto.getRespondentOrganisation(),
+                                    filterDto.getRespondentSurname(),
+                                    filterDto.getRespondentPostcode(),
+                                    filterDto.getAccountReference(),
+                                    pageable.getPageable());
 
-        // Map each entity to a summary DTO and add to the page content
-        resultPage.forEach(
-                entry -> {
-                    newPage.addContentItem(
-                            applicationListEntryMapStructMapper.toEntrySummary(entry));
+                    // breaks name into individual and/or organisation parts
+                    EntryPage newPage = new EntryPage();
+                    pageMapper.toPage(resultPage, newPage, pageable.getSortStrings());
+
+                    // Map each entity to a summary DTO and add to the page content
+                    resultPage.forEach(
+                            entry -> {
+                                newPage.addContentItem(
+                                        applicationListEntryMapStructMapper.toEntrySummary(entry));
+                            });
+
+                    log.debug(
+                            "Finished: Find Application Entry for criteria: {} with paging: {}",
+                            filterDto,
+                            pageable);
+
+                    var auditApplicationListEntry = new ApplicationListEntry();
+                    auditApplicationListEntry.setId(resultPage.get().findFirst().get().getId());
+                    AuditableResult<EntryPage, ApplicationListEntry> result =
+                            new AuditableResult<>(newPage, auditApplicationListEntry);
+
+                    return Optional.of(result);
                 });
-
-        log.debug(
-                "Finished: Find Application Entry for criteria: {} with paging: {}",
-                filterDto,
-                pageable);
-        return newPage;
     }
 
     @Override
@@ -794,18 +806,32 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         return getEntryValidator.validate(
                 entry,
                 (req, success) -> {
-                    getKeyablesForCreateUpdateEtag(success.getApplicationListEntry());
-                    EntryGetDetailDto dto =
-                            applicationListEntryMapStructMapper.toEntryGetDetailDto(
-                                    success.getApplicationListEntry(),
-                                    hasOffsite(success.getApplicationListEntry()));
-                    log.debug(
-                            "Finished: Getting application list entry detail: {} for list: {}",
-                            entry.getEntryId(),
-                            entry.getListId());
-
-                    return MatchResponse.of(
-                            dto, getKeyablesForCreateUpdateEtag(success.getApplicationListEntry()));
+                    return auditService.processAudit(
+                            null,
+                            AppListEntryAuditOperation.GET_APP_ENTRY_LIST_DETAIL,
+                            (r) -> {
+                                getKeyablesForCreateUpdateEtag(success.getApplicationListEntry());
+                                EntryGetDetailDto dto =
+                                        applicationListEntryMapStructMapper.toEntryGetDetailDto(
+                                                success.getApplicationListEntry(),
+                                                hasOffsite(success.getApplicationListEntry()));
+                                log.debug(
+                                        "Finished: Getting application list entry detail: {} for list: {}",
+                                        entry.getEntryId(),
+                                        entry.getListId());
+                                AuditableResult<
+                                                MatchResponse<EntryGetDetailDto>,
+                                                ApplicationListEntry>
+                                        result =
+                                                new AuditableResult<>(
+                                                        MatchResponse.of(
+                                                                dto,
+                                                                getKeyablesForCreateUpdateEtag(
+                                                                        success
+                                                                                .getApplicationListEntry())),
+                                                        success.getApplicationListEntry());
+                                return Optional.of(result);
+                            });
                 });
     }
 

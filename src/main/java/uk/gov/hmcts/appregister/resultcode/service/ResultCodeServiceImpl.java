@@ -96,9 +96,14 @@ public class ResultCodeServiceImpl implements ResultCodeService {
 
                     log.debug(
                             "Finish: Find active Result Code for code: {} on date: {}", code, date);
+
+                    var auditResultCode = new ResolutionCode();
+                    auditResultCode.setResultCode(code);
+                    auditResultCode.setStartDate(date);
+
                     return Optional.of(
                             new AuditableResult<ResultCodeGetDetailDto, Keyable>(
-                                    mapper.toDetailDto(rows.getFirst()), null));
+                                    mapper.toDetailDto(rows.getFirst()), auditResultCode));
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
@@ -148,8 +153,13 @@ public class ResultCodeServiceImpl implements ResultCodeService {
                             codeFilter,
                             titleFilter);
 
+                    var auditResultCode = new ResolutionCode();
+                    auditResultCode.setResultCode(codeFilter);
+                    auditResultCode.setTitle(titleFilter);
+
                     return Optional.of(
-                            new AuditableResult<ResultCodePage, Keyable>(responsePage, null));
+                            new AuditableResult<ResultCodePage, Keyable>(
+                                    responsePage, auditResultCode));
                 },
                 // Spring injects all AuditOperationLifecycleListener beans as a List;
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));

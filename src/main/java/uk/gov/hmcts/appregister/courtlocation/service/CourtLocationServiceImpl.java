@@ -83,8 +83,12 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                                         .formatted(code, date));
                     }
 
+                    var auditCourt = new NationalCourtHouse();
+                    auditCourt.setCourtLocationCode(code);
+                    auditCourt.setStartDate(date);
+
                     AuditableResult<CourtLocationGetDetailDto, NationalCourtHouse> result =
-                            new AuditableResult<>(mapper.toDetailDto(rows.getFirst()), null);
+                            new AuditableResult<>(mapper.toDetailDto(rows.getFirst()), auditCourt);
 
                     // Map the single matching entity to a detail DTO
                     return Optional.of(result);
@@ -129,8 +133,12 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                     dbPage.forEach(
                             court -> responsePage.addContentItem(mapper.toSummaryDto(court)));
 
+                    var auditCourt = new NationalCourtHouse();
+                    auditCourt.setCourtLocationCode(codeFilter);
+                    auditCourt.setName(nameFilter);
+
                     AuditableResult<CourtLocationPage, NationalCourtHouse> result =
-                            new AuditableResult<>(responsePage, null);
+                            new AuditableResult<>(responsePage, auditCourt);
                     return Optional.of(result);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));

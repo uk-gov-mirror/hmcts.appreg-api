@@ -84,8 +84,12 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                             appTitle,
                             pageable);
 
+                    var auditApplicationCode = new ApplicationCode();
+                    auditApplicationCode.setCode(appCode);
+                    auditApplicationCode.setTitle(appTitle);
+
                     AuditableResult<ApplicationCodePage, ApplicationCode> result =
-                            new AuditableResult<>(newPage, null);
+                            new AuditableResult<>(newPage, auditApplicationCode);
                     return Optional.of(result);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
@@ -123,7 +127,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                                                                 ? feePair
                                                                                         .offsiteFee()
                                                                                 : null),
-                                                        null);
+                                                        success.getApplicationCode());
 
                                 log.debug(
                                         "Finish: Find Application for app code: {} date: {}",
