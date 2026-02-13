@@ -3,11 +3,16 @@ package uk.gov.hmcts.appregister.standardapplicant.service;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
@@ -28,6 +33,7 @@ import uk.gov.hmcts.appregister.standardapplicant.validator.StandardApplicantExi
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class StandardApplicationServiceImpl implements StandardApplicantService {
     private final StandardApplicantRepository repository;
     private final StandardApplicantMapper mapper;
@@ -38,6 +44,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
     private final StandardApplicantExistsValidator validator;
 
     private final AuditOperationService auditService;
+    private final List<AuditOperationLifecycleListener> auditLifecycleListeners;
     private final ApplicantMapper applicantMapper;
 
     @Override
@@ -75,7 +82,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                     AuditableResult<StandardApplicantPage, StandardApplicant> result =
                             new AuditableResult<>(newPage, auditStandardApplicant);
                     return Optional.of(result);
-                });
+                },auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
@@ -91,13 +98,18 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
                     var auditStandardApplicant = new StandardApplicant();
                     auditStandardApplicant.setApplicantCode(code);
-                    auditStandardApplicant.setApplicantStartDate(date);
+                    auditStandardApplicant.setId(-1L);
 
                     StandardApplicantGetDetailDto payloadForGet =
                             validator.validate(
                                     PayloadForGet.builder().date(date).code(code).build(),
                                     (id, standardApplicant) ->
                                             mapper.toReadGetDto(standardApplicant));
+
+                    auditStandardApplicant.setName(
+                        payloadForGet.getApplicant().getOrganisation() != null
+                                ? payloadForGet.getApplicant().getOrganisation().getName()
+                                : payloadForGet.getApplicant().getPerson().getName().toString());
 
                     log.debug(
                             "Finish: Find Standard Applicant By Code for: app code: {} date: {}",
@@ -108,6 +120,6 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                             new AuditableResult<>(payloadForGet, auditStandardApplicant);
 
                     return Optional.of(result);
-                });
+                },auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 }
