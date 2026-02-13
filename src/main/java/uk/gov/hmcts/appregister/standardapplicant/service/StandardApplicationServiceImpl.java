@@ -89,6 +89,10 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                             code,
                             date);
 
+                    var auditStandardApplicant = new StandardApplicant();
+                    auditStandardApplicant.setApplicantCode(code);
+                    auditStandardApplicant.setApplicantStartDate(date);
+
                     StandardApplicantGetDetailDto payloadForGet =
                             validator.validate(
                                     PayloadForGet.builder().date(date).code(code).build(),
@@ -99,10 +103,6 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                             "Finish: Find Standard Applicant By Code for: app code: {} date: {}",
                             code,
                             date);
-
-                    var auditStandardApplicant = new StandardApplicant();
-                    auditStandardApplicant.setApplicantCode(code);
-                    auditStandardApplicant.setApplicantStartDate(date);
 
                     AuditableResult<StandardApplicantGetDetailDto, StandardApplicant> result =
                             new AuditableResult<>(payloadForGet, auditStandardApplicant);

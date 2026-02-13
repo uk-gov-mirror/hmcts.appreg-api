@@ -140,7 +140,9 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                             pageable);
 
                     var auditApplicationListEntry = new ApplicationListEntry();
-                    auditApplicationListEntry.setId(resultPage.get().findFirst().get().getId());
+                    if (resultPage.get().findFirst().isPresent()) {
+                        auditApplicationListEntry.setId(resultPage.get().findFirst().get().getId());
+                    }
                     AuditableResult<EntryPage, ApplicationListEntry> result =
                             new AuditableResult<>(newPage, auditApplicationListEntry);
 
