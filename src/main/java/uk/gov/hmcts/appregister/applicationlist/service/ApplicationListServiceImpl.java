@@ -208,7 +208,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         // Fetch results from the repository using pagination
         Page<ApplicationListEntrySummaryProjection> dbPage =
                 aleRepository.findSummariesById(id, pageable);
-
         List<ApplicationListEntrySummary> summaries = new ArrayList<>();
 
         // Map each projection to a summary model
@@ -302,7 +301,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                     mapper.toGetDetailDto(
                                             hydrated,
                                             null,
-                                            ZERO_ENTITIES,
+                                            applicationListGetDetailDto.getEntriesSummary().size(),
                                             applicationListGetDetailDto.getEntriesSummary()),
                                     List.of(hydrated));
                         },
@@ -342,7 +341,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                     mapper.toGetDetailDto(
                                             hydrated,
                                             cja,
-                                            ZERO_ENTITIES,
+                                            applicationListGetDetailDto.getEntriesSummary().size(),
                                             applicationListGetDetailDto.getEntriesSummary()),
                                     List.of(hydrated));
                         },

@@ -125,7 +125,7 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
     }
 
     @Test
-    @DisplayName("Delete Application List Entry Result: 404 when list unknown")
+    @DisplayName("Delete Application List Entry Result: 409 when list unknown")
     void givenUnknownList_whenDelete_then404() throws Exception {
         UUID listId = UUID.randomUUID();
         UUID entryId = UUID.randomUUID();
@@ -134,13 +134,14 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         Response resp = deleteResult(listId, entryId, resultId, token);
 
-        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        assertEquals(ApplicationListEntryResultError.ENTRY_RESULT_LIST_NOT_FOUND.getCode(), resp);
+        resp.then().statusCode(HttpStatus.CONFLICT.value());
+        assertEquals(
+                ApplicationListEntryResultError.APPLICATION_LIST_DOES_NOT_EXIST.getCode(), resp);
     }
 
     @Test
     @DisplayName("Delete Application List Entry Result: 400 when list closed")
-    void givenClosedList_whenDelete_then400() throws Exception {
+    void givenClosedList_whenDelete_then409() throws Exception {
         var list = createAndSaveList(CLOSED);
 
         UUID listId = list.getUuid();
@@ -150,9 +151,10 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         Response resp = deleteResult(listId, entryId, resultId, token);
 
-        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        resp.then().statusCode(HttpStatus.CONFLICT.value());
         assertEquals(
-                ApplicationListEntryResultError.INVALID_ENTRY_RESULT_LIST_STATUS.getCode(), resp);
+                ApplicationListEntryResultError.APPLICATION_LIST_STATE_IS_INCORRECT.getCode(),
+                resp);
     }
 
     @Test
@@ -268,8 +270,8 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
     }
 
     @Test
-    @DisplayName("Create Application List Entry Result: 404 when list unknown")
-    void givenUnknownList_whenCreate_then404() throws Exception {
+    @DisplayName("Create Application List Entry Result: 409 when list unknown")
+    void givenUnknownList_whenCreate_then409() throws Exception {
         UUID listId = UUID.randomUUID();
         UUID entryId = UUID.randomUUID();
 
@@ -281,14 +283,14 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         Response resp = createResult(listId, entryId, token, payload);
 
-        resp.then().statusCode(HttpStatus.NOT_FOUND.value());
+        resp.then().statusCode(HttpStatus.CONFLICT.value());
         assertEquals(
                 ApplicationListEntryResultError.APPLICATION_LIST_DOES_NOT_EXIST.getCode(), resp);
     }
 
     @Test
-    @DisplayName("Create Application List Entry Result: 400 when list closed")
-    void givenClosedList_whenCreate_then400() throws Exception {
+    @DisplayName("Create Application List Entry Result: 409 when list closed")
+    void givenClosedList_whenCreate_then409() throws Exception {
         var list = createAndSaveList(CLOSED);
 
         var token = getToken();
@@ -299,10 +301,9 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         Response resp = createResult(list.getUuid(), UUID.randomUUID(), token, payload);
 
-        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        resp.then().statusCode(HttpStatus.CONFLICT.value());
         assertEquals(
-                ApplicationListEntryResultError.APPLICATION_LIST_STATE_IS_INCORRECT_FOR_CREATE
-                        .getCode(),
+                ApplicationListEntryResultError.APPLICATION_LIST_STATE_IS_INCORRECT.getCode(),
                 resp);
     }
 
@@ -328,8 +329,8 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
     }
 
     @Test
-    @DisplayName("Create Application List Entry Result: 400 when resolution code unknown")
-    void givenUnknownResolutionCode_whenCreate_then400() throws Exception {
+    @DisplayName("Create Application List Entry Result: 404 when resolution code unknown")
+    void givenUnknownResolutionCode_whenCreate_then404() throws Exception {
         var list = createAndSaveList(OPEN);
         var entry = createEntry(list);
         persistance.save(entry);
@@ -342,7 +343,7 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
 
         Response resp = createResult(list.getUuid(), entry.getUuid(), token, payload);
 
-        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        resp.then().statusCode(HttpStatus.NOT_FOUND.value());
         assertEquals(
                 ApplicationListEntryResultError.RESOLUTION_CODE_DOES_NOT_EXIST.getCode(), resp);
     }

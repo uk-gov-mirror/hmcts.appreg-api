@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum;
 import uk.gov.hmcts.appregister.common.mapper.SortableField;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
-import uk.gov.hmcts.appregister.controller.testutils.GetApplicationListFilterSpecification;
+import uk.gov.hmcts.appregister.controller.applicationlist.GetApplicationListFilterSpecification;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetFilterDto;
@@ -25,6 +25,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.SortOrdersInner;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.annotation.StabilityTest;
+import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
@@ -91,7 +92,43 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
         Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
     }
 
-    // @StabilityTest
+    @StabilityTest
+    public void
+            givenApplicationListSuccessfulDefaultSort_whenSearchWithAllSortKeys_thenSuccessResponse()
+                    throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+        ApplicationListPage page = responseSpec.as(ApplicationListPage.class);
+
+        // make sure the order response marries with the request data
+        Assertions.assertEquals(1, page.getSort().getOrders().size());
+        Assertions.assertEquals(
+                SortOrdersInner.DirectionEnum.ASC,
+                page.getSort().getOrders().get(0).getDirection());
+
+        // make sure we only return defaulted externalised api sort data
+        Assertions.assertEquals(
+                ApplicationListSortFieldEnum.DESCRIPTION.getApiValue(),
+                page.getSort().getOrders().get(0).getProperty());
+
+        Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
+    }
+
+    // This test cant be made a stability test as slows the test run down
+    // TODO: look into this
+    @Test
     public void givenApplicationListSuccessfulSort_whenSortByEntryCount_thenSuccessResponse()
             throws Exception {
         // create the token
@@ -230,10 +267,6 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
                         .durationHours(1)
                         .durationMinutes(0);
 
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
-
         UUID listId =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
@@ -246,7 +279,14 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
         createListReq.setOtherLocationDescription(OTHER_LOCATION2);
         createListReq.setCourtLocationCode(null);
 
-        UUID listId2 =
+        final UUID listId2 =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        // add third list with different description so that is comes first in the sort list
+        createListReq.setOtherLocationDescription("Alternative Location");
+
+        final UUID listId3 =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
@@ -254,7 +294,7 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
                 restAssuredClient.executeGetRequestWithPaging(
                         Optional.of(10),
                         Optional.of(0),
-                        List.of(ApplicationListSortFieldEnum.LOCATION.getApiValue() + "," + "desc"),
+                        List.of(ApplicationListSortFieldEnum.LOCATION.getApiValue() + "," + "asc"),
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         GetApplicationListFilterSpecification.builder()
@@ -264,8 +304,9 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
 
         // assert order
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
-        Assertions.assertEquals(listId2, page.getContent().get(0).getId());
-        Assertions.assertEquals(listId, page.getContent().get(1).getId());
+        Assertions.assertEquals(listId, page.getContent().get(0).getId());
+        Assertions.assertEquals(listId3, page.getContent().get(1).getId());
+        Assertions.assertEquals(listId2, page.getContent().get(2).getId());
     }
 
     @StabilityTest
@@ -356,7 +397,7 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
                         getLocalUrl(WEB_CONTEXT),
                         userToken,
                         rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
+                        new OpenApiPageMetaData());
 
         resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
         ApplicationListPage page = resp.as(ApplicationListPage.class);
@@ -395,7 +436,7 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
                         getLocalUrl(WEB_CONTEXT),
                         userToken,
                         rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
+                        new OpenApiPageMetaData());
 
         resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
         ApplicationListPage page = resp.as(ApplicationListPage.class);
@@ -428,7 +469,7 @@ public class GetApplicationListControllerSortTest extends BaseIntegration {
                         getLocalUrl(WEB_CONTEXT),
                         userToken,
                         rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
+                        new OpenApiPageMetaData());
 
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
     }
