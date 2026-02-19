@@ -62,21 +62,24 @@ public class PageableMapper {
 
             sortableFields = SortableFieldMapper.of(sort.toArray(new String[0]));
             for (SortableFieldMapper sortableField : sortableFields) {
+                sortableFields = SortableFieldMapper.of(sort.toArray(new String[0]));
+
                 mappedSorts.addAll(
                         sortableField.toSortStringUsingSortableOperation(findSortFieldEnum));
 
                 tieBreaker = sortableField.toTieBreaker(findSortFieldEnum);
             }
         } else {
+            sortableFields = new ArrayList<>();
             SortableFieldMapper sortableField =
-                    SortableFieldMapper.of(
+                SortableFieldMapper.of(
                                     defaultSortProperty.getApiValue()
                                             + ","
                                             + defaultDirection.name())
                             .getFirst();
 
             mappedSorts.addAll(sortableField.toSortStringUsingSortableOperation(findSortFieldEnum));
-
+            sortableFields.add(sortableField);
             tieBreaker = sortableField.toTieBreaker(findSortFieldEnum);
         }
 

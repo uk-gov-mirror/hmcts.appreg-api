@@ -98,7 +98,9 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
         // test the functionaity
         Response responseSpec =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrl(WEB_CONTEXT), tokenGenerator.fetchTokenForRole());
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        "00-ecaf9ce5d2b348338cd6b7630c837186-7b3f6a2c9e4d1a8f-01");
 
         // assert the response
         responseSpec.then().statusCode(200);
@@ -122,6 +124,12 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 GET_APPCODES_AUDIT_ACTION,
                                 OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
+
+        activityAuditLogAsserter.assertCompletedLogContains(
+                GET_APPCODES_AUDIT_ACTION,
+                "ecaf9ce5d2b348338cd6b7630c837186",
+                Integer.valueOf(OperationStatus.COMPLETED.getStatus()).toString(),
+                mapper.writeValueAsString(page));
     }
 
     @Test
@@ -155,6 +163,11 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 GET_APPCODES_AUDIT_ACTION,
                                 OperationStatus.STARTED),
                         logCaptor.getInfoLogs().get(0)));
+
+        activityAuditLogAsserter.assertCompletedLogContainsWithUnknownMessageId(
+                GET_APPCODES_AUDIT_ACTION,
+                Integer.valueOf(OperationStatus.COMPLETED.getStatus()).toString(),
+                mapper.writeValueAsString(page));
     }
 
     @Test
@@ -1039,6 +1052,39 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                                 GET_APPCODE_AUDIT_ACTION,
                                 OperationStatus.COMPLETED),
                         logCaptor.getInfoLogs().get(1)));
+    }
+
+    @Test
+    @StabilityTest
+    public void givenASuccessfulFilterPartialCode_whenSearch_thenSuccessResponse()
+            throws Exception {
+        // a date that is within range for the offset but out of range for the main fee
+        when(clock.instant()).thenReturn(Instant.parse(CURRENT_TIME));
+        when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        new ApplicationCodeRequestFilter(Optional.of("99001"), Optional.empty()),
+                        new OpenApiPageMetaData());
+        responseSpec.then().statusCode(200);
+
+        // assert
+        ApplicationCodePage page = responseSpec.as(ApplicationCodePage.class);
+        Assertions.assertEquals(6, page.getContent().size());
+        Assertions.assertEquals("AD99001", page.getContent().get(0).getApplicationCode());
+        Assertions.assertEquals("AP99001", page.getContent().get(1).getApplicationCode());
+        Assertions.assertEquals("CT99001", page.getContent().get(2).getApplicationCode());
+        Assertions.assertEquals("MS99001", page.getContent().get(3).getApplicationCode());
+        Assertions.assertEquals("RE99001", page.getContent().get(4).getApplicationCode());
+        Assertions.assertEquals("SW99001", page.getContent().get(5).getApplicationCode());
     }
 
     private ApplicationCodeGetSummaryDto

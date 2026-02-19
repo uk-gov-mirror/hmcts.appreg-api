@@ -13,7 +13,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
+import uk.gov.hmcts.appregister.common.entity.aspect.LikeParam;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
+import uk.gov.hmcts.appregister.common.projection.ApplicationListSummaryProjection;
 
 /**
  * Repository interface for managing ApplicationList entities.
@@ -105,27 +107,43 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
      * @return a {@link Page} of {@link ApplicationList} entities matching the provided filter
      *     criteria
      */
-    @EntityGraph(attributePaths = "cja")
     @Query(
             """
-        SELECT al
+        SELECT
+          al.uuid AS uuid,
+          al.time AS time,
+          al.date AS date,
+          al.courtName AS courtName,
+          al.description AS description,
+          cja.description AS cjaDescription,
+          al.otherLocation AS otherLocation,
+          al.status AS status,
+            (
+            select count(ale2.id)
+            from ApplicationListEntry ale2
+            where ale2.applicationList = al
+              and (ale2.deleted is null or ale2.deleted <> 'Y')
+          ) as entryCount
         FROM ApplicationList al
+        LEFT JOIN al.cja cja
         WHERE (:status IS NULL OR al.status = :status)
-          AND (:courtCode IS NULL OR al.courtCode = :courtCode)
+          AND (:courtCode IS NULL OR LOWER(al.courtCode) = LOWER(cast(:courtCode AS STRING)))
           AND (:cja IS NULL OR al.cja = :cja)
           AND (al.date = COALESCE(:onDate, al.date))
           AND (
-                 COALESCE(:start, NULL) IS NULL
-                 OR (
-                   (:wrapsMidnight = TRUE AND al.time >= :start)
-                   OR (:wrapsMidnight = FALSE AND al.time >= :start AND al.time < :end)
-                 )
-               )
-          AND (:description IS NULL OR lower(al.description) LIKE concat('%', lower(cast(:description AS string)), '%'))
-          AND (:otherDesc IS NULL OR lower(al.otherLocation) LIKE concat('%', lower(cast(:otherDesc AS string)), '%'))
+               COALESCE(:start, NULL) IS NULL
+                OR (
+                     (:wrapsMidnight = TRUE  AND al.time >= :start)
+                  OR (:wrapsMidnight = FALSE AND al.time >= :start AND al.time < :end)
+                )
+              )
+          AND (:description IS NULL OR lower(al.description)
+                  LIKE concat('%', lower(cast(:description AS string)), '%') ESCAPE '\\')
+          AND (:otherDesc IS NULL OR lower(al.otherLocation)
+                  LIKE concat('%', lower(cast(:otherDesc AS string)), '%') ESCAPE '\\')
           AND (al.deleted IS NULL OR al.deleted <> 'Y')
         """)
-    Page<ApplicationList> findAllByFilter(
+    Page<ApplicationListSummaryProjection> findAllByFilter(
             @Param("status") Status status,
             @Param("courtCode") String courtCode,
             @Param("cja") CriminalJusticeArea cja,
@@ -133,7 +151,7 @@ public interface ApplicationListRepository extends JpaRepository<ApplicationList
             @Param("start") LocalTime start,
             @Param("end") LocalTime end,
             @Param("wrapsMidnight") boolean wrapsMidnight,
-            @Param("description") String description,
-            @Param("otherDesc") String otherDesc,
+            @LikeParam @Param("description") String description,
+            @LikeParam @Param("otherDesc") String otherDesc,
             Pageable pageable);
 }

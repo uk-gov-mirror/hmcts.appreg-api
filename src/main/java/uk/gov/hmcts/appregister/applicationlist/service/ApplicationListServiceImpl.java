@@ -45,6 +45,7 @@ import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryOfficialPr
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryPrintProjection;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryResolutionPrintProjection;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntrySummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.ApplicationListSummaryProjection;
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
 import uk.gov.hmcts.appregister.common.util.OfficialTypeUtil;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
@@ -127,20 +128,22 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional
     public MatchResponse<ApplicationListGetDetailDto> create(ApplicationListCreateDto dto) {
-        log.debug("Start: Request to create application list : {}", dto);
-
-        return auditService.processAudit(
-                AppListAuditOperation.CREATE_APP_LIST,
-                req ->
-                        applicationCreateListLocationValidator.validate(
-                                dto,
-                                (listCreateDto, success) ->
-                                        success.hasCourt()
-                                                ? Optional.of(
-                                                        createWithCourt(listCreateDto, success))
-                                                : Optional.of(
-                                                        createWithCja(listCreateDto, success))),
-                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+        MatchResponse<ApplicationListGetDetailDto> applicationListGetDetailDto =
+                auditService.processAudit(
+                        AppListAuditOperation.CREATE_APP_LIST,
+                        req ->
+                                applicationCreateListLocationValidator.validate(
+                                        dto,
+                                        (listCreateDto, success) ->
+                                                success.hasCourt()
+                                                        ? Optional.of(
+                                                                createWithCourt(
+                                                                        listCreateDto, success))
+                                                        : Optional.of(
+                                                                createWithCja(
+                                                                        listCreateDto, success))),
+                        auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+        return applicationListGetDetailDto;
     }
 
     /**
@@ -155,8 +158,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Transactional
     public MatchResponse<ApplicationListGetDetailDto> update(
             PayloadForUpdate<ApplicationListUpdateDto> dto) {
-        log.debug("Start: Request to update application list : {}", dto);
-
         MatchResponse<ApplicationListGetDetailDto> response =
                 applicationUpdateListLocationValidator.validate(
                         dto,
@@ -174,14 +175,16 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                         auditLifecycleListeners.toArray(
                                                 new AuditOperationLifecycleListener[0])));
 
-        log.debug("Finish: Request to update application list : {}", response.getPayload());
         return response;
     }
 
     @Override
     @Transactional
     public ApplicationListGetDetailDto get(UUID id, PagingWrapper pageable) {
-        return getListDetailDto(id, pageable.getPageable());
+        ApplicationListGetDetailDto applicationListGetDetailDto =
+                getListDetailDto(id, pageable.getPageable());
+
+        return applicationListGetDetailDto;
     }
 
     /**
@@ -205,7 +208,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         // Fetch results from the repository using pagination
         Page<ApplicationListEntrySummaryProjection> dbPage =
                 aleRepository.findSummariesById(id, pageable);
-
         List<ApplicationListEntrySummary> summaries = new ArrayList<>();
 
         // Map each projection to a summary model
@@ -299,7 +301,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                     mapper.toGetDetailDto(
                                             hydrated,
                                             null,
-                                            ZERO_ENTITIES,
+                                            applicationListGetDetailDto.getEntriesSummary().size(),
                                             applicationListGetDetailDto.getEntriesSummary()),
                                     List.of(hydrated));
                         },
@@ -339,7 +341,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                     mapper.toGetDetailDto(
                                             hydrated,
                                             cja,
-                                            ZERO_ENTITIES,
+                                            applicationListGetDetailDto.getEntriesSummary().size(),
                                             applicationListGetDetailDto.getEntriesSummary()),
                                     List.of(hydrated));
                         },
@@ -350,8 +352,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional
     public void delete(UUID idToDelete) {
-        log.debug("Start: Deleting Application List with id: {}", idToDelete);
-
         deletionValidator.validate(
                 idToDelete,
                 (id, success) ->
@@ -366,8 +366,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                 },
                                 auditLifecycleListeners.toArray(
                                         new AuditOperationLifecycleListener[0])));
-
-        log.debug("Finish: Deleted Application List with id: {}", idToDelete);
     }
 
     /**
@@ -421,7 +419,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
         return applicationListGetValidator.validateCja(
                 dto,
                 (getDto, success) -> {
-                    final Page<ApplicationList> dbPage =
+                    final Page<ApplicationListSummaryProjection> dbPage =
                             repository.findAllByFilter(
                                     entryMapper.toStatus(dto.getStatus()),
                                     dto.getCourtLocationCode(),
@@ -433,16 +431,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                     dto.getDescription(),
                                     dto.getOtherLocationDescription(),
                                     pageable.getPageable());
-
-                    // Pre-fetch the number of entries linked to each list in the page.
-                    // Avoids having to do a separate count query per list when mapping to DTOs.
-                    Map<UUID, Long> entriesPerListCounter =
-                            dbPage.isEmpty()
-                                    ? Map.of()
-                                    : fetchEntryCounts(
-                                            dbPage.map(ApplicationList::getUuid).toList());
-
-                    return assembleResponsePage(dbPage, entriesPerListCounter, pageable);
+                    return assembleResponsePage(dbPage, pageable);
                 },
                 true);
     }
@@ -450,6 +439,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional(readOnly = true)
     public ApplicationListGetPrintDto print(UUID id) {
+        log.debug("Start: Print Application List {}", id);
+
         ApplicationList list =
                 repository
                         .findByUuid(id)
@@ -510,7 +501,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
             dtos.add(dto);
         }
 
-        return buildGetPrintDto(list, dtos);
+        ApplicationListGetPrintDto applicationListGetPrintDto = buildGetPrintDto(list, dtos);
+        return applicationListGetPrintDto;
     }
 
     private Map<UUID, Long> fetchEntryCounts(List<UUID> uuids) {
@@ -522,9 +514,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     }
 
     private ApplicationListPage assembleResponsePage(
-            Page<ApplicationList> appLists,
-            Map<UUID, Long> entriesPerListCounter,
-            PagingWrapper pagingWrapper) {
+            Page<ApplicationListSummaryProjection> appLists, PagingWrapper pagingWrapper) {
         var responsePage = new ApplicationListPage();
         pageMapper.toPage(appLists, responsePage, pagingWrapper.getSortStrings());
 
@@ -534,20 +524,19 @@ public class ApplicationListServiceImpl implements ApplicationListService {
             responsePage.setContent(new ArrayList<>());
         }
 
-        for (ApplicationList al : appLists) {
-            long entryCount = entriesPerListCounter.getOrDefault(al.getUuid(), ZERO_ENTITIES);
-            String location = deriveLocation(al);
-            responsePage.addContentItem(mapper.toGetSummaryDto(al, entryCount, location));
+        for (ApplicationListSummaryProjection alp : appLists) {
+            String location = deriveLocation(alp);
+            responsePage.addContentItem(mapper.toGetSummaryDto(alp, alp.getEntryCount(), location));
         }
         return responsePage;
     }
 
-    private String deriveLocation(ApplicationList al) {
+    private String deriveLocation(ApplicationListSummaryProjection al) {
         if (al.getCourtName() != null) {
             return al.getCourtName();
         }
-        if (al.getCja() != null) {
-            return al.getCja().getDescription();
+        if (al.getCjaDescription() != null) {
+            return al.getCjaDescription();
         }
         return "Location not set";
     }

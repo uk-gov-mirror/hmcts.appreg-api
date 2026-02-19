@@ -19,23 +19,12 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 import org.apache.http.HttpHeaders;
 import org.openapitools.jackson.nullable.JsonNullableModule;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.common.serializer.StrictLocalTimeDeserializer;
 import uk.gov.hmcts.appregister.common.serializer.StrictLocalTimeSerializer;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
 
 @Component
 public class RestAssuredClient {
-
-    @Value("${spring.data.web.pageable.page-parameter}")
-    private String pageNumberQueryName;
-
-    @Value("${spring.data.web.pageable.size-parameter}")
-    private String pageSizeQueryName;
-
-    @Value("${spring.data.web.sort.sort-parameter}")
-    private String sortQueryName;
 
     // Initialize RestAssured configuration
     {
@@ -45,10 +34,10 @@ public class RestAssuredClient {
         JavaTimeModule timeModule = new JavaTimeModule();
 
         // Setup the serializer and deserializer for LocalTime with format "HH:mm"
-        timeModule.addDeserializer(LocalTime.class, new StrictLocalTimeDeserializer());
         timeModule.addSerializer(LocalTime.class, new StrictLocalTimeSerializer());
         objectMapper.registerModule(timeModule);
         objectMapper.registerModule(new JsonNullableModule());
+
         RestAssured.config =
                 RestAssuredConfig.config()
                         .objectMapperConfig(
@@ -65,7 +54,33 @@ public class RestAssuredClient {
      * @return The specification of the response
      */
     public Response executeGetRequest(URL url, TokenAndJwksKey token) throws URISyntaxException {
-        return given().header("Authorization", "Bearer " + token.getToken()).get(url).andReturn();
+        return executeGetRequest(url, token, (String) null);
+    }
+
+    /**
+     * gets a request builder that can be used to make requests (with trace) against the
+     * application.
+     *
+     * @param url The url context
+     * @param token The bearer token
+     * @param trace The traceparent header value
+     * @return The specification of the response with W3C Trace header
+     *     https://www.w3.org/TR/trace-context/
+     */
+    public Response executeGetRequest(URL url, TokenAndJwksKey token, String trace)
+            throws URISyntaxException {
+        if (trace != null) {
+            return given().header("Content-Type", "application/vnd.hmcts.appreg.v1+json")
+                    .header("Authorization", "Bearer " + token.getToken())
+                    .header("traceparent", trace)
+                    .get(url)
+                    .andReturn();
+        } else {
+            return given().header("Content-Type", "application/vnd.hmcts.appreg.v1+json")
+                    .header("Authorization", "Bearer " + token.getToken())
+                    .get(url)
+                    .andReturn();
+        }
     }
 
     /**
@@ -81,10 +96,17 @@ public class RestAssuredClient {
             TokenAndJwksKey token,
             UnaryOperator<RequestSpecification> requestSpecificationConsumer)
             throws URISyntaxException {
-        return requestSpecificationConsumer
-                .apply(given().header("Authorization", "Bearer " + token.getToken()))
-                .get(url)
-                .andReturn();
+        RequestSpecification requestSpecification = given();
+
+        if (token != null) {
+            requestSpecification = given().header("Authorization", "Bearer " + token.getToken());
+        }
+
+        if (requestSpecificationConsumer != null) {
+            requestSpecificationConsumer.apply(requestSpecification);
+        }
+
+        return requestSpecification.get(url).andReturn();
     }
 
     /**
@@ -120,6 +142,36 @@ public class RestAssuredClient {
             TokenAndJwksKey token) {
         return executeGetRequestWithPaging(
                 pageSize, pageNumber, pageSort, url, token, rs -> rs, new OpenApiPageMetaData());
+    }
+
+    /**
+     * gets a request builder that can be used to make requests against the application.
+     *
+     * @param pageSize The page size of the reuest
+     * @param pageNumber The page number of the request
+     * @param pageSort The page sort number of the request
+     * @param url The url context
+     * @param token The bearer token
+     * @param requestSpecificationConsumer A request specification that will be called before
+     *     sending the request. Allows operation specific payload customisation i.e. request
+     *     parameters to be added etc
+     * @return The specification of the response
+     */
+    public Response executeGetRequestWithPaging(
+            Optional<Integer> pageSize,
+            Optional<Integer> pageNumber,
+            List<String> pageSort,
+            URL url,
+            TokenAndJwksKey token,
+            UnaryOperator<RequestSpecification> requestSpecificationConsumer) {
+        return executeGetRequestWithPaging(
+                pageSize,
+                pageNumber,
+                pageSort,
+                url,
+                token,
+                requestSpecificationConsumer,
+                new OpenApiPageMetaData());
     }
 
     /**
@@ -173,27 +225,19 @@ public class RestAssuredClient {
         if (pageNumber.isPresent()) {
             requestSpecification =
                     requestSpecification.queryParam(
-                            pageMetaData == null
-                                    ? pageNumberQueryName
-                                    : pageMetaData.getPageNumberQueryName(),
-                            pageNumber.get());
+                            pageMetaData.getPageNumberQueryName(), pageNumber.get());
         }
 
         if (pageSize.isPresent()) {
             requestSpecification =
                     requestSpecification.queryParam(
-                            pageMetaData == null
-                                    ? pageSizeQueryName
-                                    : pageMetaData.getPageSizeQueryName(),
-                            pageSize.get());
+                            pageMetaData.getPageSizeQueryName(), pageSize.get());
         }
 
         if (!sortField.isEmpty()) {
             for (String sort : sortField) {
                 requestSpecification =
-                        requestSpecification.queryParam(
-                                pageMetaData == null ? sortQueryName : pageMetaData.getSortName(),
-                                sort);
+                        requestSpecification.queryParam(pageMetaData.getSortName(), sort);
             }
         }
         return requestSpecification;

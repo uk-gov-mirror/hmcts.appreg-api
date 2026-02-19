@@ -20,12 +20,18 @@ springdoc:
   writer-with-order-by-keys: true
 
 spring:
+  http:
+    converters:
+      preferred-json-mapper: true
+  # Continue to use Jackson 2 for now
+  jackson:
+    use-jackson2-defaults: true
   data:
     web:
       pageable:
-        # When this value is set to true, we cant simply return the Spring Page object as a response from our controllers. The reason being that the response
-        # is always zero indexed for page numbers, so a request of page=2 will return a pageNumber of 1.
         one-indexed-parameters: false
+        # The page name parameters do not make any difference as they are
+        # hard coded into the open api spec
         page-parameter: page
         size-parameter: pageSize
         default-page-size: 10
@@ -74,12 +80,6 @@ spring:
           tenant: ${AZURE_TENANT_ID:00000000-0000-0000-0000-000000000000}
   mvc:
     static-path-pattern: /specs/**
-logging:
-  level:
-    org.springframework.*: DEBUG
-  pattern:
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} %X{traceId} - %msg%n"
-    correlation: "[%X{traceId}/%X{spanId}]"
 
 app:
   timezone: "Europe/London"

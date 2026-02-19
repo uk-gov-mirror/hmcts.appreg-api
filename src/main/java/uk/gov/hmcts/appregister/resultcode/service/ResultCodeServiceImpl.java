@@ -79,7 +79,6 @@ public class ResultCodeServiceImpl implements ResultCodeService {
         return auditService.processAudit(
                 ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT,
                 unused -> {
-                    log.debug("Start: Find active Result Code using code: {} date: {}", code, date);
                     final List<ResolutionCode> rows =
                             repository.findActiveResolutionCodesByCodeAndDate(code, date);
 
@@ -95,8 +94,6 @@ public class ResultCodeServiceImpl implements ResultCodeService {
                                         .formatted(code, date));
                     }
 
-                    log.debug(
-                            "Finish: Find active Result Code for code: {} on date: {}", code, date);
                     return Optional.of(
                             new AuditableResult<ResultCodeGetDetailDto, Keyable>(
                                     mapper.toDetailDto(rows.getFirst()), null));

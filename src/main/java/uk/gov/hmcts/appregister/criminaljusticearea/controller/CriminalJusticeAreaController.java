@@ -51,6 +51,7 @@ public class CriminalJusticeAreaController implements CriminalJusticeAreasApi {
 
         CriminalJusticeAreaPage criminalJusticeAreaPage =
                 criminalJusticeService.findAll(code, description, pageable);
+
         return ResponseEntity.ok().body(criminalJusticeAreaPage);
     }
 }
