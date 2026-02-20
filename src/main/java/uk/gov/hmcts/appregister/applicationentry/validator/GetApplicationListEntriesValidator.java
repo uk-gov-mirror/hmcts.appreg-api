@@ -1,5 +1,7 @@
 package uk.gov.hmcts.appregister.applicationentry.validator;
 
+import java.util.Optional;
+import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -9,10 +11,6 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.validator.Validator;
-
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.BiFunction;
 
 @Component
 @Slf4j
@@ -24,17 +22,20 @@ public class GetApplicationListEntriesValidator
 
     @Override
     public void validate(PayloadGetEntryInList validatable) {
-            validate(validatable, null);
+        validate(validatable, null);
     }
 
     @Override
-    public <R> R validate(PayloadGetEntryInList validatable, BiFunction<PayloadGetEntryInList, ApplicationList, R> validateSuccess) {
-        Optional<ApplicationList> applicationList = applicationListRepository.findByUuid(validatable.getListId());
+    public <R> R validate(
+            PayloadGetEntryInList validatable,
+            BiFunction<PayloadGetEntryInList, ApplicationList, R> validateSuccess) {
+        Optional<ApplicationList> applicationList =
+                applicationListRepository.findByUuid(validatable.getListId());
         if (applicationList.isEmpty()) {
             throw new AppRegistryException(
-                ApplicationListError.LIST_NOT_FOUND,
-                "The application list with id %s was not found"
-                    .formatted(validatable.getListId()));
+                    ApplicationListError.LIST_NOT_FOUND,
+                    "The application list with id %s was not found"
+                            .formatted(validatable.getListId()));
         }
 
         if (validateSuccess != null) {
