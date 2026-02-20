@@ -44,6 +44,7 @@ import uk.gov.hmcts.appregister.applicationentry.model.PayloadGetEntryInList;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationEntryValidator;
+import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationListEntriesValidator;
 import uk.gov.hmcts.appregister.applicationentry.validator.GetEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
@@ -135,6 +136,8 @@ public class ApplicationEntryServiceImplTest {
 
     private GetEntryValidationSuccess getEntryValidationSuccess;
 
+    private GetApplicationListEntriesValidator getApplicationListEntriesValidator;
+
     // A null match provider that returns a null etag
     private static MatchProvider NULL_MATCH_PROVIDER =
             new MatchProvider() {
@@ -217,6 +220,7 @@ public class ApplicationEntryServiceImplTest {
                         applicationListEntryEntityMapper,
                         entityManager,
                         getEntryValidator,
+                        getApplicationListEntriesValidator,
                         clock);
     }
 
@@ -243,6 +247,7 @@ public class ApplicationEntryServiceImplTest {
                         applicationListEntryEntityMapper,
                         entityManager,
                         getEntryValidator,
+                        getApplicationListEntriesValidator,
                         clock);
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);

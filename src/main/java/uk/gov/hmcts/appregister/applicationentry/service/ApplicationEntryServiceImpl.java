@@ -19,6 +19,7 @@ import uk.gov.hmcts.appregister.applicationentry.model.PayloadGetEntryInList;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.CreateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationEntryValidator;
+import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationListEntriesValidator;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
@@ -89,6 +90,8 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final EntityManager entityManager;
 
     private final GetApplicationEntryValidator getEntryValidator;
+
+    private final GetApplicationListEntriesValidator getApplicationListEntriesValidator;
 
     private final Clock clock;
 
@@ -806,6 +809,39 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
                     return MatchResponse.of(
                             dto, getKeyablesForCreateUpdateEtag(success.getApplicationListEntry()));
+                });
+    }
+
+    @Override
+    public EntryPage getApplicationListEntries(
+            PayloadGetEntryInList payloadForGet, PagingWrapper pageable) {
+        log.debug(
+                "Started: Getting application list entries for list: {}",
+                payloadForGet.getListId());
+
+        return getApplicationListEntriesValidator.validate(
+                payloadForGet,
+                (req, success) -> {
+                    // get the entries for the list
+                    Page<ApplicationListEntryGetSummaryProjection> entries =
+                            applicationListEntryRepository
+                                    .findApplicationListEntriesByApplicationListId(
+                                            success.getUuid(), pageable.getPageable());
+
+                    EntryPage entryPage = new EntryPage();
+                    pageMapper.toPage(entries, entryPage, pageable.getSortStrings());
+
+                    entries.forEach(
+                            entry -> {
+                                entryPage.addContentItem(
+                                        applicationListEntryMapStructMapper.toEntrySummary(entry));
+                            });
+
+                    log.debug(
+                            "Finished: Getting application list entries for list: {}",
+                            payloadForGet.getListId());
+
+                    return entryPage;
                 });
     }
 

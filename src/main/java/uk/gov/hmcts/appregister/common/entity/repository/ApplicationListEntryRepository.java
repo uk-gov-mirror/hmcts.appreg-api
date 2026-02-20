@@ -317,6 +317,48 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
         """)
     Optional<ApplicationListEntry> findByEntryUuidWithinListUuid(UUID listId, UUID entryId);
 
+    @Query(
+            """
+        SELECT al.date  AS date,
+                    ale.uuid AS uuid,
+                    ale.id AS id,
+                    al.courtCode  AS courtCode,
+                    ac.legislation as legislation,
+                    ac.feeDue feeRequired,
+                    aler.id as result,
+                    cja.code AS cjaCode,
+                    al.otherLocation AS otherLocationDescription,
+                    ana as anameAddress,
+                    sa.applicantCode AS standardApplicantCode,
+                    rna as rnameAddress,
+                    ac.title as title,
+                    al.status AS status,
+                    al.date as dateOfAl,
+                    ana.name as applicationorganisation,
+                    ana.surname as applicantSurname,
+                    rna.name as respondentOrganisation,
+                    rna.surname as respondentSurname,
+                    rna.postcode as respondentPostcode,
+                    ale.caseReference as  accountReference,
+                    sa as standardApplicant,
+                    al.uuid as listId
+        FROM ApplicationListEntry ale
+        LEFT JOIN ale.applicationList al
+        LEFT JOIN ale.anamedaddress ana
+        LEFT JOIN ale.standardApplicant sa
+        LEFT JOIN ale.rnameaddress rna
+        LEFT JOIN ale.applicationCode ac
+        LEFT JOIN CriminalJusticeArea cja ON al.cja = cja
+        LEFT JOIN AppListEntryResolution aler ON aler.applicationList
+                    = ale AND aler.id = (SELECT MAX(sub.id)
+                      FROM AppListEntryResolution sub
+                      WHERE sub.applicationList = ale)
+        WHERE ale.applicationList.uuid = :listId
+        AND (ale.deleted IS NULL OR ale.deleted <> '1')
+        """)
+    Page<ApplicationListEntryGetSummaryProjection> findApplicationListEntriesByApplicationListId(
+            UUID listId, Pageable pageable);
+
     /**
      * Bulk-move entries to a new application list using a single JPQL UPDATE. Returns number of
      * rows updated.

@@ -56,4 +56,7 @@ public interface ApplicationEntryService {
      * @return A MatchResponse containing the entry details
      */
     MatchResponse<EntryGetDetailDto> getApplicationListEntryDetail(PayloadGetEntryInList entry);
+
+    EntryPage getApplicationListEntries(
+            PayloadGetEntryInList payloadForGet, PagingWrapper pageable);
 }

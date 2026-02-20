@@ -113,6 +113,32 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                 .body(matchResponse.getPayload());
     }
 
+    @Override
+    public ResponseEntity<EntryPage> getApplicationListEntries(
+            UUID listId, Integer pageNumber, Integer pageSize, List<String> sort) {
+        PayloadGetEntryInList payloadForGet =
+                PayloadGetEntryInList.builder().listId(listId).build();
+
+        PagingWrapper pageInfo =
+                pageableMapper.from(
+                        pageNumber,
+                        pageSize,
+                        sort,
+                        ApplicationEntrySortFieldEnum.CODE,
+                        Sort.Direction.ASC,
+                        ApplicationEntrySortFieldEnum::getEntityValue);
+
+        EntryPage entryResponse =
+                applicationEntryService.getApplicationListEntries(payloadForGet, pageInfo);
+
+        log.info("Get Application List Entries for listId: {}", listId);
+
+        return ResponseEntity.ok()
+                .varyBy(HttpHeaders.ACCEPT)
+                .contentType(VND_JSON_V1)
+                .body(entryResponse);
+    }
+
     /**
      * Builds the resource location URI for a given Application List Entry ID.
      *
