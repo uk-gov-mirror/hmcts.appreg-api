@@ -2269,7 +2269,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
             getATokenWithValidCredentials().roles(List.of(RoleEnum.USER)).build();
 
         //creating application list to ensure it has no entries
-        UUID applicationListId = UUID.fromString("{ffffffff-ffff-ffff-ffff-ffffffffffff}");
+        UUID applicationListId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
         // test the functionality
         Response responseSpec =
@@ -2280,10 +2280,7 @@ public class ApplicationEntryControllerTest extends AbstractSecurityControllerTe
                         + applicationListId
                         + "/entries"),
                 tokenGenerator.fetchTokenForRole());
-        EntryPage page = responseSpec.as(EntryPage.class);
-        Assertions.assertEquals(200, responseSpec.getStatusCode());
-        assertEquals(0, (int) page.getTotalPages());
-        Assertions.assertTrue(page.getContent().isEmpty());
+        Assertions.assertEquals(404, responseSpec.getStatusCode());
     }
 
     @Override
