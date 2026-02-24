@@ -44,7 +44,7 @@ def determineDevEnvironmentDeployment() {
   env.DEV_ENABLE_DARTS_PORTAL = false
   env.DEV_PORTAL_IMAGE_SUFFIX = "latest"
 
-  echo "1 - env.DEV_ENABLE_DARTS_PORTAL: ${env.DEV_ENABLE_DARTS_PORTAL}"
+  echo "1 - env.DEV_ENABLE_PORTAL: ${env.DEV_ENABLE_DARTS_PORTAL}"
 
   def githubApi = new GithubAPI(this)
     for (label in githubApi.getLabelsbyPattern(env.BRANCH_NAME, "enable_portal_")) {
@@ -91,14 +91,5 @@ def determineDevEnvironmentDeployment() {
   before('akschartsinstall') {
     onPR {
       determineDevEnvironmentDeployment()
-    }
-  }
-
-  afterSuccess('akschartsinstall') {
-    onPR {
-      // restore the PR DB from staging
-      sh("./bin/ci/db-stg-to-pr.sh")
-      // run flyway migrate on PR DB
-      sh("./bin/ci/run-flyway-pr-db.sh")
     }
   }

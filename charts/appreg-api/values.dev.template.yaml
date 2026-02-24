@@ -4,12 +4,13 @@ java:
   ingressHost: ${SERVICE_FQDN}
   devmemoryLimits: "3Gi"
   environment:
-    POSTGRES_USER: ${POSTGRES-USER}
+    POSTGRES_USER: "hmcts"
     POSTGRES_HOST: "appreg-dev.postgres.database.azure.com"
     POSTGRES_PORT: ${POSTGRES-PORT}
     SPRING_DATASOURCE_URL: ${POSTGRES_HOST}
     SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
     SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASS}
+    # The profile that dictates what data is inserted
     SPRING_PROFILES_ACTIVE: functional
     AZURE_TENANT_ID: ${AZURE_TENANT_ID}
     AZURE_AUDIENCE_ID: ${AZURE_AUDIENCE_ID}
