@@ -118,9 +118,11 @@ afterAlways('test') {
 }
 */
 
+/*
 afterFailure('test') {
   junit testResults: '**/test-results/integration/*.xml'
 }
+*/
 
 static LinkedHashMap<String, Object> secret(String secretName, String envVar) {
     [$class     : 'AzureKeyVaultSecret',
