@@ -179,6 +179,7 @@ def determineDevEnvironmentDeployment() {
     junit testResults: '**/test-results/integration/*.xml'
   }
 
+/**
   afterAlways('akschartsinstall') {
     if(params.SKIP_TESTS || params.SKIP_SONAR) {
       stage('SKIP_TESTS OR SKIP_SONAR IS TRUE') {
@@ -186,7 +187,7 @@ def determineDevEnvironmentDeployment() {
       }
     }
   }
-
+*/
   before('dbmigrate:demo') {
     sh("./gradlew --no-daemon --init-script init.gradle assemble")
   }
