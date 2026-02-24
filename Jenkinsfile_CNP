@@ -186,11 +186,12 @@ def determineDevEnvironmentDeployment() {
   echo "2 - env.DEV_ENABLE_DARTS_PORTAL: ${env.DEV_ENABLE_DARTS_PORTAL}"
 }
 
-  afterFailure('test') {
-    junit testResults: '**/test-results/integration/*.xml'
-  }
 
 /**
+
+ afterFailure('test') {
+ junit testResults: '**/test-results/integration/*.xml'
+  }
   afterAlways('akschartsinstall') {
     if(params.SKIP_TESTS || params.SKIP_SONAR) {
       stage('SKIP_TESTS OR SKIP_SONAR IS TRUE') {
