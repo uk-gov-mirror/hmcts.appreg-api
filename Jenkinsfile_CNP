@@ -21,7 +21,7 @@ def secrets = [
         ]
 ]
 
-
+/**
 afterAlways('test') {
 
   builder.gradle('jacocoTestReport')
@@ -116,6 +116,7 @@ afterAlways('test') {
     reportName           : "PMD Integration Test Report"
   ]
 }
+*/
 
 afterFailure('test') {
   junit testResults: '**/test-results/integration/*.xml'
