@@ -1,0 +1,15 @@
+apiVersion: v2
+appVersion: 1.1.0
+dependencies:
+- name: library
+  repository: oci://hmctspublic.azurecr.io/helm
+  version: 2.2.2
+description: A Helm chart for HMCTS postgres SQL database
+icon: https://github.com/hmcts/chart-servicebus/raw/master/images/message_icon-32.png
+keywords:
+- subscribe
+- publish
+- flexibleserver
+- postgresdatabase
+name: postgresql
+version: 1.1.0

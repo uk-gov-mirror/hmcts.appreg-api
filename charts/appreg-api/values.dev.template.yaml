@@ -1,21 +1,18 @@
 java:
-  releaseNameOverride: '{{ .Release.Name }}-api'
   # Don't modify below here
   image: ${IMAGE_NAME}
   ingressHost: ${SERVICE_FQDN}
   devmemoryLimits: "3Gi"
   environment:
+    env_name: 'DEV'
     POSTGRES_USER: "hmcts"
     POSTGRES_HOST: "appreg-dev.postgres.database.azure.com"
-    POSTGRES_PORT: ${POSTGRES-PORT}
-    SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-    SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASS}
-    # The profile that dictates what data is inserted
-    SPRING_PROFILES_ACTIVE: functional
-    AZURE_TENANT_ID: ${AZURE_TENANT_ID}
-    AZURE_AUDIENCE_ID: ${AZURE_AUDIENCE_ID}
-    AZURE_ISSUER: ${AZURE_ISSUER}
-    POSTGRES_DATABASE: "pr-${CHANGE_ID}-appreg"
+    POSTGRES_PORT: 5432
+    POSTGRES_DATABASE: postgres
+    azure-tenant-id: "temp_tenant_id"
+    azure-audience-id: "temp_aud"
+    JAVA_TOOL_OPTIONS: '-XX:InitialRAMPercentage=50 -XX:MaxRAMPercentage=75 -Xlog:gc* -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heap.hprof'
+
 
 # Launch the database that this PR will be working against
 postgresql:
