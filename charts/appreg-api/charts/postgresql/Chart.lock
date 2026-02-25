@@ -1,6 +1,0 @@
-dependencies:
-- name: library
-  repository: oci://hmctspublic.azurecr.io/helm
-  version: 2.2.2
-digest: sha256:62247028537eb9d507673736917e00c9d71a3ef63d17ae294c39541897fdde60
-generated: "2025-02-10T15:57:54.904532895Z"
