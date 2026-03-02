@@ -7,7 +7,7 @@ parameters:
 get:
   operationId: getApplicationListEntries
   tags: [ application-list-entries ]
-  summary: Get Application List Entries (paginated)
+  summary: Get Application List Entries (paginated, filterable)
   description: Returns a paginated list of Application List Entries linked to a specific Application List.
   parameters:
     - in: query
