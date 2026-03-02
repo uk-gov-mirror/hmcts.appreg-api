@@ -139,12 +139,11 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                             filterDto,
                             pageable);
 
-                    var auditApplicationListEntry = new ApplicationListEntry();
-                    if (resultPage.get().findFirst().isPresent()) {
-                        auditApplicationListEntry.setId(resultPage.get().findFirst().get().getId());
-                    }
                     AuditableResult<EntryPage, ApplicationListEntry> result =
-                            new AuditableResult<>(newPage, auditApplicationListEntry);
+                            new AuditableResult<>(
+                                    newPage,
+                                    applicationListEntryMapStructMapper.toApplicationListEntry(
+                                            filterDto));
 
                     return Optional.of(result);
                 });
@@ -831,7 +830,8 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                                                 getKeyablesForCreateUpdateEtag(
                                                                         success
                                                                                 .getApplicationListEntry())),
-                                                        success.getApplicationListEntry());
+                                                        applicationListEntryMapStructMapper
+                                                                .toApplicationListEntry(entry));
                                 return Optional.of(result);
                             });
                 });

@@ -86,6 +86,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @Column(name = "case_reference")
     @Size(max = 15)
+    @Audit(action = {CrudEnum.READ})
     private String caseReference;
 
     @Column(name = "account_number")
