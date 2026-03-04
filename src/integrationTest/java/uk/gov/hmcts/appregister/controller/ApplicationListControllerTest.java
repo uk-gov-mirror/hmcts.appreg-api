@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-
-import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
@@ -251,25 +249,26 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(page.getElementsOnPage()).isEqualTo(1);
         assertThat(page.getContent()).hasSize(1);
 
-        // this check is to make sure that a default value is provided for the log when the parameter is not needed.
+        // this check is to make sure that a default value is provided for the log when the
+        // parameter is not needed.
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
-                    TableNames.APPICATION_LIST,
-                    "id",
-                    null,
-                    "00000000-0000-0000-0000-000000000000",
-                    AppListAuditOperation.GET_APP_LIST.getType().name(),
-                    AppListAuditOperation.GET_APP_LIST.getEventName()));
+                        TableNames.APPICATION_LIST,
+                        "id",
+                        null,
+                        "00000000-0000-0000-0000-000000000000",
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
 
         // this is to check that the description has been logged as it was included as a param.
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "list_description",
-                null,
-                prefix,
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "list_description",
+                        null,
+                        prefix,
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -323,31 +322,31 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(only.getEntriesCount()).isEqualTo(3);
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "list_description",
-                null,
-                prefix,
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "list_description",
+                        null,
+                        prefix,
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "application_list_time",
-                null,
-                t0930.toString(),
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "application_list_time",
+                        null,
+                        t0930.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "application_list_date",
-                null,
-                day.toString(),
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "application_list_date",
+                        null,
+                        day.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -384,14 +383,13 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(only.getTime()).isEqualTo(t2359);
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "application_list_time",
-                null,
-                t2359.toString(),
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
-
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "application_list_time",
+                        null,
+                        t2359.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -431,13 +429,13 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(only.getLocation()).isEqualTo(VALID_COURT_NAME);
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "courthouse_code",
-                null,
-                VALID_COURT_CODE,
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "courthouse_code",
+                        null,
+                        VALID_COURT_CODE,
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -476,13 +474,13 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(page.getContent().getFirst().getDescription()).contains(prefix);
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "cja_code",
-                null,
-                VALID_CJA_CODE,
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "cja_code",
+                        null,
+                        VALID_CJA_CODE,
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -523,13 +521,13 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(page.getContent()).hasSize(0);
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "description",
-                null,
-                prefix,
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "description",
+                        null,
+                        prefix,
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -671,13 +669,13 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(dto.getEntriesSummary()).isNotNull();
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "id",
-                null,
-                id.toString(),
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "id",
+                        null,
+                        id.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
@@ -719,16 +717,18 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         assertThat(problemDetail.getStatus()).isEqualTo(400);
 
         // Making sure there is no audit log for this failed request.
-        assertThatThrownBy(() -> differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "id",
-                null,
-                "232322",
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName())))
-            .isInstanceOf(java.lang.AssertionError.class)
-            .hasMessage("We did not found expected logs");
+        assertThatThrownBy(
+                        () ->
+                                differenceLogAsserter.assertDataAuditChange(
+                                        AuditLogAsserter.getDataAuditAssertion(
+                                                TableNames.APPICATION_LIST,
+                                                "id",
+                                                null,
+                                                "232322",
+                                                AppListAuditOperation.GET_APP_LIST.getType().name(),
+                                                AppListAuditOperation.GET_APP_LIST.getEventName())))
+                .isInstanceOf(java.lang.AssertionError.class)
+                .hasMessage("We did not found expected logs");
     }
 
     @Test
@@ -1021,13 +1021,13 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
                         + entryGetDetailDto.getRespondent().getPerson().getName().getTitle());
 
         differenceLogAsserter.assertDataAuditChange(
-            AuditLogAsserter.getDataAuditAssertion(
-                TableNames.APPICATION_LIST,
-                "id",
-                null,
-                id.toString(),
-                AppListAuditOperation.GET_APP_LIST.getType().name(),
-                AppListAuditOperation.GET_APP_LIST.getEventName()));
+                AuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "id",
+                        null,
+                        id.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @Test
