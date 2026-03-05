@@ -65,6 +65,7 @@ public class ApplicationCode extends BaseUnmanagedChangeableEntity
 
     @Column(name = "application_code_title", nullable = false)
     @Size(max = 500)
+    @Audit(action = {CrudEnum.READ})
     private String title;
 
     @Column(name = "application_code_wording", nullable = false)
@@ -90,6 +91,7 @@ public class ApplicationCode extends BaseUnmanagedChangeableEntity
     private String destinationEmail2;
 
     @Column(name = "application_code_start_date", nullable = false)
+    @Audit(action = {CrudEnum.READ})
     private LocalDate startDate;
 
     @Column(name = "application_code_end_date")
