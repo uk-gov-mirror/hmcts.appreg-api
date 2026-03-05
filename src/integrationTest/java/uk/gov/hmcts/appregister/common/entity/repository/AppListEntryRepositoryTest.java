@@ -454,23 +454,36 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
     public void testGetListEntriesSearchWithSearchCriteria() {
         // Searching without filter to get a list id to then filter.
         Pageable page =
-            PageRequest.of(
-                0,
-                20,
-                Sort.by(Sort.Direction.DESC, "courtCode")
-                    .and(Sort.by(Sort.Direction.ASC, "id")));
+                PageRequest.of(
+                        0,
+                        20,
+                        Sort.by(Sort.Direction.DESC, "courtCode")
+                                .and(Sort.by(Sort.Direction.ASC, "id")));
         Page<ApplicationListEntryGetSummaryProjection> page0 =
-            applicationListEntryRepository.searchForGetSummary(
-                null, false, null, null, null, null, null, null, null, null, null, null,
-                null, null, page);
+                applicationListEntryRepository.searchForGetSummary(
+                        null, false, null, null, null, null, null, null, null, null, null, null,
+                        null, null, page);
 
         ApplicationListEntryGetSummaryProjection projection0 = page0.getContent().get(4);
 
         // When: page 0 size 1
         Page<ApplicationListEntryGetSummaryProjection> page1 =
-            applicationListEntryRepository.searchForGetSummary(
-                UUID.fromString(projection0.getListId()), false, null, null, null, null, null, null, null, null, null, null,
-                null, null, page);
+                applicationListEntryRepository.searchForGetSummary(
+                        UUID.fromString(projection0.getListId()),
+                        false,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        page);
 
         // Then
         assertThat(page1.getTotalElements()).isEqualTo(1);

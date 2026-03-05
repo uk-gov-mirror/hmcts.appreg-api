@@ -268,8 +268,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
 
         ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
         Assertions.assertEquals(
-            ApplicationListError.LIST_NOT_FOUND.getCode().getType().get(),
-            problemDetail.getType());
+                ApplicationListError.LIST_NOT_FOUND.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     private UUID createApplicationList(TokenAndJwksKey token, String prefix) throws Exception {
