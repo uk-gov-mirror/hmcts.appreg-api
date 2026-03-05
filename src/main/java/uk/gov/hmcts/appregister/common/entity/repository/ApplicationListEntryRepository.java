@@ -233,6 +233,19 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
             @LikeParam @Param("accountReference") String accountReference,
             Pageable pageable);
 
+    Page<ApplicationListEntryGetSummaryProjection> searchForSummaryByListId(
+        @Param("applicationListId") UUID applicationListId,
+        @LikeParam @Param("applicantOrganisation") String applicantOrganisation,
+        @LikeParam @Param("applicantSurname") String applicantSurname,
+        @LikeParam @Param("respondentOrganisation") String respondentOrganisation,
+        @LikeParam @Param("respondentSurname") String respondentSurname,
+        @LikeParam @Param("respondentPostcode") String respondentPostcode,
+        @LikeParam @Param("accountReference") String accountReference,
+        @Param("feeRequired") Boolean feeRequired,
+        @Param("resulted") String resulted,
+        @Param("sequenceNumber") Integer sequenceNumber,
+        Pageable pageable);
+
     /**
      * Retrieves list of entries for a given application list.
      *

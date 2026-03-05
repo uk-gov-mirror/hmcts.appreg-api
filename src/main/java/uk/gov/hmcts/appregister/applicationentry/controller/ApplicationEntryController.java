@@ -22,6 +22,7 @@ import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.security.RoleNames;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.api.ApplicationListEntriesApi;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
@@ -116,7 +117,7 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
     @Override
     public ResponseEntity<EntryPage> getApplicationListEntries(
             UUID listId,
-            EntryGetFilterDto filter,
+            EntryApplicationListGetFilterDto filter,
             Integer pageNumber,
             Integer pageSize,
             List<String> sort) {

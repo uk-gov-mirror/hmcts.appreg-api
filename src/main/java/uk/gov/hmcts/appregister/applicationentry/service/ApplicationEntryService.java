@@ -5,6 +5,7 @@ import uk.gov.hmcts.appregister.applicationentry.model.PayloadGetEntryInList;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
@@ -58,5 +59,5 @@ public interface ApplicationEntryService {
     MatchResponse<EntryGetDetailDto> getApplicationListEntryDetail(PayloadGetEntryInList entry);
 
     EntryPage getApplicationListEntries(
-            PayloadGetEntryInList payloadForGet, PagingWrapper pageable, EntryGetFilterDto filter);
+            PayloadGetEntryInList payloadForGet, PagingWrapper pageable, EntryApplicationListGetFilterDto filter);
 }

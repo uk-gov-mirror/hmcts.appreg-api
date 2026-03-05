@@ -47,6 +47,7 @@ import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
@@ -817,12 +818,13 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     public EntryPage getApplicationListEntries(
             PayloadGetEntryInList payloadForGet,
             PagingWrapper pageable,
-            EntryGetFilterDto filterDto) {
+            EntryApplicationListGetFilterDto filterDto) {
         log.debug(
                 "Started: Getting application list entries for list: {}",
                 payloadForGet.getListId());
 
-        Status status = applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
+        //TODO update filter to use new provided properties.
+        //Status status = applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
 
         return getApplicationListEntriesValidator.validate(
                 payloadForGet,
