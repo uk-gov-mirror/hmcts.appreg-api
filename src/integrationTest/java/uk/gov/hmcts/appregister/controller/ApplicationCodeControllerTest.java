@@ -30,6 +30,7 @@ import uk.gov.hmcts.appregister.applicationcode.api.ApplicationCodeSortFieldEnum
 import uk.gov.hmcts.appregister.applicationcode.audit.AppCodeAuditOperation;
 import uk.gov.hmcts.appregister.applicationcode.exception.ApplicationCodeError;
 import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum;
+import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.audit.event.OperationStatus;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
@@ -283,8 +284,8 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 "application_code",
                 null,
                 id,
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getType().name(),
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName()));
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getType().name(),
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
             AuditLogAsserter.getDataAuditAssertion(
@@ -292,8 +293,8 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 "application_code_start_date",
                 null,
                 "2016-01-01",
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getType().name(),
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName()));
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getType().name(),
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName()));
     }
 
     @Test
@@ -733,8 +734,8 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 "application_code",
                 null,
                 "AD99004",
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getType().name(),
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName()));
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getType().name(),
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
             AuditLogAsserter.getDataAuditAssertion(
@@ -742,8 +743,8 @@ public class ApplicationCodeControllerTest extends AbstractSecurityControllerTes
                 "application_code_title",
                 null,
                 "Certificate of Satisfaction",
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getType().name(),
-                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT.getEventName()));
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getType().name(),
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT.getEventName()));
     }
 
     @Test
