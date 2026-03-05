@@ -45,7 +45,7 @@ class AuditOperationServiceImplTest {
         AuditOperationLifecycleListener listener =
                 Mockito.mock(AuditOperationLifecycleListener.class);
         auditOperationServiceImpl.processAudit(
-                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT,
+                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
                     // Simulate some processing and return a response
                     return Optional.of(new AuditableResult<>(applicationCodeDto, null));
@@ -78,7 +78,7 @@ class AuditOperationServiceImplTest {
         AuditOperationLifecycleListener listener =
                 Mockito.mock(AuditOperationLifecycleListener.class);
         auditOperationServiceImpl.processAudit(
-                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT,
+                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
                     // Simulate some processing and return a response
                     return Optional.empty();
@@ -119,7 +119,7 @@ class AuditOperationServiceImplTest {
                 IllegalArgumentException.class,
                 () ->
                         auditOperationServiceImpl.processAudit(
-                                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT,
+                                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                                 (req) -> {
                                     // Simulate some processing and return a response
                                     throw new IllegalArgumentException("");

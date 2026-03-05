@@ -105,7 +105,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     public ApplicationCodeGetDetailDto findByCode(PayloadForGet payloadForGet) {
         return auditService.processAudit(
                 null,
-                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT,
+                AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                 req -> {
                     log.debug(
                             "Start: Find active Application Code using code: {} date: {}",
