@@ -20,7 +20,6 @@ import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 public class GetApplicationListEntriesValidatorTest {
     @Mock private ApplicationListRepository applicationListRepository;
 

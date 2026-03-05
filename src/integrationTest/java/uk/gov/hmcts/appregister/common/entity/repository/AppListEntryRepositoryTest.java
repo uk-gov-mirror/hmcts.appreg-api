@@ -451,6 +451,43 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
     }
 
     @Test
+    public void testGetListEntriesSearchWithSearchCriteria() {
+        // Searching without filter to get a list id to then filter.
+        Pageable page =
+            PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.DESC, "courtCode")
+                    .and(Sort.by(Sort.Direction.ASC, "id")));
+        Page<ApplicationListEntryGetSummaryProjection> page0 =
+            applicationListEntryRepository.searchForGetSummary(
+                null, false, null, null, null, null, null, null, null, null, null, null,
+                null, null, page);
+
+        ApplicationListEntryGetSummaryProjection projection0 = page0.getContent().get(4);
+
+        // When: page 0 size 1
+        Page<ApplicationListEntryGetSummaryProjection> page1 =
+            applicationListEntryRepository.searchForGetSummary(
+                UUID.fromString(projection0.getListId()), false, null, null, null, null, null, null, null, null, null, null,
+                null, null, page);
+
+        // Then
+        assertThat(page1.getTotalElements()).isEqualTo(1);
+        assertThat(page1.getTotalPages()).isEqualTo(1);
+        ApplicationListEntryGetSummaryProjection projection1 = page1.getContent().getFirst();
+        assertThat(projection1.getCjaCode()).isEqualTo("CJ");
+        assertThat(projection1.getCourtCode()).isEqualTo("RCJ001");
+        assertThat(projection1.getStatus()).isEqualTo(Status.OPEN);
+        assertNotNull(projection1.getRnameAddress());
+        assertThat(projection1.getTitle()).isEqualTo("Copy documents");
+        assertNotNull(projection1.getAnameAddress());
+        assertNotNull(projection1.getLegislation(), "");
+        assertNotNull(projection1.getStandardApplicantCode(), "APP001");
+        assertThat(projection1.getDateOfAl()).isEqualTo("2024-04-21");
+    }
+
+    @Test
     public void testGetListEntriesSearchForDataWithFullEntry() {
         // When: page 0 size 1
         Pageable page = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "courtCode"));

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
+import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
@@ -264,6 +265,11 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                         getLocalUrl(CREATE_ENTRY_CONTEXT + "/" + applicationListId + "/entries"),
                         tokenGenerator.fetchTokenForRole());
         Assertions.assertEquals(404, responseSpec.getStatusCode());
+
+        ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
+        Assertions.assertEquals(
+            ApplicationListError.LIST_NOT_FOUND.getCode().getType().get(),
+            problemDetail.getType());
     }
 
     private UUID createApplicationList(TokenAndJwksKey token, String prefix) throws Exception {
