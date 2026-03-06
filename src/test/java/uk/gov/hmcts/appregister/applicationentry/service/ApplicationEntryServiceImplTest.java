@@ -99,6 +99,7 @@ import uk.gov.hmcts.appregister.data.FeeTestData;
 import uk.gov.hmcts.appregister.data.NameAddressTestData;
 import uk.gov.hmcts.appregister.data.StandardApplicantTestData;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
@@ -310,6 +311,9 @@ public class ApplicationEntryServiceImplTest {
                         eq(entryGetFilterDto.getRespondentSurname()),
                         eq(entryGetFilterDto.getRespondentPostcode()),
                         eq(entryGetFilterDto.getAccountReference()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
                         eq(mockPage)))
                 .thenReturn(page);
 
@@ -886,9 +890,10 @@ public class ApplicationEntryServiceImplTest {
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        EntryGetFilterDto entryGetFilterDto =
-                Instancio.of(EntryGetFilterDto.class).withSettings(settings).create();
-        entryGetFilterDto.setStatus(ApplicationListStatus.OPEN);
+        EntryApplicationListGetFilterDto entryGetFilterDto =
+                Instancio.of(EntryApplicationListGetFilterDto.class)
+                        .withSettings(settings)
+                        .create();
 
         Pageable mockPage = mock(Pageable.class);
         when(mockPage.getPageNumber()).thenReturn(1);
@@ -896,23 +901,24 @@ public class ApplicationEntryServiceImplTest {
         Page<ApplicationListEntryGetSummaryProjection> dbPage =
                 new PageImpl<>(List.of(applicationListEntryGetSummaryProjection), mockPage, 1);
 
-        when(applicationListEntryMapStructMapper.toStatus(entryGetFilterDto.getStatus()))
-                .thenReturn(Status.OPEN);
         when(applicationListEntryRepository.searchForGetSummary(
                         eq(applicationList.getUuid()),
-                        eq(true),
-                        eq(entryGetFilterDto.getDate()),
-                        eq(entryGetFilterDto.getCourtCode()),
-                        eq(entryGetFilterDto.getOtherLocationDescription()),
-                        eq(entryGetFilterDto.getCjaCode()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
                         eq(entryGetFilterDto.getApplicantOrganisation()),
                         eq(entryGetFilterDto.getApplicantSurname()),
-                        eq(entryGetFilterDto.getStandardApplicantCode()),
-                        eq(Status.fromValue(entryGetFilterDto.getStatus().getValue())),
+                        eq(null),
+                        eq(null),
                         eq(entryGetFilterDto.getRespondentOrganisation()),
                         eq(entryGetFilterDto.getRespondentSurname()),
                         eq(entryGetFilterDto.getRespondentPostcode()),
                         eq(entryGetFilterDto.getAccountReference()),
+                        eq(entryGetFilterDto.getApplicationTitle()),
+                        eq(entryGetFilterDto.getFeeRequired()),
+                        eq(entryGetFilterDto.getSequenceNumber()),
                         eq(mockPage)))
                 .thenReturn(dbPage);
 
@@ -937,10 +943,10 @@ public class ApplicationEntryServiceImplTest {
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        EntryGetFilterDto entryGetFilterDto =
-                Instancio.of(EntryGetFilterDto.class).withSettings(settings).create();
-
-        entryGetFilterDto.setStatus(ApplicationListStatus.OPEN);
+        EntryApplicationListGetFilterDto entryGetFilterDto =
+                Instancio.of(EntryApplicationListGetFilterDto.class)
+                        .withSettings(settings)
+                        .create();
 
         when(applicationListRepository.findByUuid(applicationList.getUuid()))
                 .thenReturn(Optional.of(applicationList));
@@ -952,23 +958,24 @@ public class ApplicationEntryServiceImplTest {
         Page<ApplicationListEntryGetSummaryProjection> dbPage =
                 new PageImpl<>(List.of(), mockPage, 0);
 
-        when(applicationListEntryMapStructMapper.toStatus(entryGetFilterDto.getStatus()))
-                .thenReturn(Status.OPEN);
         when(applicationListEntryRepository.searchForGetSummary(
                         eq(applicationList.getUuid()),
-                        eq(true),
-                        eq(entryGetFilterDto.getDate()),
-                        eq(entryGetFilterDto.getCourtCode()),
-                        eq(entryGetFilterDto.getOtherLocationDescription()),
-                        eq(entryGetFilterDto.getCjaCode()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
                         eq(entryGetFilterDto.getApplicantOrganisation()),
                         eq(entryGetFilterDto.getApplicantSurname()),
-                        eq(entryGetFilterDto.getStandardApplicantCode()),
-                        eq(Status.fromValue(entryGetFilterDto.getStatus().getValue())),
+                        eq(null),
+                        eq(null),
                         eq(entryGetFilterDto.getRespondentOrganisation()),
                         eq(entryGetFilterDto.getRespondentSurname()),
                         eq(entryGetFilterDto.getRespondentPostcode()),
                         eq(entryGetFilterDto.getAccountReference()),
+                        eq(entryGetFilterDto.getApplicationTitle()),
+                        eq(entryGetFilterDto.getFeeRequired()),
+                        eq(entryGetFilterDto.getSequenceNumber()),
                         eq(mockPage)))
                 .thenReturn(dbPage);
 

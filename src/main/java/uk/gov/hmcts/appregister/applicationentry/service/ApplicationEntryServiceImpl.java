@@ -124,6 +124,9 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                         filterDto.getRespondentSurname(),
                         filterDto.getRespondentPostcode(),
                         filterDto.getAccountReference(),
+                        null,
+                        null,
+                        null,
                         pageable.getPageable());
 
         // breaks name into individual and/or organisation parts
@@ -830,8 +833,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                 "Started: Getting application list entries for list: {}",
                 payloadForGet.getListId());
 
-        //TODO update filter to use new provided properties.
-        //Status status = applicationListEntryMapStructMapper.toStatus(filterDto.getStatus());
+        // TODO update filter to use new provided properties.
 
         return getApplicationListEntriesValidator.validate(
                 payloadForGet,
@@ -840,19 +842,22 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                     Page<ApplicationListEntryGetSummaryProjection> entries =
                             applicationListEntryRepository.searchForGetSummary(
                                     payloadForGet.getListId(),
-                                    filterDto.getDate() != null,
-                                    filterDto.getDate(),
-                                    filterDto.getCourtCode(),
-                                    filterDto.getOtherLocationDescription(),
-                                    filterDto.getCjaCode(),
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
                                     filterDto.getApplicantOrganisation(),
                                     filterDto.getApplicantSurname(),
-                                    filterDto.getStandardApplicantCode(),
-                                    status,
+                                    null,
+                                    null,
                                     filterDto.getRespondentOrganisation(),
                                     filterDto.getRespondentSurname(),
                                     filterDto.getRespondentPostcode(),
                                     filterDto.getAccountReference(),
+                                    filterDto.getApplicationTitle(),
+                                    filterDto.getFeeRequired(),
+                                    filterDto.getSequenceNumber(),
                                     pageable.getPageable());
 
                     EntryPage entryPage = new EntryPage();

@@ -50,4 +50,6 @@ public interface ApplicationListEntryGetSummaryProjection {
     Long getId();
 
     String getListId();
+
+    Integer getSequenceNumber();
 }

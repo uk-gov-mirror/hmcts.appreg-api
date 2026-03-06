@@ -433,7 +433,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         Page<ApplicationListEntryGetSummaryProjection> page0 =
                 applicationListEntryRepository.searchForGetSummary(
                         null, false, null, null, null, null, null, null, null, null, null, null,
-                        null, null, page);
+                        null, null, null, null, null, page);
 
         // Then
         assertThat(page0.getTotalElements()).isEqualTo(11);
@@ -461,8 +461,8 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                                 .and(Sort.by(Sort.Direction.ASC, "id")));
         Page<ApplicationListEntryGetSummaryProjection> page0 =
                 applicationListEntryRepository.searchForGetSummary(
-                        null, false, null, null, null, null, null, null, null, null, null, null,
-                        null, null, page);
+                        null, null, null, null, null, null, null, null, null, null, null, null,
+                        null, null, null, null, null, page);
 
         ApplicationListEntryGetSummaryProjection projection0 = page0.getContent().get(4);
 
@@ -470,7 +470,10 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         Page<ApplicationListEntryGetSummaryProjection> page1 =
                 applicationListEntryRepository.searchForGetSummary(
                         UUID.fromString(projection0.getListId()),
-                        false,
+                        null,
+                        null,
+                        null,
+                        null,
                         null,
                         null,
                         null,
@@ -520,6 +523,9 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         "Johnson",
                         "XY9 8ZZ",
                         "29345",
+                        null,
+                        null,
+                        null,
                         page);
 
         // Then
@@ -574,6 +580,9 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         "Jac",
                         "Turn",
                         "AB11 2CD",
+                        null,
+                        null,
+                        null,
                         null,
                         page);
 
@@ -632,6 +641,9 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         true,
                         hearingDate,
                         "UNQ001",
+                        null,
+                        null,
+                        null,
                         null,
                         null,
                         null,
@@ -859,6 +871,9 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         savedEntry.getAnamedaddress().getSurname(),
+                        null,
+                        null,
+                        null,
                         null,
                         null,
                         null,

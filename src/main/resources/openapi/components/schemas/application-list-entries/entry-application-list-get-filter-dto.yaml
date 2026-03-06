@@ -8,6 +8,12 @@ properties:
     description: The sequence number of the application in the list. This has to be Exact.
     example: 1
 
+  applicationTitle:
+    type: string
+    description: The title of the application. This can be Partial.
+    example: "Smith vs Jones"
+    maxLength: 200
+
   applicantOrganisation:
     type: string
     description: The name of the organisation submitting the application. This can be Partial.
@@ -46,7 +52,7 @@ properties:
   feeRequired:
     type: boolean
     description: Whether a fee is required for the application. This has to be Exact.
-    example: "Yes"
+    example: "Y"
 
   resulted:
     type: string

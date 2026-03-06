@@ -343,6 +343,7 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(target = "isResulted", expression = "java(projection.getResult() != null)")
     @Mapping(target = "date", expression = "java(projection.getDateOfAl())")
     @Mapping(target = "listId", source = "projection.listId")
+    @Mapping(target = "sequenceNumber", source = "projection.sequenceNumber")
     public abstract EntryGetSummaryDto toEntrySummary(
             ApplicationListEntryGetSummaryProjection projection);
 

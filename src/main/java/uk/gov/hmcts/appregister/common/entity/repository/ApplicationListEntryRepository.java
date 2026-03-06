@@ -176,7 +176,9 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                     rna.postcode as respondentPostcode,
                     ale.accountNumber as  accountReference,
                     sa as standardApplicant,
-                    al.uuid as listId
+                    al.uuid as listId,
+                    ac.title AS applicationTitle,
+                    ale.sequenceNumber as sequenceNumber
                 from ApplicationListEntry ale
                 LEFT JOIN ale.anamedaddress ana
                 LEFT JOIN ale.standardApplicant sa
@@ -188,7 +190,7 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                             = ale AND aler.id = (SELECT MAX(sub.id)
                               FROM AppListEntryResolution sub
                               WHERE sub.applicationList = ale)
-            WHERE  (:hasHearingDate = false OR al.date = :hearingDate)
+            WHERE  (:hasHearingDate = false OR :hasHearingDate IS NULL OR al.date = :hearingDate)
                     AND (:applicationListId IS NULL OR al.uuid = :applicationListId)
                     AND (:otherLocationDescription IS NULL OR LOWER(al.otherLocation)
                             LIKE CONCAT('%', LOWER(cast(:otherLocationDescription AS string)), '%') ESCAPE '\\')
@@ -213,12 +215,16 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                     AND (:respondentPostcode IS NULL OR LOWER(rna.postcode) LIKE
                               CONCAT('%', LOWER(cast(:respondentPostcode AS string)), '%')
                                           ESCAPE '\\' AND rna.code='RE')
+                    AND (:applicationTitle IS NULL OR LOWER(ac.title) LIKE
+                                CONCAT('%', LOWER(cast(:applicationTitle AS string)), '%')  ESCAPE '\\')
+                    AND (:feeRequired IS NULL OR ac.feeDue = CASE WHEN :feeRequired = true THEN 'Y' ELSE 'N' END)
+                    AND (:sequenceNumber IS NULL OR ale.sequenceNumber = :sequenceNumber)
                     AND (al.deleted IS NULL OR al.deleted <> 'Y')
                     AND (ale.deleted IS NULL OR ale.deleted <> 'Y')
             """)
     Page<ApplicationListEntryGetSummaryProjection> searchForGetSummary(
             @Param("applicationListId") UUID applicationListId,
-            boolean hasHearingDate,
+            Boolean hasHearingDate,
             @Param("hearingDate") LocalDate hearingDate,
             @Param("courtCode") String courtCode,
             @LikeParam @Param("otherLocationDescription") String otherLocationDescription,
@@ -231,20 +237,10 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
             @LikeParam @Param("respondentSurname") String respondentSurname,
             @LikeParam @Param("respondentPostcode") String respondentPostcode,
             @LikeParam @Param("accountReference") String accountReference,
+            @LikeParam @Param("applicationTitle") String applicationTitle,
+            @Param("feeRequired") Boolean feeRequired,
+            @Param("sequenceNumber") Integer sequenceNumber,
             Pageable pageable);
-
-    Page<ApplicationListEntryGetSummaryProjection> searchForSummaryByListId(
-        @Param("applicationListId") UUID applicationListId,
-        @LikeParam @Param("applicantOrganisation") String applicantOrganisation,
-        @LikeParam @Param("applicantSurname") String applicantSurname,
-        @LikeParam @Param("respondentOrganisation") String respondentOrganisation,
-        @LikeParam @Param("respondentSurname") String respondentSurname,
-        @LikeParam @Param("respondentPostcode") String respondentPostcode,
-        @LikeParam @Param("accountReference") String accountReference,
-        @Param("feeRequired") Boolean feeRequired,
-        @Param("resulted") String resulted,
-        @Param("sequenceNumber") Integer sequenceNumber,
-        Pageable pageable);
 
     /**
      * Retrieves list of entries for a given application list.

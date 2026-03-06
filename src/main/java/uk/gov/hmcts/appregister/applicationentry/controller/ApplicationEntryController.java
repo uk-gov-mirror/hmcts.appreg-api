@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntryByListIdSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
 import uk.gov.hmcts.appregister.applicationentry.model.PayloadForUpdateEntry;
 import uk.gov.hmcts.appregister.applicationentry.model.PayloadGetEntryInList;
@@ -129,9 +130,9 @@ public class ApplicationEntryController implements ApplicationListEntriesApi {
                         pageNumber,
                         pageSize,
                         sort,
-                        ApplicationEntrySortFieldEnum.CODE,
+                        ApplicationEntryByListIdSortFieldEnum.SEQUENCE_NUMBER,
                         Sort.Direction.ASC,
-                        ApplicationEntrySortFieldEnum::getEntityValue);
+                        ApplicationEntryByListIdSortFieldEnum::getEntityValue);
 
         EntryPage entryResponse =
                 applicationEntryService.getApplicationListEntries(payloadForGet, pageInfo, filter);

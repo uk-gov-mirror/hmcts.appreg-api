@@ -46,7 +46,6 @@ import uk.gov.hmcts.appregister.testutils.util.AuditLogAsserter;
 import uk.gov.hmcts.appregister.testutils.util.HeaderUtil;
 import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
 import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
-import static org.mockito.Mockito.when;
 
 public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
 
