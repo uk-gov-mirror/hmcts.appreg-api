@@ -61,7 +61,7 @@ public class ApplicationListControllerDeleteTest extends AbstractApplicationList
 
         // assert the diff audit log message
         differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(2, false);
+        differenceLogAsserter.assertDiffCount(3, false);
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
@@ -71,7 +71,7 @@ public class ApplicationListControllerDeleteTest extends AbstractApplicationList
                         "DELETE",
                         "Delete Application List"));
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
                         "version",
                         "0",

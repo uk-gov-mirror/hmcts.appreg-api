@@ -301,7 +301,7 @@ public class ApplicationEntryControllerSearchTest extends AbstractApplicationEnt
                         Optional.of(pageSize),
                         Optional.of(pageNumber),
                         List.of(
-                            SortableFieldMapper.getSortStringForAsc(
+                                SortableFieldMapper.getSortStringForAsc(
                                         ApplicationEntrySortFieldEnum.ACCOUNT_REFERENCE)),
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole());

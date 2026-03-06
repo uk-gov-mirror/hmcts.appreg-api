@@ -75,7 +75,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
 
         differenceLogAsserter.assertNoErrors();
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
                         "id",
                         "",
@@ -89,7 +89,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                                 .getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.CRIMINAL_JUSTICE_AREA,
                         "cja_id",
                         "",
@@ -103,7 +103,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                                 .getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPLICATION_LISTS_ENTRY,
                         "ale_id",
                         "",
@@ -146,7 +146,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
 
         differenceLogAsserter.assertNoErrors();
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
                         "id",
                         "",
@@ -160,7 +160,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                                 .getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.CRIMINAL_JUSTICE_AREA,
                         "cja_id",
                         "",
@@ -174,7 +174,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                                 .getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
-            DataAuditLogAsserter.getDataAuditAssertion(
+                DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPLICATION_LISTS_ENTRY,
                         "ale_id",
                         "",

@@ -45,7 +45,7 @@ public class FeatureRules extends BaseRules {
                     .definedBy(BASE_PACKAGE + ".(*).validator..")
                     .layer("enumeration")
                     .definedBy(BASE_PACKAGE + ".(*).enumeration..")
-                .layer("common")
+                    .layer("common")
                     .definedBy(BASE_PACKAGE + ".common..")
                     .layer("exception")
                     .definedBy(BASE_PACKAGE + ".(*).exception..")
