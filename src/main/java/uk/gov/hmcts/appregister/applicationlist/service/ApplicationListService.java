@@ -106,6 +106,7 @@ public interface ApplicationListService {
      */
     ApplicationListPage getPage(ApplicationListGetFilterDto dto, PagingWrapper pageable);
 
+
     /**
      * Gets an Application List with all its Application List Entries.
      *

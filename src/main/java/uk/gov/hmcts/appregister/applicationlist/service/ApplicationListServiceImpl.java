@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,6 +51,7 @@ import uk.gov.hmcts.appregister.common.projection.ApplicationListSummaryProjecti
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
 import uk.gov.hmcts.appregister.common.util.OfficialTypeUtil;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
+import uk.gov.hmcts.appregister.config.AppConfig;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
@@ -76,6 +79,10 @@ import uk.gov.hmcts.appregister.generated.model.Official;
 @Service
 public class ApplicationListServiceImpl implements ApplicationListService {
     private static final long ZERO_ENTITIES = 0L;
+
+    @Value("${app.app-list-max-searchable-entries}")
+    private int appListMaxSearchableEntities;
+
 
     // Repositories
     private final ApplicationListRepository repository;
@@ -431,6 +438,14 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                     dto.getDescription(),
                                     dto.getOtherLocationDescription(),
                                     pageable.getPageable());
+
+                    if (dbPage.getTotalElements() > appListMaxSearchableEntities) {
+                        throw new AppRegistryException(
+                                ApplicationListError.TOO_MANY_RESULTS,
+                                "Too many results to return: %d. Please narrow your search criteria."
+                                        .formatted(dbPage.getTotalElements()));
+                    }
+
                     return assembleResponsePage(dbPage, pageable);
                 },
                 true);

@@ -79,6 +79,7 @@ spring:
     static-path-pattern: /specs/**
 
 app:
+  app-list-max-searchable-entries: 1000
   timezone: "Europe/London"
 
 azure:

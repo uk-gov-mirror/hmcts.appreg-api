@@ -2,7 +2,7 @@ get:
   operationId: getApplicationLists
   tags: [ application-lists ]
   summary: Get Application Lists (paginated, filterable)
-  description: Returns a paginated list of Application Lists.
+  description: Returns a paginated list of Application Lists, up to 1000 items, with optional filtering and sorting.
   parameters:
     - in: query
       name: filter

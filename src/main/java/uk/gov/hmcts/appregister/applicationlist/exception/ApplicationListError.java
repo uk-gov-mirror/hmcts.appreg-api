@@ -86,7 +86,12 @@ public enum ApplicationListError implements ErrorCodeEnum {
             DefaultErrorDetail.create(
                     HttpStatus.BAD_REQUEST,
                     "A closed application list is not allowed to be updated",
-                    "AL-20"));
+                    "AL-20")),
+    TOO_MANY_RESULTS(
+            DefaultErrorDetail.create(
+                    HttpStatus.BAD_REQUEST,
+                    "Too many results returned. Please narrow your search criteria and try again.",
+                    "AL-21"));
 
     private final DefaultErrorDetail defaultErrorCode;
 
