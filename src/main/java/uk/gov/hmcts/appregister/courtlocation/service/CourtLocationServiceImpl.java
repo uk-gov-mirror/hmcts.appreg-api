@@ -131,12 +131,14 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                     dbPage.forEach(
                             court -> responsePage.addContentItem(mapper.toSummaryDto(court)));
 
-                    AuditableResult<CourtLocationPage, NationalCourtHouse> result =
-                            new AuditableResult<>(
-                                    responsePage, mapper.toEntity(
-                                        codeFilter != null ? codeFilter : "",
-                                        nameFilter != null ? nameFilter : ""));
-                    ;
+                    AuditableResult<CourtLocationPage, NationalCourtHouse> result;
+                    if (nameFilter == null && codeFilter == null) {
+                        result = new AuditableResult<>(responsePage, mapper.toEntity("", ""));
+                    } else {
+                        result =
+                                new AuditableResult<>(
+                                        responsePage, mapper.toEntity(codeFilter, nameFilter));
+                    }
 
                     return Optional.of(result);
                 },
