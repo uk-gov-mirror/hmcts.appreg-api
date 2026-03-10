@@ -72,7 +72,7 @@ public class CourtLocationControllerTest extends AbstractSecurityControllerTest 
         assertThat(dto.getName()).isEqualTo(CARDIFF_NAME);
         assertThat(dto.getLocationCode()).isEqualTo(CARDIFF_CODE);
         assertThat(dto.getStartDate()).isEqualTo(CARDIFF_START);
-        assertThat(dto.getEndDate().isPresent()).isFalse();
+        assertThat(dto.getEndDate().get()).isNull();
 
         AuditAssertUtil.assertStart(AUDIT_GET_ONE, logCaptor.getInfoLogs().get(0));
         AuditAssertUtil.assertCompleted(AUDIT_GET_ONE, logCaptor.getInfoLogs().get(1));
@@ -115,7 +115,7 @@ public class CourtLocationControllerTest extends AbstractSecurityControllerTest 
         assertThat(dto.getName()).isEqualTo(BRISTOL_NAME);
         assertThat(dto.getLocationCode()).isEqualTo(BRISTOL_CODE);
         assertThat(dto.getStartDate()).isEqualTo(BRISTOL_START);
-        assertThat(dto.getEndDate().isPresent()).isFalse();
+        Assertions.assertNull(dto.getEndDate().get());
 
         AuditAssertUtil.assertStart(AUDIT_GET_ONE, logCaptor.getInfoLogs().get(0));
         AuditAssertUtil.assertCompleted(AUDIT_GET_ONE, logCaptor.getInfoLogs().get(1));

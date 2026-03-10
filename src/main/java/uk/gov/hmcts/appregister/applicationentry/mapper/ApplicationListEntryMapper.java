@@ -605,7 +605,7 @@ public abstract class ApplicationListEntryMapper {
      * @param filterDto Entity containing the GET dto for logging.
      * @return ApplicationListEntry Entity containing the mapped values from the GET params.
      */
-    @Mapping(target = "caseReference", source = "filterDto.accountReference")
+    @Mapping(target = "accountNumber", source = "filterDto.accountReference")
     @Mapping(target = "standardApplicant.applicantCode", source = "filterDto.standardApplicantCode")
     @Mapping(target = "anamedaddress.name", source = "filterDto.applicantOrganisation")
     @Mapping(target = "anamedaddress.surname", source = "filterDto.applicantSurname")
@@ -625,8 +625,8 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(target = "applicationCode", ignore = true)
     @Mapping(target = "numberOfBulkRespondents", ignore = true)
     @Mapping(target = "applicationListEntryWording", ignore = true)
-    @Mapping(target = "accountNumber", ignore = true)
     @Mapping(target = "entryRescheduled", ignore = true)
+    @Mapping(target = "caseReference", ignore = true)
     @Mapping(target = "notes", ignore = true)
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "bulkUpload", ignore = true)

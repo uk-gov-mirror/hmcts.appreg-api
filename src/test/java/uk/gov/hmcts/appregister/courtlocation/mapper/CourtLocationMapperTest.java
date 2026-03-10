@@ -63,7 +63,7 @@ public class CourtLocationMapperTest {
         Assertions.assertEquals(name, dto.getName());
         Assertions.assertEquals(startDate, dto.getStartDate());
 
-        Assertions.assertFalse(dto.getEndDate().isPresent(), "endDate should be marked present");
+        Assertions.assertNull(dto.getEndDate().get(), "endDate should be marked present");
     }
 
     @Test

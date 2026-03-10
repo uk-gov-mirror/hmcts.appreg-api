@@ -72,7 +72,7 @@ public class ApplicationEntryControllerSearchTest extends AbstractApplicationEnt
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPLICATION_LISTS_ENTRY,
-                        "case_reference",
+                        "account_number",
                         null,
                         "29345",
                         AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST.getType().name(),
@@ -286,7 +286,7 @@ public class ApplicationEntryControllerSearchTest extends AbstractApplicationEnt
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPLICATION_LISTS_ENTRY,
-                        "case_reference",
+                        "account_number",
                         null,
                         "29345",
                         AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST.getType().name(),
@@ -635,7 +635,7 @@ public class ApplicationEntryControllerSearchTest extends AbstractApplicationEnt
         differenceLogAsserter.assertDataAuditChange(
                 AuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPLICATION_LISTS_ENTRY,
-                        "case_reference",
+                        "account_number",
                         null,
                         "",
                         AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST.getType().name(),

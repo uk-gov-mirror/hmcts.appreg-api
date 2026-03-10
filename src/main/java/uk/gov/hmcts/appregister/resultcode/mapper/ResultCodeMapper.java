@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.NullValueCheckStrategy;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.openapitools.jackson.nullable.JsonNullable;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
@@ -22,11 +20,7 @@ import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
  *   <li>{@link #toSummaryDto(ResolutionCode)} — produces a summary DTO with only code and title.
  * </ul>
  */
-@Mapper(
-        componentModel = "spring",
-        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface ResultCodeMapper {
 
     // Map a {@link ResolutionCode} entity to a full detail DTO.
