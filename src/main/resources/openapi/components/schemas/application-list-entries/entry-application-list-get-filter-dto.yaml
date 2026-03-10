@@ -18,13 +18,13 @@ properties:
     type: string
     description: The name of the organisation submitting the application. This can be Partial.
     example: "Smith Legal Services Ltd"
-    maxLength: 100
+    maxLength: 300
 
   respondentName:
     type: string
     description: The name of the organisation responding to the application.
     example: "Jones Consulting Group"
-    maxLength: 100
+    maxLength: 300
 
   respondentPostcode:
     type: string
