@@ -74,4 +74,3 @@ public class CourtLocationMapperTest {
         Assertions.assertNotNull(mapper.toEntity(record));
     }
 }
-

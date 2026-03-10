@@ -22,6 +22,7 @@ import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
 import uk.gov.hmcts.appregister.standardapplicant.audit.StandardApplicantOperation;
+import uk.gov.hmcts.appregister.standardapplicant.mapper.CodeAndName;
 import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
 import uk.gov.hmcts.appregister.standardapplicant.validator.StandardApplicantExistsValidator;
 
@@ -73,11 +74,9 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                             name,
                             pageable);
 
+                    CodeAndName record = new CodeAndName(code, name);
                     AuditableResult<StandardApplicantPage, StandardApplicant> result =
-                            new AuditableResult<>(
-                                    newPage,
-                                    mapper.toEntity(
-                                            code != null ? code : "", name != null ? name : ""));
+                            new AuditableResult<>(newPage, mapper.toEntity(record));
 
                     return Optional.of(result);
                 },

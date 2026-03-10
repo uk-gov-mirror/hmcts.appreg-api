@@ -24,6 +24,7 @@ import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
 import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeOperation;
 import uk.gov.hmcts.appregister.resultcode.exception.ResultCodeError;
+import uk.gov.hmcts.appregister.resultcode.mapper.CodeAndTitle;
 import uk.gov.hmcts.appregister.resultcode.mapper.ResultCodeMapper;
 
 /**
@@ -125,11 +126,6 @@ public class ResultCodeServiceImpl implements ResultCodeService {
         return auditService.processAudit(
                 ResultCodeOperation.GET_RESULT_CODES_AUDIT_EVENT,
                 unused -> {
-                    log.debug(
-                            "Start: Find active Result Codes filtered by code: {} and title: {}",
-                            codeFilter,
-                            titleFilter);
-
                     Page<ResolutionCode> dbPage =
                             repository.findActiveOnDate(
                                     codeFilter, titleFilter, todayUk, pageable.getPageable());
@@ -149,14 +145,10 @@ public class ResultCodeServiceImpl implements ResultCodeService {
                             "Finish: Find active Result Codes filtered by code: {} and title: {}",
                             codeFilter,
                             titleFilter);
-                    AuditableResult<ResultCodePage, Keyable> result;
-                    if (codeFilter == null && titleFilter == null) {
-                        result = new AuditableResult<>(responsePage, mapper.toEntity("", ""));
-                    } else {
-                        result =
-                                new AuditableResult<>(
-                                        responsePage, mapper.toEntity(codeFilter, titleFilter));
-                    }
+
+                    CodeAndTitle record = new CodeAndTitle(codeFilter, titleFilter);
+                    AuditableResult<ResultCodePage, Keyable> result =
+                            new AuditableResult<>(responsePage, mapper.toEntity(record));
                     return Optional.of(result);
                 },
                 // Spring injects all AuditOperationLifecycleListener beans as a List;

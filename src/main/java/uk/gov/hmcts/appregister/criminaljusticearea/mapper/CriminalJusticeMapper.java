@@ -19,7 +19,7 @@ public interface CriminalJusticeMapper {
     @Mapping(target = "id", constant = "0L")
     @Mapping(target = "code", source = "code")
     @Mapping(target = "description", source = "description")
-    CriminalJusticeArea toEntity(String code, String description);
+    CriminalJusticeArea toEntity(CodeAndDescription record);
 
     @Mapping(target = "id", constant = "0L")
     @Mapping(target = "code", source = "code")

@@ -50,7 +50,7 @@ public interface ResultCodeMapper {
     @Mapping(target = "id", constant = "0L")
     @Mapping(target = "resultCode", source = "code")
     @Mapping(target = "title", source = "title")
-    ResolutionCode toEntity(String code, String title);
+    ResolutionCode toEntity(CodeAndTitle record);
 
     default JsonNullable<LocalDate> map(LocalDate value) {
         return value != null ? JsonNullable.of(value) : JsonNullable.undefined();

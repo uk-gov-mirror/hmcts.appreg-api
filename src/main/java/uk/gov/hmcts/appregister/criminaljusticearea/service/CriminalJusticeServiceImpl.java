@@ -14,6 +14,7 @@ import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.service.LocationLookupService;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.criminaljusticearea.audit.CriminalJusticeAuditOperation;
+import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CodeAndDescription;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
@@ -69,12 +70,11 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                                             criminalJusticeAreaPage.addContentItem(
                                                     criminalJusticeMapper.toDto(entry)));
 
+                    CodeAndDescription record = new CodeAndDescription(code, description);
                     AuditableResult<CriminalJusticeAreaPage, CriminalJusticeArea> result =
                             new AuditableResult<>(
                                     criminalJusticeAreaPage,
-                                    criminalJusticeMapper.toEntity(
-                                            code != null ? code : "",
-                                            description != null ? description : ""));
+                                    criminalJusticeMapper.toEntity(record));
 
                     return Optional.of(result);
                 },
