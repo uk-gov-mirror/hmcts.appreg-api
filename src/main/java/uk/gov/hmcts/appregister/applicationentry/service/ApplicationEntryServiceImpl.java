@@ -28,6 +28,7 @@ import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeId;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
+import uk.gov.hmcts.appregister.common.entity.AppListEntrySequenceMapping;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
@@ -35,6 +36,7 @@ import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeStatusRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryOfficialRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.AppListEntrySequenceMappingRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
@@ -79,6 +81,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final AppListEntryOfficialRepository appListEntryOfficialRepository;
     private final AppListEntryFeeRepository appListEntryFeeRepository;
     private final StandardApplicantRepository standardApplicantRepository;
+    private final AppListEntrySequenceMappingRepository appListEntrySequenceMappingRepository;
 
     private final ApplicationListEntryMapper applicationListEntryMapStructMapper;
     private final ApplicantMapper applicantMapper;
@@ -123,16 +126,16 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                     filterDto.getAccountReference(),
                                     pageable.getPageable());
 
-                    // breaks name into individual and/or organisation parts
-                    EntryPage newPage = new EntryPage();
-                    pageMapper.toPage(resultPage, newPage, pageable.getSortStrings());
+        // breaks name into individual and/or organisation parts
+        EntryPage newPage = new EntryPage();
+        pageMapper.toPage(resultPage, newPage, pageable.getSortStrings());
 
-                    // Map each entity to a summary DTO and add to the page content
-                    resultPage.forEach(
-                            entry -> {
-                                newPage.addContentItem(
-                                        applicationListEntryMapStructMapper.toEntrySummary(entry));
-                            });
+        // Map each entity to a summary DTO and add to the page content
+        resultPage.forEach(
+                entry -> {
+                    newPage.addContentItem(
+                            applicationListEntryMapStructMapper.toEntrySummary(entry));
+                });
 
                     log.debug(
                             "Finished: Find Application Entry for criteria: {} with paging: {}",
@@ -186,6 +189,10 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                                                 respondentToSave,
                                                                 success.getApplicationCode(),
                                                                 success.getApplicationList());
+
+                                        Long alId = success.getApplicationList().getId();
+                                        short seq = allocateNextSequence(alId);
+                                        listEntryEntity.setSequenceNumber(seq);
 
                                         listEntryEntity =
                                                 refreshEntity(
@@ -807,33 +814,18 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         return getEntryValidator.validate(
                 entry,
                 (req, success) -> {
-                    return auditService.processAudit(
-                            null,
-                            AppListEntryAuditOperation.GET_APP_ENTRY_LIST_DETAIL,
-                            (r) -> {
-                                getKeyablesForCreateUpdateEtag(success.getApplicationListEntry());
-                                EntryGetDetailDto dto =
-                                        applicationListEntryMapStructMapper.toEntryGetDetailDto(
-                                                success.getApplicationListEntry(),
-                                                hasOffsite(success.getApplicationListEntry()));
-                                log.debug(
-                                        "Finished: Getting application list entry detail: {} for list: {}",
-                                        entry.getEntryId(),
-                                        entry.getListId());
-                                AuditableResult<
-                                                MatchResponse<EntryGetDetailDto>,
-                                                ApplicationListEntry>
-                                        result =
-                                                new AuditableResult<>(
-                                                        MatchResponse.of(
-                                                                dto,
-                                                                getKeyablesForCreateUpdateEtag(
-                                                                        success
-                                                                                .getApplicationListEntry())),
-                                                        applicationListEntryMapStructMapper
-                                                                .toApplicationListEntry(entry));
-                                return Optional.of(result);
-                            });
+                    getKeyablesForCreateUpdateEtag(success.getApplicationListEntry());
+                    EntryGetDetailDto dto =
+                            applicationListEntryMapStructMapper.toEntryGetDetailDto(
+                                    success.getApplicationListEntry(),
+                                    hasOffsite(success.getApplicationListEntry()));
+                    log.debug(
+                            "Finished: Getting application list entry detail: {} for list: {}",
+                            entry.getEntryId(),
+                            entry.getListId());
+
+                    return MatchResponse.of(
+                            dto, getKeyablesForCreateUpdateEtag(success.getApplicationListEntry()));
                 });
     }
 
@@ -889,5 +881,23 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         keyables.addAll(appListStatus);
         keyables.addAll(feesForEntry);
         return keyables;
+    }
+
+    private short allocateNextSequence(Long alId) {
+
+        AppListEntrySequenceMapping mapping =
+                appListEntrySequenceMappingRepository.findByAlIdForUpdate(alId).orElse(null);
+
+        if (mapping == null) {
+            mapping = AppListEntrySequenceMapping.builder().alId(alId).aleLastSequence(1).build();
+
+            appListEntrySequenceMappingRepository.save(mapping);
+            return (short) 1;
+        }
+
+        int next = mapping.getAleLastSequence() + 1;
+        mapping.setAleLastSequence(next);
+
+        return (short) next;
     }
 }

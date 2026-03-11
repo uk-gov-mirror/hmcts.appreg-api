@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ProblemDetail;
+
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
@@ -612,6 +614,32 @@ public class ResultCodeControllerTest extends AbstractSecurityControllerTest {
                         .successRole(RoleEnum.USER)
                         .successRole(RoleEnum.ADMIN)
                         .build());
+    }
+
+    @Test
+    public void givenValidRequest_whenMultipleSortsArePresent_thenReturn400() throws Exception {
+        var token =
+            getATokenWithValidCredentials()
+                .roles(List.of(RoleEnum.USER))
+                .build()
+                .fetchTokenForRole();
+
+        Response responseSpec =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(1),
+                Optional.of(0),
+                List.of(
+                    ResultCodeSortFieldEnum.CODE.getApiValue(),
+                    ResultCodeSortFieldEnum.TITLE.getApiValue()),
+                getLocalUrl(WEB_CONTEXT),
+                token);
+
+        // assert the response
+        responseSpec.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
+        Assertions.assertEquals(
+            CommonAppError.MULTIPLE_SORT_NOT_SUPPORTED.getCode().getType().get(),
+            problemDetail.getType());
     }
 
     // --- Filter helper (for query params) ------------------------------------------------------

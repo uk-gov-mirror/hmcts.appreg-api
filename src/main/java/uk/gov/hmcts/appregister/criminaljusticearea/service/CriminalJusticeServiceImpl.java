@@ -59,21 +59,19 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                             criminalJusticeAreaRepository.search(
                                     code, description, pageable.getPageable());
 
-                    CriminalJusticeAreaPage criminalJusticeAreaPage = new CriminalJusticeAreaPage();
-                    pageMapper.toPage(
-                            criminalJusticeList,
-                            criminalJusticeAreaPage,
-                            pageable.getSortStrings());
-                    criminalJusticeList.stream()
-                            .forEach(
-                                    (entry) ->
-                                            criminalJusticeAreaPage.addContentItem(
-                                                    criminalJusticeMapper.toDto(entry)));
+                            CriminalJusticeAreaPage craPage = new CriminalJusticeAreaPage();
+                            pageMapper.toPage(
+                                    criminalJusticeList, craPage, pageable.getSortStrings());
+                            criminalJusticeList.stream()
+                                    .forEach(
+                                            (entry) ->
+                                                    craPage.addContentItem(
+                                                            criminalJusticeMapper.toDto(entry)));
 
                     CodeAndDescription record = new CodeAndDescription(code, description);
                     AuditableResult<CriminalJusticeAreaPage, CriminalJusticeArea> result =
                             new AuditableResult<>(
-                                    criminalJusticeAreaPage,
+                                    craPage,
                                     criminalJusticeMapper.toEntity(record));
 
                     return Optional.of(result);

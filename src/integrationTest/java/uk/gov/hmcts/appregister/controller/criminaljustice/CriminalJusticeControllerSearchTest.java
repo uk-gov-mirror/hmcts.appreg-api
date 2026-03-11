@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.criminaljusticearea.api.CriminalJusticeSortFieldEnum;
@@ -717,6 +718,44 @@ public class CriminalJusticeAreaControllerTest extends AbstractSecurityControlle
                 rs = rs.queryParam("description", description.get());
             }
 
+            return rs;
+        }
+    }
+
+    @Test
+    public void givenValidRequest_whenMultipleSortsArePresent_thenReturn400() throws Exception {
+        var token = getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(1),
+                        Optional.of(0),
+                        List.of(
+                                CriminalJusticeSortFieldEnum.CODE.getApiValue(),
+                                CriminalJusticeSortFieldEnum.DESCRIPTION.getApiValue()),
+                        getLocalUrl(WEB_CONTEXT),
+                        token.fetchTokenForRole());
+
+        // assert the response
+        responseSpec.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                CommonAppError.MULTIPLE_SORT_NOT_SUPPORTED.getCode().getType().get(),
+                problemDetail.getType());
+    }
+
+    // --- Helper to apply optional query params -------------------------------------------------
+
+    record CourtLocationFilter(Optional<String> name, Optional<String> code)
+            implements UnaryOperator<RequestSpecification> {
+        @Override
+        public RequestSpecification apply(RequestSpecification rs) {
+            if (name.isPresent()) {
+                rs = rs.queryParam("name", name.get());
+            }
+            if (code.isPresent()) {
+                rs = rs.queryParam("code", code.get());
+            }
             return rs;
         }
     }

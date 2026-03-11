@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.controller;
+package uk.gov.hmcts.appregister.controller.applicationlist;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -12,187 +12,443 @@ import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
+import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
+import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
-import uk.gov.hmcts.appregister.common.entity.TableNames;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
+import uk.gov.hmcts.appregister.common.mapper.SortableField;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
-import uk.gov.hmcts.appregister.controller.applicationlist.AbstractApplicationListTest;
-import uk.gov.hmcts.appregister.controller.applicationlist.GetApplicationListFilterSpecification;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetPrintDto;
-import uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
-import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetPrintDto;
-import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
-import uk.gov.hmcts.appregister.generated.model.EntryPage;
-import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
+import uk.gov.hmcts.appregister.generated.model.SortOrdersInner;
 import uk.gov.hmcts.appregister.testutils.annotation.StabilityTest;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
-import uk.gov.hmcts.appregister.testutils.util.AuditLogAsserter;
-import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
+import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 
-public class ApplicationListControllerTest extends AbstractApplicationListTest {
+public class ApplicationListControllerSearchTest extends AbstractApplicationListControllerCrudTest {
 
-    private static final String WEB_CONTEXT = "application-lists";
-    private static final String GET_ENTRIES_CONTEXT = "application-list-entries";
-    private static final String VND_JSON_V1 = "application/vnd.hmcts.appreg.v1+json";
-    private static final String UNKNOWN_APPLICATION_LIST_ID =
-            "ffffffff-ffff-ffff-ffff-ffffffffffff";
+    @StabilityTest
+    public void givenApplicationListSuccessfulSort_whenSearchWithAllSortKeys_thenSuccessResponse()
+            throws Exception {
 
-    // --- Seeded reference data ----------------------------------------------------
-    private static final String VALID_COURT_CODE = "CCC003";
-    private static final String VALID_COURT_NAME = "Cardiff Crown Court";
+        // loop through all sort fields to make sure no errors occur
+        for (ApplicationListSortFieldEnum applicationEntrySortFieldEnum :
+                ApplicationListSortFieldEnum.values()) {
 
-    private static final String VALID_CJA_CODE = "CD";
+            // create the token
+            TokenGenerator tokenGenerator =
+                    getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-    private static final String VALID_OTHER_LOCATION = "CJA_CD_DESCRIPTION";
+            // test the functionality
+            Response responseSpec =
+                    restAssuredClient.executeGetRequestWithPaging(
+                            Optional.of(10),
+                            Optional.of(0),
+                            List.of(applicationEntrySortFieldEnum.getApiValue() + "," + "desc"),
+                            getLocalUrl(WEB_CONTEXT),
+                            tokenGenerator.fetchTokenForRole());
 
-    private static final LocalDate TEST_DATE = LocalDate.of(2025, 10, 15);
-    private static final LocalTime TEST_TIME = LocalTime.of(10, 30);
+            responseSpec.then().statusCode(200);
+            ApplicationListPage page = responseSpec.as(ApplicationListPage.class);
 
-    @Autowired private ApplicationListRepository applicationListRepository;
+            // make sure the order response marries with the request data
+            Assertions.assertEquals(1, page.getSort().getOrders().size());
+            Assertions.assertEquals(
+                    SortOrdersInner.DirectionEnum.DESC,
+                    page.getSort().getOrders().get(0).getDirection());
 
-    @Autowired private TransactionalUnitOfWork unitOfWork;
+            // make sure we only return externalised api sort data
+            Assertions.assertEquals(
+                    applicationEntrySortFieldEnum.getApiValue(),
+                    page.getSort().getOrders().get(0).getProperty());
+        }
 
-    @Autowired private ApplicationListEntryRepository aleRepository;
+        Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
+    }
 
-    // --- Happy path: create with COURT --------------------------------------------------------
+    @StabilityTest
+    public void
+            givenApplicationListSuccessfulDefaultSort_whenSearchWithAllSortKeys_thenSuccessResponse()
+                    throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
+        // test the functionality
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+        ApplicationListPage page = responseSpec.as(ApplicationListPage.class);
+
+        // make sure the order response marries with the request data
+        Assertions.assertEquals(1, page.getSort().getOrders().size());
+        Assertions.assertEquals(
+                SortOrdersInner.DirectionEnum.ASC,
+                page.getSort().getOrders().get(0).getDirection());
+
+        // make sure we only return defaulted externalised api sort data
+        Assertions.assertEquals(
+                ApplicationListSortFieldEnum.DESCRIPTION.getApiValue(),
+                page.getSort().getOrders().get(0).getProperty());
+
+        Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
+    }
+
+    // This test cant be made a stability test as slows the test run down
+    // TODO: look into this
     @Test
-    void givenValidRequest_whenDeleteWithValidId_then204() throws Exception {
-        var token =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.ADMIN))
-                        .build()
-                        .fetchTokenForRole();
+    public void givenApplicationListSuccessfulSort_whenSortByEntryCount_thenSuccessResponse()
+            throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        var req =
+        // add a list with 10 entries
+        var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
-                        .description("Morning list (cja)")
+                        .description("description")
                         .status(ApplicationListStatus.OPEN)
-                        .cjaCode(VALID_CJA_CODE)
-                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .courtLocationCode(VALID_COURT_CODE)
                         .durationHours(1)
                         .durationMinutes(0);
 
-        // setup a record for deletion
-        Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
-        resp.then().statusCode(HttpStatus.CREATED.value());
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
-        ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
-        UUID id = dto.getId();
+        UUID listId =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
 
-        differenceLogAsserter.clearLogs();
+        // create 10 entries
+        for (int i = 0; i < 10; i++) {
+            // add a entry
+            createEntry(listId);
+        }
 
-        // fire tests
-        resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE2);
 
-        // assert the diff audit log message
-        differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(2, false);
-        differenceLogAsserter.assertDataAuditChange(
-                AuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPICATION_LIST,
-                        "al_id",
-                        null,
-                        null,
-                        "DELETE",
-                        "Delete Application List"));
-        differenceLogAsserter.assertDataAuditChange(
-                AuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPICATION_LIST,
-                        "version",
-                        "0",
-                        null,
-                        "DELETE",
-                        "Delete Application List"));
+        // create a second list with 5 entries
+        UUID listId2 =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // assert success
-        resp.then().statusCode(HttpStatus.NO_CONTENT.value());
+        // create 5 entries
+        for (int i = 0; i < 5; i++) {
+            // add a entry
+            createEntry(listId2);
+        }
+
+        Response createListResp =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(
+                                ApplicationListSortFieldEnum.ENTRY_COUNT.getApiValue()
+                                        + ","
+                                        + "desc"),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        GetApplicationListFilterSpecification.builder()
+                                .dateValue(Optional.of(TEST_DATE.toString()))
+                                .build());
+        createListResp.then().statusCode(HttpStatus.OK.value());
+
+        // assert the order of the lists
+        createListResp.then().statusCode(200);
+        ApplicationListPage page = createListResp.as(ApplicationListPage.class);
+        Assertions.assertEquals(10, page.getContent().get(0).getEntriesCount());
+        Assertions.assertEquals(listId, page.getContent().get(0).getId());
+        Assertions.assertEquals(5, page.getContent().get(1).getEntriesCount());
+        Assertions.assertEquals(listId2, page.getContent().get(1).getId());
+        Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
     }
 
-    @Test
-    void givenValidRequest_whenDeleteWithInvalidId_then404() throws Exception {
-        var token =
+    @StabilityTest
+    public void givenApplicationListSuccessfulSort_whenSortByCourtCode_thenSuccessResponse()
+            throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // add a list with an entry
+        var createListReq =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("description")
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode(VALID_COURT_CODE)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
+
+        // add a list with an entry
+        UUID listId =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        // add a entry
+        createEntry(listId);
+
+        createListReq.setCourtLocationCode(VALID_COURT_CODE2);
+
+        UUID listId2 =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        Response createListResp =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(ApplicationListSortFieldEnum.LOCATION.getApiValue() + "," + "desc"),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        GetApplicationListFilterSpecification.builder()
+                                .dateValue(Optional.of(TEST_DATE.toString()))
+                                .build());
+        createListResp.then().statusCode(HttpStatus.OK.value());
+
+        // assert order is as expected
+        ApplicationListPage page = createListResp.as(ApplicationListPage.class);
+        Assertions.assertEquals(listId, page.getContent().get(0).getId());
+        Assertions.assertEquals(listId2, page.getContent().get(1).getId());
+    }
+
+    @StabilityTest
+    public void givenApplicationListSuccessfulSort_whenSortByCjaCode_thenSuccessResponse()
+            throws Exception {
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // add initial list with cja code and location description
+        var createListReq =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("description")
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode(VALID_COURT_CODE)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        UUID listId =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        // add a entry
+        createEntry(listId);
+
+        // add second list with different cja code
+        createListReq.setCjaCode(VALID_CJA_CODE2);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
+
+        final UUID listId2 =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        // add third list with different description so that is comes first in the sort list
+        createListReq.setOtherLocationDescription("Alternative Location");
+
+        final UUID listId3 =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        Response createListResp =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(ApplicationListSortFieldEnum.LOCATION.getApiValue() + "," + "asc"),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        GetApplicationListFilterSpecification.builder()
+                                .dateValue(Optional.of(TEST_DATE.toString()))
+                                .build());
+        createListResp.then().statusCode(HttpStatus.OK.value());
+
+        // assert order
+        ApplicationListPage page = createListResp.as(ApplicationListPage.class);
+        Assertions.assertEquals(listId, page.getContent().get(0).getId());
+        Assertions.assertEquals(listId3, page.getContent().get(1).getId());
+        Assertions.assertEquals(listId2, page.getContent().get(2).getId());
+    }
+
+    @StabilityTest
+    public void givenApplicationListSuccessfulSort_whenSortByCjaLocation_thenSuccessResponse()
+            throws Exception {
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // create a list with a cja code and location description
+        var createListReq =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("description")
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode(VALID_COURT_CODE)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        createListReq.setCjaCode(VALID_CJA_CODE);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
+
+        UUID listId =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        // add a entry to the list
+        createEntry(listId);
+
+        // create a second list with same cja code and different location description
+        createListReq.setCjaCode(VALID_CJA_CODE);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
+
+        UUID listId2 =
+                createApplicationListWithCourtCode(
+                        tokenGenerator.fetchTokenForRole(), createListReq);
+
+        ApplicationListGetFilterDto filterDto = new ApplicationListGetFilterDto();
+
+        // filter on today
+        filterDto.setDate(TEST_DATE);
+        Response createListResp =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(
+                                ApplicationListSortFieldEnum.LOCATION.getApiValue()
+                                        + ","
+                                        + SortableField.DESC),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        GetApplicationListFilterSpecification.builder()
+                                .dateValue(Optional.of(TEST_DATE.toString()))
+                                .build());
+        createListResp.then().statusCode(HttpStatus.OK.value());
+
+        // assert expected order
+        ApplicationListPage page = createListResp.as(ApplicationListPage.class);
+        Assertions.assertEquals(listId2, page.getContent().get(0).getId());
+        Assertions.assertEquals(listId, page.getContent().get(1).getId());
+    }
+
+    @DisplayName("GET: default paging + default sort (description ASC)")
+    @StabilityTest
+    void givenDefaults_whenGet_then200AndSortedByDescriptionAsc() throws Exception {
+
+        String prefix = uniquePrefix("get-default-sort");
+
+        createWithCourt(prefix + " - Zebra", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
+        createWithCourt(prefix + " - Alpha", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
+        createWithCourt(prefix + " - Mango", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
+
+        var userToken =
                 getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.ADMIN))
+                        .roles(List.of(RoleEnum.USER))
                         .build()
                         .fetchTokenForRole();
 
-        // fire tests
         Response resp =
-                restAssuredClient.executeDeleteRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + UUID.randomUUID()), token);
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.empty(),
+                        Optional.empty(),
+                        List.of(), // Rely on default sort
+                        getLocalUrl(WEB_CONTEXT),
+                        userToken,
+                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
+                        new OpenApiPageMetaData());
 
-        // assert success
-        resp.then().statusCode(HttpStatus.NOT_FOUND.value());
-        ProblemDetail problemDetail = resp.as(ProblemDetail.class);
-        Assertions.assertEquals(
-                ApplicationListError.DELETION_ID_NOT_FOUND.getCode().getAppCode(),
-                problemDetail.getType().toString());
+        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
+        ApplicationListPage page = resp.as(ApplicationListPage.class);
 
-        // assert the diff audit log message
-        differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(0, true);
+        assertThat(page.getContent()).hasSize(3);
+        assertThat(page.getContent().get(0).getDescription()).endsWith("Alpha");
+        assertThat(page.getContent().get(1).getDescription()).endsWith("Mango");
+        assertThat(page.getContent().get(2).getDescription()).endsWith("Zebra");
+
+        assertThat(page.getPageNumber()).isZero();
+        assertThat(page.getPageSize()).isGreaterThanOrEqualTo(3);
+        assertThat(page.getFirst()).isTrue();
     }
 
     @Test
-    void givenValidRequest_whenDeleteTwice_thenSecondDeleteReturns404() throws Exception {
-        var token =
+    @DisplayName("GET: disallowed sort (cja) -> 400")
+    void givenDisallowedSort_then400() throws Exception {
+
+        String prefix = uniquePrefix("get-sort-disallowed");
+
+        createWithCourt(prefix + " - X", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
+
+        var userToken =
                 getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.ADMIN))
+                        .roles(List.of(RoleEnum.USER))
                         .build()
                         .fetchTokenForRole();
 
-        var req =
-                new ApplicationListCreateDto()
-                        .date(TEST_DATE)
-                        .time(TEST_TIME)
-                        .description("Morning list (cja)")
-                        .status(ApplicationListStatus.OPEN)
-                        .cjaCode(VALID_CJA_CODE)
-                        .otherLocationDescription(VALID_OTHER_LOCATION)
-                        .durationHours(1)
-                        .durationMinutes(0);
+        Response resp =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.empty(),
+                        Optional.empty(),
+                        List.of("cja,asc"),
+                        getLocalUrl(WEB_CONTEXT),
+                        userToken,
+                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
+                        new OpenApiPageMetaData());
 
-        // setup a record for deletion
-        Response resp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
-        resp.then().statusCode(HttpStatus.CREATED.value());
+        resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+    }
 
-        ApplicationListGetDetailDto dto = resp.as(ApplicationListGetDetailDto.class);
-        UUID id = dto.getId();
+    @Test
+    public void givenValidRequest_whenMultipleSortsArePresent_thenReturn400() throws Exception {
 
-        resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
-        resp.then().statusCode(HttpStatus.NO_CONTENT.value());
+        var userToken =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
 
-        differenceLogAsserter.clearLogs();
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(1),
+                        Optional.of(0),
+                        List.of(
+                                ApplicationEntrySortFieldEnum.ACCOUNT_REFERENCE.getApiValue(),
+                                ApplicationEntrySortFieldEnum.LOCATION.getApiValue()),
+                        getLocalUrl(WEB_CONTEXT),
+                        userToken);
 
-        // prove the delete has been made
-        resp = restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
-        resp.then().statusCode(HttpStatus.CONFLICT.value());
-
-        ProblemDetail problemDetail = resp.as(ProblemDetail.class);
+        // assert the response
+        responseSpec.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
         Assertions.assertEquals(
-                ApplicationListError.DELETION_ALREADY_IN_DELETABLE_STATE.getCode().getAppCode(),
-                problemDetail.getType().toString());
-
-        // assert the diff audit log message
-        differenceLogAsserter.assertNoErrors();
-        differenceLogAsserter.assertDiffCount(0, true);
+                CommonAppError.MULTIPLE_SORT_NOT_SUPPORTED.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @Test
@@ -531,102 +787,6 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
     }
 
     @Test
-    @DisplayName("GET page: entriesCount excludes soft-deleted entry")
-    void givenEntryDeleted_whenGetApplicationLists_thenEntriesCountExcludesDeleted()
-            throws Exception {
-
-        // 1) Create application list via API
-        String prefix = uniquePrefix("entries-delete");
-        ApplicationListGetDetailDto created =
-                createWithCourt(prefix + " - list", TEST_DATE, TEST_TIME);
-        UUID listId = created.getId();
-
-        // 2) Prepare token to create entries
-        var token = getToken();
-
-        // 3) Build two EntryCreateDto payloads
-        EntryCreateDto entryCreateDto1 = CreateEntryDtoUtil.getCorrectCreateEntryDto();
-
-        EntryCreateDto entryCreateDto2 = CreateEntryDtoUtil.getCorrectCreateEntryDto();
-
-        // 4) Create entries
-        Response createResp1 =
-                restAssuredClient.executePostRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + listId + "/entries"),
-                        token,
-                        entryCreateDto1);
-        createResp1.then().statusCode(HttpStatus.CREATED.value());
-
-        Response createResp2 =
-                restAssuredClient.executePostRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + listId + "/entries"),
-                        token,
-                        entryCreateDto2);
-        createResp2.then().statusCode(HttpStatus.CREATED.value());
-        EntryGetDetailDto createdEntry2 = createResp2.as(EntryGetDetailDto.class);
-
-        // 5) Call the entries search endpoint to fetch entries for this list
-        Response entriesPageResp =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.of(20),
-                        Optional.of(0),
-                        List.of(),
-                        getLocalUrl(GET_ENTRIES_CONTEXT),
-                        token);
-
-        entriesPageResp.then().statusCode(HttpStatus.OK.value());
-
-        EntryPage entriesPage = entriesPageResp.as(EntryPage.class);
-        assertThat(entriesPage.getContent()).isNotNull();
-
-        boolean foundCreated2 =
-                entriesPage.getContent().stream()
-                        .anyMatch(e -> createdEntry2.getId().equals(e.getId()));
-        assertThat(foundCreated2)
-                .withFailMessage("createdEntry2 must be present in entries search results")
-                .isTrue();
-
-        UUID idFromSearch =
-                entriesPage.getContent().stream()
-                        .map(EntryGetSummaryDto::getId)
-                        .filter(id -> createdEntry2.getId().equals(id))
-                        .findFirst()
-                        .orElseThrow(
-                                () -> new AssertionError("Entry id not found by entries search"));
-
-        // 6) soft-delete the entry
-        aleRepository.softDeleteByUuid(idFromSearch);
-        aleRepository.flush(); // ensure DB is updated for subsequent controller query
-
-        // 7) Call the GET /application-lists endpoint
-        Response pageResp =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.empty(),
-                        Optional.empty(),
-                        List.of(),
-                        getLocalUrl("application-lists"),
-                        token,
-                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        null);
-
-        // 8) Assert that entriesCount excludes the deleted entry
-        pageResp.then().statusCode(HttpStatus.OK.value());
-        ApplicationListPage page = pageResp.as(ApplicationListPage.class);
-
-        // find summary to assert against
-        ApplicationListGetSummaryDto summaryToAssertDto =
-                page.getContent().stream()
-                        .filter(summary -> summary.getId().equals(listId))
-                        .findFirst()
-                        .orElseThrow(() -> new AssertionError("List id not found"));
-
-        Assertions.assertEquals(1, summaryToAssertDto.getEntriesCount());
-        assertThat(summaryToAssertDto.getEntriesCount())
-                .withFailMessage("entriesCount should exclude the deleted entry removed via repo")
-                .isEqualTo(1L);
-    }
-
-    @Test
     @DisplayName("GET Application List")
     @StabilityTest
     void givenValidRequest_whenGetApplicationList_then200AndBody() throws Exception {
@@ -770,31 +930,106 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
     }
 
     @Test
-    @DisplayName("GET Application List: 404 when list soft deleted")
-    void givenSoftDeletedApplicationList_whenGetApplicationList_then404() throws Exception {
-        ApplicationListGetDetailDto created =
-                createWithCourt("soft-deleted-get", TEST_DATE, TEST_TIME);
-        UUID id = created.getId();
+    @DisplayName("GET by id with full data set")
+    void givenGetById_whenGet_then200AndAllDataIsReturned() throws Exception {
+        // setup a record for deletion
+        String prefix = uniquePrefix("soft-deleted");
+        ApplicationListGetDetailDto dto =
+                createWithCourt(
+                        prefix + " - Zebra", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
+        UUID id = dto.getId();
 
-        var token =
+        // create a single entry
+        final EntryGetDetailDto entryGetDetailDto = createEntry(dto.getId());
+
+        var userToken =
                 getATokenWithValidCredentials()
                         .roles(List.of(RoleEnum.USER))
                         .build()
                         .fetchTokenForRole();
 
-        Response deleteResp =
-                restAssuredClient.executeDeleteRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
-        deleteResp.then().statusCode(HttpStatus.NO_CONTENT.value());
-
-        // fire test
         Response resp =
-                restAssuredClient.executeGetRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+                restAssuredClient.executeGetRequest(getLocalUrl(WEB_CONTEXT + "/" + id), userToken);
 
-        // assert success
-        resp.then().statusCode(HttpStatus.NOT_FOUND.value());
-        ProblemDetail problemDetail = resp.as(ProblemDetail.class);
+        // make the assertions on the response
+        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
+        ApplicationListGetDetailDto page = resp.as(ApplicationListGetDetailDto.class);
+
+        assertThat(page.getEntriesSummary().size()).isEqualTo(1);
+        Assertions.assertTrue(page.getDescription().startsWith("soft-deleted ::"));
+        Assertions.assertEquals(ApplicationListStatus.OPEN, page.getStatus());
+        Assertions.assertEquals(1, page.getEntriesCount());
+        Assertions.assertEquals("CCC003", page.getCourtCode());
+        Assertions.assertEquals("Cardiff Crown Court", page.getCourtName());
+        Assertions.assertEquals(1, page.getEntriesSummary().size());
         Assertions.assertEquals(
-                ApplicationListError.LIST_NOT_FOUND.getCode().getAppCode(),
+                "Copy documents", page.getEntriesSummary().get(0).getApplicationTitle());
+        Assertions.assertEquals(
+                entryGetDetailDto.getAccountNumber(),
+                page.getEntriesSummary().get(0).getAccountNumber().get());
+        Assertions.assertEquals(1, page.getEntriesSummary().get(0).getSequenceNumber());
+        Assertions.assertEquals(
+                entryGetDetailDto.getRespondent().getPerson().getContactDetails().getPostcode(),
+                page.getEntriesSummary().get(0).getPostCode().get());
+        Assertions.assertEquals(
+                page.getEntriesSummary().get(0).getApplicant().get(),
+                entryGetDetailDto.getApplicant().getPerson().getName().getSurname()
+                        + ", "
+                        + entryGetDetailDto.getApplicant().getPerson().getName().getFirstForename()
+                        + ", "
+                        + entryGetDetailDto.getApplicant().getPerson().getName().getTitle());
+
+        Assertions.assertEquals(
+                page.getEntriesSummary().get(0).getRespondent().get(),
+                entryGetDetailDto.getRespondent().getPerson().getName().getSurname()
+                        + ", "
+                        + entryGetDetailDto.getRespondent().getPerson().getName().getFirstForename()
+                        + ", "
+                        + entryGetDetailDto.getRespondent().getPerson().getName().getTitle());
+    }
+
+    @Test
+    public void givenEntryUpdate_whenOpeningClosedList_then400() throws Exception {
+        var token = getToken();
+
+        // create list
+        UUID listId = createApplicationList(token, uniquePrefix("update-open-closed-list"));
+
+        // update list to closed
+        var updateReq =
+                new ApplicationListUpdateDto()
+                        .date(TEST_DATE2)
+                        .time(TEST_TIME2)
+                        .description("Updated description")
+                        .status(ApplicationListStatus.CLOSED)
+                        .courtLocationCode(VALID_COURT_CODE2)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        Response updateResp =
+                restAssuredClient.executePutRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + listId), token, updateReq);
+        updateResp.then().statusCode(HttpStatus.OK.value());
+
+        // attempt to update back to open
+        var reopenReq =
+                new ApplicationListUpdateDto()
+                        .date(TEST_DATE2)
+                        .time(TEST_TIME2)
+                        .description("Updated description")
+                        .status(ApplicationListStatus.OPEN)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        Response reopenResp =
+                restAssuredClient.executePutRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + listId), token, reopenReq);
+        reopenResp.then().statusCode(HttpStatus.BAD_REQUEST.value());
+
+        // Assert failure is due to invalid list status for update
+        ProblemDetail problemDetail = reopenResp.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                ApplicationListError.UPDATE_NOT_ALLOWED_ON_CLOSED_LIST.getCode().getAppCode(),
                 problemDetail.getType().toString());
     }
 
@@ -842,6 +1077,41 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
                 .doesNotContain(entry2.getId());
 
         // sanity: remaining entry should be the first created one
+        assertThat(returnedEntryIds).contains(entry1.getId());
+    }
+
+    @Test
+    @DisplayName("Print Application List: entries exclude soft-deleted entries")
+    void givenEntrySoftDeleted_whenPrintApplicationList_thenDeletedEntryExcludedFromPrint()
+            throws Exception {
+
+        var token = getToken();
+
+        // create list
+        UUID listId = createApplicationList(token, uniquePrefix("print-exclude-deleted"));
+
+        // create two entries
+        final EntryGetDetailDto entry1 = createEntry(listId);
+        final EntryGetDetailDto entry2 = createEntry(listId);
+
+        // soft-delete 2nd entry
+        softDeleteEntry(entry2.getId());
+
+        // call print endpoint
+        ApplicationListGetPrintDto printDto = getApplicationListPrint(listId, token);
+
+        assertThat(printDto.getEntries())
+                .withFailMessage("entries in print output must not be null")
+                .isNotNull();
+
+        List<UUID> returnedEntryIds =
+                printDto.getEntries().stream().map(EntryGetPrintDto::getId).toList();
+
+        assertThat(returnedEntryIds)
+                .withFailMessage("Soft-deleted entry must not appear in print entries")
+                .doesNotContain(entry2.getId());
+
+        // sanity: remaining printed entry should include the first created one
         assertThat(returnedEntryIds).contains(entry1.getId());
     }
 
@@ -924,154 +1194,6 @@ public class ApplicationListControllerTest extends AbstractApplicationListTest {
         ProblemDetail problemDetail = resp.as(ProblemDetail.class);
         Assertions.assertEquals(
                 ApplicationListError.LIST_NOT_FOUND.getCode().getAppCode(),
-                problemDetail.getType().toString());
-    }
-
-    @Test
-    @DisplayName("Print Application List: entries exclude soft-deleted entries")
-    void givenEntrySoftDeleted_whenPrintApplicationList_thenDeletedEntryExcludedFromPrint()
-            throws Exception {
-
-        var token = getToken();
-
-        // create list
-        UUID listId = createApplicationList(token, uniquePrefix("print-exclude-deleted"));
-
-        // create two entries
-        final EntryGetDetailDto entry1 = createEntry(listId);
-        final EntryGetDetailDto entry2 = createEntry(listId);
-
-        // soft-delete 2nd entry
-        softDeleteEntry(entry2.getId());
-
-        // call print endpoint
-        ApplicationListGetPrintDto printDto = getApplicationListPrint(listId, token);
-
-        assertThat(printDto.getEntries())
-                .withFailMessage("entries in print output must not be null")
-                .isNotNull();
-
-        List<UUID> returnedEntryIds =
-                printDto.getEntries().stream().map(EntryGetPrintDto::getId).toList();
-
-        assertThat(returnedEntryIds)
-                .withFailMessage("Soft-deleted entry must not appear in print entries")
-                .doesNotContain(entry2.getId());
-
-        // sanity: remaining printed entry should include the first created one
-        assertThat(returnedEntryIds).contains(entry1.getId());
-    }
-
-    @Test
-    @DisplayName("GET by id with full data set")
-    void givenGetById_whenGet_then200AndAllDataIsReturned() throws Exception {
-        // setup a record for deletion
-        String prefix = uniquePrefix("soft-deleted");
-        ApplicationListGetDetailDto dto =
-                createWithCourt(
-                        prefix + " - Zebra", LocalDate.of(2025, 10, 15), LocalTime.of(10, 30));
-        UUID id = dto.getId();
-
-        // create a single entry
-        final EntryGetDetailDto entryGetDetailDto = createEntry(dto.getId());
-
-        var userToken =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        Response resp =
-                restAssuredClient.executeGetRequest(getLocalUrl(WEB_CONTEXT + "/" + id), userToken);
-
-        // make the assertions on the response
-        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
-        ApplicationListGetDetailDto page = resp.as(ApplicationListGetDetailDto.class);
-
-        assertThat(page.getEntriesSummary().size()).isEqualTo(1);
-        Assertions.assertTrue(page.getDescription().startsWith("soft-deleted ::"));
-        Assertions.assertEquals(ApplicationListStatus.OPEN, page.getStatus());
-        Assertions.assertEquals(1, page.getEntriesCount());
-        Assertions.assertEquals("CCC003", page.getCourtCode());
-        Assertions.assertEquals("Cardiff Crown Court", page.getCourtName());
-        Assertions.assertEquals(1, page.getEntriesSummary().size());
-        Assertions.assertEquals(
-                "Copy documents", page.getEntriesSummary().get(0).getApplicationTitle());
-        Assertions.assertEquals(
-                entryGetDetailDto.getAccountNumber(),
-                page.getEntriesSummary().get(0).getAccountNumber().get());
-        Assertions.assertEquals(1, page.getEntriesSummary().get(0).getSequenceNumber());
-        Assertions.assertEquals(
-                entryGetDetailDto.getRespondent().getPerson().getContactDetails().getPostcode(),
-                page.getEntriesSummary().get(0).getPostCode().get());
-        Assertions.assertEquals(
-                page.getEntriesSummary().get(0).getApplicant().get(),
-                entryGetDetailDto.getApplicant().getPerson().getName().getSurname()
-                        + ", "
-                        + entryGetDetailDto.getApplicant().getPerson().getName().getFirstForename()
-                        + ", "
-                        + entryGetDetailDto.getApplicant().getPerson().getName().getTitle());
-
-        Assertions.assertEquals(
-                page.getEntriesSummary().get(0).getRespondent().get(),
-                entryGetDetailDto.getRespondent().getPerson().getName().getSurname()
-                        + ", "
-                        + entryGetDetailDto.getRespondent().getPerson().getName().getFirstForename()
-                        + ", "
-                        + entryGetDetailDto.getRespondent().getPerson().getName().getTitle());
-
-        differenceLogAsserter.assertDataAuditChange(
-                AuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPICATION_LIST,
-                        "id",
-                        null,
-                        id.toString(),
-                        AppListAuditOperation.GET_APP_LIST.getType().name(),
-                        AppListAuditOperation.GET_APP_LIST.getEventName()));
-    }
-
-    @Test
-    public void givenEntryUpdate_whenOpeningClosedList_then400() throws Exception {
-        var token = getToken();
-
-        // create list
-        UUID listId = createApplicationList(token, uniquePrefix("update-open-closed-list"));
-
-        // update list to closed
-        var updateReq =
-                new ApplicationListUpdateDto()
-                        .date(TEST_DATE2)
-                        .time(TEST_TIME2)
-                        .description("Updated description")
-                        .status(ApplicationListStatus.CLOSED)
-                        .courtLocationCode(VALID_COURT_CODE2)
-                        .durationHours(1)
-                        .durationMinutes(0);
-
-        Response updateResp =
-                restAssuredClient.executePutRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + listId), token, updateReq);
-        updateResp.then().statusCode(HttpStatus.OK.value());
-
-        // attempt to update back to open
-        var reopenReq =
-                new ApplicationListUpdateDto()
-                        .date(TEST_DATE2)
-                        .time(TEST_TIME2)
-                        .description("Updated description")
-                        .status(ApplicationListStatus.OPEN)
-                        .durationHours(1)
-                        .durationMinutes(0);
-
-        Response reopenResp =
-                restAssuredClient.executePutRequest(
-                        getLocalUrl(WEB_CONTEXT + "/" + listId), token, reopenReq);
-        reopenResp.then().statusCode(HttpStatus.BAD_REQUEST.value());
-
-        // Assert failure is due to invalid list status for update
-        ProblemDetail problemDetail = reopenResp.as(ProblemDetail.class);
-        Assertions.assertEquals(
-                ApplicationListError.INVALID_LIST_STATUS.getCode().getAppCode(),
                 problemDetail.getType().toString());
     }
 }

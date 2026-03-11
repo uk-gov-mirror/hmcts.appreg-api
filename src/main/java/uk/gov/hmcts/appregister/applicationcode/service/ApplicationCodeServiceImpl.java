@@ -45,16 +45,21 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
     private final GetApplicationCodeValidator getApplicationCodeValidator;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ApplicationCodePage findAll(String appCode, String appTitle, PagingWrapper pageable) {
 
         // Use today's date to ensure we only return Result Codes that are currently active.
         var todayUk = LocalDate.now(clock.withZone(ukZone));
 
         return auditService.processAudit(
-                null,
                 AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
+                    log.debug(
+                            "Start: Find Application List for: app code: {} app title: {} with paging: {}",
+                            appCode,
+                            appTitle,
+                            pageable);
+
                     final Page<ApplicationCode> applicationCodeList =
                             repository.search(appCode, appTitle, todayUk, pageable.getPageable());
 

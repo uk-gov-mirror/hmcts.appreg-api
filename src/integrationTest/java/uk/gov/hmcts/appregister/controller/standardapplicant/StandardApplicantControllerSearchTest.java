@@ -33,7 +33,6 @@ import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
 import uk.gov.hmcts.appregister.standardapplicant.api.StandardApplicantSortFieldEnum;
-import uk.gov.hmcts.appregister.standardapplicant.audit.StandardApplicantOperation;
 import uk.gov.hmcts.appregister.standardapplicant.exception.StandardApplicantCodeError;
 import uk.gov.hmcts.appregister.testutils.annotation.StabilityTest;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
@@ -41,7 +40,6 @@ import uk.gov.hmcts.appregister.testutils.client.request.DateGetRequest;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractSecurityControllerTest;
 import uk.gov.hmcts.appregister.testutils.controller.RestEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
-import uk.gov.hmcts.appregister.testutils.util.AuditLogAsserter;
 import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
 
 public class StandardApplicantControllerTest extends AbstractSecurityControllerTest {
@@ -1322,6 +1320,32 @@ public class StandardApplicantControllerTest extends AbstractSecurityControllerT
                             StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
                             StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
         }
+    }
+
+    @Test
+    public void givenValidRequest_whenMultipleSortsArePresent_thenReturn400() throws Exception {
+        var token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(1),
+                        Optional.of(0),
+                        List.of(
+                                StandardApplicantSortFieldEnum.CODE.getApiValue(),
+                                StandardApplicantSortFieldEnum.NAME.getApiValue()),
+                        getLocalUrl(WEB_CONTEXT),
+                        token);
+
+        // assert the response
+        responseSpec.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                CommonAppError.MULTIPLE_SORT_NOT_SUPPORTED.getCode().getType().get(),
+                problemDetail.getType());
     }
 
     @RequiredArgsConstructor
