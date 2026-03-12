@@ -4,7 +4,7 @@ parameters:
     required: true
     schema: { type: string, format: uuid }
     description: ID of the Application List that owns the entries to be resulted.
-
+    example: "9f7b2a35-57ac-4a1c-9c41-83b6c8157af4"
 post:
   operationId: bulkResultApplicationListEntries
   tags: [ application-list-entry-results ]

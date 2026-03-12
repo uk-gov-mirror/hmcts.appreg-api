@@ -10,6 +10,9 @@ info:
   # entries elsewhere in the file and will break the build.
   version: "@version@"
 tags:
+  - name: admin
+    description:
+      Administrative operations such as jobs.
   - name: application-codes
     description:
       Application Codes are reference data, not managed in App Reg. They are required to provide a set repeatable data

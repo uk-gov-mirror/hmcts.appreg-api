@@ -1,7 +1,7 @@
 post:
   operationId: Runs the background jobs
-  tags: [ admin-jobs ]
-  summary: Executes the
+  tags: [ admin ]
+  summary: Executes the job type in the background
   description: Returns the current status and details of an administrative background job.
   parameters:
     - name: jobTypeId

@@ -76,7 +76,6 @@ public interface ApplicationListMapper {
     @Mapping(target = "description", source = "appList.description")
     @Mapping(target = "entriesCount", source = "entryCount")
     @Mapping(target = "status", source = "appList.status")
-    @Mapping(target = "entriesSummary", ignore = true)
     ApplicationListGetSummaryDto toGetSummaryDto(
             ApplicationListSummaryProjection appList, long entryCount, String location);
 

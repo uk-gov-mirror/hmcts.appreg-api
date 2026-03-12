@@ -1,6 +1,6 @@
 get:
   operationId: getJobStatus
-  tags: [ admin-jobs ]
+  tags: [ admin ]
   summary: Get the status of a background job being processed in an administative context.
   description: Returns the current status and details of a background job.
   parameters:
@@ -22,6 +22,7 @@ get:
           schema:
             $ref: "../../../components/schemas/admin/job-acknowledgement.yaml"
     "401": { $ref: "../../../components/responses/unauthorized-error.yaml" }
+    "409": { $ref: "../../..//components/responses/conflict-error.yaml" }
     "403": { $ref: "../../..//components/responses/forbidden-error.yaml" }
     "404": { $ref: "../../../components/responses/not-found-error.yaml" }
     "500": { $ref: "../../../components/responses/internal-server-error.yaml" }
