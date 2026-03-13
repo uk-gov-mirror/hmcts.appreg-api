@@ -61,5 +61,10 @@ properties:
     description: The sequence number of the application in the list.
     example: 1
 
+  resulted:
+    type: array
+    items: { $ref: "../result-codes/result-code-get-summary-dto.yaml" }
+    description: An array of Officials who will decide the outcome of the Application.
+
   status:
     $ref: '../application-lists/application-list-status.yaml'

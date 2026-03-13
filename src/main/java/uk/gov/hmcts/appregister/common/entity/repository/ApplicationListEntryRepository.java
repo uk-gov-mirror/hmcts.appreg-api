@@ -188,7 +188,8 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                     sa as standardApplicant,
                     al.uuid as listId,
                     ac.title AS applicationTitle,
-                    ale.sequenceNumber as sequenceNumber
+                    ale.sequenceNumber as sequenceNumber,
+                    rc as resolutionCode
                 from ApplicationListEntry ale
                 LEFT JOIN ale.anamedaddress ana
                 LEFT JOIN ale.standardApplicant sa
@@ -200,6 +201,7 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                             = ale AND aler.id = (SELECT MAX(sub.id)
                               FROM AppListEntryResolution sub
                               WHERE sub.applicationList = ale)
+                LEFT JOIN aler.resolutionCode rc on rc.id = aler.resolutionCode.id
             WHERE  (:hasHearingDate = false OR :hasHearingDate IS NULL OR al.date = :hearingDate)
                     AND (:applicationListId IS NULL OR al.uuid = :applicationListId)
                     AND (:otherLocationDescription IS NULL OR LOWER(al.otherLocation)
