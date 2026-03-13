@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,6 +47,11 @@ public class StandardApplicant extends BaseUnmanagedChangeableEntity
 
     @Column(name = "standard_applicant_code", nullable = false)
     @Audit(action = {CrudEnum.READ})
+    @Pattern(
+            regexp = "[a-zA-Z0-9\\-\\+\\._ ]*",
+            message =
+                    "Applicant code must be alphanumeric and can include"
+                            + " hyphens, plus signs, dots, underscores, and spaces")
     private String applicantCode;
 
     @Column(name = "standard_applicant_start_date", nullable = false)

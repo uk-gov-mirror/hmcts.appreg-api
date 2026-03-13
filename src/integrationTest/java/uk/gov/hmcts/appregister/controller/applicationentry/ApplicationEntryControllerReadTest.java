@@ -228,7 +228,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getRespondent()
                                 .getOrganisation()
                                 .getContactDetails()
-                                .getEmail())
+                                .getEmail()
+                                .get())
                 .isEqualTo("s.johnson@example.com");
         assertThat(
                         entryGetSummaryDto
@@ -262,7 +263,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getRespondent()
                                 .getOrganisation()
                                 .getContactDetails()
-                                .getEmail())
+                                .getEmail()
+                                .get())
                 .isEqualTo("info@legalaid.example.com");
         assertThat(
                         entryGetSummaryDto
@@ -337,9 +339,15 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                 .isEqualTo("John");
         assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getSurname())
                 .isEqualTo("Turner");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getSecondForename())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getName()
+                                .getSecondForename()
+                                .get())
                 .isEqualTo("Francis");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getThirdForename())
+        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getThirdForename().get())
                 .isEqualTo("Michael");
 
         assertThat(
@@ -349,11 +357,23 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getContactDetails()
                                 .getAddressLine1())
                 .isEqualTo("1 Market Street");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getEmail())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getContactDetails()
+                                .getEmail()
+                                .get())
                 .isEqualTo("john.smith@example.com");
         assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getPostcode())
                 .isEqualTo("AB11 2CD");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getPhone())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getContactDetails()
+                                .getPhone()
+                                .get())
                 .isEqualTo("01234567890");
 
         assertThat(entryGetSummaryDto.getStatus()).isEqualTo(ApplicationListStatus.OPEN);
@@ -371,7 +391,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getRespondent()
                                 .getOrganisation()
                                 .getContactDetails()
-                                .getEmail())
+                                .getEmail()
+                                .get())
                 .isEqualTo("s.johnson@example.com");
         assertThat(
                         entryGetSummaryDto
@@ -444,9 +465,15 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                 .isEqualTo("John");
         assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getSurname())
                 .isEqualTo("Turner");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getSecondForename())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getName()
+                                .getSecondForename()
+                                .get())
                 .isEqualTo("Francis");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getThirdForename())
+        assertThat(entryGetSummaryDto.getApplicant().getPerson().getName().getThirdForename().get())
                 .isEqualTo("Michael");
 
         assertThat(
@@ -456,11 +483,23 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getContactDetails()
                                 .getAddressLine1())
                 .isEqualTo("1 Market Street");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getEmail())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getContactDetails()
+                                .getEmail()
+                                .get())
                 .isEqualTo("john.smith@example.com");
         assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getPostcode())
                 .isEqualTo("AB11 2CD");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getPhone())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getContactDetails()
+                                .getPhone()
+                                .get())
                 .isEqualTo("01234567890");
 
         assertThat(entryGetSummaryDto.getStatus()).isEqualTo(ApplicationListStatus.OPEN);
@@ -478,7 +517,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getRespondent()
                                 .getOrganisation()
                                 .getContactDetails()
-                                .getEmail())
+                                .getEmail()
+                                .get())
                 .isEqualTo("s.johnson@example.com");
         assertThat(
                         entryGetSummaryDto
@@ -578,7 +618,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getRespondent()
                                 .getOrganisation()
                                 .getContactDetails()
-                                .getEmail())
+                                .getEmail()
+                                .get())
                 .isEqualTo("info@legalaid.example.com");
         assertThat(
                         entryGetSummaryDto
@@ -610,11 +651,23 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getContactDetails()
                                 .getAddressLine1())
                 .isEqualTo("1 Market Street");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getEmail())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getContactDetails()
+                                .getEmail()
+                                .get())
                 .isEqualTo("john.smith@example.com");
         assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getPostcode())
                 .isEqualTo("AB11 2CD");
-        assertThat(entryGetSummaryDto.getApplicant().getPerson().getContactDetails().getPhone())
+        assertThat(
+                        entryGetSummaryDto
+                                .getApplicant()
+                                .getPerson()
+                                .getContactDetails()
+                                .getPhone()
+                                .get())
                 .isEqualTo("01234567890");
 
         assertThat(entryGetSummaryDto.getStatus()).isEqualTo(ApplicationListStatus.CLOSED);
@@ -632,7 +685,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                 .getRespondent()
                                 .getOrganisation()
                                 .getContactDetails()
-                                .getEmail())
+                                .getEmail()
+                                .get())
                 .isEqualTo("s.johnson@example.com");
         assertThat(
                         entryGetSummaryDto
