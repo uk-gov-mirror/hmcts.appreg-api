@@ -7,28 +7,43 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import uk.gov.hmcts.appregister.Application;
 import uk.gov.hmcts.appregister.applicationentryresult.audit.AppListEntryResultAuditOperation;
 import uk.gov.hmcts.appregister.applicationentryresult.mapper.ApplicationListEntryResultEntityMapper;
 import uk.gov.hmcts.appregister.applicationentryresult.mapper.ApplicationListEntryResultMapper;
 import uk.gov.hmcts.appregister.applicationentryresult.model.ListEntryResultDeleteArgs;
 import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadForCreateEntryResult;
 import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadForUpdateEntryResult;
+import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadGetEntryResultInList;
 import uk.gov.hmcts.appregister.applicationentryresult.validator.ApplicationEntryResultCreationValidator;
 import uk.gov.hmcts.appregister.applicationentryresult.validator.ApplicationEntryResultDeletionValidator;
+import uk.gov.hmcts.appregister.applicationentryresult.validator.ApplicationEntryResultGetValidator;
 import uk.gov.hmcts.appregister.applicationentryresult.validator.ApplicationEntryResultUpdateValidator;
+import uk.gov.hmcts.appregister.applicationentryresult.validator.ListEntryResultGetValidationSuccess;
+import uk.gov.hmcts.appregister.applicationlist.validator.ApplicationListGetValidator;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.concurrency.MatchService;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
+import uk.gov.hmcts.appregister.common.mapper.PageMapper;
+import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryResultWithResultCodeProjection;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
+import uk.gov.hmcts.appregister.common.util.PagingWrapper;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ResultGetDto;
+import uk.gov.hmcts.appregister.generated.model.ResultPage;
 
 /**
  * Service implementation for managing application list entry results.
@@ -44,6 +59,7 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
     private final ApplicationEntryResultDeletionValidator deletionValidator;
     private final ApplicationEntryResultCreationValidator creationValidator;
     private final ApplicationEntryResultUpdateValidator updateValidator;
+    private final ApplicationEntryResultGetValidator applicationListGetValidator;
 
     // Services
     private final MatchService matchService;
@@ -55,6 +71,7 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
     // Mappers
     private final ApplicationListEntryResultMapper applicationListEntryResultMapper;
     private final ApplicationListEntryResultEntityMapper applicationListEntryResultEntityMapper;
+    private final PageMapper pageMapper;
 
     // Infrastructure
     private final EntityManager entityManager;
@@ -230,6 +247,54 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
         log.debug("Finish: Update Application Entry Result: {}", updateEntryResult);
 
         return getDto;
+    }
+
+    @Override
+    public ResultPage search(PayloadGetEntryResultInList payloadGetEntryResultInList,
+                             PagingWrapper pageWrapper) {
+        ResultPage resultPage = new ResultPage();
+
+        return applicationListGetValidator.validate(payloadGetEntryResultInList, (pay, success)-> auditService.processAudit(
+            null,
+            AppListEntryResultAuditOperation.GET_APP_LIST_ENTRY_RESULT,
+            req -> {
+
+                // get the list entry result
+                ApplicationList applicationList =
+                    success.getApplicationList();
+
+                ApplicationListEntry applicationListEntry =
+                    success.getApplicationListEntry();
+
+                // get the page data
+                Page<ApplicationListEntryResultWithResultCodeProjection>
+                    pageData = repository
+                    .getResolutionForApplicationListAndResolutionId(
+                        applicationList.getUuid(),
+                        applicationListEntry.getUuid(),
+                        pageWrapper.getPageable()
+                    );
+
+                // convert data to response
+                pageData.forEach(result -> {
+                    resultPage.addContentItem(applicationListEntryResultMapper.toResultGetDto(result));
+                });
+                pageMapper
+                    .toPage(pageData, resultPage, pageWrapper.getSortStrings());
+
+                // generate response for auditing
+                AppListEntryResolution appListEntryResolution = new AppListEntryResolution();
+
+                applicationListEntryResultEntityMapper.toApplicationListEntryResult(
+                    payloadGetEntryResultInList, appListEntryResolution);
+                return Optional.of(
+                    new AuditableResult<>(
+                        resultPage,
+                        appListEntryResolution
+                    ));
+            }
+        )
+        );
     }
 
     /**
