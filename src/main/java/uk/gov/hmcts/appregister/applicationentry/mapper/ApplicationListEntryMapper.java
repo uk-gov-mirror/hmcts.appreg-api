@@ -22,7 +22,6 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
-import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.EntityType;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
@@ -50,7 +49,6 @@ import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
 import uk.gov.hmcts.appregister.generated.model.Person;
 import uk.gov.hmcts.appregister.generated.model.Respondent;
 import uk.gov.hmcts.appregister.generated.model.RespondentPerson;
-import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 @Slf4j
@@ -348,9 +346,7 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(target = "date", expression = "java(projection.getDateOfAl())")
     @Mapping(target = "listId", source = "projection.listId")
     @Mapping(target = "sequenceNumber", source = "projection.sequenceNumber")
-    @Mapping(
-            target = "resulted",
-            expression = "java(toResultCodeGetSummaryDto(projection.getResults()))")
+    @Mapping(target = "resulted", source = "resolutionCode")
     public abstract EntryGetSummaryDto toEntrySummary(
             ApplicationListEntryGetSummaryProjection projection);
 
@@ -648,20 +644,4 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(target = "entryFeeIds", ignore = true)
     @Mapping(target = "uuid", ignore = true)
     public abstract ApplicationListEntry toApplicationListEntry(EntryGetFilterDto filterDto);
-
-    public List<ResultCodeGetSummaryDto> toResultCodeGetSummaryDto(List<ResolutionCode> resulted) {
-        log.info("Mapping resolution codes: {}", resulted);
-        if (resulted != null) {
-            return resulted.stream()
-                    .map(
-                            resolutionCode -> {
-                                ResultCodeGetSummaryDto dto = new ResultCodeGetSummaryDto();
-                                dto.setResultCode(resolutionCode.getResultCode());
-                                dto.setTitle(resolutionCode.getTitle());
-                                return dto;
-                            })
-                    .toList();
-        }
-        return null;
-    }
 }

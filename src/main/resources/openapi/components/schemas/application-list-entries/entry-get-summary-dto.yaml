@@ -62,9 +62,7 @@ properties:
     example: 1
 
   resulted:
-    type: array
-    items: { $ref: "../result-codes/result-code-get-summary-dto.yaml" }
-    description: An array of Officials who will decide the outcome of the Application.
+    $ref: "../result-codes/result-code-get-summary-dto.yaml"
 
   status:
     $ref: '../application-lists/application-list-status.yaml'
