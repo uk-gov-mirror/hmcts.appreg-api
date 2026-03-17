@@ -7,11 +7,13 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
+import org.hamcrest.Matchers;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -20,6 +22,7 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.base.TableNames;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
+import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
@@ -65,7 +68,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
         validateEntryCreationResponse(
                 entryCreateDto,
                 createdDto.getDetailDto(),
-                List.of("Premises Address", "Premises Date"));
+                "Application for a warrant to enter premises at {{Premises Address}} for date {{Premises Date}}");
 
         EntryPage page = findEntriesBySurname(tokenGenerator, surnameToLookup, 10, 0);
 
@@ -136,7 +139,10 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
 
         Assertions.assertNotNull(HeaderUtil.getETag(createdDto.response()));
 
-        validateEntryCreationResponse(entryCreateDto, createdDto.getDetailDto(), List.of());
+        validateEntryCreationResponse(
+                entryCreateDto,
+                createdDto.getDetailDto(),
+                "This is a test enforcement fine with no wording template substitution required");
 
         EntryPage page = findEntriesBySurname(tokenGenerator, surnameToLookup, 10, 0);
 
@@ -206,7 +212,11 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
 
         Assertions.assertNotNull(HeaderUtil.getETag(createdDto.response()));
 
-        validateEntryCreationResponse(entryCreateDto, createdDto.getDetailDto(), List.of());
+        validateEntryCreationResponse(
+                entryCreateDto,
+                createdDto.getDetailDto(),
+                "Request for a certificate of satisfaction of "
+                        + "debt registered in the register of judgements, orders and fines");
     }
 
     @Test
@@ -226,29 +236,65 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                 .getApplicant()
                 .getPerson()
                 .getContactDetails()
-                .setEmail("APPLICANT@TEST.COM");
+                .setEmail(JsonNullable.of("APPLICANT@TEST.COM"));
 
         entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
         entryCreateDto
                 .getApplicant()
                 .getOrganisation()
                 .getContactDetails()
-                .setEmail("APPLICANT@TEST.COM");
+                .setEmail(JsonNullable.of("APPLICANT@TEST.COM"));
         entryCreateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
 
         entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
         entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
         entryCreateDto
                 .getRespondent()
                 .getPerson()
                 .getContactDetails()
-                .setEmail("RESPONDENT@TEST.COM");
+                .setEmail(JsonNullable.of("RESPONDENT@TEST.COM"));
 
         entryCreateDto.setApplicationCode("MS99007");
         entryCreateDto.setStandardApplicantCode("APP001");
 
-        String surnameToLookup = UUID.randomUUID().toString();
+        String surnameToLookup = Instancio.gen().string().get();
         entryCreateDto.getApplicant().getPerson().getName().setSurname(surnameToLookup);
+        entryCreateDto.getApplicant().getPerson().getName().setThirdForename(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getName()
+                .setSecondForename(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
 
         entryCreateDto.setWordingFields(
                 List.of(
@@ -541,6 +587,1201 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
     }
 
     @Test
+    public void
+            givenAnInvalidCreateEntryRequest_whenCreateEntryWithAppicantApplicantMutualExclusiveInvalid2_400IsReturned()
+                    throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("APPLICANT@TEST.COM"));
+
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("APPLICANT@TEST.COM"));
+        entryCreateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                AppListEntryError.APPLICANT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
+                        .getCode()
+                        .getType()
+                        .get(),
+                problemDetail.getType());
+    }
+
+    @Test
+    public void
+            givenAnInvalidCreateEntryRequest_whenCreateEntryWithRespondentMutualExclusiveInvalid_400IsReturned()
+                    throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("APPLICANT@TEST.COM"));
+        entryCreateDto.getApplicant().setOrganisation(null);
+
+        entryCreateDto.getRespondent().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto
+                .getRespondent()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("APPLICANT@TEST.COM"));
+        entryCreateDto.getRespondent().getOrganisation().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("RESPONDENT@TEST.COM"));
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getRespondent()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+        entryCreateDto
+                .getRespondent()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+
+        entryCreateDto.setNumberOfRespondents(10);
+        entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setApplicationCode("MS99007");
+        entryCreateDto.setStandardApplicantCode(null);
+        String surnameToLookup = UUID.randomUUID().toString();
+        entryCreateDto.getApplicant().getPerson().getName().setSurname(surnameToLookup);
+
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("test wording");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue(LocalDate.now().toString());
+
+        // fill the template with the two parameters
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                AppListEntryError.RESPONDENT_CAN_ONLY_BE_ORGANISATION_OR_PERSON
+                        .getCode()
+                        .getType()
+                        .get(),
+                problemDetail.getType());
+    }
+
+    @Test
+    public void
+            givenAnInvalidCreateEntryRequest_whenApplicationListIsNotInCorrectStateDeleted_400IsReturned()
+                    throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getDeletedIdApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(409);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                AppListEntryError.APPLICATION_LIST_STATE_IS_INCORRECT.getCode().getType().get(),
+                problemDetail.getType());
+    }
+
+    @Test
+    public void givenAnInvalidCreateEntryRequest_whenRespondentNotRequired_400IsReturned()
+            throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                AppListEntryError.RESPONDENT_REQUIRED.getCode().getType().get(),
+                problemDetail.getType());
+    }
+
+    @Test
+    public void givenAnInvalidCreateEntryRequest_whenWordingLengthNotSufficient_400IsReturned()
+            throws Exception {
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("only one field that exceeds length");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue("extra field");
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+        Assertions.assertEquals(
+                CommonAppError.WORDING_LENGTH_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
+        Assertions.assertEquals(
+                "Premises Address=only one field that exceeds length",
+                problemDetail.getDetail().trim());
+    }
+
+    @Test
+    public void givenAnInvalidCreateEntryRequest_whenWordingDataTypeFailure_400IsReturned()
+            throws Exception {
+        TemplateSubstitution substitution = new TemplateSubstitution();
+        substitution.setKey("Premises Address");
+        substitution.setValue("value");
+
+        TemplateSubstitution substitution1 = new TemplateSubstitution();
+        substitution1.setKey("Premises Date");
+        substitution1.setValue("extra field not a date");
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setWordingFields(List.of(substitution, substitution1));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+        responseSpecCreate.then().statusCode(400);
+        ProblemDetail problemDetail = responseSpecCreate.as(ProblemDetail.class);
+
+        Assertions.assertEquals(
+                CommonAppError.WORDING_DATA_TYPE_FAILURE.getCode().getType().get(),
+                problemDetail.getType());
+        Assertions.assertEquals(
+                "Premises Date=extra field not a date", problemDetail.getDetail().trim());
+    }
+
+    @Test
+    public void givenASuccessCreate_whenEntryCreateDTOApplicantHasValidName_201Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.getApplicant().getPerson().getName().setFirstForename("vålid");
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getName()
+                .setSecondForename(JsonNullable.of("valid"));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getName()
+                .setThirdForename(JsonNullable.of("vœlid"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate.then().statusCode(201);
+    }
+
+    @Test
+    public void givenASuccessCreate_whenEntryCreateDTOApplicantHasValidAddress_201Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine1("1 valid address");
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine2(JsonNullable.of("2 valid address"));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine3(JsonNullable.of("3 valid address"));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine4(JsonNullable.of("4 valid address"));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine5(JsonNullable.of("5 valid address"));
+        entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("AA1 1AA");
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate.then().statusCode(201);
+    }
+
+    @Test
+    public void givenASuccessCreate_whenEntryCreateDTOApplicantHasValidPhoneNumber_201Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setPhone(JsonNullable.of("01234 56789"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate.then().statusCode(201);
+    }
+
+    @Test
+    public void givenASuccessCreate_whenEntryCreateDTOApplicantHasValidMobileNumber_201Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setMobile(JsonNullable.of("+447123456890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate.then().statusCode(201);
+    }
+
+    @Test
+    public void givenASuccessCreate_whenEntryCreateDTOApplicantHasValidEmail_201Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("test@valid.com"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate.then().statusCode(201);
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTORespondentHasInvalidName_400Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto.getRespondent().getPerson().getName().setFirstForename("invalid\0");
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getName()
+                .setSecondForename(JsonNullable.of("inv\nalid"));
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getName()
+                .setThirdForename(JsonNullable.of("\t lastname"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTORespondentHasInvalidAddress_400Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine2(JsonNullable.of("\r cambridge"));
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine3(JsonNullable.of(Instancio.gen().string().get()));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTORespondentHasInvalidPostcode_400Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("invalid");
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTORespondentHasInvalidPhoneNumber_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setPhone(JsonNullable.of("012234\n567890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTORespondentHasInvalidMobileNumber_400Returned()
+            throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setMobile(JsonNullable.of("072234\n567890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTORespondentHasInvalidEmailAddress_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto
+                .getRespondent()
+                .getPerson()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("invalid@email"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOApplicantHasInvalidName_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().getPerson().getName().setFirstForename("invalid\0");
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getName()
+                .setSecondForename(JsonNullable.of("inv\nalid"));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getName()
+                .setThirdForename(JsonNullable.of("\t lastname"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOApplicantHasInvalidAddress_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine2(JsonNullable.of("\r cambridge"));
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setAddressLine3(JsonNullable.of(Instancio.gen().string().get()));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOApplicantHasInvalidPostcode_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("invalid");
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOApplicantHasInvalidPhoneNumber_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setPhone(JsonNullable.of("012234\n567890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOApplicantHasInvalidMobileNumber_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setMobile(JsonNullable.of("072234\n567890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOApplicantHasInvalidEmailAddress_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("invalid@email"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOOrganisationHasInvalidName_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto.getApplicant().getOrganisation().setName("Big\tMoney");
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOOrganisationHasInvalidAddress_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setAddressLine2(JsonNullable.of("\r cambridge"));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setAddressLine3(JsonNullable.of(Instancio.gen().string().get()));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenEntryCreateDTOOrganisationHasInvalidPostcode_400Returned()
+            throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("invalid");
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void
+            givenAFailureCreate_whenEntryCreateDTOOrganisationHasInvalidPhoneNumber_400Returned()
+                    throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of("012234\n567890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void
+            givenAFailureCreate_whenEntryCreateDTOOrganisationHasInvalidMobileNumber_400Returned()
+                    throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of("072234\n567890"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
+    public void
+            givenAFailureCreate_whenEntryCreateDTOOrganisationHasInvalidEmailAddress_400Returned()
+                    throws Exception {
+
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("invalid@email"));
+
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // test the functionality
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                CommonAppError.METHOD_ARGUMENT_INVALID_ERROR
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    @Test
     public void givenSameList_whenCreateTwoEntries_thenSequenceNumbersIncrement() throws Exception {
         TokenGenerator tokenGenerator = createAdminToken();
 
@@ -683,5 +1924,36 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                                                             "Entry not found: " + entryUuid));
                     return entry.getSequenceNumber();
                 });
+    }
+
+    @Test
+    public void
+            givenApplicationCodeDoesNotRequireRespondent_whenCreateEntryWithRespondentProvided_thenReturn201()
+                    throws Exception {
+        // Arrange
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        // Use an app code which does NOT require a respondent
+        entryCreateDto.setApplicationCode("AD99004");
+
+        Assertions.assertNotNull(
+                entryCreateDto.getRespondent(),
+                "Test requires respondent to be present in payload");
+
+        entryCreateDto.setWordingFields(List.of());
+        entryCreateDto.setFeeStatuses(List.of());
+
+        var tokenGenerator = createAdminToken();
+        String surnameToLookup = UUID.randomUUID().toString();
+
+        // Act
+        SuccessCreateEntryResponse createdDto =
+                createEntryWithUniqueSurname(tokenGenerator, entryCreateDto, surnameToLookup);
+
+        // Assert
+        Assertions.assertNotNull(createdDto);
+        Assertions.assertNotNull(createdDto.getDetailDto());
+        Assertions.assertNotNull(createdDto.getDetailDto().getId());
+        Assertions.assertNotNull(HeaderUtil.getETag(createdDto.response()));
     }
 }

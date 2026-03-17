@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.appregister.common.mapper.PageableMapper;
 import uk.gov.hmcts.appregister.common.security.RoleNames;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
-import uk.gov.hmcts.appregister.courtlocation.api.CourtLocationSortFieldEnum;
+import uk.gov.hmcts.appregister.courtlocation.api.CourtLocationSortFieldMapper;
 import uk.gov.hmcts.appregister.courtlocation.service.CourtLocationService;
 import uk.gov.hmcts.appregister.generated.api.CourtLocationsApi;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
@@ -87,12 +87,12 @@ public class CourtLocationController implements CourtLocationsApi {
 
         PagingWrapper pageable =
                 pageableMapper.from(
-                        page,
-                        size,
-                        sort,
-                        CourtLocationSortFieldEnum.CODE,
-                        Sort.Direction.ASC,
-                        CourtLocationSortFieldEnum::getEntityValue);
+                    page,
+                    size,
+                    sort,
+                    CourtLocationSortFieldMapper.CODE,
+                    Sort.Direction.ASC,
+                    CourtLocationSortFieldMapper::getEntityValue);
 
         return ResponseEntity.ok().body(service.getPage(name, code, pageable));
     }

@@ -459,6 +459,15 @@ dependencies {
 
   implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+  // Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-core
+  implementation("tools.jackson.core:jackson-core:3.1.0")
+
+  // Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind
+  implementation("tools.jackson.core:jackson-databind:3.1.0")
+
+  // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+  implementation("com.fasterxml.jackson.core:jackson-annotations:2.21")
+
   // A hibernate library that generates column constants
   annotationProcessor 'org.hibernate.orm:hibernate-jpamodelgen:6.6.42.Final'
 
@@ -583,6 +592,9 @@ openApiGenerate {
   ]
 }
 
+openApiValidate {
+  inputSpec = "$rootDir/src/main/resources/openapi/openapi.yaml"
+}
 // Add a new jar that will be published to maven with the classifier -openapi
 tasks.register('openapiJarArtefact', Jar) {
   archiveClassifier = 'openapi'
@@ -595,9 +607,9 @@ tasks.register('flywayArtefact', Jar) {
   from new File("./flyway/migrations"), new File("./flyway/data_population")
 }
 
-processResources.dependsOn tasks.openApiGenerate, tasks.openapiJarArtefact, tasks.flywayArtefact, tasks.bundleOpenApi,
+processResources.dependsOn tasks.openApiValidate, tasks.openApiGenerate, tasks.openapiJarArtefact, tasks.flywayArtefact, tasks.bundleOpenApi,
   tasks.copySpecIntoMainResources
-compileJava.dependsOn tasks.openApiGenerate
+compileJava.dependsOn tasks.openApiValidate, tasks.openApiGenerate
 
 
 rootProject.tasks.named("processTestResources") {

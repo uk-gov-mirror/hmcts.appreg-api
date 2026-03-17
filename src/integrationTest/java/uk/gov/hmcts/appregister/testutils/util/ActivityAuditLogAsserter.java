@@ -11,8 +11,7 @@ import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationSlf4jLogger;
  */
 public class ActivityAuditLogAsserter {
     protected final LogCaptor operationLogger =
-            LogCaptor.forClass(
-                    uk.gov.hmcts.appregister.common.audit.listener.AuditOperationSlf4jLogger.class);
+            LogCaptor.forClass(uk.gov.hmcts.appregister.common.audit.listener.AuditOperationSlf4jLogger.class);
 
     /**
      * Asserts the activity log contains the expected values.
