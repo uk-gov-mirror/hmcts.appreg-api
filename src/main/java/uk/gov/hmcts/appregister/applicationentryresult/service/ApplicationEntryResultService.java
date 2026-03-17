@@ -6,7 +6,6 @@ import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadForUpdateEnt
 import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadGetEntryResultInList;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
-import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 import uk.gov.hmcts.appregister.generated.model.ResultCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ResultGetDto;
 import uk.gov.hmcts.appregister.generated.model.ResultPage;
@@ -42,14 +41,13 @@ public interface ApplicationEntryResultService {
      * Retrieves a paginated collection of Application List Entry Results matching the specified
      * filter criteria.
      *
-     * <p>The returned {@link ApplicationListPage} includes pagination metadata (page number, total
-     * elements, total pages) and a list of {@link
-     * uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto} items representing
-     * summarized application list entries.
+     * <p>The returned {@link ResultPage} includes pagination metadata (page number, total elements,
+     * total pages) and a list of {@link uk.gov.hmcts.appregister.generated.model.ResultGetDto}
+     * items
      *
      * @param payloadGetEntryResultInList the filter criteria
      * @param pageable pagination and sorting configuration
-     * @return an {@link ResultPage} containing a paginated set of application list summaries
+     * @return an {@link ResultPage} containing a paginated set of results
      * @throws uk.gov.hmcts.appregister.common.exception.AppRegistryException if invalid filter
      *     parameters are provided or underlying data retrieval fails
      */
