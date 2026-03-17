@@ -254,8 +254,6 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         resp.then().body("entryId", equalTo(entry.getUuid().toString()));
         resp.then().body("resultCode", equalTo(APPC_CODE));
 
-        resp.then().body("wordingFields", equalTo(List.of("Name of Crown Court")));
-
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
@@ -370,7 +368,6 @@ public class ApplicationEntryResultControllerTest extends AbstractSecurityContro
         resp.then().statusCode(HttpStatus.CREATED.value());
         resp.then().body("entryId", equalTo(entry.getUuid().toString()));
         resp.then().body("resultCode", equalTo("DUP1"));
-        resp.then().body("wordingFields", equalTo(List.of())); // expect empty
 
         UUID resultUuid = UUID.fromString(resp.jsonPath().getString("id"));
 

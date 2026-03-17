@@ -73,7 +73,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                             });
 
                     AuditableResult<ApplicationCodePage, ApplicationCode> result =
-                            new AuditableResult<>(newPage, null);
+                            new AuditableResult<>(newPage, new ApplicationCode());
                     return Optional.of(result);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
@@ -106,7 +106,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                                                                 ? feePair
                                                                                         .offsiteFee()
                                                                                 : null),
-                                                        null);
+                                                        new ApplicationCode());
 
                                 return Optional.of(result);
                             });

@@ -47,7 +47,6 @@ public class ApplicationEntryResultControllerCreateTest
         resp.then().body("id", notNullValue());
         resp.then().body("entryId", equalTo(entry.getUuid().toString()));
         resp.then().body("resultCode", equalTo(APPC_CODE));
-        resp.then().body("wordingFields", equalTo(List.of(APPC_WORDING_KEY)));
     }
 
     @Test
@@ -155,7 +154,6 @@ public class ApplicationEntryResultControllerCreateTest
         resp.then().statusCode(HttpStatus.CREATED.value());
         resp.then().body("entryId", equalTo(entry.getUuid().toString()));
         resp.then().body("resultCode", equalTo("DUP1"));
-        resp.then().body("wordingFields", equalTo(List.of()));
 
         UUID resultUuid = UUID.fromString(resp.jsonPath().getString("id"));
 

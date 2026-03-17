@@ -82,7 +82,8 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                     }
 
                     AuditableResult<CourtLocationGetDetailDto, NationalCourtHouse> result =
-                            new AuditableResult<>(mapper.toDetailDto(rows.getFirst()), null);
+                            new AuditableResult<>(
+                                    mapper.toDetailDto(rows.getFirst()), new NationalCourtHouse());
 
                     // Map the single matching entity to a detail DTO
                     return Optional.of(result);
@@ -123,7 +124,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
                             court -> responsePage.addContentItem(mapper.toSummaryDto(court)));
 
                     AuditableResult<CourtLocationPage, NationalCourtHouse> result =
-                            new AuditableResult<>(responsePage, null);
+                            new AuditableResult<>(responsePage, new NationalCourtHouse());
 
                     return Optional.of(result);
                 },

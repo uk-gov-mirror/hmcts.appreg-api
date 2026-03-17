@@ -43,33 +43,41 @@ public class ApplicationEntryResultControllerSearchTest
 
         // create results
         for (int i = 0; i < 4; i++) {
-            TemplateSubstitution substitution = new TemplateSubstitution();
-            substitution.setKey("Name of Crown Court");
-            substitution.setValue("test wording " + i);
-
             ResultCreateDto createDto = new ResultCreateDto();
-            createDto.setResultCode("APPC");
-            createDto.setWordingFields(List.of(substitution));
 
-            // create a result
-            Response response = createResult(appList, detailDto.getId(), token, createDto);
+            if (i % 2 == 0) {
+                createDto.setResultCode("CASE");
+                Response response = createResult(appList, detailDto.getId(), token, createDto);
 
-            Assertions.assertEquals(201, response.getStatusCode());
+                Assertions.assertEquals(201, response.getStatusCode());
+            } else {
+                TemplateSubstitution substitution = new TemplateSubstitution();
+                substitution.setKey("Name of Crown Court");
+                substitution.setValue("test wording " + i);
+
+                createDto.setResultCode("APPC");
+                createDto.setWordingFields(List.of(substitution));
+
+                // create a result
+                Response response = createResult(appList, detailDto.getId(), token, createDto);
+
+                Assertions.assertEquals(201, response.getStatusCode());
+            }
         }
 
         // navigate to the second page
-        Response response = getEntryResult(token, appList, detailDto.getId(), 2, 1);
+        Response response = getEntryResult(token, appList, detailDto.getId(), 1, 1);
 
         Assertions.assertEquals(200, response.getStatusCode());
         ResultPage page = response.as(ResultPage.class);
-        Assertions.assertEquals(2, page.getContent().size());
+        Assertions.assertEquals(1, page.getContent().size());
 
         Assertions.assertEquals("APPC", page.getContent().get(0).getResultCode());
         Assertions.assertEquals(
                 "Appeal forwarded to {{Name of Crown Court}}.",
                 page.getContent().get(0).getWording().getTemplate());
         Assertions.assertEquals(
-                "test wording 2",
+                "test wording 3",
                 page.getContent()
                         .get(0)
                         .getWording()
@@ -85,26 +93,17 @@ public class ApplicationEntryResultControllerSearchTest
                         .get(0)
                         .getKey());
 
-        Assertions.assertEquals("APPC", page.getContent().get(1).getResultCode());
+        // get the next page of data
+        response = getEntryResult(token, appList, detailDto.getId(), 1, 2);
+
+        Assertions.assertEquals(200, response.getStatusCode());
+        page = response.as(ResultPage.class);
+        Assertions.assertEquals("CASE", page.getContent().get(0).getResultCode());
         Assertions.assertEquals(
-                "Appeal forwarded to {{Name of Crown Court}}.",
-                page.getContent().get(1).getWording().getTemplate());
+                "Court agrees to state a case for the opinion of the High Court.",
+                page.getContent().get(0).getWording().getTemplate());
         Assertions.assertEquals(
-                "test wording 3",
-                page.getContent()
-                        .get(1)
-                        .getWording()
-                        .getSubstitutionKeyConstraints()
-                        .get(0)
-                        .getValue());
-        Assertions.assertEquals(
-                "Name of Crown Court",
-                page.getContent()
-                        .get(1)
-                        .getWording()
-                        .getSubstitutionKeyConstraints()
-                        .get(0)
-                        .getKey());
+                0, page.getContent().get(0).getWording().getSubstitutionKeyConstraints().size());
 
         // assert the data audit
         differenceLogAsserter.assertDataAuditChange(

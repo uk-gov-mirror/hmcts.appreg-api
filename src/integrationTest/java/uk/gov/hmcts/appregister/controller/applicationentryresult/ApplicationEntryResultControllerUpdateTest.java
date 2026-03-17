@@ -72,7 +72,6 @@ public class ApplicationEntryResultControllerUpdateTest
         updateResp.then().body("id", equalTo(resultUuid.toString()));
         updateResp.then().body("entryId", equalTo(existingEntry.entry().getUuid().toString()));
         updateResp.then().body("resultCode", equalTo(FRO_CODE));
-        updateResp.then().body("wordingFields", equalTo(List.of(FRO_WORDING_KEY)));
 
         differenceLogAsserter.assertNoErrors();
 

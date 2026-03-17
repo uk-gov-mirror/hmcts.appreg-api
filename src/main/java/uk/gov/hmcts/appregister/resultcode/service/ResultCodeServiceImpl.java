@@ -95,7 +95,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
 
                     return Optional.of(
                             new AuditableResult<ResultCodeGetDetailDto, Keyable>(
-                                    mapper.toDetailDto(rows.getFirst()), null));
+                                    mapper.toDetailDto(rows.getFirst()), new ResolutionCode()));
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
@@ -146,7 +146,8 @@ public class ResultCodeServiceImpl implements ResultCodeService {
                             titleFilter);
 
                     return Optional.of(
-                            new AuditableResult<ResultCodePage, Keyable>(responsePage, null));
+                            new AuditableResult<ResultCodePage, Keyable>(
+                                    responsePage, new ResolutionCode()));
                 },
                 // Spring injects all AuditOperationLifecycleListener beans as a List;
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
