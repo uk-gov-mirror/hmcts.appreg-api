@@ -5,7 +5,7 @@ package uk.gov.hmcts.appregister.common.enumeration;
  */
 public enum CrudEnum {
     CREATE('I'),
-    READ('R'),
+    READ('G'),
     UPDATE('S'),
     DELETE('D');
 
