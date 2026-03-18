@@ -1,9 +1,11 @@
 package uk.gov.hmcts.appregister.applicationentryresult.controller;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,15 +13,20 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import uk.gov.hmcts.appregister.applicationentryresult.api.ApplicationEntryResultSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationentryresult.model.ListEntryResultDeleteArgs;
 import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadForCreateEntryResult;
 import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadForUpdateEntryResult;
+import uk.gov.hmcts.appregister.applicationentryresult.model.PayloadGetEntryResultInList;
 import uk.gov.hmcts.appregister.applicationentryresult.service.ApplicationEntryResultService;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
+import uk.gov.hmcts.appregister.common.mapper.PageableMapper;
 import uk.gov.hmcts.appregister.common.security.RoleNames;
+import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.api.ApplicationListEntryResultsApi;
 import uk.gov.hmcts.appregister.generated.model.ResultCreateDto;
 import uk.gov.hmcts.appregister.generated.model.ResultGetDto;
+import uk.gov.hmcts.appregister.generated.model.ResultPage;
 import uk.gov.hmcts.appregister.generated.model.ResultUpdateDto;
 
 /**
@@ -32,6 +39,9 @@ import uk.gov.hmcts.appregister.generated.model.ResultUpdateDto;
 public class ApplicationEntryResultController implements ApplicationListEntryResultsApi {
 
     private final ApplicationEntryResultService service;
+
+    // Mapper converting OpenAPI paging params to Spring Data {@link Pageable}.
+    private final PageableMapper pageableMapper;
 
     public static final MediaType VND_JSON_V1 =
             MediaType.parseMediaType("application/vnd.hmcts.appreg.v1+json");
@@ -127,6 +137,27 @@ public class ApplicationEntryResultController implements ApplicationListEntryRes
                 .headers(h -> h.setLocation(locationOf(resultGetDto.getPayload().getId())))
                 .eTag(resultGetDto.getEtag())
                 .body(resultGetDto.getPayload());
+    }
+
+    @Override
+    public ResponseEntity<ResultPage> getApplicationListEntryResults(
+            UUID listId, UUID entryId, Integer pageNumber, Integer pageSize) {
+        PagingWrapper pagingWrapper =
+                pageableMapper.from(
+                        pageNumber,
+                        pageSize,
+                        List.of(),
+                        ApplicationEntryResultSortFieldEnum.CODE,
+                        Sort.Direction.ASC,
+                        ApplicationEntryResultSortFieldEnum::getEntityValue);
+        ResultPage resultPage =
+                service.search(
+                        PayloadGetEntryResultInList.builder()
+                                .listId(listId)
+                                .entryId(entryId)
+                                .build(),
+                        pagingWrapper);
+        return ResponseEntity.ok().body(resultPage);
     }
 
     /**

@@ -13,6 +13,7 @@ import uk.gov.hmcts.appregister.audit.listener.diff.AuditableData;
 import uk.gov.hmcts.appregister.audit.listener.diff.Auditor;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationServiceImpl;
 import uk.gov.hmcts.appregister.common.entity.DataAudit;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
@@ -52,7 +53,8 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
                                 .getClass()
                                 .getCanonicalName()
                                 .equals(event.getNewValue().getClass().getCanonicalName()))
-                        || !event.getOldValue().getId().equals(event.getNewValue().getId()))) {
+                        || !defaultKeyableId(event.getOldValue())
+                                .equals(defaultKeyableId(event.getNewValue())))) {
             log.debug(
                     "New and old audit values are not the same type and or id{} {}",
                     event.getOldValue().getClass().getCanonicalName(),
@@ -239,16 +241,16 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
             boolean primaryOld) {
         if (primaryOld && secondaryDiff == null) {
             log.debug(SAVING_OLD_AUDIT_MESSAGE, primaryDiff);
-            audit.setRelatedKey(event.getOldValue() != null ? event.getOldValue().getId() : -1L);
+            audit.setRelatedKey(defaultKeyableId(event.getOldValue()));
             audit.setNewValue(EMPTY_VALUE);
             audit.setOldValue(primaryDiff.getValue());
         } else if (!primaryOld && secondaryDiff == null) {
             log.debug(SAVING_NEW_AUDIT_MESSAGE, primaryDiff);
-            audit.setRelatedKey(event.getNewValue() != null ? event.getNewValue().getId() : -1L);
+            audit.setRelatedKey(defaultKeyableId(event.getNewValue()));
             audit.setNewValue(primaryDiff.getValue());
             audit.setOldValue(EMPTY_VALUE);
         } else {
-            audit.setRelatedKey(event.getOldValue() != null ? event.getNewValue().getId() : -1L);
+            audit.setRelatedKey(defaultKeyableId(event.getNewValue()));
 
             if (primaryOld) {
                 audit.setOldValue(primaryDiff.getValue());
@@ -262,6 +264,20 @@ public class DataAuditLogger extends AuditOperationLifecycleListenerAdapter {
                 log.debug(SAVING_OLD_AUDIT_MESSAGE, secondaryDiff);
             }
         }
+    }
+
+    /**
+     * The default keyable long with a default.
+     *
+     * @param l The long or a default value if null
+     * @return The long or -1 if null
+     */
+    private Long defaultKeyableId(Keyable l) {
+        if (l != null && l.getId() != null) {
+            return l.getId();
+        }
+
+        return -1L;
     }
 
     @Override

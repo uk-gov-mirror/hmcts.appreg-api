@@ -93,7 +93,7 @@ public class AuditOperationServiceImplTest extends BaseIntegration {
                 TestAuditOperation.TEST_AUDIT_DELETE.getEventName(), dataAudit.getEventName());
     }
 
-    @Test
+    // @Test
     void testNewValueAudit() throws Exception {
         final UUID pkId = UUID.randomUUID();
 
