@@ -1329,16 +1329,17 @@ public class ApplicationEntryServiceImplTest {
         }
     }
 
-    static class DummyGetApplicationListEntriesValidator extends GetApplicationListEntriesValidator {
+    static class DummyGetApplicationListEntriesValidator
+            extends GetApplicationListEntriesValidator {
         public DummyGetApplicationListEntriesValidator(
-            ApplicationListRepository applicationListRepository) {
+                ApplicationListRepository applicationListRepository) {
             super(applicationListRepository);
         }
 
         @Override
         public <R> R validate(
-            PayloadGetEntryInList validatable,
-            BiFunction<PayloadGetEntryInList, ApplicationList, R> validateSuccess) {
+                PayloadGetEntryInList validatable,
+                BiFunction<PayloadGetEntryInList, ApplicationList, R> validateSuccess) {
             return validateSuccess.apply(validatable, new ApplicationList());
         }
     }
