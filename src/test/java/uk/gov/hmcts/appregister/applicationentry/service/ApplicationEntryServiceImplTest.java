@@ -1329,6 +1329,20 @@ public class ApplicationEntryServiceImplTest {
         }
     }
 
+    static class DummyGetApplicationListEntriesValidator extends GetApplicationListEntriesValidator {
+        public DummyGetApplicationListEntriesValidator(
+            ApplicationListRepository applicationListRepository) {
+            super(applicationListRepository);
+        }
+
+        @Override
+        public <R> R validate(
+            PayloadGetEntryInList validatable,
+            BiFunction<PayloadGetEntryInList, ApplicationList, R> validateSuccess) {
+            return validateSuccess.apply(validatable, new ApplicationList());
+        }
+    }
+
     @Setter
     static class DummyMoveEntriesValidator extends MoveEntriesValidator {
 
