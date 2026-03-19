@@ -101,8 +101,9 @@ public enum AppListEntryError implements ErrorCodeEnum {
                     "ALE-19")),
     ACCOUNT_NUMBER_REQUIRED_FOR_APPLICATION_CODE(
             DefaultErrorDetail.create(
-                    HttpStatus.BAD_REQUEST, "Account number is required for EF applications", "ALE-20"));
-
+                    HttpStatus.BAD_REQUEST,
+                    "Account number is required for EF applications",
+                    "ALE-20"));
 
     private final DefaultErrorDetail defaultErrorCode;
 
