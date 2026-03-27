@@ -58,7 +58,7 @@ public abstract class AbstractFilterAndSortControllerTest<T extends Keyable> ext
     /**
      * The stream of negative security contexts to be tested.
      */
-    protected abstract Stream<RestSortEndpointDescription<ApplicationCode>> getSortDescriptions() throws Exception;
+    protected abstract Stream<RestSortEndpointDescription<T>> getSortDescriptions() throws Exception;
 
 
     @BeforeEach
