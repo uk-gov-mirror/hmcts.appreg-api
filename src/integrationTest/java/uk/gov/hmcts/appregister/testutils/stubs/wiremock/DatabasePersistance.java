@@ -115,6 +115,7 @@ public class DatabasePersistance {
         return nationalCourtHouseRepository.saveAndFlush(data);
     }
 
+    @Transactional
     public ApplicationListEntry save(ApplicationListEntry entry) {
 
         if (entry.getApplicationCode() != null) {
@@ -137,7 +138,7 @@ public class DatabasePersistance {
             save(entry.getAnamedaddress());
         }
 
-        return applicationListEntryRepository.saveAndFlush(entry);
+        return refreshEntity(applicationListEntryRepository.saveAndFlush(entry));
     }
 
     @Transactional
@@ -146,8 +147,10 @@ public class DatabasePersistance {
             save(entry.getCja());
         }
 
-        for (ApplicationListEntry alEntry : entry.getEntries()) {
-            save(alEntry);
+        if (entry.getEntries() != null) {
+            for (ApplicationListEntry alEntry : entry.getEntries()) {
+                save(alEntry);
+            }
         }
 
         entry = applicationListRepository.saveAndFlush(entry);
@@ -163,6 +166,7 @@ public class DatabasePersistance {
         return applicationListEntryOfficialRepository.saveAndFlush(data);
     }
 
+    @Transactional
     public AppListEntryResolution save(AppListEntryResolution entryResult) {
 
         if (entryResult.getApplicationList() != null) {

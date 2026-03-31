@@ -55,7 +55,7 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
     STATUS(
             SortMetaDataDescriptor.<ApplicationList>builder()
                     .sortableOperationEnum(ApplicationListSortFieldEnum.STATUS)
-                    .sortableValueFunction(ApplicationList::getStatus)
+                    .sortableValueFunction(keyable -> keyable.getStatus().toString())
                     .sortGenerator(
                             new GenerateAccordingToSort<ApplicationList>() {
                                 @Override
@@ -70,7 +70,12 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
     LOCATION(
             SortMetaDataDescriptor.<ApplicationList>builder()
                     .sortableOperationEnum(ApplicationListSortFieldEnum.LOCATION)
-                    .sortableValueFunction(ApplicationList::getOtherLocation)
+                    .sortableValueFunction(
+                            keyable -> {
+                                return keyable.getCourtName()
+                                        + keyable.getDescription()
+                                        + keyable.getOtherLocation();
+                            })
                     .sortGenerator(
                             new GenerateAccordingToSort<ApplicationList>() {
                                 @Override
@@ -78,7 +83,12 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
                                         int count,
                                         ApplicationList keyable,
                                         SortMetaDataDescriptor<ApplicationList> descriptor) {
-                                    keyable.setOtherLocation(PrimitiveDataGenerator.generate(35));
+                                    keyable.setCourtName(
+                                            PrimitiveDataGenerator.generate(count, 200));
+                                    keyable.setDescription(
+                                            PrimitiveDataGenerator.generate(count, 200));
+                                    keyable.setOtherLocation(
+                                            PrimitiveDataGenerator.generate(count, 200));
                                 }
                             })
                     .build()),
@@ -133,15 +143,15 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
                                         int count,
                                         ApplicationList keyable,
                                         SortMetaDataDescriptor<ApplicationList> descriptor) {
-                                    keyable.setDescription(PrimitiveDataGenerator.generate());
+                                    keyable.setDescription(
+                                            PrimitiveDataGenerator.generate(count, 200));
                                 }
                             })
                     .build()),
     OTHER_LOCATION_DESCRIPTION(
             SortMetaDataDescriptor.<ApplicationList>builder()
                     .sortableOperationEnum(ApplicationListSortFieldEnum.OTHER_LOCATION)
-                    .sortableValueFunction(ApplicationList::getDescription)
-                    .defaultSort(true)
+                    .sortableValueFunction(ApplicationList::getOtherLocation)
                     .sortGenerator(
                             new GenerateAccordingToSort<ApplicationList>() {
                                 @Override
@@ -149,7 +159,8 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
                                         int count,
                                         ApplicationList keyable,
                                         SortMetaDataDescriptor<ApplicationList> descriptor) {
-                                    keyable.setOtherLocation(PrimitiveDataGenerator.generate());
+                                    keyable.setOtherLocation(
+                                            PrimitiveDataGenerator.generate(count, 200));
                                 }
                             })
                     .build()),

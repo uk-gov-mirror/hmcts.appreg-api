@@ -23,7 +23,8 @@ public enum ResultCodeSortEnum implements SortMetaDescriptorEnum<ResolutionCode>
                                         int count,
                                         ResolutionCode keyable,
                                         SortMetaDataDescriptor<ResolutionCode> descriptor) {
-                                    keyable.setResultCode(PrimitiveDataGenerator.generate(2));
+                                    keyable.setResultCode(
+                                            PrimitiveDataGenerator.generate(count, 2));
                                 }
                             })
                     .build()),
@@ -38,7 +39,7 @@ public enum ResultCodeSortEnum implements SortMetaDescriptorEnum<ResolutionCode>
                                         int count,
                                         ResolutionCode keyable,
                                         SortMetaDataDescriptor<ResolutionCode> descriptor) {
-                                    keyable.setTitle(PrimitiveDataGenerator.generate(35));
+                                    keyable.setTitle(PrimitiveDataGenerator.generate(count, 35));
                                 }
                             })
                     .build());

@@ -23,7 +23,7 @@ public enum ApplicationCodeSortEnum implements SortMetaDescriptorEnum<Applicatio
                                         int count,
                                         ApplicationCode keyable,
                                         SortMetaDataDescriptor<ApplicationCode> descriptor) {
-                                    keyable.setCode(PrimitiveDataGenerator.generate(10));
+                                    keyable.setCode(PrimitiveDataGenerator.generate(count, 10));
                                 }
                             })
                     .build()),

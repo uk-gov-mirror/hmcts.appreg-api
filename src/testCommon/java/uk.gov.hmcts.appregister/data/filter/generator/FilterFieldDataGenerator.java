@@ -35,7 +35,7 @@ public class FilterFieldDataGenerator {
 
             // if the max is provided then we need to ensure that the partial string is not too long
             if (generateChars > 0) {
-                partialstr = startStr + PrimitiveDataGenerator.generate(generateChars) + endStr;
+                partialstr = startStr + PrimitiveDataGenerator.generate(-1, generateChars) + endStr;
             }
 
             FilterFieldValue<T> filterValue = new FilterFieldValue<T>(keyable, partialstr);
@@ -56,7 +56,7 @@ public class FilterFieldDataGenerator {
 
             return filterData;
         } else {
-            String randomStr = PrimitiveDataGenerator.generate(max);
+            String randomStr = PrimitiveDataGenerator.generate(count, max);
 
             FilterFieldValue<T> filterValue = new FilterFieldValue<T>(keyable, randomStr);
             FilterFieldData<T> filterFieldData = new FilterFieldData<>();

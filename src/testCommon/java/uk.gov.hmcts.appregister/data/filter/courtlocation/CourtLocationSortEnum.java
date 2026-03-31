@@ -24,7 +24,7 @@ public enum CourtLocationSortEnum implements SortMetaDescriptorEnum<NationalCour
                                         NationalCourtHouse keyable,
                                         SortMetaDataDescriptor<NationalCourtHouse> descriptor) {
                                     keyable.setCourtLocationCode(
-                                            PrimitiveDataGenerator.generate(10));
+                                            PrimitiveDataGenerator.generate(count, 10));
                                 }
                             })
                     .build()),

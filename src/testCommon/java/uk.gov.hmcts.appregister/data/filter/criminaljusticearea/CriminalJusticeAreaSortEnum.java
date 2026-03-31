@@ -23,7 +23,7 @@ public enum CriminalJusticeAreaSortEnum implements SortMetaDescriptorEnum<Crimin
                                         int count,
                                         CriminalJusticeArea keyable,
                                         SortMetaDataDescriptor<CriminalJusticeArea> descriptor) {
-                                    keyable.setCode(PrimitiveDataGenerator.generate(2));
+                                    keyable.setCode(PrimitiveDataGenerator.generate(count, 2));
                                 }
                             })
                     .build()),
@@ -38,7 +38,8 @@ public enum CriminalJusticeAreaSortEnum implements SortMetaDescriptorEnum<Crimin
                                         int count,
                                         CriminalJusticeArea keyable,
                                         SortMetaDataDescriptor<CriminalJusticeArea> descriptor) {
-                                    keyable.setDescription(PrimitiveDataGenerator.generate(35));
+                                    keyable.setDescription(
+                                            PrimitiveDataGenerator.generate(count, 35));
                                 }
                             })
                     .build());

@@ -21,7 +21,7 @@ public class PrimitiveDataGenerator {
 
     /** generate the string with a maximum of 100. */
     public static String generate() {
-        return generate(100);
+        return generate(-1, 100);
     }
 
     /**
@@ -29,12 +29,22 @@ public class PrimitiveDataGenerator {
      *
      * @param length The maximum length of the string.
      */
-    public static String generate(int length) {
+    public static String generate(int count, int length) {
         Random random = new Random();
         StringBuilder sb = new StringBuilder(length);
 
-        for (int i = 0; i < length; i++) {
+        int numberOfSpacesNeededExcludingCount = length;
+
+        if (count != -1) {
+            numberOfSpacesNeededExcludingCount = (length - Integer.toString(count).length());
+        }
+
+        for (int i = 0; i < numberOfSpacesNeededExcludingCount; i++) {
             sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
+        }
+
+        if (count != -1) {
+            sb = sb.append(count);
         }
 
         return sb.toString();

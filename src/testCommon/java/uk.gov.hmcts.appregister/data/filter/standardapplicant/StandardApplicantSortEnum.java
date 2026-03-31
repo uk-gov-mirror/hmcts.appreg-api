@@ -23,7 +23,8 @@ public enum StandardApplicantSortEnum implements SortMetaDescriptorEnum<Standard
                                         int count,
                                         StandardApplicant keyable,
                                         SortMetaDataDescriptor<StandardApplicant> descriptor) {
-                                    keyable.setApplicantCode(PrimitiveDataGenerator.generate(10));
+                                    keyable.setApplicantCode(
+                                            PrimitiveDataGenerator.generate(count, 10));
                                 }
                             })
                     .build()),
@@ -39,7 +40,7 @@ public enum StandardApplicantSortEnum implements SortMetaDescriptorEnum<Standard
                                         int count,
                                         StandardApplicant keyable,
                                         SortMetaDataDescriptor<StandardApplicant> descriptor) {
-                                    keyable.setName(PrimitiveDataGenerator.generate(35));
+                                    keyable.setName(PrimitiveDataGenerator.generate(count, 35));
                                 }
                             })
                     .build());
