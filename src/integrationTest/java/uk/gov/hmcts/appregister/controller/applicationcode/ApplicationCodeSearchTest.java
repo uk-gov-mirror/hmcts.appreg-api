@@ -511,7 +511,31 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
         Assertions.assertFalse(secondEntry.getFeeReference().isPresent());
         Assertions.assertFalse(secondEntry.getFeeDescription().isPresent());
         Assertions.assertFalse(secondEntry.getFeeAmount().isPresent());
-        Assertions.assertFalse(secondEntry.getOffsiteFeeAmount().isPresent());
+        Assertions.assertTrue(secondEntry.getOffsiteFeeAmount().isPresent());
+    }
+
+    @Test
+    public void givenValidRequest_whenGetApplicationCodes_ensureOffsiteFeeIsPresentForAll_returns200() throws Exception {
+        // create the token to send
+        TokenGenerator tokenGenerator =
+            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // execute the functionality
+        int pageSize = 100;
+        int pageNumber = 0;
+        Response responseSpec =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(pageSize),
+                Optional.of(pageNumber),
+                List.of(),
+                getLocalUrl(WEB_CONTEXT),
+                tokenGenerator.fetchTokenForRole());
+        responseSpec.then().statusCode(200);
+
+        ApplicationCodePage response = responseSpec.as(ApplicationCodePage.class);
+        for (ApplicationCodeGetSummaryDto entry : response.getContent()) {
+            assertTrue(entry.getOffsiteFeeAmount().isPresent(), "Offsite fee amount should be present for all records");
+        }
     }
 
     @Test

@@ -14,7 +14,7 @@ import uk.gov.hmcts.appregister.common.template.wording.WordingTemplateSentence;
  */
 @Getter
 @Setter
-public classUpdateApplicationEntryValidationSuccess
+public class UpdateApplicationEntryValidationSuccess
         extends CreateApplicationEntryValidationSuccess {
     public UpdateApplicationEntryValidationSuccess(
             WordingTemplateSentence wordingSentence,
