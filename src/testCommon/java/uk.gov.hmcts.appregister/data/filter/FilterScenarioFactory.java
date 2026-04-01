@@ -49,7 +49,7 @@ public class FilterScenarioFactory {
             List<FilterFieldData<T>> filterFieldDataLst = new ArrayList<>();
             for (int j = 0; j < filterDescriptionEnums.size(); j++) {
                 filterFieldDataLst.add(
-                        filterDescriptionEnums.get(j).getDescriptor().apply(i, copiedKey));
+                        filterDescriptionEnums.get(j).getDescriptor().apply(i + 1, copiedKey));
             }
             scenario.add(filterFieldDataLst);
         }
@@ -73,7 +73,7 @@ public class FilterScenarioFactory {
         List<T> result = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_RECORDS; i++) {
             result.add(CopyUtil.deepClone(keyable));
-            applySort(i, result.getLast(), sortDescriptorEnums);
+            applySort(i + 1, result.getLast(), sortDescriptorEnums);
         }
 
         return result;

@@ -3,9 +3,12 @@ package uk.gov.hmcts.appregister.controller.standardapplicant;
 import io.restassured.response.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.data.StandardApplicantTestData;
 import uk.gov.hmcts.appregister.data.filter.FilterScenarioFactory;
 import uk.gov.hmcts.appregister.data.filter.FilterableScenario;
@@ -83,9 +86,12 @@ public class StandardApplicantFilterAndSortTest
 
         int expectedIndex = 0;
 
+        Map<String, Keyable> matches = new HashMap<>();
         for (StandardApplicantGetSummaryDto item : content) {
             if (expectedIndex < keyable.size()
                     && keyable.get(expectedIndex).getApplicantCode().equals(item.getCode())) {
+                matches.put(
+                        keyable.get(expectedIndex).getApplicantCode(), keyable.get(expectedIndex));
                 expectedIndex++;
             }
         }

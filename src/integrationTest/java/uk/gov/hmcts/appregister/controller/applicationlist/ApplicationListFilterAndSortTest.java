@@ -5,7 +5,6 @@ import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
@@ -38,7 +37,7 @@ public class ApplicationListFilterAndSortTest
 
         // create the application list
         ApplicationList applicationCode = new AppListTestData().someComplete();
-        applicationCode.setEntries(Set.of());
+        applicationCode.setEntries(List.of());
 
         // process the scenario
         FilterableScenario<ApplicationList> scenario =
@@ -69,7 +68,7 @@ public class ApplicationListFilterAndSortTest
 
         // create the application code
         ApplicationList applicationCode = new AppListTestData().someComplete();
-        applicationCode.setEntries(Set.of());
+        applicationCode.setEntries(List.of());
 
         // process the scenario
         List<ApplicationList> applicationCodes =

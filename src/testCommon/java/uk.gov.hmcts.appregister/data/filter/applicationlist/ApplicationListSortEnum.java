@@ -72,9 +72,9 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
                     .sortableOperationEnum(ApplicationListSortFieldEnum.LOCATION)
                     .sortableValueFunction(
                             keyable -> {
-                                return keyable.getCourtName()
-                                        + keyable.getDescription()
-                                        + keyable.getOtherLocation();
+                                return keyable.getCourtName().toLowerCase()
+                                        + keyable.getDescription().toLowerCase()
+                                        + keyable.getOtherLocation().toLowerCase();
                             })
                     .sortGenerator(
                             new GenerateAccordingToSort<ApplicationList>() {
@@ -126,7 +126,7 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
                                         entry.setStandardApplicant(saApplicant);
                                         entry.setAnamedaddress(applicant);
                                         entry.setRnameaddress(respondent);
-                                        entry.setApplicationList(keyable);
+                                        keyable.getEntries().add(entry);
                                     }
                                 }
                             })

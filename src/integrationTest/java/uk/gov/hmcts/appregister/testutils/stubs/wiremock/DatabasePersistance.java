@@ -148,14 +148,21 @@ public class DatabasePersistance {
         }
 
         if (entry.getEntries() != null) {
-            for (ApplicationListEntry alEntry : entry.getEntries()) {
-                save(alEntry);
+            boolean alreadyProcessed =
+                    entry.getEntries().stream()
+                            .filter(e -> e.getApplicationList() == entry)
+                            .toList()
+                            .isEmpty();
+            if (!alreadyProcessed) {
+                for (ApplicationListEntry alEntry : entry.getEntries()) {
+                    alEntry.setApplicationList(entry);
+                    save(alEntry);
+                }
             }
         }
 
-        entry = applicationListRepository.saveAndFlush(entry);
-        refreshEntity(entry);
-        return entry;
+        ApplicationList saved = applicationListRepository.saveAndFlush(entry);
+        return refreshEntity(saved);
     }
 
     public StandardApplicant save(StandardApplicant data) {

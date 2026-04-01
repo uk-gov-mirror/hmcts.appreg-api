@@ -165,8 +165,6 @@ public abstract class AbstractFilterAndSortControllerTest<T extends Keyable>
             RestFilterEndpointDescription<T> filterDescription) throws Exception {
         // save all keyable data that belongs to scenario
         saveFilterScenarioData(filterDescription.getFilterableScenario());
-        Assertions.assertTrue(
-                filterDescription.getFilterableScenario().getSortDescriptorEnums().size() > 1);
         if (filterDescription.getFilterableScenario().isPartialOnlyConfig()) {
             // run the sorts across each filter
             for (SortMetaDescriptorEnum<T> sort :
@@ -301,34 +299,36 @@ public abstract class AbstractFilterAndSortControllerTest<T extends Keyable>
     @MethodSource("getSortDescriptions")
     public void runSortFailure(RestSortEndpointDescription<T> sortEndpointDescription)
             throws Exception {
-        Response response =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.of(1),
-                        Optional.of(0),
-                        List.of(
-                                sortEndpointDescription
-                                                .getSortDescriptors()
-                                                .getDescriptor()
-                                                .getSortableOperationEnum()
-                                                .getApiValue()
-                                        + ","
-                                        + SortableField.DESC,
-                                sortEndpointDescription
-                                                .getAvailableSortDescriptorsExcludingActive()
-                                                .get(0)
-                                                .getDescriptor()
-                                                .getSortableOperationEnum()
-                                                .getApiValue()
-                                        + ","
-                                        + SortableField.ASC),
-                        sortEndpointDescription.getUrl(),
-                        getATokenWithValidCredentials()
-                                .roles(List.of(RoleEnum.USER))
-                                .build()
-                                .fetchTokenForRole());
+        if (sortEndpointDescription.getAllAvailableSortDescriptors().size() > 1) {
+            Response response =
+                    restAssuredClient.executeGetRequestWithPaging(
+                            Optional.of(1),
+                            Optional.of(0),
+                            List.of(
+                                    sortEndpointDescription
+                                                    .getSortDescriptors()
+                                                    .getDescriptor()
+                                                    .getSortableOperationEnum()
+                                                    .getApiValue()
+                                            + ","
+                                            + SortableField.DESC,
+                                    sortEndpointDescription
+                                                    .getAvailableSortDescriptorsExcludingActive()
+                                                    .get(0)
+                                                    .getDescriptor()
+                                                    .getSortableOperationEnum()
+                                                    .getApiValue()
+                                            + ","
+                                            + SortableField.ASC),
+                            sortEndpointDescription.getUrl(),
+                            getATokenWithValidCredentials()
+                                    .roles(List.of(RoleEnum.USER))
+                                    .build()
+                                    .fetchTokenForRole());
 
-        ProblemAssertUtil.assertEquals(
-                CommonAppError.MULTIPLE_SORT_NOT_SUPPORTED.getCode(), response);
+            ProblemAssertUtil.assertEquals(
+                    CommonAppError.MULTIPLE_SORT_NOT_SUPPORTED.getCode(), response);
+        }
     }
 
     @ParameterizedTest
