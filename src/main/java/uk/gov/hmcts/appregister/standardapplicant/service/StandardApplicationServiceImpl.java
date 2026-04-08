@@ -47,7 +47,13 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
     private final ApplicantMapper applicantMapper;
 
     @Override
-    public StandardApplicantPage findAll(String code, String name, PagingWrapper pageable) {
+    public StandardApplicantPage findAll(
+            String code,
+            String name,
+            String addressLine1,
+            LocalDate from,
+            LocalDate to,
+            PagingWrapper pageable) {
 
         return auditService.processAudit(
                 null,
@@ -59,7 +65,14 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
                     // breaks name into individual and/or organisation parts
                     final Page<StandardApplicant> standardApplicantsList =
-                            repository.search(code, name, todayUk, pageable.getPageable());
+                            repository.search(
+                                    code,
+                                    name,
+                                    addressLine1,
+                                    from,
+                                    to,
+                                    todayUk,
+                                    pageable.getPageable());
 
                     StandardApplicantPage newPage = new StandardApplicantPage();
                     pageMapper.toPage(standardApplicantsList, newPage, pageable.getSortStrings());

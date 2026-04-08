@@ -85,6 +85,9 @@ public class StandardApplicantServiceTest {
 
         String code = "APP001";
         String name = "John Doe";
+        String addressLine1 = "123 Main Street";
+        LocalDate from = LocalDate.now().minusDays(10);
+        LocalDate to = LocalDate.now().plusDays(10);
         Pageable pageable = PageRequest.of(0, 2);
 
         StandardApplicantTestData standardApplicantTestData = new StandardApplicantTestData();
@@ -97,12 +100,20 @@ public class StandardApplicantServiceTest {
                         pageable,
                         2);
 
-        when(repository.search(eq(code), eq(name), isNotNull(), eq(pageable))).thenReturn(pageImpl);
+        when(repository.search(
+                        eq(code),
+                        eq(name),
+                        eq(addressLine1),
+                        eq(from),
+                        eq(to),
+                        isNotNull(),
+                        eq(pageable)))
+                .thenReturn(pageImpl);
 
         PagingWrapper wrapper = PagingWrapper.of(List.of(), pageable);
 
         StandardApplicantPage standardApplicantPage =
-                standardApplicantService.findAll(code, name, wrapper);
+                standardApplicantService.findAll(code, name, addressLine1, from, to, wrapper);
 
         Assertions.assertEquals(2, standardApplicantPage.getTotalElements());
         Assertions.assertEquals(
