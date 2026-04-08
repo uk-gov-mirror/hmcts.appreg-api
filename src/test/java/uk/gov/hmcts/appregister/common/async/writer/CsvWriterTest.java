@@ -17,7 +17,7 @@ public class CsvWriterTest {
     void testWriteAppendsReadData() throws IOException {
         try (CsvWriter<PersonCsvPojo> writer = new CsvWriter<>(PersonCsvPojo.class)) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            URL resource = classLoader.getResource("helloworld.csv");
+            URL resource = classLoader.getResource("person.csv");
             File fileToLoad = new File(resource.getFile());
 
             ReadPagePosition readPagePosition = new ReadPagePosition(1, 0);

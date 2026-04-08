@@ -54,7 +54,7 @@ public class AsyncJobServiceImplTest {
 
         // setup the reader for the csv file
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL resource = classLoader.getResource("helloworld.csv");
+        URL resource = classLoader.getResource("person.csv");
         File fileToLoad = new File(resource.getFile());
 
         List<PersonCsvPojo> output = new ArrayList<>();
@@ -251,7 +251,7 @@ public class AsyncJobServiceImplTest {
         UUID jobId = UUID.randomUUID();
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL resource = classLoader.getResource("helloworld.csv");
+        URL resource = classLoader.getResource("person.csv");
         File fileToLoad = new File(resource.getFile());
 
         List<PersonCsvPojo> output = new ArrayList<>();

@@ -18,7 +18,7 @@ class CsvReaderTest {
     @Test
     void testRead() throws IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL resource = classLoader.getResource("helloworld.csv");
+        URL resource = classLoader.getResource("person.csv");
         File fileToLoad = new File(resource.getFile());
 
         ReadPagePosition readPagePosition = new ReadPagePosition(1, 0);
@@ -46,7 +46,7 @@ class CsvReaderTest {
     @Test
     public void testFailFormat() throws IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL resource = classLoader.getResource("helloworld_failformat.csv");
+        URL resource = classLoader.getResource("person_failformat.csv");
         File fileToLoad = new File(resource.getFile());
 
         ReadPagePosition readPagePosition = new ReadPagePosition(1, 0);
@@ -67,7 +67,7 @@ class CsvReaderTest {
     @Test
     public void testDataTypeError() throws IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL resource = classLoader.getResource("helloworld_faildataformat.csv");
+        URL resource = classLoader.getResource("person_faildataformat.csv");
         File fileToLoad = new File(resource.getFile());
 
         ReadPagePosition readPagePosition = new ReadPagePosition(1, 0);
