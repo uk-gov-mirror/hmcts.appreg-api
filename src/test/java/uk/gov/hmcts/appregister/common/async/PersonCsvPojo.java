@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.common.async;
 
 import com.opencsv.bean.CsvBindByName;
-
 import lombok.Getter;
 import lombok.Setter;
 

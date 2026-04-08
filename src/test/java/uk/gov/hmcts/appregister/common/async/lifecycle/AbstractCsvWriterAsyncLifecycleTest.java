@@ -1,12 +1,18 @@
 package uk.gov.hmcts.appregister.common.async.lifecycle;
 
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 import org.mockito.Mockito;
-
-import uk.gov.hmcts.appregister.common.async.PersonCsvPojo;
 import uk.gov.hmcts.appregister.common.async.JobContext;
+import uk.gov.hmcts.appregister.common.async.PersonCsvPojo;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
 import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
@@ -14,26 +20,15 @@ import uk.gov.hmcts.appregister.common.async.writer.CsvWriter;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class AbstractCsvWriterAsyncLifecycleTest {
 
     @Test
     public void testAbstractCsvAsyncLifecycle() throws IOException {
-        DummyCsvAsyncLifecycle lifecycleUnderTest;
         JobStatusResponse jobStatusResponse = Mockito.mock(JobStatusResponse.class);
         when(jobStatusResponse.getStatus()).thenReturn(JobStatus.FAILED);
         when(jobStatusResponse.getUserName()).thenReturn("user");
         when(jobStatusResponse.getErrorMessage()).thenReturn("error");
 
-        JobContext jobContext = new JobContext();
         NameAddress nameAddress = new NameAddress();
         nameAddress.setName("title");
         nameAddress.setEmailAddress("email");
@@ -42,22 +37,27 @@ public class AbstractCsvWriterAsyncLifecycleTest {
         nameAddress1.setName("title");
         nameAddress1.setEmailAddress("email");
 
+        DummyCsvAsyncLifecycle lifecycleUnderTest;
+
+        JobContext jobContext = new JobContext();
+
         final CsvWriter<PersonCsvPojo> csvWriter = new CsvWriter<>(PersonCsvPojo.class);
-        CsvReader<PersonCsvPojo> csvReader;
         lifecycleUnderTest = new DummyCsvAsyncLifecycle(csvWriter);
 
         // first processing call
-        lifecycleUnderTest.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<>(
-            jobStatusResponse, List.of(nameAddress), jobContext,
-            JobStatus.PROCESSING
-        ));
+        lifecycleUnderTest.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<>(
+                        jobStatusResponse, List.of(nameAddress), jobContext, JobStatus.PROCESSING));
 
         // second processing call
-        lifecycleUnderTest.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<>(
-            jobStatusResponse, List.of(nameAddress1), jobContext,
-            JobStatus.PROCESSING
-        ));
+        lifecycleUnderTest.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<>(
+                        jobStatusResponse,
+                        List.of(nameAddress1),
+                        jobContext,
+                        JobStatus.PROCESSING));
 
+        CsvReader<PersonCsvPojo> csvReader;
         csvReader = new CsvReader<>(csvWriter.getInputStream(), PersonCsvPojo.class);
         // now lets read the data
         try (csvReader) {
@@ -74,12 +74,13 @@ public class AbstractCsvWriterAsyncLifecycleTest {
             Assertions.assertEquals(nameAddress1.getEmailAddress(), output.get(1).getEmail());
         }
 
-
         // completed call
-        lifecycleUnderTest.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<>(
-            jobStatusResponse, List.of(nameAddress, nameAddress1), jobContext,
-            JobStatus.COMPLETED
-        ));
+        lifecycleUnderTest.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<>(
+                        jobStatusResponse,
+                        List.of(nameAddress, nameAddress1),
+                        jobContext,
+                        JobStatus.COMPLETED));
 
         // ensure we try to write the blob
         verify(jobStatusResponse, times(1)).write(notNull());
@@ -91,13 +92,11 @@ public class AbstractCsvWriterAsyncLifecycleTest {
 
     @Test
     public void testAbstractCsvAsyncLifecycleFail() throws IOException {
-        DummyCsvAsyncLifecycle lifecycleUnderTest;
         JobStatusResponse jobStatusResponse = Mockito.mock(JobStatusResponse.class);
         when(jobStatusResponse.getStatus()).thenReturn(JobStatus.FAILED);
         when(jobStatusResponse.getUserName()).thenReturn("user");
         when(jobStatusResponse.getErrorMessage()).thenReturn("error");
 
-        JobContext jobContext = new JobContext();
         NameAddress nameAddress = new NameAddress();
         nameAddress.setName("title");
         nameAddress.setEmailAddress("email");
@@ -106,22 +105,26 @@ public class AbstractCsvWriterAsyncLifecycleTest {
         nameAddress1.setName("title");
         nameAddress1.setEmailAddress("email");
 
+        DummyCsvAsyncLifecycle lifecycleUnderTest;
+
         final CsvWriter<PersonCsvPojo> csvWriter = new CsvWriter<>(PersonCsvPojo.class);
-        CsvReader<PersonCsvPojo> csvReader;
         lifecycleUnderTest = new DummyCsvAsyncLifecycle(csvWriter);
+        JobContext jobContext = new JobContext();
 
         // first processing call
-        lifecycleUnderTest.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<>(
-            jobStatusResponse, List.of(nameAddress), jobContext,
-            JobStatus.PROCESSING
-        ));
+        lifecycleUnderTest.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<>(
+                        jobStatusResponse, List.of(nameAddress), jobContext, JobStatus.PROCESSING));
 
         // second processing call
-        lifecycleUnderTest.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<>(
-            jobStatusResponse, List.of(nameAddress1), jobContext,
-            JobStatus.PROCESSING
-        ));
+        lifecycleUnderTest.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<>(
+                        jobStatusResponse,
+                        List.of(nameAddress1),
+                        jobContext,
+                        JobStatus.PROCESSING));
 
+        CsvReader<PersonCsvPojo> csvReader;
         csvReader = new CsvReader<>(csvWriter.getInputStream(), PersonCsvPojo.class);
         // now lets read the data
         try (csvReader) {
@@ -139,10 +142,12 @@ public class AbstractCsvWriterAsyncLifecycleTest {
         }
 
         // fail processing
-        lifecycleUnderTest.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<>(
-            jobStatusResponse, List.of(nameAddress, nameAddress1), jobContext,
-            JobStatus.FAILED
-        ));
+        lifecycleUnderTest.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<>(
+                        jobStatusResponse,
+                        List.of(nameAddress, nameAddress1),
+                        jobContext,
+                        JobStatus.FAILED));
 
         // ensure we did not write the blob
         verify(jobStatusResponse, times(0)).write(notNull());
@@ -152,7 +157,8 @@ public class AbstractCsvWriterAsyncLifecycleTest {
         Assertions.assertThrows(IOException.class, csvReader::getInputStream);
     }
 
-    class DummyCsvAsyncLifecycle extends AbstractCsvWriterAsyncLifecycle<NameAddress, PersonCsvPojo> {
+    class DummyCsvAsyncLifecycle
+            extends AbstractCsvWriterAsyncLifecycle<NameAddress, PersonCsvPojo> {
         public DummyCsvAsyncLifecycle(CsvWriter<PersonCsvPojo> csvWriter) {
             super(csvWriter);
         }

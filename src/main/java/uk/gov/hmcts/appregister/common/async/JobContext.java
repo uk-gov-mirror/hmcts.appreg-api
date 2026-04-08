@@ -1,10 +1,9 @@
 package uk.gov.hmcts.appregister.common.async;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * A context that allows us to control the flow of job events.

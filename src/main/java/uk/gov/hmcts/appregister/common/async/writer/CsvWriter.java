@@ -1,52 +1,48 @@
 package uk.gov.hmcts.appregister.common.async.writer;
 
-import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.opencsv.bean.HeaderNameBaseMappingStrategy;
 import com.opencsv.bean.StatefulBeanToCsv;
-
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
-
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvException;
-
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
-
-import lombok.extern.slf4j.Slf4j;
-
-import org.apache.tomcat.util.http.fileupload.IOUtils;
-
-import org.aspectj.apache.bcel.generic.RET;
-
-import uk.gov.hmcts.appregister.common.async.CsvPojo;
-import uk.gov.hmcts.appregister.common.async.JobContext;
-import uk.gov.hmcts.appregister.common.async.exception.JobError;
-import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
-import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import uk.gov.hmcts.appregister.common.async.CsvPojo;
+import uk.gov.hmcts.appregister.common.async.JobContext;
 
+/**
+ * A open csv writer that writes a set of {@link CsvPojo} to a generic csv file with multiple
+ * results. This writer is appender and write can be called multiple times. On close of this writer
+ * the file is deleted. Use of this resource should ensure its use within a try resources context
+ */
 @Slf4j
-public class CsvWriter<T extends CsvPojo> implements PageWrite<T> {
+public class CsvWriter<T extends CsvPojo> implements PageWriter<T> {
+
+    /** The representation of the underlying file. */
     private File file;
 
+    /**
+     * The default delimeter for csv is pipes not commas. This aligns ourself with the expected
+     * delimiter
+     */
     private static final char DEFAULT_DELIMITER = '|';
 
-    NoHeaderStrategy<T> noHeaderStrategy;
+    /**
+     * A no header strategy that allows us to append to the underlying file whilst ensuring we have
+     * one set of headers.
+     */
+    private NoHeaderStrategy<T> noHeaderStrategy;
 
-    private Class<T> tClass;
-
-    public CsvWriter(Class<T> tClass) throws IOException {
+    public CsvWriter(Class<T> cls) throws IOException {
         this.file = File.createTempFile(UUID.randomUUID().toString(), ".csv");
-        this.tClass = tClass;
         noHeaderStrategy = new NoHeaderStrategy<>(file);
-        noHeaderStrategy.setType(tClass);
+        noHeaderStrategy.setType(cls);
     }
 
     @Override
@@ -61,19 +57,26 @@ public class CsvWriter<T extends CsvPojo> implements PageWrite<T> {
 
     /**
      * writes the csv to the file.
+     *
      * @param csv The records to write
-     * @return The true or false if the write was successful.
+     * @param jobContext The context to log any errors.
+     * @throws IOException Any problems writing the csv.
      */
-    public boolean write(List<T> csv, JobContext jobContext) throws IOException {
+    public void write(List<T> csv, JobContext jobContext) throws IOException {
         try (FileWriter writer = new FileWriter(file, true)) {
-            StatefulBeanToCsv<T> beanToCsv =
-                new StatefulBeanToCsvBuilder<T>(writer)
-                    .withApplyQuotesToAll(false)
-                    .withSeparator(DEFAULT_DELIMITER)
-                    .withMappingStrategy(noHeaderStrategy)
-                    .build();
 
+            // open the csv writer
+            StatefulBeanToCsv<T> beanToCsv =
+                    new StatefulBeanToCsvBuilder<T>(writer)
+                            .withApplyQuotesToAll(false)
+                            .withSeparator(DEFAULT_DELIMITER)
+                            .withMappingStrategy(noHeaderStrategy)
+                            .build();
+
+            // any specific errors related to formatting are logged to the context by default
             try {
+
+                // write the csv pojos to a csv file
                 beanToCsv.write(csv); // must pass a collection
             } catch (CsvDataTypeMismatchException dataTypeMismatchException) {
                 jobContext.logError(dataTypeMismatchException.getMessage());
@@ -81,12 +84,9 @@ public class CsvWriter<T extends CsvPojo> implements PageWrite<T> {
                 jobContext.logError(csvRequiredFieldEmptyException.getMessage());
             }
         }
-        return false;
     }
 
-    /**
-     * Do not add a header if it has already been written.
-     */
+    /** Do not add a header if it has already been written. */
     public class NoHeaderStrategy<T> extends HeaderNameBaseMappingStrategy<T> {
 
         private final File file;
@@ -97,12 +97,14 @@ public class CsvWriter<T extends CsvPojo> implements PageWrite<T> {
 
         @Override
         public String[] generateHeader(T bean) throws CsvRequiredFieldEmptyException {
+            // if the file is empty, then we can write the header, otherwise
+            // do not bother
             if (file.length() != 0) {
                 return new String[0]; // <-- prevents header from being written
             }
+
+            // generate the header
             return super.generateHeader(bean);
         }
-
-
     }
 }

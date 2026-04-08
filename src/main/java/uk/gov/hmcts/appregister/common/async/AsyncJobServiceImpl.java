@@ -6,16 +6,12 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import lombok.RequiredArgsConstructor;
-
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
 import uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycle;
 import uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycleEvent;
@@ -24,12 +20,10 @@ import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
 import uk.gov.hmcts.appregister.common.async.model.TrackJobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.reader.DataReader;
-import uk.gov.hmcts.appregister.common.async.reader.PageRead;
+import uk.gov.hmcts.appregister.common.async.reader.PageReader;
 import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
 import uk.gov.hmcts.appregister.common.async.validator.StartJobValidator;
-import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
-import uk.gov.hmcts.appregister.generated.model.JobType;
 
 /**
  * A default implementation of the {@link AsyncJobService} interface.
@@ -39,26 +33,30 @@ import uk.gov.hmcts.appregister.generated.model.JobType;
 @RequiredArgsConstructor
 @Setter
 public class AsyncJobServiceImpl implements AsyncJobService {
-    /** decouples the core lifecyle of an async job from its state management. */
+    /** decouples the core lifecycles of an async job from its state management. */
     private final JobStatusPersistence persistence;
 
+    /**
+     * If executed within a Spring context then ensure that the job read page size is set in yaml.
+     */
     @Value("${appreg.job.page-size}")
     private int pageSize;
 
+    /** Validates whether a job can be started. */
     private final StartJobValidator validator;
 
     /**
-     * A shared executor. We use virtual threads asa most of the processing will be IO which should
-     * mean our service can scale.
+     * A shared executor. We use virtual threads here as most of the processing will be IO which
+     * should mean our service can scale better than a more traditional thread pool.
      */
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     @Override
     @Transactional
     public <T> TrackJobStatusResponse startJob(
-        JobTypeRequest jobTypeRequest,
-        DataReader<T> dataReader,
-        AsyncJobLifecycle<T> lifecycle) {
+            JobTypeRequest jobTypeRequest,
+            DataReader<T> dataReader,
+            AsyncJobLifecycle<T> lifecycle) {
         return startJob(jobTypeRequest, dataReader, null, lifecycle);
     }
 
@@ -67,7 +65,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
     public <T> TrackJobStatusResponse startJob(
             JobTypeRequest jobRequest,
             DataReader<T> dataReader,
-            PageRead<T> pageImport,
+            PageReader<T> pageImport,
             AsyncJobLifecycle<T> lifecycle) {
 
         JobContext jobContext = new JobContext();
@@ -85,18 +83,14 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
         ReadPagePosition position = new ReadPagePosition(pageSize, 0);
 
-        AsyncLifecycleProcessing<T> process = new AsyncLifecycleProcessing<>(
-            position,
-            dataReader,
-            jobStatusResponse,
-            lifecycle,
-            jobContext,
-            pageImport);
+        AsyncLifecycleProcessor<T> process =
+                new AsyncLifecycleProcessor<>(
+                        position, dataReader, jobStatusResponse, lifecycle, jobContext, pageImport);
 
         // the core import logic will be processed in a seperate thread
         future = executor.submit(process);
 
-       return new TrackJobStatusResponse(getJobStatus(id).get(), future);
+        return new TrackJobStatusResponse(getJobStatus(id).get(), future);
     }
 
     @Transactional
@@ -105,22 +99,27 @@ public class AsyncJobServiceImpl implements AsyncJobService {
         return persistence.getJobStatus(jobId);
     }
 
-
+    /**
+     * fire an event and change the state of the underlying job.
+     *
+     * @param response The jobn to fire the event for and the forthcoming state transition.
+     * @param data The read data to pass to the lifecycle event.
+     * @param status The status to set the job to.
+     * @param lifecycle The lifecycle to fire the event for.
+     * @param context The job context to pass to the lifecycle event.
+     */
     private <T> void fireEventAndChangeState(
-        JobStatusResponse response,
-        List<T> data,
-        JobStatus status,
-        AsyncJobLifecycle<T> lifecycle,
-        JobContext context) throws IOException {
+            JobStatusResponse response,
+            List<T> data,
+            JobStatus status,
+            AsyncJobLifecycle<T> lifecycle,
+            JobContext context)
+            throws IOException {
         log.debug("Processing {} for job {}", status, response.getJobId());
 
         // fire the lifecycle event
-        lifecycle.lifeCycleEventPerformed(new AsyncJobLifecycleEvent<T>(
-            response,
-            data,
-            context,
-            status
-        ));
+        lifecycle.lifeCycleEventPerformed(
+                new AsyncJobLifecycleEvent<T>(response, data, context, status));
 
         log.debug("Processed {} for job {}", status, response.getJobId());
 
@@ -128,11 +127,9 @@ public class AsyncJobServiceImpl implements AsyncJobService {
         persistence.setJobStatus(response.getJobId(), status);
     }
 
-    /**
-     * A runnable that will process the async job.
-     */
+    /** A runnable implementation that will process the async job. */
     @RequiredArgsConstructor
-    class AsyncLifecycleProcessing<T> implements Runnable {
+    class AsyncLifecycleProcessor<T> implements Runnable {
 
         private final ReadPagePosition position;
 
@@ -144,71 +141,80 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
         private final JobContext jobContext;
 
-        private final PageRead<T> pageRead;
+        private final PageReader<T> pageRead;
 
         @Override
         public void run() {
-            try (dataReader){
+            try (dataReader) {
                 fireEventAndChangeState(
-                    jobStatusResponse, null, JobStatus.RECEIVED, lifecycle, jobContext);
+                        jobStatusResponse, null, JobStatus.RECEIVED, lifecycle, jobContext);
 
                 dataReader.readData(
-                    position,
-                    (data, jobContext) -> {
+                        position,
+                        (data, jobContext) -> {
 
-                        // if we have a failure but we want to validate all other
-                        // results then keep going.
-                        if (jobContext.hasFailure() && jobContext.isStopped()) {
-                            persistence.setFailure(jobStatusResponse.getJobId(), jobContext.getFailureMessage());
-                            throw new JobException("Job failed during validation with message: " + jobContext.getFailureMessage());
-                        }
+                            // if we have a failure but we want to validate all other
+                            // results then keep going.
+                            if (jobContext.hasFailure() && jobContext.isStopped()) {
+                                persistence.setFailure(
+                                        jobStatusResponse.getJobId(),
+                                        jobContext.getFailureMessage());
+                                throw new JobException(
+                                        "Job failed during validation with message: "
+                                                + jobContext.getFailureMessage());
+                            }
 
-                        // validate
-                        fireEventAndChangeState(
-                            jobStatusResponse, data, JobStatus.VALIDATING, lifecycle, jobContext);
+                            // validate the read page of data
+                            fireEventAndChangeState(
+                                    jobStatusResponse,
+                                    data,
+                                    JobStatus.VALIDATING,
+                                    lifecycle,
+                                    jobContext);
 
-                        // process the state
-                        fireEventAndChangeState(
-                            jobStatusResponse,
-                            data,
-                            JobStatus.PROCESSING,
-                            lifecycle,
-                            jobContext
-                        );
+                            // if we have a failure but we want to validate all other
+                            // results then keep going.
+                            if (jobContext.hasFailure() && jobContext.isStopped()) {
+                                persistence.setFailure(
+                                        jobStatusResponse.getJobId(),
+                                        jobContext.getFailureMessage());
+                                throw new JobException(
+                                        "Job failed during validation with message: "
+                                                + jobContext.getFailureMessage());
+                            }
 
-                        if (pageRead != null) {
-                            // process the data
-                            pageRead.readData(data, jobContext);
-                        }
-                        return true;
-                    },
-                    jobContext
-                );
+                            // process the state with the read data
+                            fireEventAndChangeState(
+                                    jobStatusResponse,
+                                    data,
+                                    JobStatus.PROCESSING,
+                                    lifecycle,
+                                    jobContext);
+
+                            // if we dont have a page read callback then do not call.
+                            if (pageRead != null) {
+                                // process the data
+                                pageRead.readData(data, jobContext);
+                            }
+                        },
+                        jobContext);
 
                 // if a failure was detected then fail else complete the job
                 if (jobContext.hasFailure()) {
                     fireEventAndChangeState(
-                        jobStatusResponse,
-                        null,
-                        JobStatus.FAILED, lifecycle, jobContext
-                    );
-                    persistence.setFailure(jobStatusResponse.getJobId(), jobContext.getFailureMessage());
+                            jobStatusResponse, null, JobStatus.FAILED, lifecycle, jobContext);
+                    persistence.setFailure(
+                            jobStatusResponse.getJobId(), jobContext.getFailureMessage());
                 } else {
                     fireEventAndChangeState(
-                        jobStatusResponse,
-                        null,
-                        JobStatus.COMPLETED, lifecycle, jobContext
-                    );
+                            jobStatusResponse, null, JobStatus.COMPLETED, lifecycle, jobContext);
                 }
             } catch (Throwable t) {
                 log.error("Error processing job", t);
 
                 try {
                     fireEventAndChangeState(
-                        jobStatusResponse,
-                        null,
-                        JobStatus.FAILED, lifecycle, jobContext
-                    );
+                            jobStatusResponse, null, JobStatus.FAILED, lifecycle, jobContext);
                 } catch (IOException e) {
                     log.error("Error calling failure lifecycle", e);
                 }
@@ -219,9 +225,11 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                 }
 
                 // set the fail state
-                persistence.setFailure(jobStatusResponse.getJobId(), jobContext.getFailureMessage() == null ? "Failed with unknown error"
-                    : jobContext.getFailureMessage());
-
+                persistence.setFailure(
+                        jobStatusResponse.getJobId(),
+                        jobContext.getFailureMessage() == null
+                                ? "Failed with unknown error"
+                                : jobContext.getFailureMessage());
             }
         }
     }

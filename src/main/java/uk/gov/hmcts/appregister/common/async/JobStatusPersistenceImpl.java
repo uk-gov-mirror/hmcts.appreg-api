@@ -1,34 +1,22 @@
 package uk.gov.hmcts.appregister.common.async;
 
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.InputStreamSource;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.stereotype.Component;
-
-import uk.gov.hmcts.appregister.common.async.exception.JobError;
-import uk.gov.hmcts.appregister.common.async.exception.JobException;
-import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
-import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
-import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
-import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
-import uk.gov.hmcts.appregister.generated.model.JobType;
-
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
+import org.springframework.stereotype.Component;
+import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
+import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
+import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
+import uk.gov.hmcts.appregister.generated.model.JobStatus;
 
 /**
  * TODO: This class needs implementing against the database. Waiting for ticket to be implemented.
@@ -37,18 +25,18 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class JobStatusPersistenceImpl implements JobStatusPersistence {
-    private final String JDBC_BLOB_QUERY = "content FROM files WHERE id = ?";
-    private final String JDBC_INSERT_BLOB_QUERY = "content FROM files WHERE id = ?";
+    private static final String JDBC_BLOB_QUERY = "content FROM files WHERE id = ?";
+    private static final String JDBC_INSERT_BLOB_QUERY = "content FROM files WHERE id = ?";
 
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void setJobStatus(JobIdRequest jobType, JobStatus jobStatus) {
-
+        // do nothing
     }
 
     public void setFailure(JobIdRequest jobType, String reasonFailed) {
-
+        // do nothing
     }
 
     @Override
@@ -80,7 +68,7 @@ public class JobStatusPersistenceImpl implements JobStatusPersistence {
         InputStreamResource inputStream = null;
         File file = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
 
-            jdbcTemplate.query(
+        jdbcTemplate.query(
                 JDBC_BLOB_QUERY,
                 ps -> ps.setString(1, jobId.getId().toString()),
                 rs -> {
@@ -93,8 +81,7 @@ public class JobStatusPersistenceImpl implements JobStatusPersistence {
                             throw new SQLException(e);
                         }
                     }
-                }
-            );
+                });
 
         // return the spring input stream resource
         return new InputStreamResource(new CloseableFileInputStream(file));
@@ -102,26 +89,26 @@ public class JobStatusPersistenceImpl implements JobStatusPersistence {
 
     /**
      * sets the blob in the database.
+     *
      * @param inputStream The input stream to write to the database.
-     * @param jobId
+     * @param jobId The job id we are setting the blob on.
      */
     public void setBlob(InputStream inputStream, JobIdRequest jobId) {
         jdbcTemplate.execute(
-            "JDBC_INSERT_BLOB_QUERY",
-            (PreparedStatementCallback<Void>) ps -> {
-                ps.setString(1, jobId.getId().toString());
-                ps.setBinaryStream(2, inputStream);
-                ps.executeUpdate();
-                return null;
-            }
-        );
+                "JDBC_INSERT_BLOB_QUERY",
+                (PreparedStatementCallback<Void>)
+                        ps -> {
+                            ps.setString(1, jobId.getId().toString());
+                            ps.setBinaryStream(2, inputStream);
+                            ps.executeUpdate();
+                            return null;
+                        });
     }
 
-    /**
-     * A closeable input stream that is backed by a file and will delete when closed
-     */
+    /** A closeable input stream that is backed by a file and will delete when closed. */
     class CloseableFileInputStream extends FileInputStream {
         private File file;
+
         CloseableFileInputStream(File file) throws IOException {
             super(file);
         }

@@ -15,4 +15,3 @@ public class JobSuccess {
     /** The application list being deleted. */
     private JobStatusResponse jobStatusResponse;
 }
-

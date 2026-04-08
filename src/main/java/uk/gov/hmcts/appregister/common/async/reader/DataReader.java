@@ -1,20 +1,20 @@
 package uk.gov.hmcts.appregister.common.async.reader;
 
-import uk.gov.hmcts.appregister.common.async.JobContext;
-
 import java.io.Closeable;
 import java.io.IOException;
+import uk.gov.hmcts.appregister.common.async.JobContext;
 
 /**
- * Allows us to import the job.
+ * Allows us to read data from a source in pages.
  */
 public interface DataReader<T> extends Closeable {
-
-
     /**
      * reads the data from the reader and converts it to a list of objects.
-      * @return The list of objects.
+     *
+     * @param position The position of the page to read.
+     * @param pageReader The page of read data
+     * @param jobContext The job context to log any read specific errors.
      */
-    void readData(ReadPagePosition position, PageRead<T> pageImporter, JobContext jobContext) throws IOException;
+    void readData(ReadPagePosition position, PageReader<T> pageReader, JobContext jobContext)
+            throws IOException;
 }
-

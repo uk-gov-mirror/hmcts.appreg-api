@@ -1,38 +1,37 @@
 package uk.gov.hmcts.appregister.common.async.writer;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import uk.gov.hmcts.appregister.common.async.PersonCsvPojo;
-import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
-import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.common.async.PersonCsvPojo;
+import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
+import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
 
 public class CsvWriterTest {
 
     @Test
-    void testWriteThatAppendsReadData() throws IOException {
+    void testWriteAppendsReadData() throws IOException {
         try (CsvWriter<PersonCsvPojo> writer = new CsvWriter<>(PersonCsvPojo.class)) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             URL resource = classLoader.getResource("helloworld.csv");
-            File fileToLoad
-                = new File(resource.getFile());
+            File fileToLoad = new File(resource.getFile());
 
             ReadPagePosition readPagePosition = new ReadPagePosition(1, 0);
 
-            try (CsvReader<PersonCsvPojo> csvReader = new CsvReader<PersonCsvPojo>(fileToLoad, PersonCsvPojo.class)) {
+            try (CsvReader<PersonCsvPojo> csvReader =
+                    new CsvReader<PersonCsvPojo>(fileToLoad, PersonCsvPojo.class)) {
                 csvReader.readData(readPagePosition, writer::write, null);
             }
 
             List<PersonCsvPojo> output = new ArrayList<>();
 
             readPagePosition = new ReadPagePosition(1, 0);
-            CsvReader<PersonCsvPojo> reader = new CsvReader(writer.getInputStream(), PersonCsvPojo.class);
+            CsvReader<PersonCsvPojo> reader =
+                    new CsvReader(writer.getInputStream(), PersonCsvPojo.class);
             reader.readData(readPagePosition, (e, context) -> output.addAll(e), null);
 
             Assertions.assertEquals(3, output.size());

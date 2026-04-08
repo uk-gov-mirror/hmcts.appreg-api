@@ -1,8 +1,13 @@
 package uk.gov.hmcts.appregister.common.async.reader;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -11,26 +16,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
-import uk.gov.hmcts.appregister.Application;
 import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
-
-import java.util.List;
-import java.util.function.Function;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class JpaReaderTest {
 
-    @Captor
-    ArgumentCaptor<Pageable> pageableArgumentCaptor;
+    @Captor ArgumentCaptor<Pageable> pageableArgumentCaptor;
 
-    @Captor
-    ArgumentCaptor<List<ApplicationCode>> applicationCodeArgumentCaptor;
+    @Captor ArgumentCaptor<List<ApplicationCode>> applicationCodeArgumentCaptor;
 
     @Test
     void testRead() throws Exception {
@@ -43,9 +37,7 @@ public class JpaReaderTest {
         JobContext jobContext = mock(JobContext.class);
 
         // setup the page data callback
-        PageRead<ApplicationCode> pageRead = Mockito.mock(PageRead.class);
-        when(pageRead.readData(List.of(code), jobContext)).thenReturn(true);
-        when(pageRead.readData(List.of(code1), jobContext)).thenReturn(true);
+        PageReader<ApplicationCode> pageRead = Mockito.mock(PageReader.class);
 
         // gets the lust of paged data
         PageImpl<ApplicationCode> page = new PageImpl<>(List.of(code));
@@ -59,24 +51,30 @@ public class JpaReaderTest {
         when(supplier.apply(pageableArgumentCaptor.capture())).thenReturn(page, page1, page2);
 
         // run the test
-        try (JpaDataReader<ApplicationCode> applicationCodeJpaDataReader = new JpaDataReader<>(supplier)) {
+        try (JpaDataReader<ApplicationCode> applicationCodeJpaDataReader =
+                new JpaDataReader<>(supplier)) {
             applicationCodeJpaDataReader.readData(readPagePosition, pageRead, jobContext);
 
             // Assert the pagination worked fine
-            Assertions.assertEquals(0, pageableArgumentCaptor.getAllValues().get(0).getPageNumber());
-            Assertions.assertEquals(1, pageableArgumentCaptor.getAllValues().get(1).getPageNumber());
-            Assertions.assertEquals(2, pageableArgumentCaptor.getAllValues().get(2).getPageNumber());
+            Assertions.assertEquals(
+                    0, pageableArgumentCaptor.getAllValues().get(0).getPageNumber());
+            Assertions.assertEquals(
+                    1, pageableArgumentCaptor.getAllValues().get(1).getPageNumber());
+            Assertions.assertEquals(
+                    2, pageableArgumentCaptor.getAllValues().get(2).getPageNumber());
 
             // assert the number of times that the read callback was called
             Mockito.verify(pageRead, times(2))
-                .readData(applicationCodeArgumentCaptor.capture(), Mockito.eq(jobContext));
+                    .readData(applicationCodeArgumentCaptor.capture(), Mockito.eq(jobContext));
 
             // ensure each call to the read data passed a sub set of the data
             Assertions.assertEquals(1, applicationCodeArgumentCaptor.getAllValues().get(0).size());
-            Assertions.assertEquals(code, applicationCodeArgumentCaptor.getAllValues().get(0).get(0));
+            Assertions.assertEquals(
+                    code, applicationCodeArgumentCaptor.getAllValues().get(0).get(0));
 
             Assertions.assertEquals(1, applicationCodeArgumentCaptor.getAllValues().get(1).size());
-            Assertions.assertEquals(code1, applicationCodeArgumentCaptor.getAllValues().get(1).get(0));
+            Assertions.assertEquals(
+                    code1, applicationCodeArgumentCaptor.getAllValues().get(1).get(0));
         }
     }
 }

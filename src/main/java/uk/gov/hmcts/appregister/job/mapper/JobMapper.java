@@ -3,7 +3,6 @@ package uk.gov.hmcts.appregister.job.mapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.generated.model.JobAcknowledgement;
 

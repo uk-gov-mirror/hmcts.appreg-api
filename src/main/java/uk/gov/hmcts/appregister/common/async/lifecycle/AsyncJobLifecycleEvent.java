@@ -1,15 +1,14 @@
 package uk.gov.hmcts.appregister.common.async.lifecycle;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
 
-import java.util.List;
-
 /**
- * Represents a lifecycle event for an asynchronous job
+ * Represents a lifecycle event for an asynchronous job.
  */
 @RequiredArgsConstructor
 @Getter

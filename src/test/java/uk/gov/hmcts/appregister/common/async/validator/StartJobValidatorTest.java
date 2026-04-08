@@ -1,45 +1,45 @@
 package uk.gov.hmcts.appregister.common.async.validator;
 
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import uk.gov.hmcts.appregister.common.async.JobStatusPersistence;
 import uk.gov.hmcts.appregister.common.async.exception.JobError;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.generated.model.JobType;
 
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 public class StartJobValidatorTest {
-    @Mock
-    private JobStatusPersistence persistence;
+    @Mock private JobStatusPersistence persistence;
 
-    @InjectMocks
-    private StartJobValidator startJobValidator;
+    @InjectMocks private StartJobValidator startJobValidator;
 
     @Test
     void testValidationFail() {
-        JobTypeRequest jobIdRequest = JobTypeRequest.builder()
-            .jobType(JobType.BULK_UPLOAD_ENTRIES).build();
+        JobTypeRequest jobIdRequest =
+                JobTypeRequest.builder().jobType(JobType.BULK_UPLOAD_ENTRIES).build();
         when(persistence.isJobTypeNotFinishedForUser(jobIdRequest)).thenReturn(true);
 
-        AppRegistryException ex = Assertions.assertThrows(AppRegistryException.class, () -> startJobValidator.validate(jobIdRequest));
-        Assertions.assertEquals(JobError.JOB_TYPE_IS_ALREADY_RUNNING.getCode(), ex.getCode().getCode());
+        AppRegistryException ex =
+                Assertions.assertThrows(
+                        AppRegistryException.class, () -> startJobValidator.validate(jobIdRequest));
+        Assertions.assertEquals(
+                JobError.JOB_TYPE_IS_ALREADY_RUNNING.getCode(), ex.getCode().getCode());
     }
 
     @Test
     void testValidationSuccess() {
-        JobTypeRequest jobIdRequest = JobTypeRequest.builder()
-            .jobType(JobType.BULK_UPLOAD_ENTRIES).build();
+        JobTypeRequest jobIdRequest =
+                JobTypeRequest.builder().jobType(JobType.BULK_UPLOAD_ENTRIES).build();
         when(persistence.isJobTypeNotFinishedForUser(jobIdRequest)).thenReturn(false);
 
-        Assertions.assertTrue(startJobValidator.validate(jobIdRequest, (req, v)
-            -> Boolean.TRUE).booleanValue());
+        Assertions.assertTrue(
+                startJobValidator.validate(jobIdRequest, (req, v) -> Boolean.TRUE).booleanValue());
     }
 }
