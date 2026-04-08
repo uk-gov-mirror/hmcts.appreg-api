@@ -18,6 +18,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantSummaryProjection;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
@@ -64,22 +65,25 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                     var todayUk = LocalDate.now(clock.withZone(ukZone));
 
                     // breaks name into individual and/or organisation parts
-                    final Page<StandardApplicant> standardApplicantsList =
-                            repository.search(
-                                    code,
-                                    name,
-                                    addressLine1,
-                                    from,
-                                    to,
-                                    todayUk,
-                                    pageable.getPageable());
+                    final Page<StandardApplicantSummaryProjection> standardApplicantsList =
+                        repository.search(
+                            code,
+                            name,
+                            addressLine1,
+                            from,
+                            to,
+                            todayUk,
+                            pageable.getPageable());
 
                     StandardApplicantPage newPage = new StandardApplicantPage();
                     pageMapper.toPage(standardApplicantsList, newPage, pageable.getSortStrings());
 
-                    // Map each entity to a summary DTO and add to the page content
-                    standardApplicantsList.map(
-                            sa -> newPage.addContentItem(mapper.toReadGetSummaryDto(sa)));
+                    // Map each projection to a summary DTO and add to the page content
+                    standardApplicantsList.forEach(
+                        projection -> newPage.addContentItem(
+                            mapper.toReadGetSummaryDto(projection)
+                        )
+                    );
 
                     log.debug(
                             "Finished: Find Standard Applicant for: code: {} name: {} with paging: {}",

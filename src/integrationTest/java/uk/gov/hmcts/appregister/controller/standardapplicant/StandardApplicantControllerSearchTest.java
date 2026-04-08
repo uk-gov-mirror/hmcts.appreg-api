@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.controller;
+package uk.gov.hmcts.appregister.controller.standardapplicant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -551,7 +551,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         new StandardApplicantRequestFilter(
-                                Optional.of("not exist"), Optional.of("does not exist")),
+                                Optional.of("not exist"), Optional.of("does not exist"),
+                                Optional.empty(), Optional.empty(), Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response is successful with no content
@@ -652,7 +653,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         List.of("name"),
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
-                        new StandardApplicantRequestFilter(Optional.of("APP00"), Optional.empty()),
+                        new StandardApplicantRequestFilter(Optional.of("APP00"), Optional.empty(),
+                                                           Optional.empty(), Optional.empty(),
+                                                           Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response
@@ -701,7 +704,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         List.of("name"),
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
-                        new StandardApplicantRequestFilter(Optional.empty(), Optional.of("ORG")),
+                        new StandardApplicantRequestFilter(Optional.empty(), Optional.of("ORG"),
+                                                           Optional.empty(), Optional.empty(),
+                                                           Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response
@@ -759,7 +764,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         List.of("name"),
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
-                        new StandardApplicantRequestFilter(Optional.empty(), Optional.of("D")),
+                        new StandardApplicantRequestFilter(Optional.empty(), Optional.of("D"),
+                                                           Optional.empty(), Optional.empty(),
+                                                           Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response
@@ -841,7 +848,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         List.of("name"),
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
-                        new StandardApplicantRequestFilter(Optional.empty(), Optional.of("Dunn")),
+                        new StandardApplicantRequestFilter(Optional.empty(), Optional.of("Dunn"),
+                                                           Optional.empty(), Optional.empty(),
+                                                           Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response
@@ -911,7 +920,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         new StandardApplicantRequestFilter(
-                                Optional.of("APP001"), Optional.of("Smith")),
+                                Optional.of("APP001"), Optional.of("Smith"),
+                                Optional.empty(), Optional.empty(), Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response
@@ -963,7 +973,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         new StandardApplicantRequestFilter(
-                                Optional.of("APP001"), Optional.of("John")),
+                                Optional.of("APP001"), Optional.of("John"), Optional.empty(),
+                                Optional.empty(), Optional.empty()),
                         new OpenApiPageMetaData());
 
         // assert the response
@@ -1064,7 +1075,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         new StandardApplicantRequestFilter(
-                                Optional.of("AP99004"), Optional.of("John, Smith")),
+                                Optional.of("AP99004"), Optional.of("John, Smith"), Optional.empty(),
+                                Optional.empty(), Optional.empty()),
                         new OpenApiPageMetaData());
         // assert the response
         responseSpec.then().statusCode(400);
@@ -1092,7 +1104,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         new StandardApplicantRequestFilter(
-                                Optional.of("AP99004"), Optional.of("John")),
+                                Optional.of("AP99004"), Optional.of("John"), Optional.empty(),
+                                Optional.empty(), Optional.empty()),
                         new OpenApiPageMetaData());
         // assert the response
         responseSpec.then().statusCode(400);
@@ -1123,7 +1136,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         getLocalUrl(WEB_CONTEXT),
                         tokenGenerator.fetchTokenForRole(),
                         new StandardApplicantRequestFilter(
-                                Optional.of("AP99004"), Optional.of("John")),
+                                Optional.of("AP99004"), Optional.of("John"),
+                                Optional.empty(), Optional.empty(), Optional.empty()),
                         new OpenApiPageMetaData());
 
         ProblemDetail problemDetail = responseSpec.as(ProblemDetail.class);
@@ -1152,7 +1166,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                             List.of(),
                             getLocalUrl(WEB_CONTEXT),
                             tokenGenerator.fetchTokenForRole(),
-                            new StandardApplicantRequestFilter(Optional.of("P0"), Optional.empty()),
+                            new StandardApplicantRequestFilter(Optional.of("P0"), Optional.empty(),
+                                                               Optional.empty(), Optional.empty(),
+                                                               Optional.empty()),
                             new OpenApiPageMetaData());
 
             StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
@@ -1212,7 +1228,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                             getLocalUrl(WEB_CONTEXT),
                             tokenGenerator.fetchTokenForRole(),
                             new StandardApplicantRequestFilter(
-                                    Optional.empty(), Optional.of("anisation 1")),
+                                    Optional.empty(), Optional.of("anisation 1"),
+                                    Optional.empty(), Optional.empty(), Optional.empty()),
                             new OpenApiPageMetaData());
 
             StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
@@ -1262,7 +1279,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                             getLocalUrl(WEB_CONTEXT),
                             tokenGenerator.fetchTokenForRole(),
                             new StandardApplicantRequestFilter(
-                                    Optional.empty(), Optional.of("Owe")),
+                                    Optional.empty(), Optional.of("Owe"), Optional.empty(),
+                                    Optional.empty(), Optional.empty()),
                             new OpenApiPageMetaData());
 
             StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
@@ -1313,7 +1331,8 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                             getLocalUrl(WEB_CONTEXT),
                             tokenGenerator.fetchTokenForRole(),
                             new StandardApplicantRequestFilter(
-                                    Optional.empty(), Optional.of("Jones")),
+                                    Optional.empty(), Optional.of("Jones"),
+                                    Optional.empty(), Optional.empty(), Optional.empty()),
                             new OpenApiPageMetaData());
 
             StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
@@ -1375,6 +1394,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
     static class StandardApplicantRequestFilter implements UnaryOperator<RequestSpecification> {
         private final Optional<String> code;
         private final Optional<String> name;
+        private final Optional<String> addressLine1;
+        private final Optional<LocalDate> from;
+        private final Optional<LocalDate> to;
 
         @Override
         public RequestSpecification apply(RequestSpecification rs) {
@@ -1384,6 +1406,18 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
 
             if (name.isPresent()) {
                 rs = rs.queryParam("name", name.get());
+            }
+
+            if (addressLine1.isPresent()) {
+                rs = rs.queryParam("addressLine1", addressLine1.get());
+            }
+
+            if (from.isPresent()) {
+                rs = rs.queryParam("from", from.get());
+            }
+
+            if (to.isPresent()) {
+                rs = rs.queryParam("to", to.get());
             }
 
             return rs;

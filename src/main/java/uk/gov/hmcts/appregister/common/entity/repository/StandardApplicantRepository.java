@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.entity.aspect.LikeParam;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantSummaryProjection;
 
 /**
  * Repository for StandardApplicant entities.
@@ -67,27 +68,44 @@ public interface StandardApplicantRepository extends JpaRepository<StandardAppli
     @Query(
             """
         SELECT
-                c,
-                COALESCE(
-                    NULLIF(
-                        TRIM(
-                            FUNCTION('concat_ws', ' ',
-                                c.applicantForename1,
-                                c.applicantForename2,
-                                c.applicantForename3,
-                                c.applicantSurname
-                            )
-                        ),
-                        ''
+            c.applicantCode AS applicantCode,
+            COALESCE(
+                c.name,
+                NULLIF(
+                    TRIM(
+                        FUNCTION('concat_ws', ' ',
+                            c.applicantForename1,
+                            c.applicantForename2,
+                            c.applicantForename3,
+                            c.applicantSurname
+                        )
                     ),
-                    c.name
-                ) AS effectiveName
+                    ''
+                )
+            ) AS effectiveName,
+            c.name AS applicantName,
+            c.applicantForename1 AS firstForename,
+            c.applicantSurname AS surname,
+            c.applicantForename2 AS secondForename,
+            c.applicantForename3 AS thirdForename,
+            c.applicantTitle AS title,
+            c.addressLine1 AS addressLine1,
+            c.addressLine2 AS addressLine2,
+            c.addressLine3 AS addressLine3,
+            c.addressLine4 AS addressLine4,
+            c.addressLine5 AS addressLine5,
+            c.postcode AS postcode,
+            c.telephoneNumber AS phone,
+            c.mobileNumber AS mobile,
+            c.emailAddress AS email,
+            c.applicantStartDate AS applicantStartDate,
+            c.applicantEndDate AS applicantEndDate
         FROM StandardApplicant c
         WHERE (:code IS NULL OR LOWER(c.applicantCode) LIKE CONCAT('%', LOWER(CAST(:code AS string)), '%')  ESCAPE '\\')
           AND (c.applicantStartDate < :active)
           AND (c.applicantEndDate IS NULL OR c.applicantEndDate > :active)
-          AND (:from IS NULL OR c.applicantStartDate >= :from)
-          AND (:to IS NULL OR c.applicantEndDate <= :to)
+          AND (CAST(:from AS date) IS NULL OR c.applicantStartDate >= :from)
+          AND (CAST(:to AS date) IS NULL OR c.applicantEndDate <= :to)
           AND (
               :addressLine1 IS NULL
               OR LOWER(c.addressLine1) LIKE CONCAT(
@@ -105,7 +123,7 @@ public interface StandardApplicantRepository extends JpaRepository<StandardAppli
                           AND LOWER(c.applicantSurname) LIKE CONCAT('%',
                                    LOWER(CAST(:name AS string)), '%')  ESCAPE '\\')))
         """)
-    Page<StandardApplicant> search(
+    Page<StandardApplicantSummaryProjection> search(
             @LikeParam @Param("code") String code,
             @LikeParam @Param("name") String name,
             @LikeParam @Param("addressLine1") String addressLine1,
