@@ -153,16 +153,8 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                         position,
                         (data, jobContext) -> {
 
-                            // if we have a failure but we want to validate all other
-                            // results then keep going.
-                            if (jobContext.hasFailure() && jobContext.isStopped()) {
-                                persistence.setFailure(
-                                        jobStatusResponse.getJobId(),
-                                        jobContext.getFailureMessage());
-                                throw new JobException(
-                                        "Job failed during validation with message: "
-                                                + jobContext.getFailureMessage());
-                            }
+                            // decide wether to fail or continue
+                            handleFailure(jobContext, jobStatusResponse, JobStatus.RECEIVED);
 
                             // validate the read page of data
                             fireEventAndChangeState(
@@ -172,16 +164,8 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                     lifecycle,
                                     jobContext);
 
-                            // if we have a failure but we want to validate all other
-                            // results then keep going.
-                            if (jobContext.hasFailure() && jobContext.isStopped()) {
-                                persistence.setFailure(
-                                        jobStatusResponse.getJobId(),
-                                        jobContext.getFailureMessage());
-                                throw new JobException(
-                                        "Job failed during validation with message: "
-                                                + jobContext.getFailureMessage());
-                            }
+                            // decide wether to fail or continue
+                            handleFailure(jobContext, jobStatusResponse, JobStatus.VALIDATING);
 
                             // process the state with the read data
                             fireEventAndChangeState(
@@ -190,6 +174,9 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                     JobStatus.PROCESSING,
                                     lifecycle,
                                     jobContext);
+
+                            // decide wether to fail or continue
+                            handleFailure(jobContext, jobStatusResponse, JobStatus.PROCESSING);
 
                             // if we dont have a page read callback then do not call.
                             if (pageRead != null) {
@@ -201,10 +188,8 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
                 // if a failure was detected then fail else complete the job
                 if (jobContext.hasFailure()) {
-                    fireEventAndChangeState(
-                            jobStatusResponse, null, JobStatus.FAILED, lifecycle, jobContext);
-                    persistence.setFailure(
-                            jobStatusResponse.getJobId(), jobContext.getFailureMessage());
+                    throw new JobException(
+                            "Failed to process job: " + jobStatusResponse.getJobId().getId());
                 } else {
                     fireEventAndChangeState(
                             jobStatusResponse, null, JobStatus.COMPLETED, lifecycle, jobContext);
@@ -231,6 +216,24 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                 ? "Failed with unknown error"
                                 : jobContext.getFailureMessage());
             }
+        }
+    }
+
+    /**
+     * Decide how to handle a failure.
+     *
+     * @param jobContext The job context containing the failure message.
+     * @param jobStatusResponse The job status response containing the job id.
+     */
+    private void handleFailure(
+            JobContext jobContext, JobStatusResponse jobStatusResponse, JobStatus status)
+            throws JobException {
+        // if we have a failure but we want to validate all other
+        // results then keep going.
+        if (jobContext.hasFailure() && jobContext.isStopped()) {
+            throw new JobException(
+                    "Job failed during %s for job %s. Forced termination"
+                            .formatted(status, jobStatusResponse.getJobId().getId()));
         }
     }
 }

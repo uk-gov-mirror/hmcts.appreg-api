@@ -187,7 +187,13 @@ public class AsyncJobServiceImplTest {
         lifecycle.stop = true;
         JobIdRequest request = executeWithLifecycle(lifecycle);
         Assertions.assertTrue(lifecycle.failed);
-        verify(persistence, times(1)).setFailure(request, BrokenLifecycleWithContext.ERROR);
+        verify(persistence, times(1))
+                .setFailure(
+                        request,
+                        BrokenLifecycleWithContext.ERROR
+                                + ", Job failed during PROCESSING for job "
+                                + request.getId()
+                                + ". Forced termination");
     }
 
     @Test
@@ -198,7 +204,13 @@ public class AsyncJobServiceImplTest {
 
         // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
-        verify(persistence, times(1)).setFailure(request, BrokenLifecycleWithContext.ERROR);
+        verify(persistence, times(1))
+                .setFailure(
+                        request,
+                        BrokenLifecycleWithContext.ERROR
+                                + ", Job failed during VALIDATING for job "
+                                + request.getId()
+                                + ". Forced termination");
     }
 
     @Test
@@ -207,7 +219,6 @@ public class AsyncJobServiceImplTest {
         lifecycle.stop = false;
         JobIdRequest request = executeWithLifecycle(lifecycle);
 
-        // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
         verify(persistence, times(1))
                 .setFailure(
@@ -216,7 +227,9 @@ public class AsyncJobServiceImplTest {
                                 + ", "
                                 + BrokenLifecycleWithContext.ERROR
                                 + ", "
-                                + BrokenLifecycleWithContext.ERROR);
+                                + BrokenLifecycleWithContext.ERROR
+                                + ", Failed to process job: "
+                                + request.getId().toString());
     }
 
     @Test
