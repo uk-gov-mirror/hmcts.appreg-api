@@ -1,16 +1,19 @@
 package uk.gov.hmcts.appregister.common.async.reader;
 
+import uk.gov.hmcts.appregister.common.async.JobContext;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
  * Represents a
  */
 @FunctionalInterface
-public interface PageRead<T> extends Cloneable {
+public interface PageRead<T> {
     /**
      * imports the page data from the csv file and converts it to a list of objects.
-     * @param position The position of the data to import.
      * @param relatedData The related data to import.
+     * @return p
      */
-    void readData(ReadPagePosition position, List<T> relatedData);
+    boolean readData(List<T> relatedData, JobContext jobContext) throws IOException;
 }

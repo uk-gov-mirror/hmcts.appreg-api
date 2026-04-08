@@ -4,7 +4,12 @@ import com.opencsv.bean.CsvToBean;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 
+import com.opencsv.bean.exceptionhandler.CsvExceptionHandler;
+
+import com.opencsv.exceptions.CsvException;
+
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -12,14 +17,18 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import uk.gov.hmcts.appregister.common.async.CsvPojo;
+import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.async.exception.JobError;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
 import java.util.UUID;
@@ -29,23 +38,31 @@ import java.util.UUID;
  */
 @Getter
 @Setter
-public class CsvReader<T extends CsvPojo> implements DataReader<T> {
-
-    /** The limit of records to read from the csv. */
-    private static final int DEFAULT_SIZE_LIMIT = 100;
-
-    /** The position of the offset in the csv. */
-    private int offsetPosition = 0;
-
-    /** The size of the records to load into memory */
-    private int loadSize = DEFAULT_SIZE_LIMIT;
+public class CsvReader<T extends CsvPojo> implements DataReader<T>, Closeable {
 
     private File source;
 
-    public CsvReader(MultipartFile file) throws IOException {
-        source = new File(UUID.randomUUID().toString());
+    private Class<T> cls;
+
+    private CsvToBean<T> csvToBean;
+
+    private List<T> lastReadPage;
+
+    private static final char DEFAULT_DELIMITER = '|';
+
+    public CsvReader(MultipartFile file, Class<T> tClass) throws IOException {
+        this(file.getInputStream(), tClass);
+    }
+
+    public CsvReader(File file, Class<T> tClass) throws IOException {
+        this(new FileInputStream(file), tClass);
+    }
+
+    public CsvReader(InputStream is, Class<T> tClass) throws IOException {
+        source = File.createTempFile(UUID.randomUUID().toString(), ".csv");
         FileOutputStream fileOutputStream = new FileOutputStream(source);
-        IOUtils.copy(file.getInputStream(), fileOutputStream);
+        IOUtils.copy(is, fileOutputStream);
+        this.cls = tClass;
     }
 
     @Override
@@ -54,28 +71,15 @@ public class CsvReader<T extends CsvPojo> implements DataReader<T> {
     }
 
     @Override
-    public <T> void importData(Class<T> cls, PageRead<T> keyableFunction) {
-        ReadPagePosition importPagePosition = new ReadPagePosition();
-        importPagePosition.offset = offsetPosition;
-        importPagePosition.limit = loadSize;
+    public void readData(ReadPagePosition position, PageRead<T> keyableFunction, JobContext context) throws IOException {
+        List<T> listCsvData = readCsv(new FileReader(source), cls, position, context);
 
-        try {
-            List<T> listCsvData = readCsv(new FileReader(source), cls, 0, loadSize);
+        // loop around all of the pages in the csv file
+        while (!listCsvData.isEmpty()) {
+            keyableFunction.readData(listCsvData, context);
 
-            // loop around all of the pages in the csv file
-            while (listCsvData != null) {
-                if (!keyableFunction.importData(importPagePosition, listCsvData)) {
-                    listCsvData = readCsv(source, cls, loadSize, offsetPosition);
-                } else {
-                    throw new AppRegistryException(
-                        JobError.JOB_DOES_NOT_EXIST_OR_NOT_FOR_USER,
-                        "Problems importing the csv data"
-                    );
-                }
-            }
-        } catch (FileNotFoundException fileNotFoundException) {
-            throw new AppRegistryException(JobError.JOB_DOES_NOT_EXIST_OR_NOT_FOR_USER,
-                                           "File not found", fileNotFoundException);
+            position.setStartOffset(position.getStartOffset() + position.getPageSize());
+            listCsvData = readCsv(new FileReader(source), cls, position, context);
         }
     }
 
@@ -83,20 +87,45 @@ public class CsvReader<T extends CsvPojo> implements DataReader<T> {
      * reads the csv file and returns the records.
      * @return The type of the records.
      */
-    private <T> List<T> readCsv(Reader source, Class<T> clzz, int limit, int offsetPosition) {
+    private <T> List<T> readCsv(Reader source, Class<T> clzz, ReadPagePosition position, JobContext context) throws IOException {
         try (Reader reader = source) {
             CsvToBean<T> csvToBean = new CsvToBeanBuilder<T>(reader)
                 .withType(clzz)
-                .withSkipLines(1) // header
+                .withSeparator(DEFAULT_DELIMITER)
+                .withExceptionHandler(new ErrorToContext(context))
                 .build();
 
             return csvToBean.stream()
-                .skip(offsetPosition)
-                .limit(limit)
+                .skip(position.startOffset)
+                .limit(position.pageSize)
                 .toList();
-        } catch (IOException ioException) {
-            throw new AppRegistryException(JobError.JOB_DOES_NOT_EXIST_OR_NOT_FOR_USER,
-                                           "Error reading csv file", ioException);
+        }
+    }
+
+    /**
+     * gets the input stream that has built up each time a page is processed.
+     * @return The input stream.
+     */
+    public InputStream getInputStream() throws IOException {
+        return new FileInputStream(source);
+    }
+
+    /**
+     * Converts the csv exception to a job error and adds it to the job context for storage.
+     */
+    @RequiredArgsConstructor
+    class ErrorToContext implements CsvExceptionHandler {
+        private final JobContext jobContext;
+
+        @Override
+        public CsvException handleException(CsvException e) throws CsvException {
+            if (jobContext != null) {
+                jobContext.logError(e.getMessage());
+                // ignore the exception from being thrown
+                return null;
+            } else {
+                return e;
+            }
         }
     }
 }

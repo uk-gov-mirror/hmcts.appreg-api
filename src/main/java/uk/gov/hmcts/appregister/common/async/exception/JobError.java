@@ -7,14 +7,27 @@ import uk.gov.hmcts.appregister.common.exception.ErrorDetail;
 import org.springframework.http.HttpStatus;
 
 /**
- * An enumeration to capture the errors for the application list entry.
+ * An enumeration to capture the errors for the asynchronous jobs that can be thrown back to the client synchronously.
  */
 public enum JobError implements ErrorCodeEnum {
     JOB_DOES_NOT_EXIST_OR_NOT_FOR_USER(
-            DefaultErrorDetail.create(
-                    HttpStatus.BAD_REQUEST,
-                    "The requested job does not exist or it is not for the user",
-                    "ALE-1"));
+        DefaultErrorDetail.create(
+            HttpStatus.BAD_REQUEST,
+            "The requested job does not exist or it is not for the user",
+            "JOB-1"
+        )),
+    JOB_TYPE_IS_ALREADY_RUNNING(
+        DefaultErrorDetail.create(
+            HttpStatus.BAD_REQUEST,
+            "The requested job type is already running",
+            "JOB-2"
+        )),
+    JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM(
+        DefaultErrorDetail.create(
+            HttpStatus.BAD_REQUEST,
+            "The requested job does not have data to get a download stream",
+            "JOB-3"
+        ));
 
     private final DefaultErrorDetail defaultErrorCode;
 

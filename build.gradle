@@ -15,6 +15,7 @@ plugins {
   id 'com.diffplug.spotless' version '8.2.1'
   id 'org.openrewrite.rewrite' version 'latest.release'
   id 'maven-publish'
+  id 'com.github.jk1.dependency-license-report' version '2.6'
 }
 
 /**
@@ -635,5 +636,30 @@ publishing {
         password = System.getenv("AZURE_DEVOPS_ARTIFACT_TOKEN")
       }
     }
+  }
+
+  // Configuration for the license report plugin
+  licenseReport {
+    // Directory where reports will be generated
+    outputDir = "$buildDir/reports/dependency-license"
+
+    // Configurations to scan (adjust as needed)
+    configurations = ['runtimeClasspath']
+
+    // Renderers define output formats
+    renderers = [
+      new com.github.jk1.license.render.JsonReportRenderer(),
+      new com.github.jk1.license.render.SimpleHtmlReportRenderer()
+    ]
+
+    // Optional: filter out dependencies (example)
+    filters = [
+      new com.github.jk1.license.filter.LicenseBundleNormalizer()
+    ]
+
+    // Optional: exclude specific groups/modules
+    excludes = [
+      'com.example:excluded-library'
+    ]
   }
 }

@@ -1,18 +1,15 @@
 package uk.gov.hmcts.appregister.common.async.reader;
 
 
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 public class ReadPagePosition {
-
-    int offset;
-
-    @Setter(AccessLevel.NONE)
-    final int limit;
+    int pageSize = 10;
+    int startOffset;
 }
