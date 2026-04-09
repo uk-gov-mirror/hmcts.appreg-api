@@ -62,7 +62,16 @@ properties:
     example: 1
 
   resulted:
-    $ref: "../result-codes/result-code-get-summary-dto.yaml"
+    type: array
+    description: List of result codes applied to this application list entry.
+    items:
+      $ref: "../result-codes/result-code-get-summary-dto.yaml"
 
   status:
     $ref: '../application-lists/application-list-status.yaml'
+
+  accountNumber:
+    type: string
+    maxLength: 20
+    nullable: true
+    example: "ACC-001"
