@@ -66,24 +66,22 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
                     // breaks name into individual and/or organisation parts
                     final Page<StandardApplicantEnrichedProjection> standardApplicantsList =
-                        repository.search(
-                            code,
-                            name,
-                            addressLine1,
-                            from,
-                            to,
-                            todayUk,
-                            pageable.getPageable());
+                            repository.search(
+                                    code,
+                                    name,
+                                    addressLine1,
+                                    from,
+                                    to,
+                                    todayUk,
+                                    pageable.getPageable());
 
                     StandardApplicantPage newPage = new StandardApplicantPage();
                     pageMapper.toPage(standardApplicantsList, newPage, pageable.getSortStrings());
 
                     // Map each projection to a summary DTO and add to the page content
                     standardApplicantsList.forEach(
-                        projection -> newPage.addContentItem(
-                            mapper.toReadGetSummaryDto(projection)
-                        )
-                    );
+                            projection ->
+                                    newPage.addContentItem(mapper.toReadGetSummaryDto(projection)));
 
                     log.debug(
                             "Finished: Find Standard Applicant for: code: {} name: {} with paging: {}",

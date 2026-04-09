@@ -104,8 +104,10 @@ public class StandardApplicantServiceTest {
         when(standardApplicant2.getApplicantStartDate()).thenReturn(from.plusDays(1));
         when(standardApplicant2.getApplicantEndDate()).thenReturn(to.plusDays(1));
 
-        StandardApplicantEnrichedProjection projection1 = mock(StandardApplicantEnrichedProjection.class);
-        StandardApplicantEnrichedProjection projection2 = mock(StandardApplicantEnrichedProjection.class);
+        StandardApplicantEnrichedProjection projection1 =
+                mock(StandardApplicantEnrichedProjection.class);
+        StandardApplicantEnrichedProjection projection2 =
+                mock(StandardApplicantEnrichedProjection.class);
 
         when(projection1.getStandardApplicant()).thenReturn(standardApplicant1);
         when(projection1.getEffectiveName()).thenReturn("John Doe");
@@ -114,10 +116,7 @@ public class StandardApplicantServiceTest {
         when(projection2.getEffectiveName()).thenReturn("Jane Doe");
 
         PageImpl<StandardApplicantEnrichedProjection> pageImpl =
-            new PageImpl<>(
-                java.util.List.of(projection1, projection2),
-                pageable,
-                2);
+                new PageImpl<>(java.util.List.of(projection1, projection2), pageable, 2);
 
         when(repository.search(
                         eq(code),
@@ -134,15 +133,15 @@ public class StandardApplicantServiceTest {
         StandardApplicantPage standardApplicantPage =
                 standardApplicantService.findAll(code, name, addressLine1, from, to, wrapper);
 
-        verify(repository).search(
-            eq(code),
-            eq(name),
-            eq(addressLine1),
-            eq(from),
-            eq(to),
-            isNotNull(),
-            eq(pageable)
-        );
+        verify(repository)
+                .search(
+                        eq(code),
+                        eq(name),
+                        eq(addressLine1),
+                        eq(from),
+                        eq(to),
+                        isNotNull(),
+                        eq(pageable));
 
         Assertions.assertEquals(2, standardApplicantPage.getTotalElements());
         Assertions.assertEquals(
