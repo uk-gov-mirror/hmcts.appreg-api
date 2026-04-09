@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.common.async.model;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,8 @@ public class JobStatusResponse {
     private final String errorMessage;
 
     /** The persistence layer to use to store and read the associated blob. */
-    private final JobStatusPersistence persistence;
+    @Getter(AccessLevel.NONE)
+    protected final JobStatusPersistence persistence;
 
     /**
      * gets the job based on the response if we ever need to lookup the state of this job again.

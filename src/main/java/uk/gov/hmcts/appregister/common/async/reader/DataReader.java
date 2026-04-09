@@ -9,7 +9,7 @@ import uk.gov.hmcts.appregister.common.async.JobContext;
  */
 public interface DataReader<T> extends Closeable {
     /**
-     * reads the data from the reader and converts it to a list of objects.
+     * reads the page of data from the reader and converts it to a list of objects.
      *
      * @param position The position of the page to read.
      * @param pageReader The page of read data

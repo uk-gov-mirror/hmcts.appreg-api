@@ -14,7 +14,7 @@ public class TrackJobStatusResponse extends JobStatusResponse {
                 response.getStatus(),
                 response.getUserName(),
                 response.getErrorMessage(),
-                response.getPersistence());
+                response.persistence);
         this.future = future;
     }
 }

@@ -79,9 +79,9 @@ public class CsvWriter<T extends CsvPojo> implements PageWriter<T> {
                 // write the csv pojos to a csv file
                 beanToCsv.write(csv); // must pass a collection
             } catch (CsvDataTypeMismatchException dataTypeMismatchException) {
-                jobContext.logError(dataTypeMismatchException.getMessage());
+                jobContext.logFailure(dataTypeMismatchException.getMessage());
             } catch (CsvRequiredFieldEmptyException csvRequiredFieldEmptyException) {
-                jobContext.logError(csvRequiredFieldEmptyException.getMessage());
+                jobContext.logFailure(csvRequiredFieldEmptyException.getMessage());
             }
         }
     }

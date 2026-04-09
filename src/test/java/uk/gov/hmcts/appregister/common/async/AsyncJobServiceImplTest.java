@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
 import uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycle;
@@ -28,15 +29,19 @@ import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
 import uk.gov.hmcts.appregister.common.async.model.TrackJobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
+import uk.gov.hmcts.appregister.common.async.reader.PageReader;
 import uk.gov.hmcts.appregister.common.async.validator.StartJobValidator;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
 import uk.gov.hmcts.appregister.generated.model.JobType;
 
 @ExtendWith(MockitoExtension.class)
+@Slf4j
 public class AsyncJobServiceImplTest {
     @Mock private JobStatusPersistence persistence;
 
     @Mock private StartJobValidator startJobValidator;
+
+    @Spy private TransactionalUnitOfWork service = new TransactionalUnitOfWork();
 
     @InjectMocks private AsyncJobServiceImpl asyncJobServiceImpl;
 
@@ -171,11 +176,44 @@ public class AsyncJobServiceImplTest {
     @Test
     public void testAsyncAbruptProcessingFailure() throws Exception {
         BrokenLifecycleWithContext lifecycle = new BrokenLifecycleWithContext();
-        JobIdRequest request = executeWithLifecycle(lifecycle);
+
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+        JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                        .type(JobType.BULK_UPLOAD_ENTRIES)
+                        .uuid(jobId)
+                        .userName(userId)
+                        .status(JobStatus.RECEIVED)
+                        .build();
+
+        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+        DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
+
+        // prove that we did not continue passing the data after the failure
+        Assertions.assertEquals(1, reader.data.size());
+
         Assertions.assertTrue(lifecycle.failed);
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.RECEIVED);
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.VALIDATING);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+
         verify(persistence, times(1))
                 .setFailure(
-                        request,
+                        jobIdRequest,
                         BrokenLifecycleWithContext.ERROR
                                 + ", "
                                 + BrokenLifecycleWithContext.ERROR1);
@@ -185,51 +223,194 @@ public class AsyncJobServiceImplTest {
     public void testAsyncAbruptProcessingStopFailure() throws Exception {
         BrokenProcessingStoppableLifecycle lifecycle = new BrokenProcessingStoppableLifecycle();
         lifecycle.stop = true;
-        JobIdRequest request = executeWithLifecycle(lifecycle);
+
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+        JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                        .type(JobType.BULK_UPLOAD_ENTRIES)
+                        .uuid(jobId)
+                        .userName(userId)
+                        .status(JobStatus.RECEIVED)
+                        .build();
+
+        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+        DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
         Assertions.assertTrue(lifecycle.failed);
+
+        // prove that we did not continue passing the data after the failure
+        Assertions.assertEquals(1, reader.data.size());
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.RECEIVED);
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.VALIDATING);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+
         verify(persistence, times(1))
                 .setFailure(
-                        request,
+                        jobIdRequest,
                         BrokenLifecycleWithContext.ERROR
                                 + ", Job failed during PROCESSING for job "
-                                + request.getId()
+                                + jobIdRequest.getId()
                                 + ". Forced termination");
+    }
+
+    @Test
+    public void testAsyncProcessingFailureNotStopping() throws Exception {
+        BrokenProcessingStoppableLifecycle lifecycle = new BrokenProcessingStoppableLifecycle();
+        lifecycle.stop = false;
+
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+        JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                        .type(JobType.BULK_UPLOAD_ENTRIES)
+                        .uuid(jobId)
+                        .userName(userId)
+                        .status(JobStatus.RECEIVED)
+                        .build();
+
+        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+        DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
+
+        // prove that we continued passing the data even though we had an error in the processing
+        Assertions.assertEquals(3, reader.data.size());
+
+        Assertions.assertTrue(lifecycle.failed);
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.RECEIVED);
+
+        verify(persistence, times(3))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.VALIDATING);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.PROCESSING);
+
+        verify(persistence, times(1))
+                .setFailure(
+                        jobIdRequest,
+                        BrokenProcessingStoppableLifecycle.ERROR
+                                + ", "
+                                + BrokenProcessingStoppableLifecycle.VALIDATE_ERROR
+                                + ", "
+                                + BrokenProcessingStoppableLifecycle.VALIDATE_ERROR
+                                + ", "
+                                + "Failed to process job: "
+                                + jobIdRequest.getId().toString());
     }
 
     @Test
     public void testAsyncValidationFailureStop() throws Exception {
 
         BrokenValidationStoppableLifecycle lifecycle = new BrokenValidationStoppableLifecycle();
-        JobIdRequest request = executeWithLifecycle(lifecycle);
+
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+        JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                        .type(JobType.BULK_UPLOAD_ENTRIES)
+                        .uuid(jobId)
+                        .userName(userId)
+                        .status(JobStatus.RECEIVED)
+                        .build();
+
+        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+        DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
+
+        // prove that we did not continue passing the data after the failure
+        Assertions.assertEquals(1, reader.data.size());
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.RECEIVED);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
 
         // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
         verify(persistence, times(1))
                 .setFailure(
-                        request,
+                        jobIdRequest,
                         BrokenLifecycleWithContext.ERROR
                                 + ", Job failed during VALIDATING for job "
-                                + request.getId()
+                                + jobIdRequest.getId()
                                 + ". Forced termination");
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.VALIDATING);
     }
 
     @Test
     public void testAsyncValidationFailureDoNotStop() throws Exception {
         BrokenValidationStoppableLifecycle lifecycle = new BrokenValidationStoppableLifecycle();
         lifecycle.stop = false;
-        JobIdRequest request = executeWithLifecycle(lifecycle);
+
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+        JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                        .type(JobType.BULK_UPLOAD_ENTRIES)
+                        .uuid(jobId)
+                        .userName(userId)
+                        .status(JobStatus.RECEIVED)
+                        .build();
+
+        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+        DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
+
+        // prove that we did continue passing the data after the failure
+        Assertions.assertEquals(3, reader.data.size());
 
         Assertions.assertTrue(lifecycle.failed);
         verify(persistence, times(1))
                 .setFailure(
-                        request,
+                        jobIdRequest,
                         BrokenLifecycleWithContext.ERROR
                                 + ", "
                                 + BrokenLifecycleWithContext.ERROR
                                 + ", "
                                 + BrokenLifecycleWithContext.ERROR
                                 + ", Failed to process job: "
-                                + request.getId().toString());
+                                + jobIdRequest.getId().toString());
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.RECEIVED);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+
+        verify(persistence, times(3)).setJobStatus(jobIdRequest, JobStatus.VALIDATING);
+
+        verify(persistence, times(0)).setJobStatus(jobIdRequest, JobStatus.PROCESSING);
     }
 
     @Test
@@ -237,57 +418,77 @@ public class AsyncJobServiceImplTest {
         BrokenValidationJobExceptionLifecycle lifecycle =
                 new BrokenValidationJobExceptionLifecycle();
 
-        JobIdRequest request = executeWithLifecycle(lifecycle);
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+        JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                        .type(JobType.BULK_UPLOAD_ENTRIES)
+                        .uuid(jobId)
+                        .userName(userId)
+                        .status(JobStatus.RECEIVED)
+                        .build();
+
+        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+        DataPageReader request = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
 
         // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
-        verify(persistence, times(1)).setFailure(request, BrokenLifecycleWithContext.ERROR);
+
+        verify(persistence, times(1))
+                .setJobStatus(
+                        JobIdRequest.builder().id(jobId).userName(userId).build(),
+                        JobStatus.RECEIVED);
+
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+
+        verify(persistence, times(1)).setFailure(jobIdRequest, BrokenLifecycleWithContext.ERROR);
     }
 
-    private JobIdRequest executeWithLifecycle(
-            AsyncJobLifecycle<PersonCsvPojo> personCsvPojoAsyncJobLifecycle) throws Exception {
+    private DataPageReader executeWithLifecycleForFailure(
+            JobIdRequest jobIdRequest,
+            AsyncJobLifecycle<PersonCsvPojo> personCsvPojoAsyncJobLifecycle)
+            throws Exception {
         asyncJobServiceImpl.setPageSize(1);
-        String userId = "userId";
-        UUID jobId = UUID.randomUUID();
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         URL resource = classLoader.getResource("person.csv");
         File fileToLoad = new File(resource.getFile());
 
-        List<PersonCsvPojo> output = new ArrayList<>();
-        JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+        String userId = "userId";
+
+        JobTypeRequest jobRequest =
+                JobTypeRequest.builder().jobType(JobType.DURATION_REPORT).userName(userId).build();
+        DataPageReader reader = new DataPageReader();
 
         try (CsvReader<PersonCsvPojo> csvReader =
                 new CsvReader<>(fileToLoad, PersonCsvPojo.class)) {
-
             when(persistence.startJob(Mockito.notNull())).thenReturn(jobIdRequest);
 
-            JobStatusResponse statusResponse =
-                    JobStatusResponse.builder()
-                            .type(JobType.BULK_UPLOAD_ENTRIES)
-                            .uuid(jobId)
-                            .userName(userId)
-                            .status(JobStatus.RECEIVED)
-                            .build();
-
-            when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
-
-            JobTypeRequest jobRequest =
-                    JobTypeRequest.builder()
-                            .jobType(JobType.DURATION_REPORT)
-                            .userName(userId)
-                            .build();
-
-            asyncJobServiceImpl
-                    .startJob(
-                            jobRequest,
-                            csvReader,
-                            (data, context) -> output.addAll(data),
-                            personCsvPojoAsyncJobLifecycle)
-                    .getFuture()
-                    .get();
+            try {
+                asyncJobServiceImpl
+                        .startJob(jobRequest, csvReader, reader, personCsvPojoAsyncJobLifecycle)
+                        .getFuture()
+                        .get();
+            } catch (Exception e) {
+                // we expect an error to be propagated so catch it
+                log.error("Failed", e);
+            }
         }
-        return jobIdRequest;
+        return reader;
+    }
+
+    class DataPageReader implements PageReader<PersonCsvPojo> {
+        private List<PersonCsvPojo> data = new ArrayList<>();
+
+        @Override
+        public void readData(List<PersonCsvPojo> relatedData, JobContext jobContext)
+                throws IOException {
+            data.addAll(relatedData);
+        }
     }
 
     @Slf4j
@@ -301,8 +502,8 @@ public class AsyncJobServiceImplTest {
             log.debug("Failing processing");
 
             // set error
-            event.getContext().logError(ERROR);
-            event.getContext().logError(ERROR1);
+            event.getContext().logFailure(ERROR);
+            event.getContext().logFailure(ERROR1);
 
             // throw exception so we do not continue with the processing
             throw new IOException("Broken");
@@ -322,13 +523,13 @@ public class AsyncJobServiceImplTest {
 
         @Override
         public void validating(AsyncJobLifecycleEvent<PersonCsvPojo> event) throws IOException {
-            event.getContext().logError(ERROR);
+            event.getContext().logFailure(ERROR);
 
             // allow us to stop the validation
             if (stop) {
-                event.getContext().setStopped(true);
+                event.getContext().setStoppedValidating(true);
             } else {
-                event.getContext().setStopped(false);
+                event.getContext().setStoppedValidating(false);
             }
         }
 
@@ -341,19 +542,28 @@ public class AsyncJobServiceImplTest {
     @Slf4j
     static class BrokenProcessingStoppableLifecycle implements AsyncJobLifecycle<PersonCsvPojo> {
         private static final String ERROR = "random error";
+        private static final String VALIDATE_ERROR = "validate error";
+
         private boolean failed = false;
         private boolean stop = true;
+        private boolean validateFailAfterFirst = true;
+        private int validated = 0;
 
         @Override
         public void processing(AsyncJobLifecycleEvent<PersonCsvPojo> event) throws IOException {
-            event.getContext().logError(ERROR);
+            event.getContext().logFailure(ERROR);
 
             // allow us to stop the validation
-            if (stop) {
-                event.getContext().setStopped(true);
-            } else {
-                event.getContext().setStopped(false);
+            event.getContext().setStoppedValidating(stop);
+        }
+
+        @Override
+        public void validating(AsyncJobLifecycleEvent<PersonCsvPojo> event) throws IOException {
+            if (validated > 0 && validateFailAfterFirst) {
+                event.getContext().logFailure(VALIDATE_ERROR);
             }
+
+            validated = validated + 1;
         }
 
         @Override

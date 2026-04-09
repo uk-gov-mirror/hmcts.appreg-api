@@ -13,6 +13,8 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
@@ -31,10 +33,12 @@ public class JobStatusPersistenceImpl implements JobStatusPersistence {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void setJobStatus(JobIdRequest jobType, JobStatus jobStatus) {
         // do nothing
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void setFailure(JobIdRequest jobType, String reasonFailed) {
         // do nothing
     }
@@ -50,6 +54,7 @@ public class JobStatusPersistenceImpl implements JobStatusPersistence {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public JobIdRequest startJob(JobTypeRequest request) {
         return null;
     }
@@ -65,7 +70,6 @@ public class JobStatusPersistenceImpl implements JobStatusPersistence {
     }
 
     private InputStreamResource getBlobToOutputStream(JobIdRequest jobId) throws IOException {
-        InputStreamResource inputStream = null;
         File file = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
 
         jdbcTemplate.query(

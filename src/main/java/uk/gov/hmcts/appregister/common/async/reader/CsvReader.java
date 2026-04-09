@@ -117,7 +117,7 @@ public class CsvReader<T extends CsvPojo> implements DataReader<T>, Closeable {
         public CsvException handleException(CsvException e) throws CsvException {
             // add the csv error to the job context
             if (jobContext != null) {
-                jobContext.logError(e.getMessage());
+                jobContext.logFailure(e.getMessage());
                 // ignore the exception from being thrown
                 return null;
             } else {
