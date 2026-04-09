@@ -54,8 +54,8 @@ get:
     - in: query
       name: sort
       description: >
-        Repeatable sort parameter. Format per item: `property,(asc|desc)`.
-        Example: `?sort=name,asc&sort=code,desc`.
+        Sort parameter. Format: `property,(asc|desc)`.
+        Example: `?sort=name,asc`.
 
         Supported properties:
           - `code`
