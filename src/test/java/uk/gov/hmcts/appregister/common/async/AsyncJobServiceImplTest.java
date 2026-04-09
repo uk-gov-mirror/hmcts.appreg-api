@@ -448,6 +448,68 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1)).setFailure(jobIdRequest, BrokenLifecycleWithContext.ERROR);
     }
 
+    @Test
+    void testPartialFailOfCSVFailsWithANeatError() throws Exception {
+        // set the page size
+        asyncJobServiceImpl.setPageSize(1);
+
+        // setup the user provider to get hold of the user name
+        String userId = "userId";
+        UUID jobId = UUID.randomUUID();
+
+        // setup the callback
+        AsyncJobLifecycle<PersonCsvPojo> lifecycle = Mockito.mock(AsyncJobLifecycle.class);
+
+        // setup the reader for the csv file
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        URL resource = classLoader.getResource("person_failformat.csv");
+        File fileToLoad = new File(resource.getFile());
+
+        List<PersonCsvPojo> output = new ArrayList<>();
+        CsvReader<PersonCsvPojo> csvReader = new CsvReader<>(fileToLoad, PersonCsvPojo.class);
+        try (csvReader) {
+            JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
+
+            // mock the persistence start job
+            when(persistence.startJob(Mockito.notNull())).thenReturn(jobIdRequest);
+
+            JobStatusResponse statusResponse =
+                JobStatusResponse.builder()
+                    .type(JobType.BULK_UPLOAD_ENTRIES)
+                    .uuid(jobId)
+                    .userName(userId)
+                    .status(JobStatus.RECEIVED)
+                    .build();
+
+            when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
+
+            JobTypeRequest jobRequest =
+                JobTypeRequest.builder()
+                    .jobType(JobType.DURATION_REPORT)
+                    .userName(userId)
+                    .build();
+
+            try {
+                // start the job and wait for the async response
+                asyncJobServiceImpl.startJob(
+                        jobRequest,
+                        csvReader,
+                        (data, context) -> output.addAll(data),
+                        lifecycle
+                    ).getFuture()
+                    .get();
+            } catch (Exception e) {
+                log.error("Error", e);
+            }
+
+            Assertions.assertEquals(2, output.size());
+            verify(persistence, times(1)).setFailure(jobIdRequest,
+                                                     "Number of data fields does not match number of headers., " +
+                                                         "Failed to process job: " + jobIdRequest.getId().toString());
+
+        }
+    }
+
     private DataPageReader executeWithLifecycleForFailure(
             JobIdRequest jobIdRequest,
             AsyncJobLifecycle<PersonCsvPojo> personCsvPojoAsyncJobLifecycle)

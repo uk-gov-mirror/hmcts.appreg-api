@@ -43,6 +43,8 @@ public class JobContext {
      * @param errorMsg The error message to log.
      */
     public void logFailure(String errorMsg) {
-        validationFailureMessages.add(errorMsg);
+        if (validationFailureMessages.stream().filter(msg -> msg.equals(errorMsg)).count() == 0) {
+            validationFailureMessages.add(errorMsg);
+        }
     }
 }
