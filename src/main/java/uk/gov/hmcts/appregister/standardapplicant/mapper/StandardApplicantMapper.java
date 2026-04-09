@@ -36,12 +36,12 @@ public abstract class StandardApplicantMapper {
 
     @Autowired ApplicantMapper applicantMapper;
 
-    @Mapping(target = "code", source = "applicantCode")
+    @Mapping(target = "code", source = "standardApplicant.applicantCode")
     @Mapping(
             target = "applicant",
             expression = "java(mapApplicantFromProjection(projection))")
-    @Mapping(target = "startDate", source = "applicantStartDate")
-    @Mapping(target = "endDate", source = "applicantEndDate", qualifiedByName = "toEndDate")
+    @Mapping(target = "startDate", source = "standardApplicant.applicantStartDate")
+    @Mapping(target = "endDate", source = "standardApplicant.applicantEndDate", qualifiedByName = "toEndDate")
     public abstract StandardApplicantGetSummaryDto toReadGetSummaryDto(StandardApplicantSummaryProjection projection);
 
     @Mapping(target = "code", source = "applicantCode")
@@ -111,17 +111,26 @@ public abstract class StandardApplicantMapper {
     protected Applicant mapApplicantFromProjection(StandardApplicantSummaryProjection projection) {
         Applicant applicant = new Applicant();
 
-        if (projection.getApplicantName() != null) {
+        StandardApplicant standardApplicant = projection.getStandardApplicant();
+        if (standardApplicant == null) {
+            return applicant;
+        }
+
+        if (StandardApplicant.isOrganisation(standardApplicant)) {
             Organisation organisation = new Organisation();
-            organisation.setName(projection.getApplicantName());
-            organisation.setContactDetails(mapContactDetailsFromProjection(projection));
+            organisation.setName(
+                projection.getEffectiveName() != null
+                    ? projection.getEffectiveName()
+                    : standardApplicant.getName());
+            organisation.setContactDetails(mapContactDetailsFromStandardApplicant(standardApplicant));
             applicant.setOrganisation(organisation);
-        } else if (projection.getFirstForename() != null && projection.getSurname() != null) {
-            FullName name = getFullName(projection);
+        } else if (standardApplicant.getApplicantForename1() != null
+            && standardApplicant.getApplicantSurname() != null) {
+            FullName name = getFullName(standardApplicant);
 
             Person person = new Person();
             person.setName(name);
-            person.setContactDetails(mapContactDetailsFromProjection(projection));
+            person.setContactDetails(mapContactDetailsFromStandardApplicant(standardApplicant));
 
             applicant.setPerson(person);
         }
@@ -129,65 +138,63 @@ public abstract class StandardApplicantMapper {
         return applicant;
     }
 
-    private static FullName getFullName(StandardApplicantSummaryProjection projection) {
+    private static FullName getFullName(StandardApplicant standardApplicant) {
         FullName name = new FullName();
-        name.setTitle(projection.getTitle());
-        name.setFirstForename(projection.getFirstForename());
+        name.setTitle(standardApplicant.getApplicantTitle());
+        name.setFirstForename(standardApplicant.getApplicantForename1());
         name.setSecondForename(
-            projection.getSecondForename() == null
+            standardApplicant.getApplicantForename2() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getSecondForename()));
+                : JsonNullable.of(standardApplicant.getApplicantForename2()));
         name.setThirdForename(
-            projection.getThirdForename() == null
+            standardApplicant.getApplicantForename3() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getThirdForename()));
-        name.setSurname(projection.getSurname());
+                : JsonNullable.of(standardApplicant.getApplicantForename3()));
+        name.setSurname(standardApplicant.getApplicantSurname());
         return name;
     }
 
-    protected ContactDetails mapContactDetailsFromProjection(
-        StandardApplicantSummaryProjection projection) {
-
+    protected ContactDetails mapContactDetailsFromStandardApplicant(StandardApplicant standardApplicant) {
         ContactDetails contactDetails = new ContactDetails();
 
-        contactDetails.setAddressLine1(projection.getAddressLine1());
+        contactDetails.setAddressLine1(standardApplicant.getAddressLine1());
 
         contactDetails.setAddressLine2(
-            projection.getAddressLine2() == null
+            standardApplicant.getAddressLine2() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getAddressLine2()));
+                : JsonNullable.of(standardApplicant.getAddressLine2()));
 
         contactDetails.setAddressLine3(
-            projection.getAddressLine3() == null
+            standardApplicant.getAddressLine3() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getAddressLine3()));
+                : JsonNullable.of(standardApplicant.getAddressLine3()));
 
         contactDetails.setAddressLine4(
-            projection.getAddressLine4() == null
+            standardApplicant.getAddressLine4() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getAddressLine4()));
+                : JsonNullable.of(standardApplicant.getAddressLine4()));
 
         contactDetails.setAddressLine5(
-            projection.getAddressLine5() == null
+            standardApplicant.getAddressLine5() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getAddressLine5()));
+                : JsonNullable.of(standardApplicant.getAddressLine5()));
 
-        contactDetails.setPostcode(projection.getPostcode());
+        contactDetails.setPostcode(standardApplicant.getPostcode());
 
         contactDetails.setPhone(
-            projection.getPhone() == null
+            standardApplicant.getTelephoneNumber() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getPhone()));
+                : JsonNullable.of(standardApplicant.getTelephoneNumber()));
 
         contactDetails.setMobile(
-            projection.getMobile() == null
+            standardApplicant.getMobileNumber() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getMobile()));
+                : JsonNullable.of(standardApplicant.getMobileNumber()));
 
         contactDetails.setEmail(
-            projection.getEmail() == null
+            standardApplicant.getEmailAddress() == null
                 ? JsonNullable.undefined()
-                : JsonNullable.of(projection.getEmail()));
+                : JsonNullable.of(standardApplicant.getEmailAddress()));
 
         return contactDetails;
     }

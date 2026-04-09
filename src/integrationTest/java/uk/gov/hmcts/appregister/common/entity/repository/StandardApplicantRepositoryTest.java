@@ -173,8 +173,8 @@ public class StandardApplicantRepositoryTest extends BaseRepositoryTest {
                 assertEquals(1, results.getTotalElements());
 
                 StandardApplicantSummaryProjection row = results.getContent().getFirst();
-                assertEquals("APP900", row.getApplicantCode());
-                assertEquals("221B Baker Street", row.getAddressLine1());
+                assertEquals("APP900", row.getStandardApplicant().getApplicantCode());
+                assertEquals("221B Baker Street", row.getStandardApplicant().getAddressLine1());
             });
     }
 }

@@ -68,38 +68,21 @@ public interface StandardApplicantRepository extends JpaRepository<StandardAppli
     @Query(
             """
         SELECT
-            c.applicantCode AS applicantCode,
-            COALESCE(
-                c.name,
-                NULLIF(
-                    TRIM(
-                        FUNCTION('concat_ws', ' ',
-                            c.applicantForename1,
-                            c.applicantForename2,
-                            c.applicantForename3,
-                            c.applicantSurname
-                        )
-                    ),
-                    ''
-                )
-            ) AS effectiveName,
-            c.name AS applicantName,
-            c.applicantForename1 AS firstForename,
-            c.applicantSurname AS surname,
-            c.applicantForename2 AS secondForename,
-            c.applicantForename3 AS thirdForename,
-            c.applicantTitle AS title,
-            c.addressLine1 AS addressLine1,
-            c.addressLine2 AS addressLine2,
-            c.addressLine3 AS addressLine3,
-            c.addressLine4 AS addressLine4,
-            c.addressLine5 AS addressLine5,
-            c.postcode AS postcode,
-            c.telephoneNumber AS phone,
-            c.mobileNumber AS mobile,
-            c.emailAddress AS email,
-            c.applicantStartDate AS applicantStartDate,
-            c.applicantEndDate AS applicantEndDate
+                c AS standardApplicant,
+                COALESCE(
+                    c.name,
+                    NULLIF(
+                        TRIM(
+                            FUNCTION('concat_ws', ' ',
+                                c.applicantForename1,
+                                c.applicantForename2,
+                                c.applicantForename3,
+                                c.applicantSurname
+                            )
+                        ),
+                        ''
+                    )
+                ) AS effectiveName
         FROM StandardApplicant c
         WHERE (:code IS NULL OR LOWER(c.applicantCode) LIKE CONCAT('%', LOWER(CAST(:code AS string)), '%')  ESCAPE '\\')
           AND (c.applicantStartDate < :active)
