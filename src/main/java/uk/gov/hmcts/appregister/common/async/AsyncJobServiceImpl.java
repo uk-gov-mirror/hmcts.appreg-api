@@ -247,14 +247,14 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                 throws IOException {
             log.debug("Processing {} for job {}", status, response.getJobId());
 
+            // ensure we set the status
+            persistence.setJobStatus(response.getJobId(), status);
+
             // fire the lifecycle event
             lifecycle.lifeCycleEventPerformed(
                     new AsyncJobLifecycleEvent<T>(response, data, context, status));
 
             log.debug("Processed {} for job {}", status, response.getJobId());
-
-            // ensure we set the status
-            persistence.setJobStatus(response.getJobId(), status);
         }
     }
 

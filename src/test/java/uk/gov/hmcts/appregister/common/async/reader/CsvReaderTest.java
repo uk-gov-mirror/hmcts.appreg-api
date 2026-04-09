@@ -59,8 +59,7 @@ class CsvReaderTest {
         }
 
         Assertions.assertEquals(
-                "Number of data fields does not match number of headers.,"
-                        + " Number of data fields does not match number of headers.",
+                "Number of data fields does not match number of headers.",
                 jobContext.getCommaDelimitedFailureMessage());
     }
 
@@ -79,8 +78,7 @@ class CsvReaderTest {
         }
 
         Assertions.assertEquals(
-                "Conversion of notanumber to int failed., "
-                        + "Conversion of notanumber to int failed., Conversion of notanumber to int failed.",
+                "Conversion of notanumber to int failed.",
                 jobContext.getCommaDelimitedFailureMessage());
     }
 }

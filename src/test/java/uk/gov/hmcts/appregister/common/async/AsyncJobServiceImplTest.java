@@ -313,8 +313,10 @@ public class AsyncJobServiceImplTest {
                         BrokenProcessingStoppableLifecycle.ERROR
                                 + ", "
                                 + BrokenProcessingStoppableLifecycle.VALIDATE_ERROR
+                                + "1"
                                 + ", "
                                 + BrokenProcessingStoppableLifecycle.VALIDATE_ERROR
+                                + "2"
                                 + ", "
                                 + "Failed to process job: "
                                 + jobIdRequest.getId().toString());
@@ -358,6 +360,7 @@ public class AsyncJobServiceImplTest {
                 .setFailure(
                         jobIdRequest,
                         BrokenLifecycleWithContext.ERROR
+                                + "0"
                                 + ", Job failed during VALIDATING for job "
                                 + jobIdRequest.getId()
                                 + ". Forced termination");
@@ -394,10 +397,13 @@ public class AsyncJobServiceImplTest {
                 .setFailure(
                         jobIdRequest,
                         BrokenLifecycleWithContext.ERROR
+                                + "0"
                                 + ", "
                                 + BrokenLifecycleWithContext.ERROR
+                                + "1"
                                 + ", "
                                 + BrokenLifecycleWithContext.ERROR
+                                + "2"
                                 + ", Failed to process job: "
                                 + jobIdRequest.getId().toString());
 
@@ -586,9 +592,11 @@ public class AsyncJobServiceImplTest {
         private boolean failed = false;
         private boolean stop = true;
 
+        int count = 0;
+
         @Override
         public void validating(AsyncJobLifecycleEvent<PersonCsvPojo> event) throws IOException {
-            event.getContext().logFailure(ERROR);
+            event.getContext().logFailure(ERROR + count);
 
             // allow us to stop the validation
             if (stop) {
@@ -596,6 +604,8 @@ public class AsyncJobServiceImplTest {
             } else {
                 event.getContext().setStoppedValidating(false);
             }
+
+            count = count + 1;
         }
 
         @Override
@@ -625,7 +635,7 @@ public class AsyncJobServiceImplTest {
         @Override
         public void validating(AsyncJobLifecycleEvent<PersonCsvPojo> event) throws IOException {
             if (validated > 0 && validateFailAfterFirst) {
-                event.getContext().logFailure(VALIDATE_ERROR);
+                event.getContext().logFailure(VALIDATE_ERROR + validated);
             }
 
             validated = validated + 1;
