@@ -14,7 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
-import uk.gov.hmcts.appregister.common.projection.StandardApplicantSummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantEnrichedProjection;
 import uk.gov.hmcts.appregister.data.StandardApplicantTestData;
 import uk.gov.hmcts.appregister.testutils.BaseRepositoryTest;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
@@ -160,7 +160,7 @@ public class StandardApplicantRepositoryTest extends BaseRepositoryTest {
 
                 repository.save(nonMatching);
 
-                Page<StandardApplicantSummaryProjection> results =
+                Page<StandardApplicantEnrichedProjection> results =
                     repository.search(
                         null,
                         null,
@@ -172,7 +172,7 @@ public class StandardApplicantRepositoryTest extends BaseRepositoryTest {
 
                 assertEquals(1, results.getTotalElements());
 
-                StandardApplicantSummaryProjection row = results.getContent().getFirst();
+                StandardApplicantEnrichedProjection row = results.getContent().getFirst();
                 assertEquals("APP900", row.getStandardApplicant().getApplicantCode());
                 assertEquals("221B Baker Street", row.getStandardApplicant().getAddressLine1());
             });

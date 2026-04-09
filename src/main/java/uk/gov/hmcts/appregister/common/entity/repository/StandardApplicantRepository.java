@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.entity.aspect.LikeParam;
-import uk.gov.hmcts.appregister.common.projection.StandardApplicantSummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantEnrichedProjection;
 
 /**
  * Repository for StandardApplicant entities.
@@ -106,7 +106,7 @@ public interface StandardApplicantRepository extends JpaRepository<StandardAppli
                           AND LOWER(c.applicantSurname) LIKE CONCAT('%',
                                    LOWER(CAST(:name AS string)), '%')  ESCAPE '\\')))
         """)
-    Page<StandardApplicantSummaryProjection> search(
+    Page<StandardApplicantEnrichedProjection> search(
             @LikeParam @Param("code") String code,
             @LikeParam @Param("name") String name,
             @LikeParam @Param("addressLine1") String addressLine1,

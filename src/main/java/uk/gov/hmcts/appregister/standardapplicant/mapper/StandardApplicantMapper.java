@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
-import uk.gov.hmcts.appregister.common.projection.StandardApplicantSummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantEnrichedProjection;
 import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.ContactDetails;
 import uk.gov.hmcts.appregister.generated.model.FullName;
@@ -42,7 +42,7 @@ public abstract class StandardApplicantMapper {
             expression = "java(mapApplicantFromProjection(projection))")
     @Mapping(target = "startDate", source = "standardApplicant.applicantStartDate")
     @Mapping(target = "endDate", source = "standardApplicant.applicantEndDate", qualifiedByName = "toEndDate")
-    public abstract StandardApplicantGetSummaryDto toReadGetSummaryDto(StandardApplicantSummaryProjection projection);
+    public abstract StandardApplicantGetSummaryDto toReadGetSummaryDto(StandardApplicantEnrichedProjection projection);
 
     @Mapping(target = "code", source = "applicantCode")
     @Mapping(
@@ -108,7 +108,7 @@ public abstract class StandardApplicantMapper {
         }
     }
 
-    protected Applicant mapApplicantFromProjection(StandardApplicantSummaryProjection projection) {
+    protected Applicant mapApplicantFromProjection(StandardApplicantEnrichedProjection projection) {
         Applicant applicant = new Applicant();
 
         StandardApplicant standardApplicant = projection.getStandardApplicant();

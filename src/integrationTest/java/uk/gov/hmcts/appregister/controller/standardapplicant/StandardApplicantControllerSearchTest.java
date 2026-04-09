@@ -1390,6 +1390,121 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                 problemDetail.getType());
     }
 
+    @Test
+    public void givenValidRequest_whenFilterByAddressLine1AndFromDateAndSortByName_thenReturnSortedResults()
+        throws Exception {
+        TokenGenerator tokenGenerator =
+            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        Response responseSpec =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(10),
+                Optional.of(0),
+                List.of("name,asc"),
+                getLocalUrl(WEB_CONTEXT),
+                tokenGenerator.fetchTokenForRole(),
+                new StandardApplicantRequestFilter(
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.of("123 High Street"),
+                    Optional.of(LocalDate.of(2026, 4, 1)), // matches seeded data
+                    Optional.empty()),
+                new OpenApiPageMetaData());
+
+        responseSpec.then().statusCode(200);
+
+        StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
+        Assertions.assertFalse(page.getContent().isEmpty());
+
+        // verify sorting by name (ascending)
+        StandardApplicantGetSummaryDto first = page.getContent().get(0);
+        StandardApplicantGetSummaryDto second = page.getContent().get(1);
+
+        String firstName =
+            first.getApplicant().getOrganisation() != null
+                ? first.getApplicant().getOrganisation().getName()
+                : first.getApplicant().getPerson().getName().getFirstForename();
+
+        String secondName =
+            second.getApplicant().getOrganisation() != null
+                ? second.getApplicant().getOrganisation().getName()
+                : second.getApplicant().getPerson().getName().getFirstForename();
+
+        Assertions.assertEquals("John", firstName);
+        Assertions.assertEquals("Organisation 1", secondName);
+
+        // verify filter applied
+        page.getContent().forEach(item -> {
+            String address =
+                item.getApplicant().getOrganisation() != null
+                    ? item.getApplicant().getOrganisation().getContactDetails().getAddressLine1()
+                    : item.getApplicant().getPerson().getContactDetails().getAddressLine1();
+
+            Assertions.assertEquals("123 High Street", address);
+        });
+    }
+
+    @Test
+    public void givenValidRequest_whenSortByAddressLine1_thenReturnSortedResults()
+        throws Exception {
+        TokenGenerator tokenGenerator =
+            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        Response responseSpec =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(10),
+                Optional.of(0),
+                List.of("addressLine1,asc"),
+                getLocalUrl(WEB_CONTEXT),
+                tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+
+        StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
+        Assertions.assertFalse(page.getContent().isEmpty());
+
+        String firstAddress = extractAddress(page.getContent().get(0));
+        String secondAddress = extractAddress(page.getContent().get(1));
+        String thirdAddress = extractAddress(page.getContent().get(2));
+        String fourthAddress = extractAddress(page.getContent().get(3));
+
+        Assertions.assertEquals("123 High Street", firstAddress);
+        Assertions.assertEquals("123 High Street", secondAddress);
+        Assertions.assertEquals("123 High Street", thirdAddress);
+        Assertions.assertEquals("456 Elm Road", fourthAddress);
+    }
+
+    @Test
+    public void givenValidRequest_whenSortByFrom_thenReturnSortedResults()
+        throws Exception {
+
+        TokenGenerator tokenGenerator =
+            getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        Response responseSpec =
+            restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(10),
+                Optional.of(0),
+                List.of("from,asc"),
+                getLocalUrl(WEB_CONTEXT),
+                tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+
+        StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
+        Assertions.assertFalse(page.getContent().isEmpty());
+
+        LocalDate firstDate = page.getContent().get(0).getStartDate();
+        LocalDate secondDate = page.getContent().get(1).getStartDate();
+        LocalDate thirdDate = page.getContent().get(2).getStartDate();
+        LocalDate fourthDate = page.getContent().get(3).getStartDate();
+
+        Assertions.assertEquals(LocalDate.of(2026, 4, 8), firstDate);
+        Assertions.assertEquals(LocalDate.of(2026, 4, 8), secondDate);
+        Assertions.assertEquals(LocalDate.of(2026, 4, 8), thirdDate);
+        Assertions.assertEquals(LocalDate.of(2026, 4, 9), fourthDate);
+    }
+
     @RequiredArgsConstructor
     static class StandardApplicantRequestFilter implements UnaryOperator<RequestSpecification> {
         private final Optional<String> code;
@@ -1413,11 +1528,11 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
             }
 
             if (from.isPresent()) {
-                rs = rs.queryParam("from", from.get());
+                rs = rs.queryParam("from", from.get().toString());
             }
 
             if (to.isPresent()) {
-                rs = rs.queryParam("to", to.get());
+                rs = rs.queryParam("to", to.get().toString());
             }
 
             return rs;
@@ -1445,5 +1560,11 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         .successRole(RoleEnum.USER)
                         .successRole(RoleEnum.ADMIN)
                         .build());
+    }
+
+    private String extractAddress(StandardApplicantGetSummaryDto dto) {
+        return dto.getApplicant().getOrganisation() != null
+            ? dto.getApplicant().getOrganisation().getContactDetails().getAddressLine1()
+            : dto.getApplicant().getPerson().getContactDetails().getAddressLine1();
     }
 }

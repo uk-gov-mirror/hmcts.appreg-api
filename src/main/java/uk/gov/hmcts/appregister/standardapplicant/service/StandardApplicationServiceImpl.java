@@ -18,7 +18,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
-import uk.gov.hmcts.appregister.common.projection.StandardApplicantSummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantEnrichedProjection;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
@@ -65,7 +65,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                     var todayUk = LocalDate.now(clock.withZone(ukZone));
 
                     // breaks name into individual and/or organisation parts
-                    final Page<StandardApplicantSummaryProjection> standardApplicantsList =
+                    final Page<StandardApplicantEnrichedProjection> standardApplicantsList =
                         repository.search(
                             code,
                             name,
