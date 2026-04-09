@@ -474,39 +474,42 @@ public class AsyncJobServiceImplTest {
             when(persistence.startJob(Mockito.notNull())).thenReturn(jobIdRequest);
 
             JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                    .type(JobType.BULK_UPLOAD_ENTRIES)
-                    .uuid(jobId)
-                    .userName(userId)
-                    .status(JobStatus.RECEIVED)
-                    .build();
+                    JobStatusResponse.builder()
+                            .type(JobType.BULK_UPLOAD_ENTRIES)
+                            .uuid(jobId)
+                            .userName(userId)
+                            .status(JobStatus.RECEIVED)
+                            .build();
 
             when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
 
             JobTypeRequest jobRequest =
-                JobTypeRequest.builder()
-                    .jobType(JobType.DURATION_REPORT)
-                    .userName(userId)
-                    .build();
+                    JobTypeRequest.builder()
+                            .jobType(JobType.DURATION_REPORT)
+                            .userName(userId)
+                            .build();
 
             try {
                 // start the job and wait for the async response
-                asyncJobServiceImpl.startJob(
-                        jobRequest,
-                        csvReader,
-                        (data, context) -> output.addAll(data),
-                        lifecycle
-                    ).getFuture()
-                    .get();
+                asyncJobServiceImpl
+                        .startJob(
+                                jobRequest,
+                                csvReader,
+                                (data, context) -> output.addAll(data),
+                                lifecycle)
+                        .getFuture()
+                        .get();
             } catch (Exception e) {
                 log.error("Error", e);
             }
 
             Assertions.assertEquals(2, output.size());
-            verify(persistence, times(1)).setFailure(jobIdRequest,
-                                                     "Number of data fields does not match number of headers., " +
-                                                         "Failed to process job: " + jobIdRequest.getId().toString());
-
+            verify(persistence, times(1))
+                    .setFailure(
+                            jobIdRequest,
+                            "Number of data fields does not match number of headers., "
+                                    + "Failed to process job: "
+                                    + jobIdRequest.getId().toString());
         }
     }
 
