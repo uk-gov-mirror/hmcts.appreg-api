@@ -15,8 +15,8 @@ import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.service.LocationLookupService;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.criminaljusticearea.audit.CriminalJusticeAuditOperation;
-import uk.gov.hmcts.appregister.criminaljusticearea.model.CodeAndDescription;
 import uk.gov.hmcts.appregister.criminaljusticearea.mapper.CriminalJusticeMapper;
+import uk.gov.hmcts.appregister.criminaljusticearea.model.CodeAndDescription;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaPage;
 
@@ -32,7 +32,7 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
     private final LocationLookupService locationLookupService;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CriminalJusticeAreaGetDto findByCode(String code) {
         return auditService.processAudit(
                 null,
@@ -45,14 +45,13 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                                     criminalJusticeMapper.toDto(cja),
                                     criminalJusticeMapper.toEntity(code));
 
-                            return Optional.of(result);
-                        },
-                        auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
-
+                    return Optional.of(result);
+                },
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CriminalJusticeAreaPage findAll(
             String code, String description, PagingWrapper pageable) {
         return auditService.processAudit(
@@ -75,7 +74,7 @@ public class CriminalJusticeServiceImpl implements CriminalJusticeService {
                     AuditableResult<CriminalJusticeAreaPage, CriminalJusticeArea> result =
                             new AuditableResult<>(craPage, criminalJusticeMapper.toEntity(record));
 
-                            return Optional.of(result);
-                        });
+                    return Optional.of(result);
+                });
     }
 }

@@ -24,8 +24,8 @@ import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
 import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeAuditOperation;
 import uk.gov.hmcts.appregister.resultcode.exception.ResultCodeError;
-import uk.gov.hmcts.appregister.resultcode.model.CodeAndTitle;
 import uk.gov.hmcts.appregister.resultcode.mapper.ResultCodeMapper;
+import uk.gov.hmcts.appregister.resultcode.model.CodeAndTitle;
 
 /**
  * Service implementation for Result Code operations.
@@ -75,7 +75,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
      * @throws AppRegistryException if no match or multiple matches are found
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ResultCodeGetDetailDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
                 ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT,
@@ -119,7 +119,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
      * @return a page of Result Code summaries
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ResultCodePage findAll(String codeFilter, String titleFilter, PagingWrapper pageable) {
 
         // Use today's date to ensure we only return Result Codes that are currently active.

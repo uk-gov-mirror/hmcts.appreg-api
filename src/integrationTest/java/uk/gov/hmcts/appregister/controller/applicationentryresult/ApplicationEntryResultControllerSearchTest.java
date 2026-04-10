@@ -108,12 +108,12 @@ public class ApplicationEntryResultControllerSearchTest
         // assert the data audit
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
-                    TableNames.APPLICATION_LISTS,
-                    "id",
-                    null,
-                    appList.toString(),
-                    CrudEnum.READ.name(),
-                    AppListEntryResultAuditOperation.GET_APP_LIST_ENTRY_RESULT.getEventName()));
+                        TableNames.APPLICATION_LISTS,
+                        "id",
+                        null,
+                        appList.toString(),
+                        CrudEnum.READ.name(),
+                        AppListEntryResultAuditOperation.GET_APP_LIST_ENTRY_RESULT.getEventName()));
 
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(

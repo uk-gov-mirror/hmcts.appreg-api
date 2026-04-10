@@ -64,8 +64,6 @@ public class BaseIntegration extends BasePostgresIntegrationTest {
         }
 
         logCaptor = LogCaptor.forClass(AuditOperationSlf4jLogger.class);
-        differenceLogAsserter = new DataAuditLogAsserter();
-
         activityAuditLogAsserter = new ActivityAuditLogAsserter();
         logCaptor.clearLogs();
         differenceLogAsserter.clearLogs();

@@ -449,7 +449,7 @@ public class CourtLocationControllerSearchTest extends AbstractCourtLocationCont
     public void givenCourtLocationSuccessfulSort_whenSearchWithAllSortKeys_thenSuccessResponse()
             throws Exception {
         for (CourtLocationSortFieldMapper courtLocationSortFieldMapper :
-            CourtLocationSortFieldMapper.values()) {
+                CourtLocationSortFieldMapper.values()) {
 
             // create the token
             TokenGenerator tokenGenerator =

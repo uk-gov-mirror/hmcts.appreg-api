@@ -29,10 +29,10 @@ import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntr
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidator;
+import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
+import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.concurrency.MatchResponse;
 import uk.gov.hmcts.appregister.common.concurrency.MatchService;
-import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
-import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeId;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
@@ -115,7 +115,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final Clock clock;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public EntryPage search(EntryGetFilterDto filterDto, PagingWrapper pageable) {
         log.debug(
                 "Started: Find Application Entry for criteria: {} with paging: {}",
@@ -890,7 +890,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public MatchResponse<EntryGetDetailDto> getApplicationListEntryDetail(
             PayloadGetEntryInList entry) {
         log.debug(
@@ -932,7 +932,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public EntryPage getApplicationListEntries(
             PayloadGetEntryInList payloadForGet,
             PagingWrapper pageable,

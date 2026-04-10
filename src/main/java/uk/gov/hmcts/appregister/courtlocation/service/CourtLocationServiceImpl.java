@@ -19,8 +19,8 @@ import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.courtlocation.audit.CourtLocationAuditOperation;
 import uk.gov.hmcts.appregister.courtlocation.exception.CourtLocationError;
-import uk.gov.hmcts.appregister.courtlocation.model.CodeAndName;
 import uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper;
+import uk.gov.hmcts.appregister.courtlocation.model.CodeAndName;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationPage;
 
@@ -65,7 +65,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
      * @throws AppRegistryException if no match or multiple matches are found
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CourtLocationGetDetailDto findByCodeAndDate(String code, LocalDate date) {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT,
@@ -110,7 +110,7 @@ public class CourtLocationServiceImpl implements CourtLocationService {
      * @return a page of Court Location summaries
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CourtLocationPage getPage(String nameFilter, String codeFilter, PagingWrapper pageable) {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT,

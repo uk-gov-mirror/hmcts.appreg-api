@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.common.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.common.audit.service.AuditOperationService;
@@ -24,8 +23,8 @@ import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
 import uk.gov.hmcts.appregister.standardapplicant.audit.StandardApplicantAuditOperation;
-import uk.gov.hmcts.appregister.standardapplicant.model.CodeAndName;
 import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
+import uk.gov.hmcts.appregister.standardapplicant.model.CodeAndName;
 import uk.gov.hmcts.appregister.standardapplicant.validator.StandardApplicantExistsValidator;
 
 /**
@@ -49,7 +48,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
     private final ApplicantMapper applicantMapper;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public StandardApplicantPage findAll(
             String code,
             String name,
@@ -59,9 +58,9 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
             PagingWrapper pageable) {
 
         return auditService.processAudit(
-            null,
-            StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS,
-            (req) -> {
+                null,
+                StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS,
+                (req) -> {
                     // Use today's date to ensure we only return Result Codes that are currently
                     // active.
                     var todayUk = LocalDate.now(clock.withZone(ukZone));
@@ -91,16 +90,16 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
                     return Optional.of(result);
                 },
-            auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public StandardApplicantGetDetailDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
-            null,
-            StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE,
-            (req) -> {
+                null,
+                StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE,
+                (req) -> {
                     log.debug(
                             "Start: Find Standard Applicant By Code for: app code: {} date: {}",
                             code,
@@ -122,6 +121,6 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
                     return Optional.of(result);
                 },
-            auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 }

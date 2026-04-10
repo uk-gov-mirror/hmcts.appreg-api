@@ -202,7 +202,9 @@ public class StandardApplicantServiceTest {
         verify(auditOperationService)
                 .processAudit(
                         isNull(),
-                        eq(StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE),
+                        eq(
+                                StandardApplicantAuditOperation
+                                        .GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE),
                         notNull(),
                         notNull());
     }

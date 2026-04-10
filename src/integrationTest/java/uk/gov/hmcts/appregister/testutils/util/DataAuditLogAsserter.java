@@ -5,15 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.Assertions;
-import uk.gov.hmcts.appregister.common.audit.listener.DataAuditLogger;
-import uk.gov.hmcts.appregister.common.audit.listener.diff.ReflectiveAuditor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.common.audit.listener.diff.ReflectiveAuditor;
 
 /**
  * A class that allows us to assert against audit log data. This class reads the logs from {@link
- * DataAuditLogger}.
+ * uk.gov.hmcts.appregister.common.audit.listener.DataAuditLogger}.
  */
 @Slf4j
 @RequiredArgsConstructor

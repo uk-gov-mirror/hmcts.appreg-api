@@ -1294,7 +1294,7 @@ public class ApplicationEntryServiceImplTest {
     void move_returns400_whenEntryIdsNull() {
         doThrow(
                         new AppRegistryException(
-                            ApplicationListError.ENTRY_NOT_PROVIDED, "No entry IDs provided"))
+                                ApplicationListError.ENTRY_NOT_PROVIDED, "No entry IDs provided"))
                 .when(moveEntriesValidator)
                 .validate(any(MoveEntriesDto.class), any());
 

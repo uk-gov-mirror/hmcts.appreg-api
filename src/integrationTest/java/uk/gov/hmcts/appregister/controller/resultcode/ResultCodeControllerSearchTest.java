@@ -48,9 +48,9 @@ public class ResultCodeControllerSearchTest extends AbstractSecurityControllerTe
 
     // Audit event names
     private static final String AUDIT_GET_ONE =
-        ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT.getEventName();
+            ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT.getEventName();
     private static final String AUDIT_GET_PAGE =
-        ResultCodeAuditOperation.GET_RESULT_CODES_AUDIT_EVENT.getEventName();
+            ResultCodeAuditOperation.GET_RESULT_CODES_AUDIT_EVENT.getEventName();
 
     private static final int DEFAULT_PAGE_SIZE = 10;
 
