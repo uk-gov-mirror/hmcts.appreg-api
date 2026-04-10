@@ -11,7 +11,7 @@ VALUES
 INSERT INTO national_court_houses (nch_id, courthouse_name, version_number, changed_by, changed_date, court_type, start_date, end_date, loc_loc_id, psa_psa_id, court_location_code, sl_courthouse_name, norg_id)
 VALUES
     (1, 'Royal Courts of Justice', 0.0, 0, '1987-05-01', 'Appeal', '1875-12-04', NULL, 501, 1, 'RCJ001', 'RCJ', 701),
-    (2, 'Manchester Civil Justice Centre', 0.0, 0, '1987-05-01', 'Court', '2007-10-01', NULL, 502, 1, 'MCJC002', 'MCJC', 702),
+--     (2, 'Manchester Civil Justice Centre', 0.0, 0, '1987-05-01', 'Court', '2007-10-01', NULL, 502, 1, 'MCJC002', 'MCJC', 702),
     (3, 'Cardiff Crown Court', 0.0, 0, '1987-05-01', 'Court', '1904-01-01', NULL, 503, 1, 'CCC003', 'CCC', 703),
     (4, 'Birmingham Civil Justice Centre', 0.0, 0, '1987-05-01','Court', '1987-05-01', NULL, 504, 1, 'BCJC004', 'BCJC', 704),
     (5, 'Leeds Combined Court Centre',  0.0, 0, '1987-05-01', 'Court', '1993-09-15', NULL, 505, 1, 'LCCC005', 'LCCC', 705),

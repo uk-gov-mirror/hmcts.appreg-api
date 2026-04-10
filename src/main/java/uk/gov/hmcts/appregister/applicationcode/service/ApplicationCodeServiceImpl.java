@@ -72,16 +72,10 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                     applicationCodeList.map(
                             code -> {
                                 FeePair feePair = feeService.resolveFeePair(code.getFeeReference());
-                                Fee offsiteFee =
-                                        feePair != null && feePair.offsiteFee() != null
-                                                ? feePair.offsiteFee()
-                                                : feeService.getOffsiteFee(code.getStartDate());
 
                                 return newPage.addContentItem(
                                         applicationCodeMapper.toApplicationCodeGetSummaryDto(
-                                                code,
-                                                feePair != null ? feePair.mainFee() : null,
-                                                offsiteFee));
+                                                code, feePair.mainFee(), feePair.offsiteFee()));
                             });
 
                     log.debug(
@@ -112,12 +106,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                 FeePair feePair =
                                         feeService.resolveFeePair(
                                                 success.getApplicationCode().getFeeReference());
-                                Fee offsiteFee =
-                                        feePair != null && feePair.offsiteFee() != null
-                                                ? feePair.offsiteFee()
-                                                : feeService.getOffsiteFee(
-                                                        success.getApplicationCode()
-                                                                .getStartDate());
+                                Fee offsiteFee = feePair.offsiteFee();
 
                                 AuditableResult<ApplicationCodeGetDetailDto, ApplicationCode>
                                         result =
@@ -126,9 +115,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                                                 .toApplicationCodeGetDetailDto(
                                                                         success
                                                                                 .getApplicationCode(),
-                                                                        feePair != null
-                                                                                ? feePair.mainFee()
-                                                                                : null,
+                                                                        feePair.mainFee(),
                                                                         offsiteFee),
                                                         applicationCodeMapper.toEntity(
                                                                 payloadForGet));

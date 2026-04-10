@@ -44,18 +44,4 @@ public class FeeRepositoryTest extends BaseRepositoryTest {
                 DateUtil.equalsIgnoreMillis(
                         fee.getStartDate(), feeToAssertAgainst.get().getStartDate()));
     }
-
-    @Test
-    public void testSearchForFeeWithoutOffsite() {
-        Assertions.assertNotNull(
-                applicationFeeRepository.findByReferenceBetweenDateWithOffsite(
-                        "CO1.1", LocalDate.now(), false));
-    }
-
-    @Test
-    public void testSearchForFeeWithOffsite() {
-        Assertions.assertNotNull(
-                applicationFeeRepository.findByReferenceBetweenDateWithOffsite(
-                        "CO1.1", LocalDate.now(), true));
-    }
 }
