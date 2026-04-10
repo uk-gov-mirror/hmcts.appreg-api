@@ -12,6 +12,7 @@ import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.mapper.WordingTemplateMapper;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
+import uk.gov.hmcts.appregister.resultcode.model.CodeAndTitle;
 
 /**
  * MapStruct mapper for converting between {@link ResolutionCode} entities and Result Code API DTOs.

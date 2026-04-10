@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -180,6 +181,59 @@ class AppRegExceptionHandlerTest {
     }
 
     @Test
+    void givenMultipleFieldErrors_whenTheExceptionIsThrown_thenErrorsAreReturnedInSortedOrder()
+            throws Exception {
+
+        BindingResult result = Mockito.mock(BindingResult.class);
+
+        List<FieldError> fieldErrors =
+                List.of(
+                        new FieldError(
+                                "objectName",
+                                "zField",
+                                "rejectedValue",
+                                false,
+                                null,
+                                null,
+                                "zMessage"),
+                        new FieldError(
+                                "objectName",
+                                "aField",
+                                "rejectedValue",
+                                false,
+                                null,
+                                null,
+                                "aMessage"));
+
+        Mockito.when(result.getFieldErrors()).thenReturn(fieldErrors);
+
+        String customMessage = "Custom message";
+
+        MethodArgumentNotValidException exception =
+                new MethodArgumentNotValidException(null, result) {
+                    @Override
+                    public String getMessage() {
+                        return customMessage;
+                    }
+                };
+
+        ResponseEntity<Object> problemDetail =
+                exceptionHandler.handleMethodArgumentNotValid(exception, null, null, null);
+
+        Assertions.assertNotNull(problemDetail);
+        Assertions.assertNotNull(problemDetail.getBody());
+
+        ProblemDetail body = (ProblemDetail) problemDetail.getBody();
+        Assertions.assertNotNull(body.getProperties());
+
+        Object errorsObj = body.getProperties().get("errors");
+        Assertions.assertInstanceOf(Map.class, errorsObj);
+
+        Map<?, ?> errors = (Map<?, ?>) errorsObj;
+        Assertions.assertEquals(List.of("aField", "zField"), List.copyOf(errors.keySet()));
+    }
+
+    @Test
     void
             givenHttpMessageNotReadableExceptionWithAppCode_whenTheExceptionIsThrown_thenAProblemDetailIsaReturned()
                     throws Exception {
@@ -236,5 +290,39 @@ class AppRegExceptionHandlerTest {
         Assertions.assertEquals(
                 CommonAppError.NOT_READABLE_ERROR.getCode().getType().get(),
                 ((ProblemDetail) problemDetail.getBody()).getType());
+    }
+
+    @Test
+    void
+            givenAccessDeniedException_whenTheExceptionIsThrown_thenForbiddenProblemDetailIsReturned() {
+        // setup
+        AccessDeniedException exception = new AccessDeniedException("Forbidden");
+
+        // execute
+        ResponseEntity<ProblemDetail> problemDetail =
+                exceptionHandler.handleAccessDenied(exception);
+
+        // assert
+        Assertions.assertEquals(HttpStatusCode.valueOf(403), problemDetail.getStatusCode());
+        Assertions.assertNotNull(problemDetail.getBody());
+        Assertions.assertEquals(403, problemDetail.getBody().getStatus());
+        Assertions.assertEquals("Access denied", problemDetail.getBody().getDetail());
+    }
+
+    @Test
+    void givenUnexpectedException_whenTheExceptionIsThrown_thenAProblemDetailIsReturned() {
+        // setup
+        RuntimeException exception = new RuntimeException("boom");
+
+        // execute
+        ResponseEntity<ProblemDetail> problemDetail =
+                exceptionHandler.handleUnexpectedException(exception);
+
+        // assert
+        Assertions.assertEquals(HttpStatusCode.valueOf(500), problemDetail.getStatusCode());
+        Assertions.assertNotNull(problemDetail.getBody());
+        Assertions.assertEquals(500, problemDetail.getBody().getStatus());
+        Assertions.assertEquals(
+                "An unexpected error occurred", problemDetail.getBody().getDetail());
     }
 }

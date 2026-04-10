@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.applicationcode.audit.AppCodeAuditOperation;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
-import uk.gov.hmcts.appregister.applicationcode.mapper.CodeAndTitle;
+import uk.gov.hmcts.appregister.applicationcode.model.CodeAndTitle;
 import uk.gov.hmcts.appregister.applicationcode.validator.GetApplicationCodeValidator;
 import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
 import uk.gov.hmcts.appregister.common.audit.listener.AuditOperationLifecycleListener;
@@ -55,6 +55,12 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
         return auditService.processAudit(
                 AppCodeAuditOperation.GET_APPLICATION_CODES_AUDIT_EVENT,
                 (req) -> {
+                    log.debug(
+                            "Start: Find Application List for: app code: {} app title: {} with paging: {}",
+                            appCode,
+                            appTitle,
+                            pageable);
+
                     final Page<ApplicationCode> applicationCodeList =
                             repository.search(appCode, appTitle, todayUk, pageable.getPageable());
 
@@ -80,7 +86,6 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                             pageable);
 
                     CodeAndTitle record = new CodeAndTitle(appCode, appTitle);
-
                     AuditableResult<ApplicationCodePage, ApplicationCode> result =
                             new AuditableResult<>(newPage, applicationCodeMapper.toEntity(record));
 
@@ -120,6 +125,10 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                                         applicationCodeMapper.toEntity(
                                                                 payloadForGet));
 
+                                log.debug(
+                                        "Finish: Find Application for app code: {} date: {}",
+                                        payload.getCode(),
+                                        payload.getDate());
                                 return Optional.of(result);
                             });
                 },

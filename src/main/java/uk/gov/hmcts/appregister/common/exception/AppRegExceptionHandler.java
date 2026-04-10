@@ -5,7 +5,8 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -134,25 +136,22 @@ public class AppRegExceptionHandler extends ResponseEntityExceptionHandler {
         problemDetail.setDetail("Validation failed for fields:");
         problemDetail.setProperties(new java.util.HashMap<>());
 
-        Map<String, Object> errors = new HashMap();
+        Map<String, Object> errors = new LinkedHashMap<>();
 
-        // add the failure specifics to the problem detail properties
-        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-
-            // we cant check on the sub class of field error. Instead lets check on the name of the
-            // class to determine if this is a violation error
-            // or a type mismatch error as these are the most common errors we want to give specific
-            // messages for
-            if (fieldError.getCode() == null || !fieldError.getCode().contains("typeMismatch")) {
-                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-            } else {
-                // if this is a type mismatch error, we want to give a more specific message about
-                // the expected format as this is a common error for our date and time fields
-                errors.put(
-                        fieldError.getField(),
-                        "Please ensure that any times are in the format HH:mm and dates are in the format yyyy-MM-dd");
-            }
-        }
+        ex.getBindingResult().getFieldErrors().stream()
+                .sorted(Comparator.comparing(FieldError::getField))
+                .forEach(
+                        fieldError -> {
+                            if (fieldError.getCode() == null
+                                    || !fieldError.getCode().contains("typeMismatch")) {
+                                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+                            } else {
+                                errors.put(
+                                        fieldError.getField(),
+                                        "Please ensure that any times are in the format HH:mm and dates are in the"
+                                                + " format yyyy-MM-dd");
+                            }
+                        });
 
         problemDetail.setProperty("errors", errors);
 
@@ -221,5 +220,23 @@ public class AppRegExceptionHandler extends ResponseEntityExceptionHandler {
             current = current.getCause();
         }
         return null;
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access denied", ex);
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Access denied"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleUnexpectedException(Exception ex) {
+        log.error("Unexpected error occurred", ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        ProblemDetail.forStatusAndDetail(
+                                HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred"));
     }
 }

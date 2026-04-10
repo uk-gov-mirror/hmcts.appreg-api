@@ -24,7 +24,7 @@ import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodePage;
 import uk.gov.hmcts.appregister.resultcode.audit.ResultCodeAuditOperation;
 import uk.gov.hmcts.appregister.resultcode.exception.ResultCodeError;
-import uk.gov.hmcts.appregister.resultcode.mapper.CodeAndTitle;
+import uk.gov.hmcts.appregister.resultcode.model.CodeAndTitle;
 import uk.gov.hmcts.appregister.resultcode.mapper.ResultCodeMapper;
 
 /**
@@ -80,6 +80,7 @@ public class ResultCodeServiceImpl implements ResultCodeService {
         return auditService.processAudit(
                 ResultCodeAuditOperation.GET_RESULT_CODE_AUDIT_EVENT,
                 unused -> {
+                    log.debug("Start: Find active Result Code using code: {} date: {}", code, date);
                     final List<ResolutionCode> rows =
                             repository.findActiveResolutionCodesByCodeAndDate(code, date);
 

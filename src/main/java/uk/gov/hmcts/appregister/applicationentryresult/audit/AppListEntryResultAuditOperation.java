@@ -10,7 +10,9 @@ import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 public enum AppListEntryResultAuditOperation implements AuditOperation {
     DELETE_APP_LIST_ENTRY_RESULT("Delete Application List Entry Result", CrudEnum.DELETE),
     CREATE_APP_LIST_ENTRY_RESULT("Create Application List Entry Result", CrudEnum.CREATE),
-    UPDATE_APP_LIST_ENTRY_RESULT("Update Application List Entry Result", CrudEnum.UPDATE);
+    UPDATE_APP_LIST_ENTRY_RESULT("Update Application List Entry Result", CrudEnum.UPDATE),
+    GET_APP_LIST_ENTRY_RESULT("Get Application List Entry Result", CrudEnum.READ);
+
     private final String eventName;
 
     private final CrudEnum type;

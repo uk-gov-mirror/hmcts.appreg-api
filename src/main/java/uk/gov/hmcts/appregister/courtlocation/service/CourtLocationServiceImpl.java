@@ -19,7 +19,7 @@ import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.courtlocation.audit.CourtLocationAuditOperation;
 import uk.gov.hmcts.appregister.courtlocation.exception.CourtLocationError;
-import uk.gov.hmcts.appregister.courtlocation.mapper.CodeAndName;
+import uk.gov.hmcts.appregister.courtlocation.model.CodeAndName;
 import uk.gov.hmcts.appregister.courtlocation.mapper.CourtLocationMapper;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.CourtLocationPage;
@@ -70,6 +70,8 @@ public class CourtLocationServiceImpl implements CourtLocationService {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT,
                 unused -> {
+                    log.debug(
+                            "Start: Find active Court Location for code: {} date: {}", code, date);
                     final List<NationalCourtHouse> rows =
                             repository.findActiveCourtsWithDate(code, date);
 
@@ -113,6 +115,11 @@ public class CourtLocationServiceImpl implements CourtLocationService {
         return auditService.processAudit(
                 CourtLocationAuditOperation.GET_COURT_LOCATIONS_AUDIT_EVENT,
                 unused -> {
+                    log.debug(
+                            "Start: Find Application List for: name: {} app code: {} with paging: {}",
+                            nameFilter,
+                            codeFilter,
+                            pageable);
                     final Page<NationalCourtHouse> dbPage =
                             repository.findAllActiveCourts(
                                     codeFilter, nameFilter, pageable.getPageable());

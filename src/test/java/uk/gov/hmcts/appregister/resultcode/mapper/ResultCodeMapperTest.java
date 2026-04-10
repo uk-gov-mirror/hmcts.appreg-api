@@ -8,6 +8,7 @@ import uk.gov.hmcts.appregister.common.mapper.WordingTemplateMapperImpl;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.TemplateConstraint;
+import uk.gov.hmcts.appregister.resultcode.model.CodeAndTitle;
 
 public class ResultCodeMapperTest {
     private final ResultCodeMapper mapper = new ResultCodeMapperImpl();

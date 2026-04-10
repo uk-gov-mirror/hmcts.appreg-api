@@ -6,6 +6,7 @@ import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.data.StandardApplicantTestData;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
+import uk.gov.hmcts.appregister.standardapplicant.model.CodeAndName;
 
 public class StandardApplicantMapperTest {
     @Test

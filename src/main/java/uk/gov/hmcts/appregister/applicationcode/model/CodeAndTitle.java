@@ -1,3 +1,3 @@
-package uk.gov.hmcts.appregister.resultcode.mapper;
+package uk.gov.hmcts.appregister.applicationcode.model;
 
 public record CodeAndTitle(String code, String title) {}

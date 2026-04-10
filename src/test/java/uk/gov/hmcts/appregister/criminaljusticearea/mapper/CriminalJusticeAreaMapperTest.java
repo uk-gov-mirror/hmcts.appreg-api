@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.criminaljusticearea.mapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
+import uk.gov.hmcts.appregister.criminaljusticearea.model.CodeAndDescription;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 public class CriminalJusticeAreaMapperTest {

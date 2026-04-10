@@ -1,18 +1,28 @@
 package uk.gov.hmcts.appregister.controller.applicationentry;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.appregister.common.enumeration.YesOrNo.NO;
 
+import com.nimbusds.jose.JOSEException;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import java.net.MalformedURLException;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -21,9 +31,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
+import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
+import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.base.TableNames;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
@@ -33,10 +47,12 @@ import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
@@ -77,6 +93,11 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
     @Autowired protected TransactionalUnitOfWork unitOfWork;
     @Autowired protected ApplicationListRepository applicationListRepository;
     @Autowired protected ApplicationListEntryRepository applicationListEntryRepository;
+    @Autowired protected ApplicationCodeRepository applicationCodeRepository;
+
+    protected static final LocalDate TEST_DATE = LocalDate.of(2025, 10, 15);
+    protected static final LocalTime TEST_TIME = LocalTime.of(10, 30);
+    protected static final String VALID_COURT_CODE = "CCC003";
 
     @BeforeEach
     void setupUser() {
@@ -190,6 +211,45 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
             }
             if (standardApplicantCode.isPresent()) {
                 rs = rs.queryParam("standardApplicantCode", standardApplicantCode.get());
+            }
+            return rs;
+        }
+    }
+
+    protected record ApplicationEntryFilterByApplicationId(
+            UUID applicationId,
+            Optional<String> applicantName,
+            Optional<String> respondentName,
+            Optional<String> respondentPostcode,
+            Optional<String> accountReference,
+            Optional<String> applicationTitle,
+            Optional<Boolean> feeRequired,
+            Optional<Integer> sequenceNumber)
+            implements UnaryOperator<RequestSpecification> {
+
+        @Override
+        public RequestSpecification apply(RequestSpecification rs) {
+            rs = rs.queryParam("applicationId", applicationId.toString());
+            if (applicantName.isPresent()) {
+                rs = rs.queryParam("applicantName", applicantName.get());
+            }
+            if (respondentName.isPresent()) {
+                rs = rs.queryParam("respondentName", respondentName.get());
+            }
+            if (respondentPostcode.isPresent()) {
+                rs = rs.queryParam("respondentPostcode", respondentPostcode.get());
+            }
+            if (accountReference.isPresent()) {
+                rs = rs.queryParam("accountReference", accountReference.get());
+            }
+            if (applicationTitle.isPresent()) {
+                rs = rs.queryParam("applicationTitle", applicationTitle.get());
+            }
+            if (feeRequired.isPresent()) {
+                rs = rs.queryParam("feeRequired", feeRequired.get());
+            }
+            if (sequenceNumber.isPresent()) {
+                rs = rs.queryParam("sequenceNumber", sequenceNumber.get());
             }
             return rs;
         }
@@ -333,7 +393,7 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
             EntryUpdateDto entryUpdateDto,
             EntryGetDetailDto response,
             String wordingSpec,
-            List<FeeStatus> existingFees) {
+            List<FeeStatus> expectedFees) {
 
         if (entryUpdateDto.getApplicant() != null) {
             Assertions.assertEquals(entryUpdateDto.getApplicant(), response.getApplicant());
@@ -359,30 +419,18 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         Assertions.assertEquals(entryUpdateDto.getLodgementDate(), response.getLodgementDate());
         Assertions.assertEquals(entryUpdateDto.getHasOffsiteFee(), response.getHasOffsiteFee());
 
-        for (int i = 0; i < existingFees.size(); i++) {
-            Assertions.assertEquals(
-                    existingFees.get(i).getPaymentReference(),
-                    response.getFeeStatuses().get(i).getPaymentReference());
-            Assertions.assertEquals(
-                    existingFees.get(i).getStatusDate(),
-                    response.getFeeStatuses().get(i).getStatusDate());
-            Assertions.assertEquals(
-                    existingFees.get(i).getPaymentStatus(),
-                    response.getFeeStatuses().get(i).getPaymentStatus());
-        }
+        // Replace semantics: response should match exactly what was sent in the update
+        Assertions.assertEquals(expectedFees.size(), response.getFeeStatuses().size());
 
-        for (int i = existingFees.size(); i < response.getFeeStatuses().size(); i++) {
+        for (int i = 0; i < expectedFees.size(); i++) {
             Assertions.assertEquals(
-                    entryUpdateDto
-                            .getFeeStatuses()
-                            .get(i - existingFees.size())
-                            .getPaymentReference(),
+                    expectedFees.get(i).getPaymentReference(),
                     response.getFeeStatuses().get(i).getPaymentReference());
             Assertions.assertEquals(
-                    entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getStatusDate(),
+                    expectedFees.get(i).getStatusDate(),
                     response.getFeeStatuses().get(i).getStatusDate());
             Assertions.assertEquals(
-                    entryUpdateDto.getFeeStatuses().get(i - existingFees.size()).getPaymentStatus(),
+                    expectedFees.get(i).getPaymentStatus(),
                     response.getFeeStatuses().get(i).getPaymentStatus());
         }
 
@@ -508,7 +556,7 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         final List<Official> officials = Instancio.ofList(Official.class).size(4).create();
 
         updateDto.getApplicant().setPerson(null);
-        updateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA1 1BB");
+        updateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA13 1BB");
         updateDto
                 .getApplicant()
                 .getOrganisation()
@@ -545,7 +593,7 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
                 .getContactDetails()
                 .setMobile(JsonNullable.of(null));
 
-        updateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
+        updateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA12 1AA");
         updateDto
                 .getRespondent()
                 .getPerson()
@@ -607,5 +655,150 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         var list = new AppListTestData().someMinimal().status(status).build();
         persistance.save(list);
         return list;
+    }
+
+    public void saveResolution(ApplicationListEntry sourceEntry, String resultCode) {
+        ResolutionCode resolutionCode = new ResolutionCode();
+        resolutionCode.setResultCode(resultCode);
+        resolutionCode.setTitle(resultCode + " title");
+        resolutionCode.setWording(resultCode + " wording");
+        resolutionCode.setLegislation("Test legislation");
+        resolutionCode.setStartDate(LocalDate.now());
+        resolutionCode.setChangedBy(1L);
+        resolutionCode.setChangedDate(OffsetDateTime.now());
+        resolutionCode = persistance.save(resolutionCode);
+
+        ApplicationCode persistedCode =
+                applicationCodeRepository
+                        .findById(sourceEntry.getApplicationCode().getId())
+                        .orElseThrow();
+
+        ApplicationCode applicationCodeCopy = createApplicationCodeCopy(persistedCode);
+
+        ApplicationListEntry persistedEntry =
+                applicationListEntryRepository.findById(sourceEntry.getId()).orElseThrow();
+
+        ApplicationList persistedList =
+                applicationListRepository
+                        .findById(persistedEntry.getApplicationList().getId())
+                        .orElseThrow();
+
+        ApplicationListEntry entryCopy =
+                createApplicationListEntryCopy(persistedEntry, persistedList, applicationCodeCopy);
+
+        AppListEntryResolution entryResolution = new AppListEntryResolution();
+        entryResolution.setApplicationList(entryCopy);
+        entryResolution.setResolutionCode(resolutionCode);
+        entryResolution.setResolutionWording(resultCode + " wording");
+        entryResolution.setResolutionOfficer("Test officer");
+
+        persistance.save(entryResolution);
+    }
+
+    public static @NotNull ApplicationCode createApplicationCodeCopy(
+            ApplicationCode persistedCode) {
+        ApplicationCode applicationCodeCopy = new ApplicationCode();
+        applicationCodeCopy.setId(persistedCode.getId());
+        applicationCodeCopy.setVersion(persistedCode.getVersion());
+        applicationCodeCopy.setCode(persistedCode.getCode());
+        applicationCodeCopy.setTitle(persistedCode.getTitle());
+        applicationCodeCopy.setWording(persistedCode.getWording());
+        applicationCodeCopy.setLegislation(persistedCode.getLegislation());
+        applicationCodeCopy.setFeeDue(persistedCode.getFeeDue());
+        applicationCodeCopy.setRequiresRespondent(persistedCode.getRequiresRespondent());
+        applicationCodeCopy.setBulkRespondentAllowed(persistedCode.getBulkRespondentAllowed());
+        applicationCodeCopy.setStartDate(persistedCode.getStartDate());
+        applicationCodeCopy.setChangedBy(persistedCode.getChangedBy());
+        applicationCodeCopy.setChangedDate(persistedCode.getChangedDate());
+        applicationCodeCopy.setCreatedUser(persistedCode.getCreatedUser());
+        applicationCodeCopy.setApplicationListEntryList(null);
+        return applicationCodeCopy;
+    }
+
+    public static @NotNull ApplicationListEntry createApplicationListEntryCopy(
+            ApplicationListEntry persistedEntry,
+            ApplicationList persistedList,
+            ApplicationCode applicationCodeCopy) {
+        ApplicationListEntry entryCopy = new ApplicationListEntry();
+        entryCopy.setId(persistedEntry.getId());
+        entryCopy.setUuid(persistedEntry.getUuid());
+        entryCopy.setVersion(persistedEntry.getVersion());
+        entryCopy.setApplicationList(persistedList);
+        entryCopy.setApplicationCode(applicationCodeCopy);
+        entryCopy.setApplicationListEntryWording(persistedEntry.getApplicationListEntryWording());
+        entryCopy.setEntryRescheduled(persistedEntry.getEntryRescheduled());
+        entryCopy.setSequenceNumber(persistedEntry.getSequenceNumber());
+        entryCopy.setLodgementDate(persistedEntry.getLodgementDate());
+        entryCopy.setCreatedUser(persistedEntry.getCreatedUser());
+        entryCopy.setAccountNumber(persistedEntry.getAccountNumber());
+        entryCopy.setCaseReference(persistedEntry.getCaseReference());
+        entryCopy.setBulkUpload(persistedEntry.getBulkUpload());
+        entryCopy.setRetryCount(persistedEntry.getRetryCount());
+        entryCopy.setTcepStatus(persistedEntry.getTcepStatus());
+        entryCopy.setNotes(persistedEntry.getNotes());
+        return entryCopy;
+    }
+
+    public ApplicationCode buildApplicationCode(String code) {
+        ApplicationCode applicationCode = new ApplicationCode();
+        applicationCode.setCode(code);
+        applicationCode.setTitle("Test title");
+        applicationCode.setWording("Test wording");
+        applicationCode.setLegislation("Test legislation");
+        applicationCode.setFeeDue(NO);
+        applicationCode.setRequiresRespondent(NO);
+        applicationCode.setBulkRespondentAllowed(NO);
+        applicationCode.setStartDate(LocalDate.now());
+        applicationCode.setChangedBy(1L);
+        applicationCode.setChangedDate(OffsetDateTime.now());
+        applicationCode.setCreatedUser("email");
+        return applicationCode;
+    }
+
+    public ApplicationCode createApplicationCode(String code, boolean clearEntries) {
+        ApplicationCode applicationCode = buildApplicationCode(code);
+        if (clearEntries) {
+            applicationCode.setApplicationListEntryList(null);
+        }
+        return persistance.save(applicationCode);
+    }
+
+    public void saveResolutions(ApplicationListEntry entry, String... resultCodes) {
+        ApplicationListEntry currentEntry = entry;
+        for (String resultCode : resultCodes) {
+            currentEntry =
+                    applicationListEntryRepository.findById(currentEntry.getId()).orElseThrow();
+            saveResolution(currentEntry, resultCode);
+        }
+    }
+
+    public Response executeGetEntries(UUID listUuid, int size, int page)
+            throws MalformedURLException, JOSEException {
+        TokenGenerator tokenGenerator = createAdminToken();
+        return restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(size),
+                Optional.of(page),
+                List.of(),
+                getLocalUrl(CREATE_ENTRY_CONTEXT + "/" + listUuid + "/entries"),
+                tokenGenerator.fetchTokenForRole());
+    }
+
+    public EntryGetSummaryDto findEntry(EntryPage page, UUID entryUuid) {
+        return page.getContent().stream()
+                .filter(item -> entryUuid.equals(item.getId()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    public void assertResultCodes(EntryGetSummaryDto dto, String... expectedCodes) {
+        assertThat(dto.getIsResulted()).isTrue();
+        assertEquals(expectedCodes.length, dto.getResulted().size());
+
+        Set<String> codes =
+                dto.getResulted().stream()
+                        .map(ResultCodeGetSummaryDto::getResultCode)
+                        .collect(Collectors.toSet());
+
+        assertEquals(Set.of(expectedCodes), codes);
     }
 }

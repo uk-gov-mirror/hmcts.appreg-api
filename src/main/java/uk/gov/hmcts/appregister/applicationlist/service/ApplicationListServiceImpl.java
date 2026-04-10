@@ -128,22 +128,20 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional
     public MatchResponse<ApplicationListGetDetailDto> create(ApplicationListCreateDto dto) {
-        MatchResponse<ApplicationListGetDetailDto> applicationListGetDetailDto =
-                auditService.processAudit(
-                        AppListAuditOperation.CREATE_APP_LIST,
-                        req ->
-                                applicationCreateListLocationValidator.validate(
-                                        dto,
-                                        (listCreateDto, success) ->
-                                                success.hasCourt()
-                                                        ? Optional.of(
-                                                                createWithCourt(
-                                                                        listCreateDto, success))
-                                                        : Optional.of(
-                                                                createWithCja(
-                                                                        listCreateDto, success))),
-                        auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
-        return applicationListGetDetailDto;
+        log.debug("Start: Request to create application list : {}", dto);
+
+        return auditService.processAudit(
+                AppListAuditOperation.CREATE_APP_LIST,
+                req ->
+                        applicationCreateListLocationValidator.validate(
+                                dto,
+                                (listCreateDto, success) ->
+                                        success.hasCourt()
+                                                ? Optional.of(
+                                                        createWithCourt(listCreateDto, success))
+                                                : Optional.of(
+                                                        createWithCja(listCreateDto, success))),
+                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     /**
@@ -158,6 +156,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Transactional
     public MatchResponse<ApplicationListGetDetailDto> update(
             PayloadForUpdate<ApplicationListUpdateDto> dto) {
+        log.debug("Start: Request to update application list : {}", dto);
+
         MatchResponse<ApplicationListGetDetailDto> response =
                 applicationUpdateListLocationValidator.validate(
                         dto,
@@ -175,6 +175,7 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                         auditLifecycleListeners.toArray(
                                                 new AuditOperationLifecycleListener[0])));
 
+        log.debug("Finish: Request to update application list : {}", response.getPayload());
         return response;
     }
 
@@ -359,6 +360,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
     @Override
     @Transactional
     public void delete(UUID idToDelete) {
+        log.debug("Start: Deleting Application List with id: {}", idToDelete);
+
         deletionValidator.validate(
                 idToDelete,
                 (id, success) ->
@@ -373,6 +376,8 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                                 },
                                 auditLifecycleListeners.toArray(
                                         new AuditOperationLifecycleListener[0])));
+
+        log.debug("Finish: Deleted Application List with id: {}", idToDelete);
     }
 
     /**
@@ -533,7 +538,6 @@ public class ApplicationListServiceImpl implements ApplicationListService {
                     return Optional.of(result);
                 },
                 auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
-
     }
 
     private Map<UUID, Long> fetchEntryCounts(List<UUID> uuids) {

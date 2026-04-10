@@ -4,6 +4,7 @@ import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import uk.gov.hmcts.appregister.common.entity.CriminalJusticeArea;
+import uk.gov.hmcts.appregister.criminaljusticearea.model.CodeAndDescription;
 import uk.gov.hmcts.appregister.generated.model.CriminalJusticeAreaGetDto;
 
 /**

@@ -19,11 +19,12 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantEnrichedProjection;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
-import uk.gov.hmcts.appregister.standardapplicant.audit.StandardApplicantOperation;
-import uk.gov.hmcts.appregister.standardapplicant.mapper.CodeAndName;
+import uk.gov.hmcts.appregister.standardapplicant.audit.StandardApplicantAuditOperation;
+import uk.gov.hmcts.appregister.standardapplicant.model.CodeAndName;
 import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapper;
 import uk.gov.hmcts.appregister.standardapplicant.validator.StandardApplicantExistsValidator;
 
@@ -49,25 +50,40 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
     @Override
     @Transactional(readOnly = true)
-    public StandardApplicantPage findAll(String code, String name, PagingWrapper pageable) {
+    public StandardApplicantPage findAll(
+            String code,
+            String name,
+            String addressLine1,
+            LocalDate from,
+            LocalDate to,
+            PagingWrapper pageable) {
+
         return auditService.processAudit(
-                null,
-                StandardApplicantOperation.GET_STANDARD_APPLICANTS,
-                (req) -> {
+            null,
+            StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS,
+            (req) -> {
                     // Use today's date to ensure we only return Result Codes that are currently
                     // active.
                     var todayUk = LocalDate.now(clock.withZone(ukZone));
 
                     // breaks name into individual and/or organisation parts
-                    final Page<StandardApplicant> standardApplicantsList =
-                            repository.search(code, name, todayUk, pageable.getPageable());
+                    final Page<StandardApplicantEnrichedProjection> standardApplicantsList =
+                            repository.search(
+                                    code,
+                                    name,
+                                    addressLine1,
+                                    from,
+                                    to,
+                                    todayUk,
+                                    pageable.getPageable());
 
                     StandardApplicantPage newPage = new StandardApplicantPage();
                     pageMapper.toPage(standardApplicantsList, newPage, pageable.getSortStrings());
 
-                    // Map each entity to a summary DTO and add to the page content
-                    standardApplicantsList.map(
-                            sa -> newPage.addContentItem(mapper.toReadGetSummaryDto(sa)));
+                    // Map each projection to a summary DTO and add to the page content
+                    standardApplicantsList.forEach(
+                            projection ->
+                                    newPage.addContentItem(mapper.toReadGetSummaryDto(projection)));
 
                     CodeAndName record = new CodeAndName(code, name);
                     AuditableResult<StandardApplicantPage, StandardApplicant> result =
@@ -75,16 +91,16 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
 
                     return Optional.of(result);
                 },
-                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+            auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 
     @Override
     @Transactional(readOnly = true)
     public StandardApplicantGetDetailDto findByCode(String code, LocalDate date) {
         return auditService.processAudit(
-                null,
-                StandardApplicantOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE,
-                (req) -> {
+            null,
+            StandardApplicantAuditOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE,
+            (req) -> {
                     log.debug(
                             "Start: Find Standard Applicant By Code for: app code: {} date: {}",
                             code,
@@ -96,11 +112,16 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                                     (id, standardApplicant) ->
                                             mapper.toReadGetDto(standardApplicant));
 
+                    log.debug(
+                            "Finish: Find Standard Applicant By Code for: app code: {} date: {}",
+                            code,
+                            date);
+
                     AuditableResult<StandardApplicantGetDetailDto, StandardApplicant> result =
                             new AuditableResult<>(payloadForGet, mapper.toEntity(code, date));
 
                     return Optional.of(result);
                 },
-                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+            auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
     }
 }
