@@ -74,9 +74,8 @@ public interface StandardApplicantRepository extends JpaRepository<StandardAppli
                     NULLIF(
                         TRIM(
                             FUNCTION('concat_ws', ' ',
+                                c.applicantTitle,
                                 c.applicantForename1,
-                                c.applicantForename2,
-                                c.applicantForename3,
                                 c.applicantSurname
                             )
                         ),
