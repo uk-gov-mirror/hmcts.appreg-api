@@ -1544,15 +1544,14 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
         StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
         Assertions.assertFalse(page.getContent().isEmpty());
 
-        LocalDate firstDate = page.getContent().get(0).getStartDate();
-        LocalDate secondDate = page.getContent().get(1).getStartDate();
-        LocalDate thirdDate = page.getContent().get(2).getStartDate();
-        LocalDate fourthDate = page.getContent().get(3).getStartDate();
+        List<LocalDate> dates =
+                page.getContent().stream()
+                        .map(StandardApplicantGetSummaryDto::getStartDate)
+                        .toList();
 
-        Assertions.assertEquals(LocalDate.of(2026, 4, 8), firstDate);
-        Assertions.assertEquals(LocalDate.of(2026, 4, 8), secondDate);
-        Assertions.assertEquals(LocalDate.of(2026, 4, 8), thirdDate);
-        Assertions.assertEquals(LocalDate.of(2026, 4, 9), fourthDate);
+        List<LocalDate> sortedDates = dates.stream().sorted().toList();
+
+        Assertions.assertEquals(sortedDates, dates);
     }
 
     @RequiredArgsConstructor
