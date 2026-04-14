@@ -93,4 +93,12 @@ appreg:
   job:
     page-size: 10
 
-
+application-list:
+  sort:
+    disabled-sort-keys:
+      - time
+      - accountReference
+      - cjaCode
+      - legislation
+      - location
+      - code
