@@ -319,14 +319,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // add initial list with court name 'Cardiff Crown Court'
+        // add an initial list
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
                         .description("Alpha description")
                         .status(ApplicationListStatus.OPEN)
-                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(VALID_CJA_CODE2)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
                         .durationMinutes(0);
 
@@ -334,11 +335,11 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add second list with cja description 'CJA_CE_DESCRIPTION'
+        // add second list
         createListReq.setDescription("Zulu description");
-        createListReq.setCjaCode(VALID_CJA_CODE2);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
+        createListReq.setCjaCode(null);
+        createListReq.setOtherLocationDescription(null);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
         final UUID listId2 =
                 createApplicationListWithCourtCode(
@@ -370,33 +371,30 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // create a list with a cja code and location description
+        // add an initial list
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
                         .description("Alpha description")
                         .status(ApplicationListStatus.OPEN)
-                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(VALID_CJA_CODE2)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
                         .durationMinutes(0);
-
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
 
         UUID listId =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add a entry to the list
+        // add an entry to the list
         createEntry(listId);
 
-        // create a second list with same cja code and different location description
+        // add second list
         createListReq.setDescription("Zulu description");
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
+        createListReq.setCjaCode(null);
+        createListReq.setOtherLocationDescription(null);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
         final UUID listId2 =
                 createApplicationListWithCourtCode(
