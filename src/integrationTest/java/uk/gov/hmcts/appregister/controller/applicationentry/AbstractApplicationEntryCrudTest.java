@@ -37,12 +37,14 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.enumeration.NameAddressCodeType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
@@ -57,6 +59,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
+import uk.gov.hmcts.appregister.generated.model.FullName;
 import uk.gov.hmcts.appregister.generated.model.Official;
 import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
@@ -859,5 +862,71 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
                         .collect(Collectors.toSet());
 
         assertEquals(Set.of(expectedCodes), codes);
+    }
+
+    public void setApplicantName(
+            ApplicationListEntry entry, String title, String forename, String surname) {
+        NameAddress applicant = entry.getAnamedaddress();
+        if (applicant == null) {
+            applicant = new NameAddress();
+            applicant.setCode(NameAddressCodeType.APPLICANT);
+            applicant.setAddress1("1 Test Street");
+            entry.setAnamedaddress(applicant);
+        }
+
+        applicant.setTitle(title);
+        applicant.setForename1(forename);
+        applicant.setSurname(surname);
+    }
+
+    public void setRespondentName(
+            ApplicationListEntry entry, String title, String forename, String surname) {
+        NameAddress respondent = entry.getRnameaddress();
+        if (respondent == null) {
+            respondent = new NameAddress();
+            respondent.setCode(NameAddressCodeType.RESPONDENT);
+            respondent.setAddress1("2 Test Street");
+            entry.setRnameaddress(respondent);
+        }
+
+        respondent.setTitle(title);
+        respondent.setForename1(forename);
+        respondent.setSurname(surname);
+    }
+
+    public String renderApplicantName(EntryGetSummaryDto dto) {
+        if (dto.getApplicant() == null || dto.getApplicant().getPerson() == null) {
+            return "";
+        }
+
+        FullName name = dto.getApplicant().getPerson().getName();
+        if (name == null) {
+            return "";
+        }
+
+        return String.join(
+                        " ",
+                        Optional.ofNullable(name.getTitle()).orElse(""),
+                        Optional.ofNullable(name.getFirstForename()).orElse(""),
+                        Optional.ofNullable(name.getSurname()).orElse(""))
+                .trim();
+    }
+
+    public String renderRespondentName(EntryGetSummaryDto dto) {
+        if (dto.getRespondent() == null || dto.getRespondent().getPerson() == null) {
+            return "";
+        }
+
+        FullName name = dto.getRespondent().getPerson().getName();
+        if (name == null) {
+            return "";
+        }
+
+        return String.join(
+                        " ",
+                        Optional.ofNullable(name.getTitle()).orElse(""),
+                        Optional.ofNullable(name.getFirstForename()).orElse(""),
+                        Optional.ofNullable(name.getSurname()).orElse(""))
+                .trim();
     }
 }
