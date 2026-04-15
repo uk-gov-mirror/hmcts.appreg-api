@@ -869,25 +869,108 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
     }
 
     @Test
-    public void testGetApplicationListEntriesFiltersByApplicantNameAndRespondentName()
-            throws Exception {
-        // set up the data
+    public void testGetApplicationListEntriesFiltersByApplicantNameOnly() throws Exception {
         ApplicationList applicationList = createAndSaveList(Status.OPEN);
 
+        // matches applicant filter
         ApplicationListEntry matchingEntry = createEntry(applicationList);
         setApplicantName(matchingEntry, "Mr", "John", "Turner");
         setRespondentName(matchingEntry, "Mrs", "Sarah", "Johnson");
         persistance.save(matchingEntry);
 
+        // same respondent, different applicant, should not match
         ApplicationListEntry nonMatchingEntry = createEntry(applicationList);
         setApplicantName(nonMatchingEntry, "Ms", "Jane", "Smith");
+        setRespondentName(nonMatchingEntry, "Mrs", "Sarah", "Johnson");
+        persistance.save(nonMatchingEntry);
+
+        TokenGenerator tokenGenerator = createAdminToken();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + applicationList.getUuid()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        rs -> rs.queryParam("applicantName", "Turner"),
+                        new OpenApiPageMetaData());
+
+        responseSpec.then().statusCode(200);
+
+        EntryPage page = responseSpec.as(EntryPage.class);
+        Assertions.assertEquals(1, page.getContent().size());
+        Assertions.assertEquals(matchingEntry.getUuid(), page.getContent().getFirst().getId());
+    }
+
+    @Test
+    public void testGetApplicationListEntriesFiltersByRespondentNameOnly() throws Exception {
+        ApplicationList applicationList = createAndSaveList(Status.OPEN);
+
+        // matches respondent filter
+        ApplicationListEntry matchingEntry = createEntry(applicationList);
+        setApplicantName(matchingEntry, "Mr", "John", "Turner");
+        setRespondentName(matchingEntry, "Mrs", "Sarah", "Johnson");
+        persistance.save(matchingEntry);
+
+        // same applicant, different respondent, should not match
+        ApplicationListEntry nonMatchingEntry = createEntry(applicationList);
+        setApplicantName(nonMatchingEntry, "Mr", "John", "Turner");
         setRespondentName(nonMatchingEntry, "Mr", "Bob", "Brown");
         persistance.save(nonMatchingEntry);
 
-        // create the token
         TokenGenerator tokenGenerator = createAdminToken();
 
-        // execute the functionality
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + applicationList.getUuid()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        rs -> rs.queryParam("respondentName", "Johnson"),
+                        new OpenApiPageMetaData());
+
+        responseSpec.then().statusCode(200);
+
+        EntryPage page = responseSpec.as(EntryPage.class);
+        Assertions.assertEquals(1, page.getContent().size());
+        Assertions.assertEquals(matchingEntry.getUuid(), page.getContent().getFirst().getId());
+    }
+
+    @Test
+    public void testGetApplicationListEntriesFiltersByApplicantNameAndRespondentName()
+            throws Exception {
+        ApplicationList applicationList = createAndSaveList(Status.OPEN);
+
+        // matches both filters
+        ApplicationListEntry matchingEntry = createEntry(applicationList);
+        setApplicantName(matchingEntry, "Mr", "John", "Turner");
+        setRespondentName(matchingEntry, "Mrs", "Sarah", "Johnson");
+        persistance.save(matchingEntry);
+
+        // matches applicant only
+        ApplicationListEntry applicantOnlyEntry = createEntry(applicationList);
+        setApplicantName(applicantOnlyEntry, "Ms", "Jane", "Turner");
+        setRespondentName(applicantOnlyEntry, "Mr", "Bob", "Brown");
+        persistance.save(applicantOnlyEntry);
+
+        // matches respondent only
+        ApplicationListEntry respondentOnlyEntry = createEntry(applicationList);
+        setApplicantName(respondentOnlyEntry, "Ms", "Jane", "Smith");
+        setRespondentName(respondentOnlyEntry, "Mrs", "Sarah", "Johnson");
+        persistance.save(respondentOnlyEntry);
+
+        TokenGenerator tokenGenerator = createAdminToken();
+
         Response responseSpec =
                 restAssuredClient.executeGetRequestWithPaging(
                         Optional.of(10),
@@ -904,7 +987,6 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         .queryParam("respondentName", "Johnson"),
                         new OpenApiPageMetaData());
 
-        // assert the response
         responseSpec.then().statusCode(200);
 
         EntryPage page = responseSpec.as(EntryPage.class);
@@ -988,14 +1070,28 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                 List.of("ms jane doe", "mr john smith", "dr alex taylor"), applicantNames);
     }
 
+    @Test
     @StabilityTest
     public void testGetApplicationListEntriesSortsByRespondentName() throws Exception {
         ApplicationList list = createAndSaveList(OPEN);
+
+        ApplicationListEntry john = createEntry(list);
+        setRespondentName(john, "Mr", "John", "Smith");
+        persistance.save(john);
+
+        ApplicationListEntry jane = createEntry(list);
+        setRespondentName(jane, "Ms", "Jane", "Doe");
+        persistance.save(jane);
+
+        ApplicationListEntry alex = createEntry(list);
+        setRespondentName(alex, "Dr", "Alex", "Taylor");
+        persistance.save(alex);
+
         TokenGenerator tokenGenerator = createAdminToken();
 
         Response responseSpec =
                 restAssuredClient.executeGetRequestWithPaging(
-                        Optional.of(20),
+                        Optional.of(10),
                         Optional.of(0),
                         List.of(
                                 SortableField.getSortStringForAsc(
@@ -1007,21 +1103,14 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
 
         EntryPage page = responseSpec.as(EntryPage.class);
 
-        Assertions.assertEquals(1, page.getSort().getOrders().size());
-        Assertions.assertEquals(
-                SortOrdersInner.DirectionEnum.ASC,
-                page.getSort().getOrders().getFirst().getDirection());
-        Assertions.assertEquals(
-                ApplicationEntryByListIdSortFieldEnum.RESPONDENT.getApiValue(),
-                page.getSort().getOrders().getFirst().getProperty());
-
         List<String> respondentNames =
                 page.getContent().stream()
                         .map(this::renderRespondentName)
                         .map(String::toLowerCase)
                         .toList();
 
-        Assertions.assertEquals(respondentNames.stream().sorted().toList(), respondentNames);
+        Assertions.assertEquals(
+                List.of("ms jane doe", "mr john smith", "dr alex taylor"), respondentNames);
     }
 
     record ApplicationEntryFilter(
