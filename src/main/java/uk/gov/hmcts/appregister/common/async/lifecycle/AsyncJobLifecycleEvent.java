@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**
  * Represents a lifecycle event for an asynchronous job.
@@ -24,5 +25,5 @@ public class AsyncJobLifecycleEvent<T> {
     private final JobContext context;
 
     /** The status that is being transitioned to. */
-    private final JobStatus jobStatus;
+    private final JobStatus1 jobStatus;
 }

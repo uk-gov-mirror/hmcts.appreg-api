@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
@@ -23,7 +26,7 @@ import uk.gov.hmcts.appregister.common.async.reader.DataReader;
 import uk.gov.hmcts.appregister.common.async.reader.PageReader;
 import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
 import uk.gov.hmcts.appregister.common.async.validator.StartJobValidator;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**
  * A default implementation of the {@link AsyncJobService} interface.
@@ -34,9 +37,9 @@ import uk.gov.hmcts.appregister.generated.model.JobStatus;
 @Setter
 public class AsyncJobServiceImpl implements AsyncJobService {
     /** decouples the core lifecycles of an async job from its state management. */
-    private final JobStatusPersistence persistence;
+    private final AsyncJobPersistenceService persistence;
 
-    private final TransactionalUnitOfWork transactionalUnitOfWork;
+    private final TransactionUnitOfWork transactionalUnitOfWork;
 
     /**
      * If executed within a Spring context then ensure that the job read page size is set in yaml.
@@ -85,7 +88,8 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
         AsyncLifecycleProcessor<T> process =
                 new AsyncLifecycleProcessor<>(
-                        position, dataReader, jobStatusResponse, lifecycle, jobContext, pageImport);
+                        position, dataReader, jobStatusResponse, lifecycle, jobContext, pageImport,
+                        SecurityContextHolder.getContext());
 
         // the core import logic will be processed in a seperate thread
         Future<?> futureJobOutcome = executor.submit(process);
@@ -118,8 +122,13 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
         private final PageReader<T> pageRead;
 
+        private final SecurityContext authentication;
+
         @Override
         public void run() {
+            // set the authentication on the thread local of this thread.
+            SecurityContextHolder.setContext(authentication);
+
             // run the runnable inside of a database transaction
             transactionalUnitOfWork.inTransaction(
                     () -> {
@@ -127,7 +136,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                             fireEventAndChangeState(
                                     jobStatusResponse,
                                     null,
-                                    JobStatus.RECEIVED,
+                                    JobStatus1.RECEIVED,
                                     lifecycle,
                                     jobContext);
 
@@ -137,13 +146,13 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
                                         // decide wether to fail or continue
                                         handleFailure(
-                                                jobContext, jobStatusResponse, JobStatus.RECEIVED);
+                                            jobContext, jobStatusResponse, JobStatus1.RECEIVED);
 
                                         // validate the read page of data
                                         fireEventAndChangeState(
                                                 jobStatusResponse,
                                                 data,
-                                                JobStatus.VALIDATING,
+                                                JobStatus1.VALIDATING,
                                                 lifecycle,
                                                 jobContext);
 
@@ -157,7 +166,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                         handleFailure(
                                                 jobContext,
                                                 jobStatusResponse,
-                                                JobStatus.VALIDATING);
+                                                JobStatus1.VALIDATING);
 
                                         // if a failure has been detected then stop processing and
                                         // just ensure that
@@ -168,7 +177,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                             fireEventAndChangeState(
                                                     jobStatusResponse,
                                                     data,
-                                                    JobStatus.PROCESSING,
+                                                    JobStatus1.PROCESSING,
                                                     lifecycle,
                                                     jobContext);
 
@@ -176,7 +185,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                             handleFailure(
                                                     jobContext,
                                                     jobStatusResponse,
-                                                    JobStatus.PROCESSING);
+                                                    JobStatus1.PROCESSING);
                                         }
                                     },
                                     jobContext);
@@ -190,7 +199,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                 fireEventAndChangeState(
                                         jobStatusResponse,
                                         null,
-                                        JobStatus.COMPLETED,
+                                        JobStatus1.COMPLETED,
                                         lifecycle,
                                         jobContext);
                             }
@@ -201,7 +210,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                 fireEventAndChangeState(
                                         jobStatusResponse,
                                         null,
-                                        JobStatus.FAILED,
+                                        JobStatus1.FAILED,
                                         lifecycle,
                                         jobContext);
                             } catch (IOException e) {
@@ -241,7 +250,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
         private <T> void fireEventAndChangeState(
                 JobStatusResponse response,
                 List<T> data,
-                JobStatus status,
+                JobStatus1 status,
                 AsyncJobLifecycle<T> lifecycle,
                 JobContext context)
                 throws IOException {
@@ -265,7 +274,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
      * @param jobStatusResponse The job status response containing the job id.
      */
     private void handleFailure(
-            JobContext jobContext, JobStatusResponse jobStatusResponse, JobStatus status)
+            JobContext jobContext, JobStatusResponse jobStatusResponse, JobStatus1 status)
             throws JobException {
         // if we have a failure but we want to validate all other
         // results then keep going.

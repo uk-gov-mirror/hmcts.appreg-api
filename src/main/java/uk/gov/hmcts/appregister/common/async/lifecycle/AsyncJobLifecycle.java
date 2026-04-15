@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.common.async.lifecycle;
 import java.io.IOException;
 import org.slf4j.Logger;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**
  * The lifecycle for an asynchronous job.
@@ -19,19 +20,19 @@ public interface AsyncJobLifecycle<T> {
      */
     default void lifeCycleEventPerformed(AsyncJobLifecycleEvent<T> lifecycleEvent)
             throws IOException {
-        if (lifecycleEvent.getJobStatus() == JobStatus.COMPLETED) {
+        if (lifecycleEvent.getJobStatus() == JobStatus1.COMPLETED) {
             logger.debug("Job completed");
             completed(lifecycleEvent);
-        } else if (lifecycleEvent.getJobStatus() == JobStatus.FAILED) {
+        } else if (lifecycleEvent.getJobStatus() == JobStatus1.FAILED) {
             logger.debug("Job failed");
             failed(lifecycleEvent);
-        } else if (lifecycleEvent.getJobStatus() == JobStatus.PROCESSING) {
+        } else if (lifecycleEvent.getJobStatus() == JobStatus1.PROCESSING) {
             logger.debug("Job processing");
             processing(lifecycleEvent);
-        } else if (lifecycleEvent.getJobStatus() == JobStatus.RECEIVED) {
+        } else if (lifecycleEvent.getJobStatus() == JobStatus1.RECEIVED) {
             logger.debug("Job received");
             received(lifecycleEvent);
-        } else if (lifecycleEvent.getJobStatus() == JobStatus.VALIDATING) {
+        } else if (lifecycleEvent.getJobStatus() == JobStatus1.VALIDATING) {
             logger.debug("Job validating");
             validating(lifecycleEvent);
         }

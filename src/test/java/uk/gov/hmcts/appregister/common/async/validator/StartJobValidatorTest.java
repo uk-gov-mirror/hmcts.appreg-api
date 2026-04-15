@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.appregister.common.async.JobStatusPersistence;
+import uk.gov.hmcts.appregister.common.async.AsyncJobPersistenceService;
 import uk.gov.hmcts.appregister.common.async.exception.JobError;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
@@ -16,7 +16,7 @@ import uk.gov.hmcts.appregister.generated.model.JobType;
 
 @ExtendWith(MockitoExtension.class)
 public class StartJobValidatorTest {
-    @Mock private JobStatusPersistence persistence;
+    @Mock private AsyncJobPersistenceService persistence;
 
     @InjectMocks private StartJobValidator startJobValidator;
 
@@ -24,7 +24,7 @@ public class StartJobValidatorTest {
     void testValidationFail() {
         JobTypeRequest jobIdRequest =
                 JobTypeRequest.builder().jobType(JobType.BULK_UPLOAD_ENTRIES).build();
-        when(persistence.isJobTypeNotFinishedForUser(jobIdRequest)).thenReturn(true);
+        when(persistence.isJobTypeFinishedForUser(jobIdRequest)).thenReturn(false);
 
         AppRegistryException ex =
                 Assertions.assertThrows(

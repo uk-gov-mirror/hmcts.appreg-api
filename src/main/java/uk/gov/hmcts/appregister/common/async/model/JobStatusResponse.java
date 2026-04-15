@@ -9,9 +9,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.core.io.InputStreamResource;
-import uk.gov.hmcts.appregister.common.async.JobStatusPersistence;
+import uk.gov.hmcts.appregister.common.async.AsyncJobPersistenceService;
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 import uk.gov.hmcts.appregister.generated.model.JobType;
 
 /**
@@ -30,7 +30,7 @@ public class JobStatusResponse {
     private final JobType type;
 
     /** The job status. */
-    private final JobStatus status;
+    private final JobStatus1 status;
 
     /** The user name that the job is associated with. */
     private final String userName;
@@ -40,7 +40,7 @@ public class JobStatusResponse {
 
     /** The persistence layer to use to store and read the associated blob. */
     @Getter(AccessLevel.NONE)
-    protected final JobStatusPersistence persistence;
+    protected final AsyncJobPersistenceService persistence;
 
     /**
      * gets the job based on the response if we ever need to lookup the state of this job again.
@@ -58,7 +58,7 @@ public class JobStatusResponse {
      * @throws IOException Any problems
      */
     public void write(InputStream updateWithInputStream) throws IOException {
-        if (status.equals(JobStatus.FAILED) || status.equals(JobStatus.COMPLETED)) {
+        if (status.equals(JobStatus1.FAILED) || status.equals(JobStatus1.COMPLETED)) {
             throw new JobException("Can't write blob to a finished job %s".formatted(getJobId()));
         }
 

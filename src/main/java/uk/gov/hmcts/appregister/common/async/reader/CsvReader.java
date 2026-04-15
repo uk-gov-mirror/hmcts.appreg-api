@@ -17,6 +17,8 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.appregister.common.async.CsvPojo;
@@ -29,6 +31,7 @@ import uk.gov.hmcts.appregister.common.async.JobContext;
  */
 @Getter
 @Setter
+@Slf4j
 public class CsvReader<T extends CsvPojo> implements DataReader<T>, Closeable {
 
     /** The file to read from. */
@@ -115,6 +118,7 @@ public class CsvReader<T extends CsvPojo> implements DataReader<T>, Closeable {
 
         @Override
         public CsvException handleException(CsvException e) throws CsvException {
+            log.error("Error reading csv file", e);
             // add the csv error to the job context
             if (jobContext != null) {
                 jobContext.logFailure(e.getMessage());

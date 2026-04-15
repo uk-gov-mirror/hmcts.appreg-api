@@ -31,17 +31,17 @@ import uk.gov.hmcts.appregister.common.async.model.TrackJobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
 import uk.gov.hmcts.appregister.common.async.reader.PageReader;
 import uk.gov.hmcts.appregister.common.async.validator.StartJobValidator;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 import uk.gov.hmcts.appregister.generated.model.JobType;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
 public class AsyncJobServiceImplTest {
-    @Mock private JobStatusPersistence persistence;
+    @Mock private AsyncJobPersistenceService persistence;
 
     @Mock private StartJobValidator startJobValidator;
 
-    @Spy private TransactionalUnitOfWork service = new TransactionalUnitOfWork();
+    @Spy private TransactionUnitOfWork service = new TransactionUnitOfWork();
 
     @InjectMocks private AsyncJobServiceImpl asyncJobServiceImpl;
 
@@ -75,7 +75,7 @@ public class AsyncJobServiceImplTest {
                             .type(JobType.BULK_UPLOAD_ENTRIES)
                             .uuid(jobId)
                             .userName(userId)
-                            .status(JobStatus.RECEIVED)
+                            .status(JobStatus1.RECEIVED)
                             .build();
 
             when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -110,33 +110,33 @@ public class AsyncJobServiceImplTest {
             verify(persistence, times(1))
                     .setJobStatus(
                             JobIdRequest.builder().id(jobId).userName(userId).build(),
-                            JobStatus.RECEIVED);
+                            JobStatus1.RECEIVED);
             verify(persistence, times(3))
                     .setJobStatus(
                             JobIdRequest.builder().id(jobId).userName(userId).build(),
-                            JobStatus.VALIDATING);
+                            JobStatus1.VALIDATING);
             verify(persistence, times(3))
                     .setJobStatus(
                             JobIdRequest.builder().id(jobId).userName(userId).build(),
-                            JobStatus.PROCESSING);
+                            JobStatus1.PROCESSING);
             verify(persistence, times(1))
                     .setJobStatus(
                             JobIdRequest.builder().id(jobId).userName(userId).build(),
-                            JobStatus.COMPLETED);
+                            JobStatus1.COMPLETED);
 
             // assert the number of the events fired
             Assertions.assertEquals(
-                    JobStatus.RECEIVED,
+                    JobStatus1.RECEIVED,
                     lifecycleEventArgumentCaptor.getAllValues().get(0).getJobStatus());
             Assertions.assertEquals(
-                    JobStatus.VALIDATING,
+                    JobStatus1.VALIDATING,
                     lifecycleEventArgumentCaptor.getAllValues().get(1).getJobStatus());
             Assertions.assertEquals(
                     "Alice",
                     lifecycleEventArgumentCaptor.getAllValues().get(1).getData().get(0).getName());
 
             Assertions.assertEquals(
-                    JobStatus.PROCESSING,
+                    JobStatus1.PROCESSING,
                     lifecycleEventArgumentCaptor.getAllValues().get(2).getJobStatus());
 
             Assertions.assertEquals(
@@ -144,29 +144,29 @@ public class AsyncJobServiceImplTest {
                     lifecycleEventArgumentCaptor.getAllValues().get(2).getData().get(0).getName());
 
             Assertions.assertEquals(
-                    JobStatus.VALIDATING,
+                    JobStatus1.VALIDATING,
                     lifecycleEventArgumentCaptor.getAllValues().get(3).getJobStatus());
             Assertions.assertEquals(
                     "Bob",
                     lifecycleEventArgumentCaptor.getAllValues().get(3).getData().get(0).getName());
 
             Assertions.assertEquals(
-                    JobStatus.PROCESSING,
+                    JobStatus1.PROCESSING,
                     lifecycleEventArgumentCaptor.getAllValues().get(4).getJobStatus());
 
             Assertions.assertEquals(
                     "Bob",
                     lifecycleEventArgumentCaptor.getAllValues().get(4).getData().get(0).getName());
             Assertions.assertEquals(
-                    JobStatus.VALIDATING,
+                    JobStatus1.VALIDATING,
                     lifecycleEventArgumentCaptor.getAllValues().get(5).getJobStatus());
 
             Assertions.assertEquals(
-                    JobStatus.PROCESSING,
+                    JobStatus1.PROCESSING,
                     lifecycleEventArgumentCaptor.getAllValues().get(6).getJobStatus());
 
             Assertions.assertEquals(
-                    JobStatus.COMPLETED,
+                    JobStatus1.COMPLETED,
                     lifecycleEventArgumentCaptor.getAllValues().get(7).getJobStatus());
         }
 
@@ -187,7 +187,7 @@ public class AsyncJobServiceImplTest {
                         .type(JobType.BULK_UPLOAD_ENTRIES)
                         .uuid(jobId)
                         .userName(userId)
-                        .status(JobStatus.RECEIVED)
+                        .status(JobStatus1.RECEIVED)
                         .build();
 
         when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -202,14 +202,14 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.RECEIVED);
+                        JobStatus1.RECEIVED);
 
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.VALIDATING);
+                        JobStatus1.VALIDATING);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
         verify(persistence, times(1))
                 .setFailure(
@@ -234,7 +234,7 @@ public class AsyncJobServiceImplTest {
                         .type(JobType.BULK_UPLOAD_ENTRIES)
                         .uuid(jobId)
                         .userName(userId)
-                        .status(JobStatus.RECEIVED)
+                        .status(JobStatus1.RECEIVED)
                         .build();
 
         when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -248,14 +248,14 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.RECEIVED);
+                        JobStatus1.RECEIVED);
 
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.VALIDATING);
+                        JobStatus1.VALIDATING);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
         verify(persistence, times(1))
                 .setFailure(
@@ -281,7 +281,7 @@ public class AsyncJobServiceImplTest {
                         .type(JobType.BULK_UPLOAD_ENTRIES)
                         .uuid(jobId)
                         .userName(userId)
-                        .status(JobStatus.RECEIVED)
+                        .status(JobStatus1.RECEIVED)
                         .build();
 
         when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -296,16 +296,16 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.RECEIVED);
+                        JobStatus1.RECEIVED);
 
         verify(persistence, times(3))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.VALIDATING);
+                        JobStatus1.VALIDATING);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.PROCESSING);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.PROCESSING);
 
         verify(persistence, times(1))
                 .setFailure(
@@ -337,7 +337,7 @@ public class AsyncJobServiceImplTest {
                         .type(JobType.BULK_UPLOAD_ENTRIES)
                         .uuid(jobId)
                         .userName(userId)
-                        .status(JobStatus.RECEIVED)
+                        .status(JobStatus1.RECEIVED)
                         .build();
 
         when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -350,9 +350,9 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.RECEIVED);
+                        JobStatus1.RECEIVED);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
         // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
@@ -364,7 +364,7 @@ public class AsyncJobServiceImplTest {
                                 + ", Job failed during VALIDATING for job "
                                 + jobIdRequest.getId()
                                 + ". Forced termination");
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.VALIDATING);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.VALIDATING);
     }
 
     @Test
@@ -382,7 +382,7 @@ public class AsyncJobServiceImplTest {
                         .type(JobType.BULK_UPLOAD_ENTRIES)
                         .uuid(jobId)
                         .userName(userId)
-                        .status(JobStatus.RECEIVED)
+                        .status(JobStatus1.RECEIVED)
                         .build();
 
         when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -410,13 +410,13 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.RECEIVED);
+                        JobStatus1.RECEIVED);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
-        verify(persistence, times(3)).setJobStatus(jobIdRequest, JobStatus.VALIDATING);
+        verify(persistence, times(3)).setJobStatus(jobIdRequest, JobStatus1.VALIDATING);
 
-        verify(persistence, times(0)).setJobStatus(jobIdRequest, JobStatus.PROCESSING);
+        verify(persistence, times(0)).setJobStatus(jobIdRequest, JobStatus1.PROCESSING);
     }
 
     @Test
@@ -434,7 +434,7 @@ public class AsyncJobServiceImplTest {
                         .type(JobType.BULK_UPLOAD_ENTRIES)
                         .uuid(jobId)
                         .userName(userId)
-                        .status(JobStatus.RECEIVED)
+                        .status(JobStatus1.RECEIVED)
                         .build();
 
         when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
@@ -447,9 +447,9 @@ public class AsyncJobServiceImplTest {
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
-                        JobStatus.RECEIVED);
+                        JobStatus1.RECEIVED);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
         verify(persistence, times(1)).setFailure(jobIdRequest, BrokenLifecycleWithContext.ERROR);
     }
@@ -484,7 +484,7 @@ public class AsyncJobServiceImplTest {
                             .type(JobType.BULK_UPLOAD_ENTRIES)
                             .uuid(jobId)
                             .userName(userId)
-                            .status(JobStatus.RECEIVED)
+                            .status(JobStatus1.RECEIVED)
                             .build();
 
             when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));

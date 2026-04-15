@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
  * A unit of work class that allows us to write custom code in a transactional.
  */
 @Component
-public class TransactionalUnitOfWork {
+public class TransactionUnitOfWork {
     @Transactional()
     public void inTransaction(Runnable runnable) {
         runnable.run();

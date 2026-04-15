@@ -8,11 +8,12 @@ import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**
  * This is a job status persistence interface that allows us to control the job persistence.
  */
-public interface JobStatusPersistence {
+public interface AsyncJobPersistenceService {
 
     /**
      * sets the job with the state event passed to it.
@@ -20,7 +21,7 @@ public interface JobStatusPersistence {
      * @param jobType The job type
      * @param jobStatus The job status
      */
-    void setJobStatus(JobIdRequest jobType, JobStatus jobStatus);
+    void setJobStatus(JobIdRequest jobType, JobStatus1 jobStatus);
 
     /**
      * Sets the status of the job as failed with the reason for failure.
@@ -44,7 +45,7 @@ public interface JobStatusPersistence {
      * @param id The job type
      * @return true if the job type exists and is not yet finished, false otherwise
      */
-    boolean isJobTypeNotFinishedForUser(JobTypeRequest id);
+    boolean isJobTypeFinishedForUser(JobTypeRequest id);
 
     /**
      * starts a job.
