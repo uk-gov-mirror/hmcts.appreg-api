@@ -77,7 +77,6 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
     @Test
     public void givenValidRequest_whenGetStandardApplicantByCodeAndDateForIndividual_thenReturn200()
             throws Exception {
-        LocalDate queryDate = LocalDate.now();
         // create the token
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
@@ -87,7 +86,7 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                 restAssuredClient.executeGetRequest(
                         getLocalUrl(WEB_CONTEXT + "/" + APPCODE_CODE),
                         tokenGenerator.fetchTokenForRole(),
-                        new DateGetRequest(queryDate));
+                        new DateGetRequest(LocalDate.now()));
 
         // assert the response
         responseSpec.then().statusCode(200);
@@ -151,7 +150,7 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         TableNames.STANDARD_APPLICANTS,
                         "standard_applicant_start_date",
                         null,
-                        queryDate.toString(),
+                        LocalDate.now().toString(),
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE
                                 .getType()
                                 .name(),
@@ -163,7 +162,6 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
     public void
             givenValidRequest_whenGetStandardApplicantByCodeAndDateForOrganisation_thenReturn200()
                     throws Exception {
-        LocalDate queryDate = LocalDate.now();
         // create the token
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
@@ -173,7 +171,7 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                 restAssuredClient.executeGetRequest(
                         getLocalUrl(WEB_CONTEXT + "/" + APPCODE_CODE_ORGANISATION),
                         tokenGenerator.fetchTokenForRole(),
-                        new DateGetRequest(queryDate));
+                        new DateGetRequest(LocalDate.now()));
 
         // assert the response
         responseSpec.then().statusCode(200);
@@ -250,7 +248,7 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         TableNames.STANDARD_APPLICANTS,
                         "standard_applicant_start_date",
                         null,
-                        queryDate.toString(),
+                        LocalDate.now().toString(),
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS_BY_CODE_AND_DATE
                                 .getType()
                                 .name(),
@@ -420,6 +418,15 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         "",
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.STANDARD_APPLICANTS,
+                        "standard_applicant_start_date",
+                        null,
+                        "",
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
     }
 
     @StabilityTest
@@ -496,6 +503,15 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                         "",
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.STANDARD_APPLICANTS,
+                        "standard_applicant_start_date",
+                        null,
+                        "",
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
     }
 
     @Test
@@ -550,6 +566,15 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.STANDARD_APPLICANTS,
                         "standard_applicant_code",
+                        null,
+                        "",
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.STANDARD_APPLICANTS,
+                        "standard_applicant_start_date",
                         null,
                         "",
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
@@ -646,6 +671,15 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.STANDARD_APPLICANTS,
                         "standard_applicant_code",
+                        null,
+                        "",
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.STANDARD_APPLICANTS,
+                        "standard_applicant_start_date",
                         null,
                         "",
                         StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),

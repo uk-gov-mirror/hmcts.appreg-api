@@ -6,7 +6,6 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
@@ -37,7 +36,6 @@ public class CourtLocationControllerSearchTest extends AbstractCourtLocationCont
     // --- /court-locations/{code}?date=... -----------------------------------------------------
     @Test
     void givenValidRequest_whenGetCourtLocationByCodeAndDate_Cardiff_then200() throws Exception {
-        LocalDate queryDate = LocalDate.of(2025, 1, 1);
         var token =
                 getATokenWithValidCredentials()
                         .roles(List.of(RoleEnum.ADMIN))
@@ -46,9 +44,7 @@ public class CourtLocationControllerSearchTest extends AbstractCourtLocationCont
 
         Response resp =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrlWithDate(
-                                WEB_CONTEXT + "/" + CARDIFF_CODE,
-                                queryDate.atStartOfDay().atOffset(ZoneOffset.UTC)),
+                        getLocalUrlWithDate(WEB_CONTEXT + "/" + CARDIFF_CODE, OffsetDateTime.now()),
                         token);
 
         resp.then().statusCode(200);
@@ -70,20 +66,18 @@ public class CourtLocationControllerSearchTest extends AbstractCourtLocationCont
                         CARDIFF_CODE,
                         CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT.getType().name(),
                         CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT.getEventName()));
-
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.NATIONAL_COURT_HOUSES,
                         "start_date",
                         null,
-                        queryDate.toString(),
+                        LocalDate.now().toString(),
                         CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT.getType().name(),
                         CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT.getEventName()));
     }
 
     @Test
     void givenValidRequest_whenGetCourtLocationByCodeAndDate_Bristol_then200() throws Exception {
-        LocalDate queryDate = LocalDate.of(2025, 1, 1);
         var token =
                 getATokenWithValidCredentials()
                         .roles(List.of(RoleEnum.USER))
@@ -92,9 +86,7 @@ public class CourtLocationControllerSearchTest extends AbstractCourtLocationCont
 
         var resp =
                 restAssuredClient.executeGetRequest(
-                        getLocalUrlWithDate(
-                                WEB_CONTEXT + "/" + BRISTOL_CODE,
-                                queryDate.atStartOfDay().atOffset(ZoneOffset.UTC)),
+                        getLocalUrlWithDate(WEB_CONTEXT + "/" + BRISTOL_CODE, OffsetDateTime.now()),
                         token);
 
         resp.then().statusCode(200);
@@ -122,7 +114,7 @@ public class CourtLocationControllerSearchTest extends AbstractCourtLocationCont
                         TableNames.NATIONAL_COURT_HOUSES,
                         "start_date",
                         null,
-                        queryDate.toString(),
+                        LocalDate.now().toString(),
                         CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT.getType().name(),
                         CourtLocationAuditOperation.GET_COURT_LOCATION_AUDIT_EVENT.getEventName()));
     }
