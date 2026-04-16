@@ -7,13 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.common.async.AbstractAsyncTest;
 import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.async.PersonCsvPojo;
 
 /**
  * Tests the CSV reader.
  */
-class CsvReaderTest {
+class CsvReaderTest extends AbstractAsyncTest {
 
     @Test
     void testRead() throws IOException {

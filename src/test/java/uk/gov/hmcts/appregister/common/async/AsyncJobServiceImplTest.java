@@ -37,7 +37,7 @@ import uk.gov.hmcts.appregister.generated.model.JobType;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
-public class AsyncJobServiceImplTest {
+public class AsyncJobServiceImplTest extends AbstractAsyncTest {
     @Mock private AsyncJobPersistenceService persistence;
 
     @Spy private TransactionUnitOfWork service = new TransactionUnitOfWork();

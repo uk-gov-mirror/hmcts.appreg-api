@@ -16,11 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import uk.gov.hmcts.appregister.common.async.AbstractAsyncTest;
 import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 
 @ExtendWith(MockitoExtension.class)
-public class JpaReaderTest {
+public class JpaReaderTest extends AbstractAsyncTest {
 
     @Captor ArgumentCaptor<Pageable> pageableArgumentCaptor;
 
