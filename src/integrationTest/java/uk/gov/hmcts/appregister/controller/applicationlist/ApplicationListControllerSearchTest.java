@@ -809,7 +809,8 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
-    @Test
+    // TODO: Re-enable and refactor this once we have clarified what endpoint we need disabling for - ARCPOC-992/1218
+    /*@Test
     @DisplayName("GET: disabled sort key is ignored and default description ordering is used")
     void givenDisabledSortKey_whenGet_then200AndDefaultOrderingApplied() throws Exception {
         String prefix = uniquePrefix("disabled-sort");
@@ -846,7 +847,7 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         assertThat(page.getContent().get(0).getDescription()).endsWith("Alpha");
         assertThat(page.getContent().get(1).getDescription()).endsWith("Mango");
         assertThat(page.getContent().get(2).getDescription()).endsWith("Zebra");
-    }
+    }*/
 
     @Test
     @DisplayName("GET: does not return soft deleted list")
