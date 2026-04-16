@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.applicationcode.service;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +12,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.function.BiFunction;
+import lombok.Setter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,19 +105,19 @@ public class ApplicationCodeServiceImplTest {
         Fee dummyMain = new FeeTestData().someComplete();
         Fee dummyOffset = new FeeTestData().someComplete();
 
+        when(feeService.resolveFeePair(Mockito.notNull(), Mockito.notNull()))
+                .thenReturn(new FeePair(dummyMain, dummyOffset));
+
         String code = "code";
 
         LocalDate localDate = LocalDate.now(ZoneOffset.UTC);
-
-        when(feeService.resolveFeePair(Mockito.notNull(), eq(localDate)))
-                .thenReturn(new FeePair(dummyMain, dummyOffset));
 
         PayloadForGet payloadForGet = PayloadForGet.builder().code(code).date(localDate).build();
         ApplicationCodeGetDetailDto applicationCodeDto =
                 applicationCodeService.findByCode(payloadForGet);
 
         Assertions.assertEquals(applicationCodeDto.getApplicationCode(), applicationCode.getCode());
-        verify(feeService).resolveFeePair(applicationCode.getFeeReference(), localDate);
+
         Assertions.assertEquals(
                 CurrencyUtil.getPoundsToPennies(dummyMain.getAmount()),
                 applicationCodeDto.getFeeAmount().get().getValue());
@@ -128,8 +128,12 @@ public class ApplicationCodeServiceImplTest {
 
     @Test
     void findByCode_auditsRequestedLookupCriteria() {
-        final String code = "code";
-        final LocalDate localDate = LocalDate.of(2025, 1, 1);
+
+        Fee dummyMain = new FeeTestData().someComplete();
+        Fee dummyOffset = new FeeTestData().someComplete();
+
+        when(feeService.resolveFeePair(Mockito.notNull(), Mockito.notNull()))
+                .thenReturn(new FeePair(dummyMain, dummyOffset));
 
         ApplicationCode applicationCode = new ApplicationCodeTestData().someComplete();
         applicationCode.setStartDate(LocalDate.of(2020, 1, 1));
@@ -141,6 +145,9 @@ public class ApplicationCodeServiceImplTest {
 
         CapturingAuditListener listener = new CapturingAuditListener();
         ApplicationCodeServiceImpl auditedService = buildServiceWithListeners(List.of(listener));
+
+        String code = "code";
+        LocalDate localDate = LocalDate.of(2025, 1, 1);
 
         auditedService.findByCode(PayloadForGet.builder().code(code).date(localDate).build());
 
@@ -414,6 +421,7 @@ public class ApplicationCodeServiceImplTest {
         }
     }
 
+    @Setter
     class DummyGetApplicationCodeValidator extends GetApplicationCodeValidator {
         private GetApplicationCodeValidationSuccess success;
 
