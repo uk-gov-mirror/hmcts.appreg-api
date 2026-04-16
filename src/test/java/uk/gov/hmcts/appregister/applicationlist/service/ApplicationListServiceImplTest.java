@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import lombok.Setter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1094,6 +1095,7 @@ public class ApplicationListServiceImplTest {
         }
     }
 
+    @Setter
     class DummyApplicationCreateListLocationValidator
             extends ApplicationCreateListLocationValidator {
         private ListLocationValidationSuccess success;
@@ -1113,12 +1115,9 @@ public class ApplicationListServiceImplTest {
                         createApplicationSupplier) {
             return createApplicationSupplier.apply(dto, success);
         }
-
-        void setSuccess(ListLocationValidationSuccess success) {
-            this.success = success;
-        }
     }
 
+    @Setter
     class DummyApplicationUpdateListLocationValidator
             extends ApplicationUpdateListLocationValidator {
         private ListUpdateValidationSuccess success;
@@ -1153,12 +1152,9 @@ public class ApplicationListServiceImplTest {
                         createApplicationSupplier) {
             return createApplicationSupplier.apply(dto, success);
         }
-
-        void setSuccess(ListUpdateValidationSuccess success) {
-            this.success = success;
-        }
     }
 
+    @Setter
     class DummyApplicationListGetValidator extends ApplicationListGetValidator {
         private ListLocationValidationSuccess success;
 
@@ -1186,12 +1182,9 @@ public class ApplicationListServiceImplTest {
                 boolean doNotFailOnMissing) {
             return createApplicationSupplier.apply(dto, success);
         }
-
-        void setSuccess(ListLocationValidationSuccess success) {
-            this.success = success;
-        }
     }
 
+    @Setter
     class DummyApplicationDeleteListValidator extends ApplicationListDeletionValidator {
         private ListDeleteValidationSuccess success;
 
@@ -1204,10 +1197,6 @@ public class ApplicationListServiceImplTest {
                 UUID deletionId, BiFunction<UUID, ListDeleteValidationSuccess, R> deleteSupplier) {
 
             return deleteSupplier.apply(deletionId, success);
-        }
-
-        void setSuccess(ListDeleteValidationSuccess success) {
-            this.success = success;
         }
     }
 
