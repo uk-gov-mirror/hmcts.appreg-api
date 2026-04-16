@@ -76,7 +76,8 @@ public class ServiceLogAspectTest {
                         .get(1)
                         .startsWith("Duration of ServiceLogAspectTest.testMethod"));
         Assertions.assertEquals(
-                "Finish: Executed and returned null", serviceAspectLog.getDebugLogs().get(2));
+                "Finish: Executed and returned null or Closeable object",
+                serviceAspectLog.getDebugLogs().get(2));
 
         Mockito.verify(customProceedingJoinPoint, Mockito.times(1)).proceed();
     }

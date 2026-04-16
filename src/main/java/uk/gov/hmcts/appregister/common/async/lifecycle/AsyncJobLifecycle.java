@@ -2,7 +2,6 @@ package uk.gov.hmcts.appregister.common.async.lifecycle;
 
 import java.io.IOException;
 import org.slf4j.Logger;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
 import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**

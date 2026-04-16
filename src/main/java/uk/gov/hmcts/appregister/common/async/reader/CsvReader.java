@@ -13,16 +13,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.web.multipart.MultipartFile;
-import uk.gov.hmcts.appregister.common.async.CsvPojo;
 import uk.gov.hmcts.appregister.common.async.JobContext;
+import uk.gov.hmcts.appregister.common.async.model.CsvPojo;
+import uk.gov.hmcts.appregister.common.util.AppRegTempFileUtil;
 
 /**
  * A csv reader that reads pages of data from a generic csv file and pages the content according.
@@ -52,10 +51,12 @@ public class CsvReader<T extends CsvPojo> implements DataReader<T>, Closeable {
     }
 
     public CsvReader(InputStream is, Class<T> cls) throws IOException {
-        source = File.createTempFile(UUID.randomUUID().toString(), ".csv");
-        FileOutputStream fileOutputStream = new FileOutputStream(source);
-        IOUtils.copy(is, fileOutputStream);
-        this.cls = cls;
+        source = AppRegTempFileUtil.generateTempFile();
+        try (InputStream closeableis = is;
+                FileOutputStream fileOutputStream = new FileOutputStream(source)) {
+            IOUtils.copy(closeableis, fileOutputStream);
+            this.cls = cls;
+        }
     }
 
     @Override

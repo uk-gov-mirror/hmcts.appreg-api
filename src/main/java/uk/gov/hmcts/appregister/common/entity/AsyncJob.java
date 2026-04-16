@@ -8,23 +8,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
-
-import uk.gov.hmcts.appregister.audit.listener.diff.Audit;
-import uk.gov.hmcts.appregister.common.entity.base.BaseChangeableEntity;
 import uk.gov.hmcts.appregister.common.entity.base.Changeable;
 import uk.gov.hmcts.appregister.common.entity.base.PreCreateUpdateEntityListener;
 import uk.gov.hmcts.appregister.common.enumeration.JobStatusType;
-
-import java.time.OffsetDateTime;
 
 /**
  * An asynchronous job. As opposed to a polling job see {@link DatabaseJob}
@@ -56,13 +51,13 @@ public class AsyncJob implements Changeable {
     @Column(name = "job_type")
     private String jobType;
 
-    @Column(name= "last_updated")
+    @Column(name = "last_updated")
     private OffsetDateTime updateTime;
 
-    @Column(name="failure_message")
+    @Column(name = "failure_message")
     private String failureMessage;
 
-    @Column(name="user_name")
+    @Column(name = "user_name")
     private String userName;
 
     @Override

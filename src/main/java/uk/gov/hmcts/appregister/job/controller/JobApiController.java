@@ -1,7 +1,5 @@
 package uk.gov.hmcts.appregister.job.controller;
 
-import static org.springframework.http.HttpStatus.OK;
-
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -24,7 +22,7 @@ public class JobApiController implements JobsApi {
 
     @Override
     public ResponseEntity<JobAcknowledgement> getJobStatusById(UUID jobId) {
-        return ResponseEntity.status(OK)
+        return ResponseEntity.ok()
                 .varyBy("Accept")
                 .contentType(VND_JSON_V1)
                 .body(jobService.getJobAckById(jobId));

@@ -29,15 +29,26 @@ public class ReportController implements ReportsApi {
     public ResponseEntity<Resource> downloadReport(UUID jobId) {
         JobStatusResponse jobStatusResponse = jobService.getJobStatusById(jobId);
         try {
-            InputStreamResource resource = new InputStreamResource(jobStatusResponse.read());
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report.csv\"")
-                    .header(HttpHeaders.CACHE_CONTROL, "no-cache")
-                    .varyBy(HttpHeaders.ACCEPT)
-                    .contentType(MediaType.parseMediaType("text/csv"))
-                    .body(resource);
-        } catch (IOException ioException) {
-            log.error("Error reading download stream for job id: {}", jobId, ioException);
+            InputStreamResource resource = jobStatusResponse.read();
+
+            // if no downloadable resource is available, return an error
+            if (resource == null) {
+                log.error("Error reading download stream for job id: {}", jobId);
+                throw new AppRegistryException(
+                        JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM,
+                        "Download stream not available");
+            } else {
+                return ResponseEntity.ok()
+                        .header(
+                                HttpHeaders.CONTENT_DISPOSITION,
+                                "attachment; filename=\"report.csv\"")
+                        .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+                        .varyBy(HttpHeaders.ACCEPT)
+                        .contentType(MediaType.parseMediaType("text/csv"))
+                        .body(resource);
+            }
+        } catch (IOException e) {
+            log.error("Error reading download stream for job id: {}", jobId, e);
             throw new AppRegistryException(
                     JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM,
                     "Download stream not available");

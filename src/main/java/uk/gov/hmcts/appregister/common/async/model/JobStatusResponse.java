@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.core.io.InputStreamResource;
-import uk.gov.hmcts.appregister.common.async.AsyncJobPersistenceService;
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
+import uk.gov.hmcts.appregister.common.async.service.AsyncJobPersistenceService;
 import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 import uk.gov.hmcts.appregister.generated.model.JobType;
 

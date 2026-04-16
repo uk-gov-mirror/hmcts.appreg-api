@@ -30,7 +30,8 @@ import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
 import uk.gov.hmcts.appregister.common.async.model.TrackJobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
 import uk.gov.hmcts.appregister.common.async.reader.PageReader;
-import uk.gov.hmcts.appregister.common.async.validator.StartJobValidator;
+import uk.gov.hmcts.appregister.common.async.service.AsyncJobPersistenceService;
+import uk.gov.hmcts.appregister.common.async.service.AsyncJobServiceImpl;
 import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 import uk.gov.hmcts.appregister.generated.model.JobType;
 
@@ -38,8 +39,6 @@ import uk.gov.hmcts.appregister.generated.model.JobType;
 @Slf4j
 public class AsyncJobServiceImplTest {
     @Mock private AsyncJobPersistenceService persistence;
-
-    @Mock private StartJobValidator startJobValidator;
 
     @Spy private TransactionUnitOfWork service = new TransactionUnitOfWork();
 

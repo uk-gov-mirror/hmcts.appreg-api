@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * A context that allows us to control the flow of an asynchronous flow. Tgis contex.
+ * A context that allows us to control the flow of an asynchronous flow. We can use this context to
+ * set validation failures and stop the flow. The context is passed to the lifecycle events {@link
+ * uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycle}
  */
 @Getter
 @Setter
@@ -14,7 +16,8 @@ public class JobContext {
     private List<String> validationFailureMessages = new ArrayList<>();
 
     /**
-     * Is stopped allows the developer to stop the job processing. now or carry on validating each
+     * Allows the developer to stop the job processing, now or carry on validating each page of data
+     * until the end. This is false by default, so the underlying job will continue to validate each
      * page of data until the end.
      */
     private boolean isStoppedValidating = false;

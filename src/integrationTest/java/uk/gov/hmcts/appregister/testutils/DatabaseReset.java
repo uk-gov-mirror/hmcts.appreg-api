@@ -18,6 +18,7 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeReposito
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationRegisterRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.AsyncJobRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
@@ -64,6 +65,8 @@ public class DatabaseReset {
     @Autowired private final StandardApplicantRepository standardApplicantRepository;
 
     @Autowired private final NationalCourtHouseRepository nationalCourtHouseRepository;
+
+    @Autowired private final AsyncJobRepository asyncJonRepository;
 
     @Autowired
     private final AppListEntrySequenceMappingRepository appListEntrySequenceMappingRepository;
@@ -124,6 +127,9 @@ public class DatabaseReset {
 
         standardApplicantRepository.deleteAll(
                 standardApplicantRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
+        asyncJonRepository.deleteAll(
+                asyncJonRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
         dataAuditRepository.deleteAll();
     }

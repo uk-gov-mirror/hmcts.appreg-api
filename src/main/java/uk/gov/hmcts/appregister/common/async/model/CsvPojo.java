@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.common.async;
+package uk.gov.hmcts.appregister.common.async.model;
 
 /**
  * A marker interface to clarify that this class is an open csv annotated class. All Csv classes

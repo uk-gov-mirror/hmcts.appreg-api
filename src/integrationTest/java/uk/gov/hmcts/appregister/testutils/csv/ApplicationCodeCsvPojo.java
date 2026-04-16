@@ -1,13 +1,17 @@
 package uk.gov.hmcts.appregister.testutils.csv;
 
 import com.opencsv.bean.CsvBindByName;
-
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import uk.gov.hmcts.appregister.common.async.CsvPojo;
+import uk.gov.hmcts.appregister.common.async.model.CsvPojo;
 
+/**
+ * An application code test pojo.
+ */
 @Getter
 @Setter
+@EqualsAndHashCode
 public class ApplicationCodeCsvPojo implements CsvPojo {
     @CsvBindByName(column = "code")
     private String code;
@@ -19,5 +23,5 @@ public class ApplicationCodeCsvPojo implements CsvPojo {
     private String wording;
 
     @CsvBindByName(column = "feedue")
-    private String feedue;
+    private Boolean feedue;
 }

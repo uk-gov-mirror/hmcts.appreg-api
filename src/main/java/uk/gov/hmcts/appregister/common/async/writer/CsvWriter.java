@@ -11,10 +11,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.hmcts.appregister.common.async.CsvPojo;
 import uk.gov.hmcts.appregister.common.async.JobContext;
+import uk.gov.hmcts.appregister.common.async.model.CsvPojo;
+import uk.gov.hmcts.appregister.common.util.AppRegTempFileUtil;
 
 /**
  * A open csv writer that writes a set of {@link CsvPojo} to a generic csv file with multiple
@@ -40,7 +40,7 @@ public class CsvWriter<T extends CsvPojo> implements PageWriter<T> {
     private NoHeaderStrategy<T> noHeaderStrategy;
 
     public CsvWriter(Class<T> cls) throws IOException {
-        this.file = File.createTempFile(UUID.randomUUID().toString(), ".csv");
+        this.file = AppRegTempFileUtil.generateTempFile();
         noHeaderStrategy = new NoHeaderStrategy<>(file);
         noHeaderStrategy.setType(cls);
     }

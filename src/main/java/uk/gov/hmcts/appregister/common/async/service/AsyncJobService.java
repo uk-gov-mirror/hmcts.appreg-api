@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.common.async;
+package uk.gov.hmcts.appregister.common.async.service;
 
 import java.util.Optional;
 import uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycle;

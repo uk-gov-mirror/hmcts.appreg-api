@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.common.async;
+package uk.gov.hmcts.appregister.common.async.service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,7 +7,6 @@ import org.springframework.core.io.InputStreamResource;
 import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.model.JobTypeRequest;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
 import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**

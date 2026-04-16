@@ -18,7 +18,6 @@ import uk.gov.hmcts.appregister.common.async.reader.CsvReader;
 import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
 import uk.gov.hmcts.appregister.common.async.writer.CsvWriter;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
-import uk.gov.hmcts.appregister.generated.model.JobStatus;
 import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 public class AbstractCsvWriterAsyncLifecycleTest {
@@ -48,7 +47,10 @@ public class AbstractCsvWriterAsyncLifecycleTest {
         // first processing call
         lifecycleUnderTest.lifeCycleEventPerformed(
                 new AsyncJobLifecycleEvent<>(
-                        jobStatusResponse, List.of(nameAddress), jobContext, JobStatus1.PROCESSING));
+                        jobStatusResponse,
+                        List.of(nameAddress),
+                        jobContext,
+                        JobStatus1.PROCESSING));
 
         // second processing call
         lifecycleUnderTest.lifeCycleEventPerformed(
@@ -115,7 +117,10 @@ public class AbstractCsvWriterAsyncLifecycleTest {
         // first processing call
         lifecycleUnderTest.lifeCycleEventPerformed(
                 new AsyncJobLifecycleEvent<>(
-                        jobStatusResponse, List.of(nameAddress), jobContext, JobStatus1.PROCESSING));
+                        jobStatusResponse,
+                        List.of(nameAddress),
+                        jobContext,
+                        JobStatus1.PROCESSING));
 
         // second processing call
         lifecycleUnderTest.lifeCycleEventPerformed(

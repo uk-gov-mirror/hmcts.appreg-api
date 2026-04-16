@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.common.async;
+package uk.gov.hmcts.appregister.common.async.service;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,11 +10,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.hmcts.appregister.common.async.JobContext;
+import uk.gov.hmcts.appregister.common.async.TransactionUnitOfWork;
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
 import uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycle;
 import uk.gov.hmcts.appregister.common.async.lifecycle.AsyncJobLifecycleEvent;
@@ -25,7 +26,6 @@ import uk.gov.hmcts.appregister.common.async.model.TrackJobStatusResponse;
 import uk.gov.hmcts.appregister.common.async.reader.DataReader;
 import uk.gov.hmcts.appregister.common.async.reader.PageReader;
 import uk.gov.hmcts.appregister.common.async.reader.ReadPagePosition;
-import uk.gov.hmcts.appregister.common.async.validator.StartJobValidator;
 import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 
 /**
@@ -46,9 +46,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
      */
     @Value("${appreg.job.page-size}")
     private int pageSize;
-
-    /** Validates whether a job can be started. */
-    private final StartJobValidator validator;
 
     /**
      * A shared executor. We use virtual threads here as most of the processing will be IO which
@@ -75,9 +72,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
         JobContext jobContext = new JobContext();
 
-        // validate that the job is not already running
-        validator.validate(jobRequest);
-
         // start job synchronously to this thread
         JobIdRequest id = persistence.startJob(jobRequest);
 
@@ -88,7 +82,12 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
         AsyncLifecycleProcessor<T> process =
                 new AsyncLifecycleProcessor<>(
-                        position, dataReader, jobStatusResponse, lifecycle, jobContext, pageImport,
+                        position,
+                        dataReader,
+                        jobStatusResponse,
+                        lifecycle,
+                        jobContext,
+                        pageImport,
                         SecurityContextHolder.getContext());
 
         // the core import logic will be processed in a seperate thread
@@ -146,7 +145,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
                                         // decide wether to fail or continue
                                         handleFailure(
-                                            jobContext, jobStatusResponse, JobStatus1.RECEIVED);
+                                                jobContext, jobStatusResponse, JobStatus1.RECEIVED);
 
                                         // validate the read page of data
                                         fireEventAndChangeState(

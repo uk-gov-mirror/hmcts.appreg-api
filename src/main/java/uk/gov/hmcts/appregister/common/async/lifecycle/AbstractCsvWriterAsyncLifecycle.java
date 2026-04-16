@@ -3,7 +3,7 @@ package uk.gov.hmcts.appregister.common.async.lifecycle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import uk.gov.hmcts.appregister.common.async.CsvPojo;
+import uk.gov.hmcts.appregister.common.async.model.CsvPojo;
 import uk.gov.hmcts.appregister.common.async.writer.CsvWriter;
 
 /**

@@ -5,10 +5,10 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.appregister.common.async.AsyncJobService;
 import uk.gov.hmcts.appregister.common.async.exception.JobError;
 import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
 import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
+import uk.gov.hmcts.appregister.common.async.service.AsyncJobService;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.common.validator.Validator;
@@ -41,7 +41,7 @@ public class JobExistanceValidator implements Validator<UUID, JobSuccess> {
         }
 
         JobSuccess jobSuccess = new JobSuccess();
-        jobSuccess.setJobStatusResponse(jobSuccess.getJobStatusResponse());
+        jobSuccess.setJobStatusResponse(jobStatusResponse.get());
         return validateFunction.apply(uuid, jobSuccess);
     }
 }
