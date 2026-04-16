@@ -340,9 +340,7 @@ public abstract class ApplicationListEntryMapper {
 
     @Mapping(target = "id", source = "projection.uuid")
     @Mapping(target = "applicant", expression = "java(toApplicant(projection))")
-    @Mapping(
-            target = "respondent",
-            expression = "java(applicantMapper.toApplicant(projection.getRnameAddress()))")
+    @Mapping(target = "respondent", expression = "java(toRespondent(projection.getRnameAddress()))")
     @Mapping(target = "applicationTitle", source = "projection.title")
     @Mapping(target = "isFeeRequired", expression = "java(projection.getFeeRequired().isYes())")
     @Mapping(target = "status", expression = "java(toStatus(projection.getStatus()))")

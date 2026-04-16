@@ -24,7 +24,7 @@ properties:
   respondent:
     description: Name of the person or organisation responding to the application.
     example: "Jane Smith"
-    $ref: '../participants/applicant.yaml'
+    $ref: '../participants/respondent.yaml'
 
   applicationTitle:
     type: string
