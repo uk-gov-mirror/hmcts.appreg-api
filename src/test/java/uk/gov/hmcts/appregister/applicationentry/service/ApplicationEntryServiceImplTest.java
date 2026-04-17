@@ -57,6 +57,7 @@ import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntr
 import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidationSuccess;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidator;
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
@@ -1249,7 +1250,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.SOURCE_LIST_NOT_FOUND,
                                 "No source application list found for UUID"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
 
@@ -1266,7 +1267,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.TARGET_LIST_NOT_FOUND,
                                 "No target application list found for UUID"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(UUID.randomUUID());
@@ -1283,7 +1284,7 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.INVALID_LIST_STATUS, "Source list not open"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
 
@@ -1299,7 +1300,7 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.INVALID_LIST_STATUS, "Target list not open"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(UUID.randomUUID());
@@ -1316,7 +1317,7 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.ENTRY_NOT_PROVIDED, "No entry IDs provided"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
 
@@ -1332,7 +1333,7 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.ENTRY_NOT_PROVIDED, "No entry IDs provided"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setEntryIds(Set.of());
@@ -1350,7 +1351,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                                 "No application list entry found"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setEntryIds(Set.of(UUID.randomUUID()));
@@ -1368,7 +1369,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                                 "Application list entry does not belong to source list"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setEntryIds(Set.of(UUID.randomUUID()));
@@ -1522,16 +1523,11 @@ public class ApplicationEntryServiceImplTest {
 
         @Override
         public <R> R validate(
-                MoveEntriesDto dto,
-                java.util.function.BiFunction<MoveEntriesDto, MoveEntriesValidationSuccess, R>
+                MoveEntriesPayload payload,
+                java.util.function.BiFunction<MoveEntriesPayload, MoveEntriesValidationSuccess, R>
                         createSupplier) {
 
-            return createSupplier.apply(dto, success);
-        }
-
-        @Override
-        public DummyMoveEntriesValidator withSourceList(UUID id) {
-            return this;
+            return createSupplier.apply(payload, success);
         }
     }
 }
