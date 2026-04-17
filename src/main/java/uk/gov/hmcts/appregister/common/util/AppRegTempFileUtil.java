@@ -22,7 +22,8 @@ public class AppRegTempFileUtil {
      * @return The temp file
      */
     public static File generateTempFile() throws IOException {
-        // NOSONAR - we want to use the default temp directory as this is guaranteed to be writable and
+        // NOSONAR - we want to use the default temp directory as this is guaranteed to be writable
+        // and
         // will be cleaned up by the system.
         return File.createTempFile(UUID.randomUUID().toString(), "." + TEMP_FILE_EXTENSION);
     }

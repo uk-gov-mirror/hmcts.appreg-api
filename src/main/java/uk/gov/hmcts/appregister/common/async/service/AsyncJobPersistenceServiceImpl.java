@@ -40,11 +40,11 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
     private String schema;
 
     /** Gets hold of the blob stream. */
-    //NOSONAR - SQL injection is not possible here as the id is a UUID.
+    // NOSONAR - SQL injection is not possible here as the id is a UUID.
     private static final String JDBC_BLOB_QUERY = "SELECT csv_output, id FROM %s WHERE id = ?";
 
     /** Update the blob with a stream. */
-    //NOSONAR - SQL injection is not possible here as the id is a UUID.
+    // NOSONAR - SQL injection is not possible here as the id is a UUID.
     private static final String JDBC_INSERT_BLOB_QUERY =
             "UPDATE %s SET csv_output = ? WHERE id = ?";
 
