@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.common.async.service;
 
 import jakarta.persistence.EntityManager;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,9 +8,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,7 +16,6 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import uk.gov.hmcts.appregister.common.async.DeleteableFileInputStream;
 import uk.gov.hmcts.appregister.common.async.mapper.JobStatusMapper;
 import uk.gov.hmcts.appregister.common.async.model.JobIdRequest;
@@ -39,27 +35,19 @@ import uk.gov.hmcts.appregister.generated.model.JobType;
 @Component
 @RequiredArgsConstructor
 public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceService {
-    /**
-     * The schema from the Spring configuration.
-     */
+    /** The schema from the Spring configuration. */
     @Value("${spring.jpa.properties.hibernate.default_schema}")
     private String schema;
 
-    /**
-     * Gets hold of the blob stream.
-     */
+    /** Gets hold of the blob stream. */
     private static final String JDBC_BLOB_QUERY = "SELECT csv_output, id FROM %s WHERE id = ?";
 
-    /**
-     * Update the blob with a stream.
-     */
+    /** Update the blob with a stream. */
     // NOSONAR - SQL injection is not possible here as the id is a UUID.
     private static final String JDBC_INSERT_BLOB_QUERY =
-        "UPDATE %s SET csv_output = ? WHERE id = ?";
+            "UPDATE %s SET csv_output = ? WHERE id = ?";
 
-    /**
-     * The jdbc template to use to interact with the database.
-     */
+    /** The jdbc template to use to interact with the database. */
     private final JdbcTemplate jdbcTemplate;
 
     private final AsyncJobRepository asyncJobRepository;
@@ -98,26 +86,26 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
         }
 
         JobStatusResponse jobStatusResponse =
-            JobStatusResponse.builder()
-                .status(jobStatusMapper.getJobStatus(asyncJob.getJobState()))
-                .persistence(this)
-                .uuid(asyncJob.getUuid())
-                .userName(asyncJob.getUserName())
-                .type(JobType.fromValue(asyncJob.getJobType()))
-                .errorMessage(asyncJob.getFailureMessage())
-                .build();
+                JobStatusResponse.builder()
+                        .status(jobStatusMapper.getJobStatus(asyncJob.getJobState()))
+                        .persistence(this)
+                        .uuid(asyncJob.getUuid())
+                        .userName(asyncJob.getUserName())
+                        .type(JobType.fromValue(asyncJob.getJobType()))
+                        .errorMessage(asyncJob.getFailureMessage())
+                        .build();
         return Optional.ofNullable(jobStatusResponse);
     }
 
     @Override
     public boolean isJobTypeFinishedForUser(JobTypeRequest id) {
         AsyncJob asyncJob =
-            asyncJobRepository.findByJobTypeAndUser(
-                id.getJobType().getValue(), id.getUserName());
+                asyncJobRepository.findByJobTypeAndUser(
+                        id.getJobType().getValue(), id.getUserName());
 
         if (asyncJob != null) {
             return asyncJob.getJobState() == JobStatusType.COMPLETED
-                || asyncJob.getJobState() == JobStatusType.FAILED;
+                    || asyncJob.getJobState() == JobStatusType.FAILED;
         }
 
         return true;
@@ -136,9 +124,9 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
         asyncJob = refreshEntity(asyncJob);
 
         return JobIdRequest.builder()
-            .id(asyncJob.getUuid())
-            .userName(request.getUserName())
-            .build();
+                .id(asyncJob.getUuid())
+                .userName(request.getUserName())
+                .build();
     }
 
     @Override
@@ -156,21 +144,17 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
         File file = AppRegTempFileUtil.generateTempFile();
 
         jdbcTemplate.query(
-            JDBC_BLOB_QUERY.formatted(schema + "." + TableNames.ASYNC_JOBS),  // NOSONAR
-            // - SQL injection is not
-            // possible here as we use a prepared statement. The only dynamic configurable pieces are the schema
-            // which comes from Spring config.
-            ps -> ps.setObject(1, jobId.getId()),
-            rs -> {
-                try (InputStream in = rs.getBinaryStream(1)) {
-                    if (in != null) {
-                        in.transferTo(new FileOutputStream(file));
+                JDBC_BLOB_QUERY.formatted(schema + "." + TableNames.ASYNC_JOBS),
+                ps -> ps.setObject(1, jobId.getId()),
+                rs -> {
+                    try (InputStream in = rs.getBinaryStream(1)) {
+                        if (in != null) {
+                            in.transferTo(new FileOutputStream(file));
+                        }
+                    } catch (IOException e) {
+                        throw new SQLException(e);
                     }
-                } catch (IOException e) {
-                    throw new SQLException(e);
-                }
-            }
-        );
+                });
 
         if (file.length() > 0) {
             // return the spring input stream resource
@@ -185,23 +169,24 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
      * sets the blob in the database.
      *
      * @param inputStream The input stream to write to the database.
-     * @param jobId       The job id we are setting the blob on.
+     * @param jobId The job id we are setting the blob on.
      */
     public void setBlob(InputStream inputStream, JobIdRequest jobId) {
         jdbcTemplate.execute(
-            // NOSONAR
-            JDBC_INSERT_BLOB_QUERY.formatted(schema + "." + TableNames.ASYNC_JOBS), // NOSONAR - SQL injection is not
-            // possible here as we use a prepared statement. The only dynamic configurable pieces are the schema
-            // which comes from Spring config.
+                // NOSONAR
+                JDBC_INSERT_BLOB_QUERY.formatted(
+                        schema + "." + TableNames.ASYNC_JOBS), // NOSONAR - SQL injection is not
+                // possible here as we use a prepared statement. The only dynamic configurable
+                // pieces are the schema
+                // which comes from Spring config.
 
-            (PreparedStatementCallback<Void>)
-                ps -> {
-                    ps.setObject(2, jobId.getId());
-                    ps.setBinaryStream(1, inputStream);
-                    ps.executeUpdate();
-                    return null;
-                }
-        );
+                (PreparedStatementCallback<Void>)
+                        ps -> {
+                            ps.setObject(2, jobId.getId());
+                            ps.setBinaryStream(1, inputStream);
+                            ps.executeUpdate();
+                            return null;
+                        });
     }
 
     /**
