@@ -27,8 +27,7 @@ public class MoveEntriesValidator
     @Override
     public <R> R validate(
             MoveEntriesPayload payload,
-            BiFunction<MoveEntriesPayload, MoveEntriesValidationSuccess, R> createSupplier
-    ) {
+            BiFunction<MoveEntriesPayload, MoveEntriesValidationSuccess, R> createSupplier) {
         var sourceListId = payload.sourceListId();
         var moveEntriesDto = payload.moveEntriesDto();
 
@@ -50,7 +49,8 @@ public class MoveEntriesValidator
                                         new AppRegistryException(
                                                 ApplicationListError.TARGET_LIST_NOT_FOUND,
                                                 "No target application list found for UUID '%s'"
-                                                        .formatted(moveEntriesDto.getTargetListId())));
+                                                        .formatted(
+                                                                moveEntriesDto.getTargetListId())));
 
         validateLists(sourceList, targetList);
 

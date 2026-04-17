@@ -3,14 +3,8 @@ package uk.gov.hmcts.appregister.applicationlist.validator;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
-import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
-import uk.gov.hmcts.appregister.common.entity.ApplicationList;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import static uk.gov.hmcts.appregister.common.enumeration.Status.CLOSED;
 import static uk.gov.hmcts.appregister.common.enumeration.Status.OPEN;
-import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
-import uk.gov.hmcts.appregister.generated.model.MoveEntriesDto;
 
 import java.util.Optional;
 import java.util.Set;
@@ -19,7 +13,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +20,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
+import uk.gov.hmcts.appregister.generated.model.MoveEntriesDto;
 
 @ExtendWith(MockitoExtension.class)
 public class MoveEntriesValidatorTest {
@@ -61,7 +60,8 @@ public class MoveEntriesValidatorTest {
         dto.setTargetListId(targetListId);
         dto.setEntryIds(Set.of(UUID.randomUUID(), UUID.randomUUID()));
 
-        MoveEntriesValidationSuccess success = validator.validate(payload(sourceListId, dto), (d, s) -> s);
+        MoveEntriesValidationSuccess success =
+                validator.validate(payload(sourceListId, dto), (d, s) -> s);
 
         Assertions.assertNotNull(success);
         Assertions.assertEquals(target, success.getTargetList());
@@ -226,9 +226,8 @@ public class MoveEntriesValidatorTest {
     }
 
     /**
-     * Summary:
-     * This regression test checks that concurrent requests cannot race on the validator input and
-     * cause a CLOSED source list to be treated as valid.
+     * Summary: This regression test checks that concurrent requests cannot race on the validator
+     * input and cause a CLOSED source list to be treated as valid.
      */
     @Test
     void validate_arcpoc_1249_shouldRejectClosedSource_whenAnotherThreadOverwritesSourceListId() {
@@ -280,26 +279,24 @@ public class MoveEntriesValidatorTest {
                                 closedRequestReady.countDown();
 
                                 // Wait until the "benign" request has completed its validation.
-                                Assertions.assertTrue(openRequestComplete.await(5, TimeUnit.SECONDS));
+                                Assertions.assertTrue(
+                                        openRequestComplete.await(5, TimeUnit.SECONDS));
                                 return validator.validate(
-                                        closedPayload,
-                                        (request, success) -> success
-                                );
+                                        closedPayload, (request, success) -> success);
                             });
 
             var openRequest =
                     executor.submit(
                             () -> {
                                 // Do not run this request until the forbidden request has started.
-                                Assertions.assertTrue(closedRequestReady.await(5, TimeUnit.SECONDS));
+                                Assertions.assertTrue(
+                                        closedRequestReady.await(5, TimeUnit.SECONDS));
 
                                 try {
                                     // This request uses its own immutable payload, so it cannot
                                     // change the source list seen by the CLOSED request.
                                     return validator.validate(
-                                            openPayload,
-                                            (request, result) -> result
-                                    );
+                                            openPayload, (request, result) -> result);
                                 } finally {
                                     // Always release the waiting thread so the test cannot hang if
                                     // this branch fails unexpectedly.
@@ -307,20 +304,20 @@ public class MoveEntriesValidatorTest {
                                 }
                             });
 
-            var openSuccess = Assertions.assertDoesNotThrow(() -> openRequest.get(5, TimeUnit.SECONDS));
+            var openSuccess =
+                    Assertions.assertDoesNotThrow(() -> openRequest.get(5, TimeUnit.SECONDS));
             Assertions.assertEquals(target, openSuccess.getTargetList());
 
             // Even under concurrency, the CLOSED source list must still be resolved and rejected
             // with INVALID_LIST_STATUS.
-            var ex = Assertions.assertThrows(
-                    ExecutionException.class, () -> closedRequest.get(5, TimeUnit.SECONDS)
-            );
+            var ex =
+                    Assertions.assertThrows(
+                            ExecutionException.class, () -> closedRequest.get(5, TimeUnit.SECONDS));
             var cause = ex.getCause();
             Assertions.assertInstanceOf(AppRegistryException.class, cause);
             Assertions.assertEquals(
                     ApplicationListError.INVALID_LIST_STATUS,
-                    ((AppRegistryException) cause).getCode()
-            );
+                    ((AppRegistryException) cause).getCode());
             verify(alRepository).findByUuid(closedSourceListId);
         } finally {
             executor.shutdownNow();
