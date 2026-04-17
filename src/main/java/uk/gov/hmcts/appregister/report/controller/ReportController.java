@@ -16,6 +16,7 @@ import uk.gov.hmcts.appregister.common.async.model.JobStatusResponse;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.security.RoleNames;
 import uk.gov.hmcts.appregister.generated.api.ReportsApi;
+import uk.gov.hmcts.appregister.generated.model.JobStatus1;
 import uk.gov.hmcts.appregister.job.service.JobService;
 
 @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
@@ -28,14 +29,21 @@ public class ReportController implements ReportsApi {
     @Override
     public ResponseEntity<Resource> downloadReport(UUID jobId) {
         JobStatusResponse jobStatusResponse = jobService.getJobStatusById(jobId);
+        // if the job is not completed, return an error
+        if (jobStatusResponse.getStatus() != JobStatus1.COMPLETED) {
+            throw new AppRegistryException(
+                    JobError.JOB_STATE_IS_NOT_SUITABLE_FOR_DOWNLOAD,
+                    "Download stream not available");
+        }
+
         try {
             InputStreamResource resource = jobStatusResponse.read();
 
-            // if no downloadable resource is available, return an error
+            // if no downloadable resource is available for job, return an error
             if (resource == null) {
                 log.error("Error reading download stream for job id: {}", jobId);
                 throw new AppRegistryException(
-                        JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM,
+                        JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_A_DOWNLOAD_STREAM,
                         "Download stream not available");
             } else {
                 return ResponseEntity.ok()
@@ -50,7 +58,7 @@ public class ReportController implements ReportsApi {
         } catch (IOException e) {
             log.error("Error reading download stream for job id: {}", jobId, e);
             throw new AppRegistryException(
-                    JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM,
+                    JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_A_DOWNLOAD_STREAM,
                     "Download stream not available");
         }
     }

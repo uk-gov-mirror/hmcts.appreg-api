@@ -18,11 +18,14 @@ public enum JobError implements ErrorCodeEnum {
     JOB_TYPE_IS_ALREADY_RUNNING(
             DefaultErrorDetail.create(
                     HttpStatus.BAD_REQUEST, "The requested job type is already running", "JOB-2")),
-    JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM(
+    JOB_DOES_NOT_HAVE_DATA_TO_GET_A_DOWNLOAD_STREAM(
             DefaultErrorDetail.create(
                     HttpStatus.BAD_REQUEST,
                     "The requested job does not have data to get a download stream",
-                    "JOB-3"));
+                    "JOB-3")),
+    JOB_STATE_IS_NOT_SUITABLE_FOR_DOWNLOAD(
+            DefaultErrorDetail.create(
+                    HttpStatus.CONFLICT, "The job status is not correct", "JOB-4"));
 
     private final DefaultErrorDetail defaultErrorCode;
 

@@ -58,7 +58,7 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void setJobStatus(JobIdRequest jobType, JobStatus1 jobStatus) {
         // do nothing
-        AsyncJob asyncJob = asyncJobRepository.findByJobId(jobType.getId());
+        AsyncJob asyncJob = asyncJobRepository.findByJobId(jobType.getId(), jobType.getUserName());
 
         // map the status to the enum.
         asyncJob.setJobState(jobStatusMapper.getJobStatus(jobStatus));
@@ -67,7 +67,7 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void setFailure(JobIdRequest jobType, String reasonFailed) {
-        AsyncJob asyncJob = asyncJobRepository.findByJobId(jobType.getId());
+        AsyncJob asyncJob = asyncJobRepository.findByJobId(jobType.getId(), jobType.getUserName());
 
         asyncJob.setJobState(JobStatusType.FAILED);
 
@@ -78,7 +78,7 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
 
     @Override
     public Optional<JobStatusResponse> getJobStatus(JobIdRequest job) {
-        AsyncJob asyncJob = asyncJobRepository.findByJobId(job.getId());
+        AsyncJob asyncJob = asyncJobRepository.findByJobId(job.getId(), job.getUserName());
         if (asyncJob == null) {
             return Optional.empty();
         }

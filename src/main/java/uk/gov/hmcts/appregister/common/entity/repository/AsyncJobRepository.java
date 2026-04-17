@@ -29,14 +29,16 @@ public interface AsyncJobRepository extends JpaRepository<AsyncJob, Long> {
      * finds an asynchronous job by job number and the user id.
      *
      * @param jobId The job id to return the job.
+     * @param userId The user id of the current user to check ownership.
      */
     @Query(
             """
             SELECT aj
             FROM AsyncJob aj
             WHERE aj.uuid = :jobId
+            AND aj.userName = :userId
         """)
-    AsyncJob findByJobId(UUID jobId);
+    AsyncJob findByJobId(UUID jobId, String userId);
 
     /**
      * finds an asynchronous job by the id.

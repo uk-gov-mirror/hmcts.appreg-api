@@ -126,4 +126,53 @@ public class JobControllerSearchTest extends BaseIntegration {
         ProblemAssertUtil.assertEquals(
                 JobError.JOB_DOES_NOT_EXIST_OR_NOT_FOR_USER.getCode(), responseSpec);
     }
+
+    @Test
+    public void givenJob_whenJobExistsButNotForUser_thenAFailureIsReturned() throws Exception {
+        // create the token
+        TokenGenerator tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        JobTypeRequest request =
+                JobTypeRequest.builder()
+                        .jobType(JobType.FEES_REPORT)
+                        .userName(userProvider.getUserId())
+                        .build();
+
+        CsvReader<ApplicationCodeCsvPojo> csvReaderForAppCode =
+                new CsvReader<>(
+                        getClass().getResourceAsStream("/appcodes.csv"),
+                        ApplicationCodeCsvPojo.class);
+        JobProcessCsvReadLifecycle jobProcessCsvReadLifecycle =
+                new JobProcessCsvReadLifecycle(applicationCodeRepository);
+
+        // fire off a lookup for the job
+        TrackJobStatusResponse response =
+                asyncJobService.startJob(request, csvReaderForAppCode, jobProcessCsvReadLifecycle);
+
+        // wait for the job to complete
+        response.getFuture().get();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + response.getJobId().getId().toString()),
+                        tokenGenerator.fetchTokenForRole());
+        Assertions.assertEquals(200, responseSpec.statusCode());
+
+        // now we know the job exists lets get a token for a different user
+        // so that a job match will not exist
+
+        // token for a different user
+        tokenGenerator =
+                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).oid("34").build();
+
+        responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + response.getJobId().getId().toString()),
+                        tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(400);
+        ProblemAssertUtil.assertEquals(
+                JobError.JOB_DOES_NOT_EXIST_OR_NOT_FOR_USER.getCode(), responseSpec);
+    }
 }

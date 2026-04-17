@@ -59,61 +59,67 @@ public class AsyncJobServiceImplTest extends BaseIntegration {
                         .jobType(JobType.FEES_REPORT)
                         .userName(userProvider.getUserId())
                         .build();
-        CsvReader<ApplicationCodeCsvPojo> csvReaderForAppCode =
-                new CsvReader<>(
-                        getClass().getResourceAsStream("/appcodes.csv"),
-                        ApplicationCodeCsvPojo.class);
-        JobProcessCsvReadLifecycle jobProcessCsvReadLifecycle =
-                new JobProcessCsvReadLifecycle(applicationCodeRepository);
-
-        TrackJobStatusResponse response =
-                asyncJobService.startJob(request, csvReaderForAppCode, jobProcessCsvReadLifecycle);
-
-        Assertions.assertNotNull(response.getJobId());
-
-        // wait for end of async job
-        response.getFuture().get();
-
-        // now lets assert that each code was added to the database
-        ReadPagePosition position = new ReadPagePosition(0, 2);
-        JobContext jobContext = new JobContext();
-
-        // ensure we have processed all of the csv records
-        Assertions.assertEquals(10, jobProcessCsvReadLifecycle.getCountProcessed());
-
-        // make sure that each record in the csv is in the database
-        try (CsvReader<ApplicationCodeCsvPojo> csvReader =
+        try (CsvReader<ApplicationCodeCsvPojo> csvReaderForAppCode =
                 new CsvReader<>(
                         getClass().getResourceAsStream("/appcodes.csv"),
                         ApplicationCodeCsvPojo.class)) {
-            // verify that all application codes were created in the database
-            csvReader.readData(
+            JobProcessCsvReadLifecycle jobProcessCsvReadLifecycle =
+                new JobProcessCsvReadLifecycle(applicationCodeRepository);
+
+            TrackJobStatusResponse response =
+                asyncJobService.startJob(request, csvReaderForAppCode, jobProcessCsvReadLifecycle);
+
+            Assertions.assertNotNull(response.getJobId());
+
+            // wait for end of async job
+            response.getFuture().get();
+
+            // now lets assert that each code was added to the database
+            ReadPagePosition position = new ReadPagePosition(2, 0);
+            JobContext jobContext = new JobContext();
+
+            // ensure we have processed all of the csv records
+            Assertions.assertEquals(10, jobProcessCsvReadLifecycle.getCountProcessed());
+
+            // make sure that each record in the csv is in the database
+            try (CsvReader<ApplicationCodeCsvPojo> csvReader =
+                     new CsvReader<>(
+                         getClass().getResourceAsStream("/appcodes.csv"),
+                         ApplicationCodeCsvPojo.class
+                     )) {
+                // verify that all application codes were created in the database
+                csvReader.readData(
                     position,
                     (data, ctxt) -> {
                         for (int i = 0; i < data.size(); i++) {
                             List<ApplicationCode> csvBaseAppCodeLst =
-                                    applicationCodeRepository.findByCodeAndDate(
-                                            data.get(i).getCode(), LocalDate.now());
+                                applicationCodeRepository.findByCodeAndDate(
+                                    data.get(i).getCode(), LocalDate.now());
                             Assertions.assertEquals(1, csvBaseAppCodeLst.size());
                             Assertions.assertEquals(
-                                    data.get(i).getCode(), csvBaseAppCodeLst.get(i).getCode());
+                                data.get(i).getCode(), csvBaseAppCodeLst.get(0).getCode());
                             Assertions.assertEquals(
-                                    data.get(i).getTitle(), csvBaseAppCodeLst.get(i).getTitle());
+                                data.get(i).getTitle(), csvBaseAppCodeLst.get(0).getTitle());
                             Assertions.assertEquals(
-                                    data.get(i).getFeedue(),
-                                    csvBaseAppCodeLst.get(i).getFeeDue().getValue());
+                                data.get(i).getFeedue() != null && data.get(i).getFeedue(),
+                                csvBaseAppCodeLst.get(0).getFeeDue().isYes()
+                            );
                             Assertions.assertEquals(
-                                    data.get(i).getWording(),
-                                    csvBaseAppCodeLst.get(i).getWording());
+                                data.get(i).getWording(),
+                                csvBaseAppCodeLst.get(0).getWording()
+                            );
                         }
                     },
-                    jobContext);
-        }
+                    jobContext
+                );
+            }
 
-        // ensure we succeeded
-        Assertions.assertEquals(
+            // ensure we succeeded
+            Assertions.assertEquals(
                 JobStatus1.COMPLETED,
-                asyncJobService.getJobStatus(response.getJobId()).get().getStatus());
+                asyncJobService.getJobStatus(response.getJobId()).get().getStatus()
+            );
+        }
     }
 
     /** Supplies generated application codes. */

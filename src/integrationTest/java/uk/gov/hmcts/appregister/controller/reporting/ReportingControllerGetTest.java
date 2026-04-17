@@ -93,7 +93,7 @@ public class ReportingControllerGetTest extends BaseIntegration {
         JobProcessCsvWriteLifecycle csvWriterLifecycle =
                 new JobProcessCsvWriteLifecycle(new CsvWriter<>(ApplicationCodeCsvPojo.class));
 
-        // run the job writing the csv as we go eventually writing it to the database
+        // run the job wsriting the csv as we go eventually writing it to the database
         TrackJobStatusResponse response =
                 asyncJobService.startJob(request, reader, csvWriterLifecycle);
 
@@ -176,7 +176,7 @@ public class ReportingControllerGetTest extends BaseIntegration {
 
             responseSpec.then().statusCode(400);
             ProblemAssertUtil.assertEquals(
-                    JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_AN_DOWNLOAD_STREAM.getCode(),
+                    JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_A_DOWNLOAD_STREAM.getCode(),
                     responseSpec);
         }
     }
