@@ -64,10 +64,11 @@ public class AsyncJobServiceImplTest extends BaseIntegration {
                         getClass().getResourceAsStream("/appcodes.csv"),
                         ApplicationCodeCsvPojo.class)) {
             JobProcessCsvReadLifecycle jobProcessCsvReadLifecycle =
-                new JobProcessCsvReadLifecycle(applicationCodeRepository);
+                    new JobProcessCsvReadLifecycle(applicationCodeRepository);
 
             TrackJobStatusResponse response =
-                asyncJobService.startJob(request, csvReaderForAppCode, jobProcessCsvReadLifecycle);
+                    asyncJobService.startJob(
+                            request, csvReaderForAppCode, jobProcessCsvReadLifecycle);
 
             Assertions.assertNotNull(response.getJobId());
 
@@ -83,42 +84,38 @@ public class AsyncJobServiceImplTest extends BaseIntegration {
 
             // make sure that each record in the csv is in the database
             try (CsvReader<ApplicationCodeCsvPojo> csvReader =
-                     new CsvReader<>(
-                         getClass().getResourceAsStream("/appcodes.csv"),
-                         ApplicationCodeCsvPojo.class
-                     )) {
+                    new CsvReader<>(
+                            getClass().getResourceAsStream("/appcodes.csv"),
+                            ApplicationCodeCsvPojo.class)) {
                 // verify that all application codes were created in the database
                 csvReader.readData(
-                    position,
-                    (data, ctxt) -> {
-                        for (int i = 0; i < data.size(); i++) {
-                            List<ApplicationCode> csvBaseAppCodeLst =
-                                applicationCodeRepository.findByCodeAndDate(
-                                    data.get(i).getCode(), LocalDate.now());
-                            Assertions.assertEquals(1, csvBaseAppCodeLst.size());
-                            Assertions.assertEquals(
-                                data.get(i).getCode(), csvBaseAppCodeLst.get(0).getCode());
-                            Assertions.assertEquals(
-                                data.get(i).getTitle(), csvBaseAppCodeLst.get(0).getTitle());
-                            Assertions.assertEquals(
-                                data.get(i).getFeedue() != null && data.get(i).getFeedue(),
-                                csvBaseAppCodeLst.get(0).getFeeDue().isYes()
-                            );
-                            Assertions.assertEquals(
-                                data.get(i).getWording(),
-                                csvBaseAppCodeLst.get(0).getWording()
-                            );
-                        }
-                    },
-                    jobContext
-                );
+                        position,
+                        (data, ctxt) -> {
+                            for (int i = 0; i < data.size(); i++) {
+                                List<ApplicationCode> csvBaseAppCodeLst =
+                                        applicationCodeRepository.findByCodeAndDate(
+                                                data.get(i).getCode(), LocalDate.now());
+                                Assertions.assertEquals(1, csvBaseAppCodeLst.size());
+                                Assertions.assertEquals(
+                                        data.get(i).getCode(), csvBaseAppCodeLst.get(0).getCode());
+                                Assertions.assertEquals(
+                                        data.get(i).getTitle(),
+                                        csvBaseAppCodeLst.get(0).getTitle());
+                                Assertions.assertEquals(
+                                        data.get(i).getFeedue() != null && data.get(i).getFeedue(),
+                                        csvBaseAppCodeLst.get(0).getFeeDue().isYes());
+                                Assertions.assertEquals(
+                                        data.get(i).getWording(),
+                                        csvBaseAppCodeLst.get(0).getWording());
+                            }
+                        },
+                        jobContext);
             }
 
             // ensure we succeeded
             Assertions.assertEquals(
-                JobStatus1.COMPLETED,
-                asyncJobService.getJobStatus(response.getJobId()).get().getStatus()
-            );
+                    JobStatus1.COMPLETED,
+                    asyncJobService.getJobStatus(response.getJobId()).get().getStatus());
         }
     }
 
