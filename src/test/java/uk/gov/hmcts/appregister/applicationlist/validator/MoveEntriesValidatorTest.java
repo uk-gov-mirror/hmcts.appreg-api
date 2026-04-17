@@ -231,7 +231,7 @@ public class MoveEntriesValidatorTest {
      * cause a CLOSED source list to be treated as valid.
      */
     @Test
-    void validate_ARCPOC_1249_shouldRejectClosedSource_whenAnotherThreadOverwritesSourceListId() {
+    void validate_arcpoc_1249_shouldRejectClosedSource_whenAnotherThreadOverwritesSourceListId() {
         var closedSourceListId = UUID.randomUUID();
         var openSourceListId = UUID.randomUUID();
 
@@ -280,9 +280,11 @@ public class MoveEntriesValidatorTest {
                                 closedRequestReady.countDown();
 
                                 // Wait until the "benign" request has completed its validation.
-                                Assertions.assertTrue(
-                                        openRequestComplete.await(5, TimeUnit.SECONDS));
-                                return validator.validate(closedPayload, (request, success) -> success);
+                                Assertions.assertTrue(openRequestComplete.await(5, TimeUnit.SECONDS));
+                                return validator.validate(
+                                        closedPayload,
+                                        (request, success) -> success
+                                );
                             });
 
             var openRequest =
@@ -294,7 +296,10 @@ public class MoveEntriesValidatorTest {
                                 try {
                                     // This request uses its own immutable payload, so it cannot
                                     // change the source list seen by the CLOSED request.
-                                    return validator.validate(openPayload, (request, result) -> result);
+                                    return validator.validate(
+                                            openPayload,
+                                            (request, result) -> result
+                                    );
                                 } finally {
                                     // Always release the waiting thread so the test cannot hang if
                                     // this branch fails unexpectedly.
@@ -307,14 +312,15 @@ public class MoveEntriesValidatorTest {
 
             // Even under concurrency, the CLOSED source list must still be resolved and rejected
             // with INVALID_LIST_STATUS.
-            var ex =
-                    Assertions.assertThrows(
-                            ExecutionException.class, () -> closedRequest.get(5, TimeUnit.SECONDS));
+            var ex = Assertions.assertThrows(
+                    ExecutionException.class, () -> closedRequest.get(5, TimeUnit.SECONDS)
+            );
             var cause = ex.getCause();
             Assertions.assertInstanceOf(AppRegistryException.class, cause);
             Assertions.assertEquals(
                     ApplicationListError.INVALID_LIST_STATUS,
-                    ((AppRegistryException) cause).getCode());
+                    ((AppRegistryException) cause).getCode()
+            );
             verify(alRepository).findByUuid(closedSourceListId);
         } finally {
             executor.shutdownNow();
