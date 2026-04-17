@@ -12,6 +12,10 @@ public class AppRegTempFileUtil {
 
     public static final String TEMP_FILE_EXTENSION = "appregtmp";
 
+    private AppRegTempFileUtil() {
+        // Utility class
+    }
+
     /**
      * generates a temp file.
      *

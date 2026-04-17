@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -61,7 +62,7 @@ public class CsvReader<T extends CsvPojo> implements DataReader<T> {
 
     @Override
     public void close() throws IOException {
-        source.delete();
+        Files.deleteIfExists(source.toPath());
     }
 
     @Override

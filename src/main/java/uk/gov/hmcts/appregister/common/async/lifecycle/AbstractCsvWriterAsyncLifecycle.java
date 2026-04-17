@@ -19,7 +19,7 @@ public abstract class AbstractCsvWriterAsyncLifecycle<T, R extends CsvPojo>
      *
      * @param csvWriter The csv writer to use.
      */
-    public AbstractCsvWriterAsyncLifecycle(CsvWriter<R> csvWriter) {
+    protected AbstractCsvWriterAsyncLifecycle(CsvWriter<R> csvWriter) {
         this.csvWriter = csvWriter;
     }
 

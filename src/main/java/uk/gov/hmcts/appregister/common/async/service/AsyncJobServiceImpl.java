@@ -144,7 +144,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
                             dataReader.readData(
                                     position,
-                                    (data, jobContext) -> {
+                                    (data, ctxt) -> {
 
                                         // validate the read page of data
                                         fireEventAndChangeState(
@@ -189,39 +189,39 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                         lifecycle,
                                         jobContext);
                             }
-                        } catch (Throwable t) {
-                            log.error("Error processing job", t);
-
-                            try {
-                                fireEventAndChangeState(
-                                        jobStatusResponse,
-                                        null,
-                                        JobStatus1.FAILED,
-                                        lifecycle,
-                                        jobContext);
-                            } catch (IOException e) {
-                                log.error("Error calling failure lifecycle", e);
-                            }
-
-                            // if this is a job exception then log the error
-                            if (t instanceof JobException) {
-                                jobContext.logFailure(t.getMessage());
-                            }
-
-                            // set the fail state
-                            persistence.setFailure(
-                                    jobStatusResponse.getJobId(),
-                                    jobContext.getCommaDelimitedFailureMessage() == null
-                                            ? "Failed with unknown error"
-                                            : jobContext.getCommaDelimitedFailureMessage());
-
-                            // now force a failure to roll back any database transactional data that
-                            // was commited
-                            // in this transaction. This sits irrespective to
-                            // any state transitions that may have been made for the job process.
-                            throw new RuntimeException(t);
+                        } catch (Exception t) {
+                            processError(t);
                         }
                     });
+        }
+
+        private void processError(Throwable t) {
+            log.error("Error processing job", t);
+
+            try {
+                fireEventAndChangeState(
+                        jobStatusResponse, null, JobStatus1.FAILED, lifecycle, jobContext);
+            } catch (IOException e) {
+                log.error("Error calling failure lifecycle", e);
+            }
+
+            // if this is a job exception then log the error
+            if (t instanceof JobException) {
+                jobContext.logFailure(t.getMessage());
+            }
+
+            // set the fail state
+            persistence.setFailure(
+                    jobStatusResponse.getJobId(),
+                    jobContext.getCommaDelimitedFailureMessage() == null
+                            ? "Failed with unknown error"
+                            : jobContext.getCommaDelimitedFailureMessage());
+
+            // now force a failure to roll back any database transactional data that
+            // was commited
+            // in this transaction. This sits irrespective to
+            // any state transitions that may have been made for the job process.
+            throw new RuntimeException(t);
         }
 
         /**
@@ -233,7 +233,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
          * @param lifecycle The lifecycle to fire the event for.
          * @param context The job context to pass to the lifecycle event.
          */
-        private <T> void fireEventAndChangeState(
+        private void fireEventAndChangeState(
                 JobStatusResponse response,
                 List<T> data,
                 JobStatus1 status,
@@ -244,7 +244,7 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
             // fire the lifecycle event
             lifecycle.lifeCycleEventPerformed(
-                    new AsyncJobLifecycleEvent<T>(response, data, context, status));
+                    new AsyncJobLifecycleEvent<>(response, data, context, status));
 
             handleFailure(jobContext, jobStatusResponse, status);
 
@@ -255,23 +255,23 @@ public class AsyncJobServiceImpl implements AsyncJobService {
 
             log.debug("Processed {} for job {}", status, response.getJobId());
         }
-    }
 
-    /**
-     * Decide how to handle a failure.
-     *
-     * @param jobContext The job context containing the failure message.
-     * @param jobStatusResponse The job status response containing the job id.
-     */
-    private void handleFailure(
-            JobContext jobContext, JobStatusResponse jobStatusResponse, JobStatus1 status)
-            throws JobException {
-        // if we have a failure but we want to validate all other
-        // results then keep going.
-        if (jobContext.hasFailure() && jobContext.isStoppedValidating()) {
-            throw new JobException(
-                    "Job failed during %s for job %s. Forced termination"
-                            .formatted(status, jobStatusResponse.getJobId().getId()));
+        /**
+         * Decide how to handle a failure.
+         *
+         * @param jobContext The job context containing the failure message.
+         * @param jobStatusResponse The job status response containing the job id.
+         */
+        private void handleFailure(
+                JobContext jobContext, JobStatusResponse jobStatusResponse, JobStatus1 status)
+                throws JobException {
+            // if we have a failure but we want to validate all other
+            // results then keep going.
+            if (jobContext.hasFailure() && jobContext.isStoppedValidating()) {
+                throw new JobException(
+                        "Job failed during %s for job %s. Forced termination"
+                                .formatted(status, jobStatusResponse.getJobId().getId()));
+            }
         }
     }
 }

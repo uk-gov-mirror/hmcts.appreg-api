@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.appregister.common.async.JobContext;
@@ -47,7 +48,7 @@ public class CsvWriter<T extends CsvPojo> implements PageWriter<T> {
 
     @Override
     public void close() throws IOException {
-        file.delete();
+        Files.deleteIfExists(file.toPath());
     }
 
     @Override

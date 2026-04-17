@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -158,7 +159,7 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
             // return the spring input stream resource
             return new InputStreamResource(new DeleteableFileInputStream(file));
         } else {
-            file.delete();
+            Files.deleteIfExists(file.toPath());
         }
         return null;
     }
