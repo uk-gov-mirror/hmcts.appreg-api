@@ -2,12 +2,19 @@ package uk.gov.hmcts.appregister.applicationlist.validator;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
+import uk.gov.hmcts.appregister.common.entity.ApplicationList;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import static uk.gov.hmcts.appregister.common.enumeration.Status.CLOSED;
 import static uk.gov.hmcts.appregister.common.enumeration.Status.OPEN;
+import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
+import uk.gov.hmcts.appregister.generated.model.MoveEntriesDto;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,11 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
-import uk.gov.hmcts.appregister.common.entity.ApplicationList;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
-import uk.gov.hmcts.appregister.generated.model.MoveEntriesDto;
 
 @ExtendWith(MockitoExtension.class)
 public class MoveEntriesValidatorTest {
@@ -54,8 +56,7 @@ public class MoveEntriesValidatorTest {
         dto.setTargetListId(targetListId);
         dto.setEntryIds(Set.of(UUID.randomUUID(), UUID.randomUUID()));
 
-        MoveEntriesValidationSuccess success =
-                validator.withSourceList(sourceListId).validate(dto, (d, s) -> s);
+        MoveEntriesValidationSuccess success = validator.validate(payload(sourceListId, dto), (d, s) -> s);
 
         Assertions.assertNotNull(success);
         Assertions.assertEquals(target, success.getTargetList());
@@ -78,7 +79,7 @@ public class MoveEntriesValidatorTest {
         dto.setTargetListId(targetListId);
         dto.setEntryIds(Set.of(UUID.randomUUID()));
 
-        assertThatThrownBy(() -> validator.withSourceList(sourceListId).validate(dto, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dto), (d, s) -> s))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
                         ex ->
@@ -106,7 +107,7 @@ public class MoveEntriesValidatorTest {
         dto.setTargetListId(targetListId);
         dto.setEntryIds(Set.of(UUID.randomUUID()));
 
-        assertThatThrownBy(() -> validator.withSourceList(sourceListId).validate(dto, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dto), (d, s) -> s))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
                         ex ->
@@ -134,7 +135,7 @@ public class MoveEntriesValidatorTest {
         dto.setTargetListId(targetListId);
         dto.setEntryIds(Set.of(UUID.randomUUID()));
 
-        assertThatThrownBy(() -> validator.withSourceList(sourceListId).validate(dto, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dto), (d, s) -> s))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
                         ex ->
@@ -153,7 +154,7 @@ public class MoveEntriesValidatorTest {
 
         MoveEntriesDto dto = new MoveEntriesDto();
 
-        assertThatThrownBy(() -> validator.withSourceList(sourceListId).validate(dto, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dto), (d, s) -> s))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
                         ex ->
@@ -174,7 +175,7 @@ public class MoveEntriesValidatorTest {
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(targetListId);
 
-        assertThatThrownBy(() -> validator.withSourceList(sourceListId).validate(dto, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dto), (d, s) -> s))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
                         ex ->
@@ -200,8 +201,7 @@ public class MoveEntriesValidatorTest {
         dtoNull.setTargetListId(targetListId);
         dtoNull.setEntryIds(null);
 
-        assertThatThrownBy(
-                        () -> validator.withSourceList(sourceListId).validate(dtoNull, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dtoNull), (d, s) -> s))
                 .satisfies(
                         ex ->
                                 Assertions.assertEquals(
@@ -212,15 +212,15 @@ public class MoveEntriesValidatorTest {
         dtoEmpty.setTargetListId(targetListId);
         dtoEmpty.setEntryIds(Set.of());
 
-        assertThatThrownBy(
-                        () ->
-                                validator
-                                        .withSourceList(sourceListId)
-                                        .validate(dtoEmpty, (d, s) -> s))
+        assertThatThrownBy(() -> validator.validate(payload(sourceListId, dtoEmpty), (d, s) -> s))
                 .satisfies(
                         ex ->
                                 Assertions.assertEquals(
                                         ApplicationListError.ENTRY_NOT_PROVIDED,
                                         ((AppRegistryException) ex).getCode()));
+    }
+
+    private MoveEntriesPayload payload(UUID sourceListId, MoveEntriesDto moveEntriesDto) {
+        return new MoveEntriesPayload(sourceListId, moveEntriesDto);
     }
 }

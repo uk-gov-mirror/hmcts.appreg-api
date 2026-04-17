@@ -27,6 +27,7 @@ import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationListEnt
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidator;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
@@ -986,10 +987,9 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void move(UUID sourceListId, MoveEntriesDto moveEntriesDto) {
+        var payload = new MoveEntriesPayload(sourceListId, moveEntriesDto);
         ApplicationList targetList =
-                moveEntriesValidator
-                        .withSourceList(sourceListId)
-                        .validate(moveEntriesDto, (req, success) -> success.getTargetList());
+                moveEntriesValidator.validate(payload, (req, success) -> success.getTargetList());
 
         Set<UUID> requestedIds = new HashSet<>(moveEntriesDto.getEntryIds());
 
