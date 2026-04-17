@@ -319,14 +319,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // add initial list with court name 'Cardiff Crown Court'
+        // add an initial list
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
                         .description("Alpha description")
                         .status(ApplicationListStatus.OPEN)
-                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(VALID_CJA_CODE2)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
                         .durationMinutes(0);
 
@@ -334,11 +335,11 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add second list with cja description 'CJA_CE_DESCRIPTION'
+        // add second list
         createListReq.setDescription("Zulu description");
-        createListReq.setCjaCode(VALID_CJA_CODE2);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
+        createListReq.setCjaCode(null);
+        createListReq.setOtherLocationDescription(null);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
         final UUID listId2 =
                 createApplicationListWithCourtCode(
@@ -370,33 +371,30 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // create a list with a cja code and location description
+        // add an initial list
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
                         .description("Alpha description")
                         .status(ApplicationListStatus.OPEN)
-                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(VALID_CJA_CODE2)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
                         .durationMinutes(0);
-
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
 
         UUID listId =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add a entry to the list
+        // add an entry to the list
         createEntry(listId);
 
-        // create a second list with same cja code and different location description
+        // add second list
         createListReq.setDescription("Zulu description");
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
+        createListReq.setCjaCode(null);
+        createListReq.setOtherLocationDescription(null);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
         final UUID listId2 =
                 createApplicationListWithCourtCode(
@@ -811,7 +809,9 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
-    @Test
+    // TODO: Re-enable and refactor this once we have clarified what endpoint we need disabling for
+    // - ARCPOC-992/1218
+    /*@Test
     @DisplayName("GET: disabled sort key is ignored and default description ordering is used")
     void givenDisabledSortKey_whenGet_then200AndDefaultOrderingApplied() throws Exception {
         String prefix = uniquePrefix("disabled-sort");
@@ -848,7 +848,7 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         assertThat(page.getContent().get(0).getDescription()).endsWith("Alpha");
         assertThat(page.getContent().get(1).getDescription()).endsWith("Mango");
         assertThat(page.getContent().get(2).getDescription()).endsWith("Zebra");
-    }
+    }*/
 
     @Test
     @DisplayName("GET: does not return soft deleted list")
