@@ -100,6 +100,10 @@ public class JobControllerSearchTest extends BaseIntegration {
 
                         Assertions.assertEquals(
                                 JobStatus1.COMPLETED, jobStatusResponse.getStatus());
+                        Assertions.assertEquals(JobType.FEES_REPORT, jobStatusResponse.getType());
+                        Assertions.assertEquals(
+                                response.getJobId().getId(), jobStatusResponse.getId());
+
                         return true;
                     }
                 },

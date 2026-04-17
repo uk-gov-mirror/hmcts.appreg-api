@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,7 +23,9 @@ public class ServiceLogAspect extends AbstractOperationDurationAspect {
                 (name, duration, result) -> {
                     log.debug("Duration of {} operation {} ms", name, duration);
 
-                    if (result != null && !(result instanceof Closeable)) {
+                    if (result != null
+                            && !(result instanceof Closeable)
+                            && !(result instanceof Resource)) {
                         log.debug(
                                 "Finish: Executed and returned {}",
                                 getLogStringForOutputObject(result));

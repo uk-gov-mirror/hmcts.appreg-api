@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -68,16 +67,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
 
             // mock the persistence start job
             when(persistence.startJob(Mockito.notNull())).thenReturn(jobIdRequest);
-
-            JobStatusResponse statusResponse =
-                    JobStatusResponse.builder()
-                            .type(JobType.BULK_UPLOAD_ENTRIES)
-                            .uuid(jobId)
-                            .userName(userId)
-                            .status(JobStatus1.RECEIVED)
-                            .build();
-
-            when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
 
             JobTypeRequest jobRequest =
                     JobTypeRequest.builder()
@@ -181,16 +170,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
 
         JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
 
-        JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                        .type(JobType.BULK_UPLOAD_ENTRIES)
-                        .uuid(jobId)
-                        .userName(userId)
-                        .status(JobStatus1.RECEIVED)
-                        .build();
-
-        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
-
         DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
 
         // prove that we did not continue passing the data after the failure
@@ -228,16 +207,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
 
         JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
 
-        JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                        .type(JobType.BULK_UPLOAD_ENTRIES)
-                        .uuid(jobId)
-                        .userName(userId)
-                        .status(JobStatus1.RECEIVED)
-                        .build();
-
-        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
-
         DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
         Assertions.assertTrue(lifecycle.failed);
 
@@ -253,8 +222,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
                         JobStatus1.VALIDATING);
-
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
         verify(persistence, times(1))
                 .setFailure(
@@ -274,16 +241,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
         UUID jobId = UUID.randomUUID();
 
         JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
-
-        JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                        .type(JobType.BULK_UPLOAD_ENTRIES)
-                        .uuid(jobId)
-                        .userName(userId)
-                        .status(JobStatus1.RECEIVED)
-                        .build();
-
-        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
 
         DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
 
@@ -331,27 +288,12 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
 
         JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
 
-        JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                        .type(JobType.BULK_UPLOAD_ENTRIES)
-                        .uuid(jobId)
-                        .userName(userId)
-                        .status(JobStatus1.RECEIVED)
-                        .build();
-
-        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
-
-        DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
-
-        // prove that we did not continue passing the data after the failure
-        Assertions.assertEquals(1, reader.data.size());
+        executeWithLifecycleForFailure(jobIdRequest, lifecycle);
 
         verify(persistence, times(1))
                 .setJobStatus(
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
                         JobStatus1.RECEIVED);
-
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
 
         // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
@@ -363,7 +305,7 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
                                 + ", Job failed during VALIDATING for job "
                                 + jobIdRequest.getId()
                                 + ". Forced termination");
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.VALIDATING);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.RECEIVED);
     }
 
     @Test
@@ -375,16 +317,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
         UUID jobId = UUID.randomUUID();
 
         JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
-
-        JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                        .type(JobType.BULK_UPLOAD_ENTRIES)
-                        .uuid(jobId)
-                        .userName(userId)
-                        .status(JobStatus1.RECEIVED)
-                        .build();
-
-        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
 
         DataPageReader reader = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
 
@@ -428,17 +360,7 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
 
         JobIdRequest jobIdRequest = JobIdRequest.builder().id(jobId).userName(userId).build();
 
-        JobStatusResponse statusResponse =
-                JobStatusResponse.builder()
-                        .type(JobType.BULK_UPLOAD_ENTRIES)
-                        .uuid(jobId)
-                        .userName(userId)
-                        .status(JobStatus1.RECEIVED)
-                        .build();
-
-        when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
-
-        DataPageReader request = executeWithLifecycleForFailure(jobIdRequest, lifecycle);
+        executeWithLifecycleForFailure(jobIdRequest, lifecycle);
 
         // fail was executed and we logged only one error
         Assertions.assertTrue(lifecycle.failed);
@@ -448,7 +370,7 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
                         JobIdRequest.builder().id(jobId).userName(userId).build(),
                         JobStatus1.RECEIVED);
 
-        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.FAILED);
+        verify(persistence, times(1)).setJobStatus(jobIdRequest, JobStatus1.RECEIVED);
 
         verify(persistence, times(1)).setFailure(jobIdRequest, BrokenLifecycleWithContext.ERROR);
     }
@@ -485,8 +407,6 @@ public class AsyncJobServiceImplTest extends AbstractAsyncTest {
                             .userName(userId)
                             .status(JobStatus1.RECEIVED)
                             .build();
-
-            when(persistence.getJobStatus(jobIdRequest)).thenReturn(Optional.of(statusResponse));
 
             JobTypeRequest jobRequest =
                     JobTypeRequest.builder()

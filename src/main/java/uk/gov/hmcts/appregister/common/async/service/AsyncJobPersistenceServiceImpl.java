@@ -69,6 +69,8 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
     public void setFailure(JobIdRequest jobType, String reasonFailed) {
         AsyncJob asyncJob = asyncJobRepository.findByJobId(jobType.getId());
 
+        asyncJob.setJobState(JobStatusType.FAILED);
+
         // set the failure message. Truncate to 4000 characters.
         asyncJob.setFailureMessage(truncate(reasonFailed, 4000));
         asyncJobRepository.save(asyncJob);
@@ -126,12 +128,12 @@ public class AsyncJobPersistenceServiceImpl implements AsyncJobPersistenceServic
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void writeBlob(JobIdRequest jobIdRequest, InputStream inputStream) throws IOException {
         setBlob(inputStream, jobIdRequest);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public InputStreamResource readBlob(JobIdRequest jobIdRequest) throws IOException {
         return getBlobToOutputStream(jobIdRequest);
     }

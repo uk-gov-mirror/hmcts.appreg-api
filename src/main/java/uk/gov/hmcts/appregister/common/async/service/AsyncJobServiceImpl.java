@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.common.async.JobContext;
 import uk.gov.hmcts.appregister.common.async.TransactionUnitOfWork;
 import uk.gov.hmcts.appregister.common.async.exception.JobException;
@@ -54,7 +53,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     @Override
-    @Transactional
     public <T> TrackJobStatusResponse startJob(
             JobTypeRequest jobTypeRequest,
             DataReader<T> dataReader,
@@ -63,7 +61,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
     }
 
     @Override
-    @Transactional
     public <T> TrackJobStatusResponse startJob(
             JobTypeRequest jobRequest,
             DataReader<T> dataReader,
@@ -76,7 +73,14 @@ public class AsyncJobServiceImpl implements AsyncJobService {
         JobIdRequest id = persistence.startJob(jobRequest);
 
         // get the response data
-        JobStatusResponse jobStatusResponse = persistence.getJobStatus(id).get();
+        JobStatusResponse jobStatusResponse =
+                JobStatusResponse.builder()
+                        .uuid(id.getId())
+                        .persistence(persistence)
+                        .type(jobRequest.getJobType())
+                        .userName(jobRequest.getUserName())
+                        .status(JobStatus1.RECEIVED)
+                        .build();
 
         ReadPagePosition position = new ReadPagePosition(pageSize, 0);
 
@@ -93,10 +97,9 @@ public class AsyncJobServiceImpl implements AsyncJobService {
         // the core import logic will be processed in a seperate thread
         Future<?> futureJobOutcome = executor.submit(process);
 
-        return new TrackJobStatusResponse(getJobStatus(id).get(), futureJobOutcome);
+        return new TrackJobStatusResponse(jobStatusResponse, futureJobOutcome);
     }
 
-    @Transactional
     @Override
     public Optional<JobStatusResponse> getJobStatus(JobIdRequest jobId) {
         return persistence.getJobStatus(jobId);
@@ -143,10 +146,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                     position,
                                     (data, jobContext) -> {
 
-                                        // decide wether to fail or continue
-                                        handleFailure(
-                                                jobContext, jobStatusResponse, JobStatus1.RECEIVED);
-
                                         // validate the read page of data
                                         fireEventAndChangeState(
                                                 jobStatusResponse,
@@ -161,12 +160,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                             pageRead.readData(data, jobContext);
                                         }
 
-                                        // decide wether to fail or continue
-                                        handleFailure(
-                                                jobContext,
-                                                jobStatusResponse,
-                                                JobStatus1.VALIDATING);
-
                                         // if a failure has been detected then stop processing and
                                         // just ensure that
                                         // validation is captured for all. We do not support partial
@@ -179,12 +172,6 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                                                     JobStatus1.PROCESSING,
                                                     lifecycle,
                                                     jobContext);
-
-                                            // decide wether to fail or continue
-                                            handleFailure(
-                                                    jobContext,
-                                                    jobStatusResponse,
-                                                    JobStatus1.PROCESSING);
                                         }
                                     },
                                     jobContext);
@@ -255,12 +242,16 @@ public class AsyncJobServiceImpl implements AsyncJobService {
                 throws IOException {
             log.debug("Processing {} for job {}", status, response.getJobId());
 
-            // ensure we set the status
-            persistence.setJobStatus(response.getJobId(), status);
-
             // fire the lifecycle event
             lifecycle.lifeCycleEventPerformed(
                     new AsyncJobLifecycleEvent<T>(response, data, context, status));
+
+            handleFailure(jobContext, jobStatusResponse, status);
+
+            // ensure we set the status
+            persistence.setJobStatus(response.getJobId(), status);
+
+            log.info("Job {} is now {}", response.getJobId(), status);
 
             log.debug("Processed {} for job {}", status, response.getJobId());
         }
