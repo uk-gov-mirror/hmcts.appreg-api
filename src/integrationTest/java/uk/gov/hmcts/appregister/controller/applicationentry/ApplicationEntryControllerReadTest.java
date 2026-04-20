@@ -1077,14 +1077,17 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
 
         ApplicationListEntry john = createEntry(list);
         setRespondentName(john, "Mr", "John", "Smith");
+        john.getRnameaddress().setDateOfBirth(LocalDate.of(1990, 1, 1));
         persistance.save(john);
 
         ApplicationListEntry jane = createEntry(list);
         setRespondentName(jane, "Ms", "Jane", "Doe");
+        jane.getRnameaddress().setDateOfBirth(LocalDate.of(1985, 5, 5));
         persistance.save(jane);
 
         ApplicationListEntry alex = createEntry(list);
         setRespondentName(alex, "Dr", "Alex", "Taylor");
+        alex.getRnameaddress().setDateOfBirth(LocalDate.of(1975, 9, 9));
         persistance.save(alex);
 
         TokenGenerator tokenGenerator = createAdminToken();
@@ -1111,6 +1114,18 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
 
         Assertions.assertEquals(
                 List.of("ms jane doe", "mr john smith", "dr alex taylor"), respondentNames);
+
+        List<LocalDate> respondentDobs =
+                page.getContent().stream()
+                        .map(dto -> dto.getRespondent().getPerson().getDateOfBirth())
+                        .toList();
+
+        Assertions.assertEquals(
+                List.of(
+                        LocalDate.of(1985, 5, 5),
+                        LocalDate.of(1990, 1, 1),
+                        LocalDate.of(1975, 9, 9)),
+                respondentDobs);
     }
 
     record ApplicationEntryFilter(
