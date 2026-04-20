@@ -944,44 +944,53 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
         return getApplicationListEntriesValidator.validate(
                 payloadForGet,
-                (req, success) -> {
-                    // get the entries for the list
-                    Page<ApplicationListEntryGetSummaryProjection> entries =
-                            applicationListEntryRepository.searchForGetSummary(
-                                    payloadForGet.getListId(),
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    filterDto.getApplicantName(),
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    filterDto.getRespondentName(),
-                                    filterDto.getRespondentPostcode(),
-                                    filterDto.getAccountReference(),
-                                    filterDto.getApplicationTitle(),
-                                    filterDto.getResulted(),
-                                    filterDto.getFeeRequired(),
-                                    filterDto.getSequenceNumber(),
-                                    pageable.getPageable());
+                (req, success) ->
+                        auditService.processAudit(
+                                null,
+                                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST,
+                                (r) -> {
+                                    // get the entries for the list
+                                    Page<ApplicationListEntryGetSummaryProjection> entries =
+                                            applicationListEntryRepository.searchForGetSummary(
+                                                    payloadForGet.getListId(),
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    filterDto.getApplicantName(),
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    filterDto.getRespondentName(),
+                                                    filterDto.getRespondentPostcode(),
+                                                    filterDto.getAccountReference(),
+                                                    filterDto.getApplicationTitle(),
+                                                    filterDto.getResulted(),
+                                                    filterDto.getFeeRequired(),
+                                                    filterDto.getSequenceNumber(),
+                                                    pageable.getPageable());
 
-                    EntryPage entryPage = buildEntryPage(entries, pageable);
+                                    EntryPage entryPage = buildEntryPage(entries, pageable);
 
-                    if (entryPage.getContent() == null) {
-                        entryPage.setContent(List.of());
-                    }
+                                    if (entryPage.getContent() == null) {
+                                        entryPage.setContent(List.of());
+                                    }
 
-                    log.debug(
-                            "Finished: Getting application list entries for list: {}",
-                            payloadForGet.getListId());
+                                    log.debug(
+                                            "Finished: Getting application list entries for list: {}",
+                                            payloadForGet.getListId());
 
-                    return entryPage;
-                });
+                                    return Optional.of(
+                                            new AuditableResult<>(
+                                                    entryPage,
+                                                    applicationListEntryMapStructMapper
+                                                            .toApplicationListEntry(
+                                                                    payloadForGet, filterDto)));
+                                }));
     }
 
     @Override

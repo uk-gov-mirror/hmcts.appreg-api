@@ -68,6 +68,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ac_ac_id", nullable = false)
+    @Audit(action = {CrudEnum.READ})
     private ApplicationCode applicationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -114,6 +115,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
     private String createdUser;
 
     @Column(name = "sequence_number", nullable = false)
+    @Audit(action = {CrudEnum.READ})
     private Short sequenceNumber;
 
     @Column(name = "tcep_status")

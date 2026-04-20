@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
@@ -1086,6 +1087,10 @@ public class ApplicationEntryServiceImplTest {
         summaryDto.setIsResulted(false);
 
         when(applicationListEntryMapStructMapper.toEntrySummary(any())).thenReturn(summaryDto);
+        when(applicationListEntryMapStructMapper.toApplicationListEntry(
+                        any(PayloadGetEntryInList.class),
+                        any(EntryApplicationListGetFilterDto.class)))
+                .thenReturn(new ApplicationListEntry());
 
         when(applicationListEntryMapStructMapper.toResultCodeGetSummaryDto(any()))
                 .thenReturn(new ResultCodeGetSummaryDto());
@@ -1115,6 +1120,77 @@ public class ApplicationEntryServiceImplTest {
         Assertions.assertEquals(1, response.getContent().size());
         Assertions.assertEquals(1, response.getContent().getFirst().getResulted().size());
         Assertions.assertTrue(response.getContent().getFirst().getIsResulted());
+
+        // The read endpoint now goes through the audit service, so the mapper must build the
+        // audit surrogate from the path parameter and query-string filter.
+        verify(applicationListEntryMapStructMapper)
+                .toApplicationListEntry(payloadGetEntryInList, entryGetFilterDto);
+    }
+
+    @Test
+    void testGetApplicationListEntries_buildsAuditEntityFromPayloadAndFilter() {
+        // Arrange a simple successful search so we can focus on whether the service builds the
+        // correct audit payload for the read operation.
+        val applicationList = new AppListTestData().someComplete();
+        when(applicationListRepository.findByUuid(applicationList.getUuid()))
+                .thenReturn(Optional.of(applicationList));
+
+        val entryGetFilterDto = new EntryApplicationListGetFilterDto();
+        entryGetFilterDto.setApplicantName("Applicant Audit Org");
+        entryGetFilterDto.setRespondentName("Respondent Audit Org");
+        entryGetFilterDto.setRespondentPostcode("ZZ1 1ZZ");
+        entryGetFilterDto.setAccountReference("ACC-123");
+        entryGetFilterDto.setApplicationTitle("Read audit application title");
+        entryGetFilterDto.setFeeRequired(Boolean.TRUE);
+        entryGetFilterDto.setSequenceNumber(7);
+
+        val mockPage = mock(Pageable.class);
+        when(mockPage.getPageNumber()).thenReturn(0);
+        val wrapper = PagingWrapper.of(List.of(), mockPage);
+        val dbPage = new PageImpl<ApplicationListEntryGetSummaryProjection>(List.of(), mockPage, 0);
+
+        when(applicationListEntryRepository.searchForGetSummary(
+                        eq(applicationList.getUuid()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(entryGetFilterDto.getApplicantName()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(entryGetFilterDto.getRespondentName()),
+                        eq(entryGetFilterDto.getRespondentPostcode()),
+                        eq(entryGetFilterDto.getAccountReference()),
+                        eq(entryGetFilterDto.getApplicationTitle()),
+                        eq(entryGetFilterDto.getResulted()),
+                        eq(entryGetFilterDto.getFeeRequired()),
+                        eq(entryGetFilterDto.getSequenceNumber()),
+                        eq(mockPage)))
+                .thenReturn(dbPage);
+
+        val payloadGetEntryInList =
+                PayloadGetEntryInList.builder().listId(applicationList.getUuid()).build();
+        val auditEntity = new ApplicationListEntry();
+
+        when(applicationListEntryMapStructMapper.toApplicationListEntry(
+                        payloadGetEntryInList, entryGetFilterDto))
+                .thenReturn(auditEntity);
+
+        // Act by calling the service through the same public method the controller uses.
+        val response =
+                service.getApplicationListEntries(
+                        payloadGetEntryInList, wrapper, entryGetFilterDto);
+
+        // Assert the business response still comes back, and the mapper is asked for the exact
+        // payload/filter pair that should be written to DATA_AUDIT.
+        Assertions.assertNotNull(response);
+        verify(applicationListEntryMapStructMapper)
+                .toApplicationListEntry(payloadGetEntryInList, entryGetFilterDto);
     }
 
     @Test

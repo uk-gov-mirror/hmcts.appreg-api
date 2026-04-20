@@ -660,6 +660,17 @@ public class ApplicationListServiceImplTest {
                 .when(pageMapper)
                 .toPage(eq(dbPage), any(ApplicationListPage.class), eq(wrapper.getSortStrings()));
 
+        // This is the exact entity instance we expect the service to hand to the audit framework.
+        val auditEntity = new ApplicationList();
+        auditEntity.setId(0L);
+        auditEntity.setUuid(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+        auditEntity.setStatus(Status.OPEN);
+        auditEntity.setCourtCode("LOC123");
+        auditEntity.setDescription("morning");
+        auditEntity.setOtherLocation("town hall");
+        auditEntity.setDate(DEFAULT_DATE);
+        auditEntity.setTime(DEFAULT_TIME);
+
         // Build a realistic search request that should be converted into an auditable
         // ApplicationList surrogate.
         val filter =
@@ -671,17 +682,6 @@ public class ApplicationListServiceImplTest {
                         .time(DEFAULT_TIME)
                         .description("morning")
                         .otherLocationDescription("town hall");
-
-        // This is the exact entity instance we expect the service to hand to the audit framework.
-        val auditEntity = new ApplicationList();
-        auditEntity.setId(0L);
-        auditEntity.setUuid(UUID.fromString("00000000-0000-0000-0000-000000000000"));
-        auditEntity.setStatus(Status.OPEN);
-        auditEntity.setCourtCode("LOC123");
-        auditEntity.setDescription("morning");
-        auditEntity.setOtherLocation("town hall");
-        auditEntity.setDate(DEFAULT_DATE);
-        auditEntity.setTime(DEFAULT_TIME);
 
         // The service should use the existing mapper-based path rather than a custom audit DTO.
         when(mapper.toEntity(filter)).thenReturn(auditEntity);

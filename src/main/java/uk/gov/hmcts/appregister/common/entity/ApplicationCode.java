@@ -76,6 +76,7 @@ public class ApplicationCode extends BaseUnmanagedChangeableEntity
 
     @Column(name = "fee_due", nullable = false)
     @Convert(converter = YesNoConverter.class)
+    @Audit(action = {CrudEnum.READ})
     private YesOrNo feeDue;
 
     @Column(name = "application_code_respondent", nullable = false)
