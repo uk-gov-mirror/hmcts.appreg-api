@@ -256,9 +256,9 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
-                        "courthouse_code",
+                        "application_list_date",
                         null,
-                        VALID_COURT_CODE,
+                        TEST_DATE.toString(),
                         AppListAuditOperation.GET_APP_LIST.getType().name(),
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
