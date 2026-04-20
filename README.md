@@ -160,3 +160,6 @@ and set the environment variables to match your local setup. The postman suite c
 ## License
 
 This project is licensed under the MIT License — see [LICENSE](LICENSE).
+
+To obtain all license dependencies please run `./gradlew generateLicenseReport`. The license output report can be found
+[here](./build/reports/dependency-license/index.json)
