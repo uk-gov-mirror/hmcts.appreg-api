@@ -15,8 +15,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import uk.gov.hmcts.appregister.audit.listener.diff.Audit;
+import uk.gov.hmcts.appregister.audit.listener.diff.AuditEnabled;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.converter.YesNoConverter;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 
 @Entity
@@ -26,6 +29,7 @@ import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 @Builder
 @Getter
 @Setter
+@AuditEnabled(types = {CrudEnum.READ})
 public class DatabaseJob implements Keyable {
     @Id
     @Column(name = "dj_id", nullable = false, updatable = false)
@@ -35,6 +39,7 @@ public class DatabaseJob implements Keyable {
     private Long id;
 
     @Column(name = "job_name", nullable = false)
+    @Audit(action = {CrudEnum.READ})
     private String name;
 
     @Column(name = "job_enabled", nullable = false)

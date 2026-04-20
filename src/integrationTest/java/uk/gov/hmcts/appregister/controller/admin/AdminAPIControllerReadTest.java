@@ -4,8 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import io.restassured.response.Response;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ProblemDetail;
+import uk.gov.hmcts.appregister.admin.audit.AdminAuditOperation;
+import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.generated.model.AdminJobType;
 import uk.gov.hmcts.appregister.generated.model.JobStatus;
@@ -42,5 +45,44 @@ public class AdminAPIControllerReadTest extends AbstractAdminAPICrudTest {
         assertEquals(
                 problemDetail.getDetail(),
                 "Problem with value " + jobName + " for parameter jobType");
+    }
+
+    @Test
+    public void whenGetJobStatusByName_thenDataAuditRowIsPersisted() throws Exception {
+        val jobName = AdminJobType.APPLICATION_LISTS_DATABASE_JOB.name();
+
+        // Remove earlier rows so the assertions below only inspect this GET request.
+        dataAuditRepository.deleteAll();
+
+        val responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + jobName),
+                        createAdminToken().fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+
+        // Verify the GET audit row persisted for the requested database job name.
+        val persistedAuditRow =
+                dataAuditRepository.findAll().stream()
+                        .filter(row -> TableNames.DATABASE_JOBS.equals(row.getTableName()))
+                        .filter(row -> "job_name".equals(row.getColumnName()))
+                        .filter(
+                                row ->
+                                        AdminJobType.APPLICATION_LISTS_DATABASE_JOB
+                                                .getValue()
+                                                .equals(row.getNewValue()))
+                        .findFirst()
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a database_jobs.job_name audit row for GET /admin/jobs/{jobType}"));
+
+        assertEquals("", persistedAuditRow.getOldValue());
+        assertEquals(
+                AdminAuditOperation.GET_DATABASE_JOB_STATUS_AUDIT_EVENT.getEventName(),
+                persistedAuditRow.getEventName());
+        assertEquals(
+                AdminAuditOperation.GET_DATABASE_JOB_STATUS_AUDIT_EVENT.getType(),
+                persistedAuditRow.getUpdateType());
     }
 }
