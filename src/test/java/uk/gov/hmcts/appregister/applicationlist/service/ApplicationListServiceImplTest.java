@@ -34,6 +34,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import lombok.Setter;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -625,6 +626,73 @@ public class ApplicationListServiceImplTest {
         assertThat(result.getContent()).isEmpty();
 
         verify(mapper, never()).toGetSummaryDto(any(), anyLong(), anyString());
+    }
+
+    @Test
+    void getPage_auditsMappedDatabaseFields() {
+        // The GET validator normally enriches the request before the repository call.
+        // For this unit test we only need a successful validation path.
+        val success = new ListUpdateValidationSuccess();
+        getValidator.setSuccess(success);
+
+        when(entryMapper.toStatus(ApplicationListStatus.OPEN)).thenReturn(Status.OPEN);
+
+        // The search returns an empty page; the important part here is the audit payload, not the
+        // page contents.
+        Page<ApplicationListSummaryProjection> dbPage = Page.empty();
+        val pageable = mock(Pageable.class);
+        val wrapper = PagingWrapper.of(List.of(), pageable);
+
+        when(repository.findAllByFilter(
+                        eq(Status.OPEN),
+                        eq("LOC123"),
+                        isNull(),
+                        eq(DEFAULT_DATE),
+                        eq(DEFAULT_TIME),
+                        eq(DEFAULT_TIME.plusMinutes(1)),
+                        eq(false),
+                        eq("morning"),
+                        eq("town hall"),
+                        eq(pageable)))
+                .thenReturn(dbPage);
+
+        doAnswer(inv -> null)
+                .when(pageMapper)
+                .toPage(eq(dbPage), any(ApplicationListPage.class), eq(wrapper.getSortStrings()));
+
+        // Build a realistic search request that should be converted into an auditable
+        // ApplicationList surrogate.
+        val filter =
+                new ApplicationListGetFilterDto()
+                        .status(ApplicationListStatus.OPEN)
+                        .courtLocationCode("LOC123")
+                        .cjaCode("52")
+                        .date(DEFAULT_DATE)
+                        .time(DEFAULT_TIME)
+                        .description("morning")
+                        .otherLocationDescription("town hall");
+
+        // This is the exact entity instance we expect the service to hand to the audit framework.
+        val auditEntity = new ApplicationList();
+        auditEntity.setId(0L);
+        auditEntity.setUuid(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+        auditEntity.setStatus(Status.OPEN);
+        auditEntity.setCourtCode("LOC123");
+        auditEntity.setDescription("morning");
+        auditEntity.setOtherLocation("town hall");
+        auditEntity.setDate(DEFAULT_DATE);
+        auditEntity.setTime(DEFAULT_TIME);
+
+        // The service should use the existing mapper-based path rather than a custom audit DTO.
+        when(mapper.toEntity(filter)).thenReturn(auditEntity);
+        auditOperationService.clearCapturedAudit();
+
+        service.getPage(filter, wrapper);
+
+        // Prove that the GET operation sent the mapped database-backed fields into audit.
+        Assertions.assertEquals(
+                AppListAuditOperation.GET_APP_LIST, auditOperationService.getLastAuditType());
+        Assertions.assertSame(auditEntity, auditOperationService.getLastNewEntity());
     }
 
     @Test
