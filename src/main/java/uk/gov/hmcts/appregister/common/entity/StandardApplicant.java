@@ -59,6 +59,7 @@ public class StandardApplicant extends BaseUnmanagedChangeableEntity
     private LocalDate applicantStartDate;
 
     @Column(name = "standard_applicant_end_date")
+    @Audit(action = {CrudEnum.READ})
     private LocalDate applicantEndDate;
 
     @Column(name = "version", nullable = false)
@@ -88,6 +89,7 @@ public class StandardApplicant extends BaseUnmanagedChangeableEntity
     private String applicantSurname;
 
     @Column(name = "address_l1", length = 35, nullable = false)
+    @Audit(action = {CrudEnum.READ})
     private String addressLine1;
 
     @Column(name = "address_l2", length = 35)

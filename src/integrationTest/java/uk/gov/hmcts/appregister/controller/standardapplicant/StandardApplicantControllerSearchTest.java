@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1486,10 +1487,9 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
     public void
             givenValidRequest_whenFilterByAddressLine1AndFromDateAndSortByName_thenReturnSortedResults()
                     throws Exception {
-        TokenGenerator tokenGenerator =
-                getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+        val tokenGenerator = getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        Response responseSpec =
+        val responseSpec =
                 restAssuredClient.executeGetRequestWithPaging(
                         Optional.of(10),
                         Optional.of(0),
@@ -1506,19 +1506,19 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
 
         responseSpec.then().statusCode(200);
 
-        StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
+        val page = responseSpec.as(StandardApplicantPage.class);
         Assertions.assertFalse(page.getContent().isEmpty());
 
         // verify sorting by name (ascending)
-        StandardApplicantGetSummaryDto first = page.getContent().get(0);
-        StandardApplicantGetSummaryDto second = page.getContent().get(1);
+        val first = page.getContent().get(0);
+        val second = page.getContent().get(1);
 
-        String firstName =
+        val firstName =
                 first.getApplicant().getOrganisation() != null
                         ? first.getApplicant().getOrganisation().getName()
                         : first.getApplicant().getPerson().getName().getFirstForename();
 
-        String secondName =
+        val secondName =
                 second.getApplicant().getOrganisation() != null
                         ? second.getApplicant().getOrganisation().getName()
                         : second.getApplicant().getPerson().getName().getFirstForename();
@@ -1530,7 +1530,7 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
         page.getContent()
                 .forEach(
                         item -> {
-                            String address =
+                            val address =
                                     item.getApplicant().getOrganisation() != null
                                             ? item.getApplicant()
                                                     .getOrganisation()
@@ -1543,6 +1543,25 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
 
                             Assertions.assertEquals("123 High Street", address);
                         });
+
+        // The GET audit should capture each DB-backed filter value that was sent on the request.
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.STANDARD_APPLICANTS,
+                        "address_l1",
+                        null,
+                        "123 High Street",
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.STANDARD_APPLICANTS,
+                        "standard_applicant_start_date",
+                        null,
+                        "2026-04-01",
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getType().name(),
+                        StandardApplicantOperation.GET_STANDARD_APPLICANTS.getEventName()));
     }
 
     @Test
