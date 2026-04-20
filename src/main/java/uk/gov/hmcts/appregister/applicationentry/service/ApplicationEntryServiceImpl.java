@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
+import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryReadAudit;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
 import uk.gov.hmcts.appregister.applicationentry.model.PayloadForUpdateEntry;
@@ -987,9 +988,12 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                     return Optional.of(
                                             new AuditableResult<>(
                                                     entryPage,
-                                                    applicationListEntryMapStructMapper
-                                                            .toApplicationListEntry(
-                                                                    payloadForGet, filterDto)));
+                                                    new ApplicationListEntryReadAudit(
+                                                            applicationListEntryMapStructMapper
+                                                                    .toApplicationListEntry(
+                                                                            payloadForGet,
+                                                                            filterDto),
+                                                            filterDto.getResulted())));
                                 }));
     }
 

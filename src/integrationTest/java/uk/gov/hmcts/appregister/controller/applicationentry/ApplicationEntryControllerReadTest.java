@@ -241,7 +241,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
         val persistedRespondentAddress = persistance.save(respondentAddress);
         entry.setRnameaddress(persistedRespondentAddress);
 
-        persistance.save(entry);
+        val persistedEntry = persistance.save(entry);
+        saveResolution(persistedEntry, "RC1");
 
         // Remove setup-time audit rows so the assertions below only inspect the rows produced by
         // the GET /application-lists/{listId}/entries request.
@@ -265,6 +266,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         .queryParam("accountReference", "ACC-123")
                                         .queryParam(
                                                 "applicationTitle", "Read audit application title")
+                                        .queryParam("resulted", "RC1")
                                         .queryParam("feeRequired", true)
                                         .queryParam("sequenceNumber", 7),
                         new OpenApiPageMetaData());
@@ -311,6 +313,12 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                 TableNames.APPLICATION_CODES,
                 "application_code_title",
                 "Read audit application title",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.RESOLUTION_CODES,
+                "resolution_code",
+                "RC1",
                 AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
         assertAuditRow(
                 allAuditRows,
