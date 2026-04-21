@@ -1,5 +1,7 @@
 package uk.gov.hmcts.appregister.applicationentryresult.audit;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import uk.gov.hmcts.appregister.audit.listener.diff.Auditable;
 import uk.gov.hmcts.appregister.audit.listener.diff.AuditableData;
@@ -7,9 +9,6 @@ import uk.gov.hmcts.appregister.audit.listener.diff.ReflectiveAuditor;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Audit wrapper for Application List Entry Result writes.
