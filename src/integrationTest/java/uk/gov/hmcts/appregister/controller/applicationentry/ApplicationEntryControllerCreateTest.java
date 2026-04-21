@@ -2389,6 +2389,11 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                 .getOrganisation()
                 .getContactDetails()
                 .setMobile(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("applicant.audit@test.com"));
 
         entryCreateDto.getRespondent().setOrganisation(null);
         entryCreateDto.getRespondent().getPerson().getName().setSurname("RespondentAudit");
