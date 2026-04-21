@@ -33,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -228,6 +229,8 @@ public class ApplicationEntryServiceImplTest {
     @Spy
     private GetApplicationListEntriesValidator getApplicationListEntriesValidator =
             new DummyGetApplicationListEntriesValidator(applicationListRepository);
+
+    @Captor ArgumentCaptor<List<ApplicationListEntry>> entriesCaptor;
 
     @BeforeEach
     void setUp() {
@@ -1176,71 +1179,113 @@ public class ApplicationEntryServiceImplTest {
     }
 
     @Test
-    void move_performsBulkUpdate_whenValidRequest() {
+    void move_resequencesEntries_whenValidRequest() {
         ApplicationList targetList = new ApplicationList();
+        targetList.setId(200L);
         targetList.setUuid(UUID.randomUUID());
 
-        // Two entry UUIDs requested
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
+        UUID entryId1 = UUID.randomUUID();
+        UUID entryId2 = UUID.randomUUID();
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
-        dto.setEntryIds(Set.of(id1, id2));
+        dto.setEntryIds(Set.of(entryId1, entryId2));
 
         MoveEntriesValidationSuccess success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
         moveEntriesValidator.setSuccess(success);
 
-        // Mock repository to return rowsUpdated == requested size (2)
         UUID sourceListId = UUID.randomUUID();
-
         when(applicationListEntryRepository.findExistingEntryIdsInSourceList(
                         eq(sourceListId), anySet()))
-                .thenReturn(Set.of(id1, id2));
+                .thenReturn(Set.of(entryId1, entryId2));
 
-        when(applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        anySet(), eq(targetList), eq(sourceListId)))
-                .thenReturn(2);
+        ApplicationListEntry entry1 = new ApplicationListEntry();
+        entry1.setUuid(entryId1);
+        entry1.setSequenceNumber((short) 1);
 
-        // Act - should not throw
+        ApplicationListEntry entry2 = new ApplicationListEntry();
+        entry2.setUuid(entryId2);
+        entry2.setSequenceNumber((short) 2);
+
+        when(applicationListEntryRepository.findByEntryUuidWithinListUuid(sourceListId, entryId1))
+                .thenReturn(Optional.of(entry1));
+        when(applicationListEntryRepository.findByEntryUuidWithinListUuid(sourceListId, entryId2))
+                .thenReturn(Optional.of(entry2));
+
+        AppListEntrySequenceMapping mapping =
+                AppListEntrySequenceMapping.builder()
+                        .alId(targetList.getId())
+                        .aleLastSequence(2)
+                        .build();
+
+        when(appListEntrySequenceMappingRepository.findByAlIdForUpdate(targetList.getId()))
+                .thenReturn(Optional.of(mapping));
+
+        when(applicationListEntryRepository.saveAll(anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
         service.move(sourceListId, dto);
 
-        // Verify the bulk update call was invoked once with the same source and target that the
-        // service was called with
+        // Assert
+        verify(applicationListEntryRepository).saveAll(entriesCaptor.capture());
+
+        List<ApplicationListEntry> savedEntries = entriesCaptor.getValue();
+        verify(applicationListEntryRepository).saveAll(entriesCaptor.capture());
+
+        Assertions.assertEquals(2, savedEntries.size());
+
+        Assertions.assertSame(targetList, savedEntries.get(0).getApplicationList());
+        Assertions.assertSame(targetList, savedEntries.get(1).getApplicationList());
+
+        Assertions.assertEquals((short) 3, savedEntries.get(0).getSequenceNumber());
+        Assertions.assertEquals((short) 4, savedEntries.get(1).getSequenceNumber());
+
         verify(applicationListEntryRepository, times(1))
-                .bulkMoveByUuidAndSourceList(anySet(), eq(targetList), eq(sourceListId));
+                .findByEntryUuidWithinListUuid(sourceListId, entryId1);
+        verify(applicationListEntryRepository, times(1))
+                .findByEntryUuidWithinListUuid(sourceListId, entryId2);
+
+        verify(applicationListEntryRepository, times(1))
+                .findExistingEntryIdsInSourceList(eq(sourceListId), anySet());
     }
 
     @Test
-    void move_throws_whenBulkUpdateAffectsFewerRowsThanRequested() {
+    void move_throws_whenRequestedEntryMissingFromSourceList() {
         ApplicationList targetList = new ApplicationList();
+        targetList.setId(200L);
         targetList.setUuid(UUID.randomUUID());
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
+        UUID entryId1 = UUID.randomUUID();
+        UUID entryId2 = UUID.randomUUID();
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
-        dto.setEntryIds(Set.of(id1, id2));
+        dto.setEntryIds(Set.of(entryId1, entryId2));
 
         MoveEntriesValidationSuccess success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
         moveEntriesValidator.setSuccess(success);
 
-        // Simulate DB updated only 1 row even though 2 were requested
+        // Only one of the requested IDs exists in the source list
         UUID sourceListId = UUID.randomUUID();
-        when(applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        anySet(), eq(targetList), eq(sourceListId)))
-                .thenReturn(1);
+        when(applicationListEntryRepository.findExistingEntryIdsInSourceList(
+                        eq(sourceListId), anySet()))
+                .thenReturn(Set.of(entryId1));
 
         assertThatThrownBy(() -> service.move(sourceListId, dto))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
-                        ex ->
-                                Assertions.assertEquals(
-                                        ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
-                                        ((AppRegistryException) ex).getCode()));
+                        ex -> {
+                            AppRegistryException appEx = (AppRegistryException) ex;
+                            Assertions.assertEquals(
+                                    ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST, appEx.getCode());
+                        });
+
+        verify(applicationListEntryRepository, times(0))
+                .findByEntryUuidWithinListUuid(any(), any());
+        verify(applicationListEntryRepository, times(0)).saveAll(anyList());
     }
 
     @Test
@@ -1304,6 +1349,7 @@ public class ApplicationEntryServiceImplTest {
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(UUID.randomUUID());
+        dto.setEntryIds(Set.of(UUID.randomUUID()));
 
         assertThatThrownBy(() -> service.move(UUID.randomUUID(), dto))
                 .isInstanceOf(AppRegistryException.class)
@@ -1320,6 +1366,8 @@ public class ApplicationEntryServiceImplTest {
                 .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
+        dto.setTargetListId(UUID.randomUUID());
+        dto.setEntryIds(null);
 
         assertThatThrownBy(() -> service.move(UUID.randomUUID(), dto))
                 .isInstanceOf(AppRegistryException.class)
