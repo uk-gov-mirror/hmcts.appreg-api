@@ -1252,7 +1252,7 @@ public class ApplicationEntryServiceImplTest {
     }
 
     @Test
-    void move_updatesAndSavesEachEntry_whenValidRequest() {
+    void move_resequencesEntries_whenValidRequest() {
         val sourceListId = UUID.randomUUID();
         val sourceList = new ApplicationList();
         sourceList.setId(10L);
@@ -1262,24 +1262,26 @@ public class ApplicationEntryServiceImplTest {
         targetList.setId(20L);
         targetList.setUuid(UUID.randomUUID());
 
-        val id1 = UUID.randomUUID();
+        val entryId1 = UUID.randomUUID();
+        val entryId2 = UUID.randomUUID();
 
         val entry1 = new ApplicationListEntry();
         entry1.setId(101L);
-        entry1.setUuid(id1);
+        entry1.setUuid(entryId1);
         entry1.setApplicationList(sourceList);
+        entry1.setSequenceNumber((short) 2);
         entry1.setVersion(0L);
 
         val entry2 = new ApplicationListEntry();
         entry2.setId(102L);
-        val id2 = UUID.randomUUID();
-        entry2.setUuid(id2);
+        entry2.setUuid(entryId2);
         entry2.setApplicationList(sourceList);
+        entry2.setSequenceNumber((short) 1);
         entry2.setVersion(5L);
 
         val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
-        dto.setEntryIds(Set.of(id1, id2));
+        dto.setEntryIds(Set.of(entryId1, entryId2));
 
         val success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
@@ -1287,24 +1289,36 @@ public class ApplicationEntryServiceImplTest {
 
         when(applicationListEntryRepository.findByUuidsInSourceList(eq(sourceListId), anySet()))
                 .thenReturn(List.of(entry1, entry2));
-        when(applicationListEntryRepository.save(any(ApplicationListEntry.class)))
-                .thenAnswer(
-                        invocation -> {
-                            val entry = invocation.getArgument(0, ApplicationListEntry.class);
-                            entry.setVersion(entry.getVersion() + 1);
-                            return entry;
-                        });
 
-        // Execute the move request exactly as the service receives it from the controller.
+        val mapping =
+                AppListEntrySequenceMapping.builder()
+                        .alId(targetList.getId())
+                        .aleLastSequence(2)
+                        .build();
+        when(appListEntrySequenceMappingRepository.findByAlIdForUpdate(targetList.getId()))
+                .thenReturn(Optional.of(mapping));
+
+        when(applicationListEntryRepository.save(any(ApplicationListEntry.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0, ApplicationListEntry.class));
+
+        ArgumentCaptor<ApplicationListEntry> savedEntryCaptor =
+                ArgumentCaptor.forClass(ApplicationListEntry.class);
+
         service.move(sourceListId, dto);
 
-        // Each requested entry should now point at the target list and be saved individually so
-        // the audit framework can diff old and new values.
-        Assertions.assertEquals(targetList, entry1.getApplicationList());
-        Assertions.assertEquals(targetList, entry2.getApplicationList());
         verify(applicationListEntryRepository, times(1))
                 .findByUuidsInSourceList(eq(sourceListId), anySet());
-        verify(applicationListEntryRepository, times(2)).save(any(ApplicationListEntry.class));
+        verify(applicationListEntryRepository, times(2)).save(savedEntryCaptor.capture());
+
+        List<ApplicationListEntry> savedEntries = savedEntryCaptor.getAllValues();
+        Assertions.assertEquals(2, savedEntries.size());
+        Assertions.assertSame(entry2, savedEntries.get(0));
+        Assertions.assertSame(entry1, savedEntries.get(1));
+        Assertions.assertSame(targetList, savedEntries.get(0).getApplicationList());
+        Assertions.assertSame(targetList, savedEntries.get(1).getApplicationList());
+        Assertions.assertEquals((short) 3, savedEntries.get(0).getSequenceNumber());
+        Assertions.assertEquals((short) 4, savedEntries.get(1).getSequenceNumber());
+        Assertions.assertEquals(4, mapping.getAleLastSequence());
     }
 
     @Test
@@ -1318,18 +1332,18 @@ public class ApplicationEntryServiceImplTest {
         targetList.setId(20L);
         targetList.setUuid(UUID.randomUUID());
 
-        val id1 = UUID.randomUUID();
+        val entryId1 = UUID.randomUUID();
+        val entryId2 = UUID.randomUUID();
 
         val entry1 = new ApplicationListEntry();
         entry1.setId(101L);
-        entry1.setUuid(id1);
+        entry1.setUuid(entryId1);
         entry1.setApplicationList(sourceList);
         entry1.setVersion(0L);
-        val id2 = UUID.randomUUID();
 
         val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
-        dto.setEntryIds(Set.of(id1, id2));
+        dto.setEntryIds(Set.of(entryId1, entryId2));
 
         val success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
@@ -1338,14 +1352,18 @@ public class ApplicationEntryServiceImplTest {
         when(applicationListEntryRepository.findByUuidsInSourceList(eq(sourceListId), anySet()))
                 .thenReturn(List.of(entry1));
 
-        // A partial match must be rejected so the caller can see which entry IDs were invalid.
         assertThatThrownBy(() -> service.move(sourceListId, dto))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
-                        ex ->
-                                Assertions.assertEquals(
-                                        ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
-                                        ((AppRegistryException) ex).getCode()));
+                        ex -> {
+                            AppRegistryException appEx = (AppRegistryException) ex;
+                            Assertions.assertEquals(
+                                    ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST, appEx.getCode());
+                        });
+
+        verify(applicationListEntryRepository, times(1))
+                .findByUuidsInSourceList(eq(sourceListId), anySet());
+        verify(applicationListEntryRepository, times(0)).save(any(ApplicationListEntry.class));
     }
 
     @Test
@@ -1409,6 +1427,7 @@ public class ApplicationEntryServiceImplTest {
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(UUID.randomUUID());
+        dto.setEntryIds(Set.of(UUID.randomUUID()));
 
         assertThatThrownBy(() -> service.move(UUID.randomUUID(), dto))
                 .isInstanceOf(AppRegistryException.class)
@@ -1425,6 +1444,8 @@ public class ApplicationEntryServiceImplTest {
                 .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
+        dto.setTargetListId(UUID.randomUUID());
+        dto.setEntryIds(null);
 
         assertThatThrownBy(() -> service.move(UUID.randomUUID(), dto))
                 .isInstanceOf(AppRegistryException.class)

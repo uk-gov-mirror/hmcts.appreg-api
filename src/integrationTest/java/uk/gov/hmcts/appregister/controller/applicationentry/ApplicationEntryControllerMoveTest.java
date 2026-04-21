@@ -41,6 +41,7 @@ import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.controller.applicationcode.AbstractApplicationCodeEntryCrudTest;
 import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.data.AppListTestData;
+import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
@@ -83,6 +84,29 @@ public class ApplicationEntryControllerMoveTest extends AbstractApplicationCodeE
         Response resp = moveEntries(sourceList, targetList, Set.of(sourceEntry.getUuid()));
 
         resp.then().statusCode(HttpStatus.OK.value());
+
+        Response targetResp =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT + "/" + targetList.getUuid()), getToken());
+
+        targetResp.then().statusCode(HttpStatus.OK.value());
+
+        ApplicationListGetDetailDto targetDetail = targetResp.as(ApplicationListGetDetailDto.class);
+
+        Assertions.assertTrue(
+                targetDetail.getEntriesSummary().stream()
+                        .anyMatch(e -> e.getUuid().equals(sourceEntry.getUuid())));
+
+        Assertions.assertEquals(2, targetDetail.getEntriesSummary().size());
+
+        var sequences =
+                targetDetail.getEntriesSummary().stream()
+                        .map(ApplicationListEntrySummary::getSequenceNumber)
+                        .sorted()
+                        .toList();
+
+        Assertions.assertEquals(2, sequences.size());
+        Assertions.assertTrue(sequences.get(0) < sequences.get(1));
     }
 
     @Test
@@ -287,6 +311,7 @@ public class ApplicationEntryControllerMoveTest extends AbstractApplicationCodeE
         resp.then().statusCode(HttpStatus.BAD_REQUEST.value());
 
         ProblemDetail problemDetail = resp.as(ProblemDetail.class);
+        Assertions.assertNotNull(problemDetail.getType());
         Assertions.assertEquals(
                 ApplicationListError.INVALID_LIST_STATUS.getCode().getAppCode(),
                 problemDetail.getType().toString());
