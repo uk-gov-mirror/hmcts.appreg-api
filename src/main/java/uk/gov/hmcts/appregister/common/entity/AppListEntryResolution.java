@@ -56,21 +56,21 @@ public class AppListEntryResolution extends BaseChangeableEntity
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ale_ale_id", nullable = false)
-    @Audit(action = {CrudEnum.CREATE, CrudEnum.READ})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.DELETE, CrudEnum.READ})
     private ApplicationListEntry applicationList;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rc_rc_id", nullable = false)
-    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.DELETE})
     private ResolutionCode resolutionCode;
 
     @Column(name = "al_entry_resolution_wording", nullable = false)
-    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.DELETE})
     private String resolutionWording;
 
     @Column(name = "al_entry_resolution_officer", nullable = false)
     @Size(max = 1000)
-    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.DELETE})
     private String resolutionOfficer;
 
     @Column(name = "version", nullable = false)

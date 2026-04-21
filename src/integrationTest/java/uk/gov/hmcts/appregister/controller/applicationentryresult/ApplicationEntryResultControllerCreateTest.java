@@ -10,13 +10,16 @@ import io.restassured.response.Response;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import uk.gov.hmcts.appregister.applicationentryresult.audit.AppListEntryResultAuditOperation;
 import uk.gov.hmcts.appregister.applicationentryresult.exception.ApplicationListEntryResultError;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
+import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.generated.model.ResultGetDto;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.util.TemplateAssertion;
@@ -27,20 +30,25 @@ public class ApplicationEntryResultControllerCreateTest
     @Test
     @DisplayName("Create Application List Entry Result: 201 when valid request")
     void givenValidRequest_whenCreate_then201() throws Exception {
-        var list = createAndSaveList(OPEN);
-        var entry = createEntry(list);
+        val list = createAndSaveList(OPEN);
+        val entry = createEntry(list);
         persistance.save(entry);
 
-        var token = getToken();
+        val token = getToken();
 
-        var payload =
+        val payload =
                 buildCreatePayload(
                         APPC_CODE,
                         List.of(
                                 new TemplateSubstitution(
                                         APPC_WORDING_KEY, "The Central Criminal Court")));
 
-        Response resp = createResult(list.getUuid(), entry.getUuid(), token, payload);
+        // Clear setup rows so the assertions below only inspect the create request under test.
+        dataAuditRepository.deleteAll();
+
+        // Drive the real endpoint so the result creation passes through validation, persistence
+        // and the audit listeners before we inspect DATA_AUDIT directly.
+        val resp = createResult(list.getUuid(), entry.getUuid(), token, payload);
 
         resp.then().statusCode(HttpStatus.CREATED.value());
         resp.then().header(HttpHeaders.LOCATION, notNullValue());
@@ -50,12 +58,107 @@ public class ApplicationEntryResultControllerCreateTest
         resp.then().body("entryId", equalTo(entry.getUuid().toString()));
         resp.then().body("resultCode", equalTo(APPC_CODE));
 
-        ResultGetDto resultGetDto = resp.as(ResultGetDto.class);
+        val resultGetDto = resp.as(ResultGetDto.class);
 
         TemplateAssertion.assertTemplateWithValues(
                 "Appeal forwarded to {{Name of Crown Court}}.",
                 List.of(new TemplateSubstitution(APPC_WORDING_KEY, "The Central Criminal Court")),
                 resultGetDto.getWording());
+
+        val createdResolution =
+                appListEntryResolutionRepository
+                        .findByUuidAndApplicationList_Uuid(resultGetDto.getId(), entry.getUuid())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Created AppListEntryResolution could not be reloaded"));
+
+        // The resolution row itself should record its generated identifier on create.
+        val resultIdAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "aler_id",
+                                createdResolution.getId().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.aler_id create audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.CREATE_APP_LIST_ENTRY_RESULT.getEventName(),
+                resultIdAuditRow.getEventName());
+
+        // The owning entry id is stored through the foreign key column ale_ale_id.
+        val entryIdAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "ale_ale_id",
+                                createdResolution.getApplicationList().getId().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.ale_ale_id create audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.CREATE_APP_LIST_ENTRY_RESULT.getEventName(),
+                entryIdAuditRow.getEventName());
+
+        // The selected resolution code should be recorded via the rc_rc_id join column.
+        val resolutionCodeAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "rc_rc_id",
+                                createdResolution.getResolutionCode().getId().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.rc_rc_id create audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.CREATE_APP_LIST_ENTRY_RESULT.getEventName(),
+                resolutionCodeAuditRow.getEventName());
+
+        // The substituted wording is stored directly on the resolution row.
+        val missingWordingAuditMessage =
+                "Expected an app_list_entry_resolutions.al_entry_resolution_wording create audit row";
+        val wordingAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "al_entry_resolution_wording",
+                                createdResolution.getResolutionWording())
+                        .orElseThrow(() -> new AssertionError(missingWordingAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.CREATE_APP_LIST_ENTRY_RESULT.getEventName(),
+                wordingAuditRow.getEventName());
+
+        // The service stamps the acting user into the officer column on create.
+        val missingOfficerAuditMessage =
+                "Expected an app_list_entry_resolutions.al_entry_resolution_officer create audit row";
+        val officerAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "al_entry_resolution_officer",
+                                "email")
+                        .orElseThrow(() -> new AssertionError(missingOfficerAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.CREATE_APP_LIST_ENTRY_RESULT.getEventName(),
+                officerAuditRow.getEventName());
+
+        // Version is database-backed and should be written alongside the other create audit rows.
+        val missingVersionAuditMessage =
+                "Expected an app_list_entry_resolutions.version create audit row";
+        val versionAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "version",
+                                createdResolution.getVersion().toString())
+                        .orElseThrow(() -> new AssertionError(missingVersionAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.CREATE_APP_LIST_ENTRY_RESULT.getEventName(),
+                versionAuditRow.getEventName());
     }
 
     @Test

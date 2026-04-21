@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.applicationentryresult.audit.AppListEntryResultAuditOperation;
+import uk.gov.hmcts.appregister.applicationentryresult.audit.ApplicationListEntryResultAudit;
 import uk.gov.hmcts.appregister.applicationentryresult.mapper.ApplicationListEntryResultEntityMapper;
 import uk.gov.hmcts.appregister.applicationentryresult.mapper.ApplicationListEntryResultMapper;
 import uk.gov.hmcts.appregister.applicationentryresult.model.ListEntryResultDeleteArgs;
@@ -98,7 +99,7 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
 
                     // Only audit after matchService returned successfully (i.e. match succeeded)
                     auditService.processAudit(
-                            BeanUtil.copyBean(entity),
+                            ApplicationListEntryResultAudit.from(BeanUtil.copyBean(entity)),
                             AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT,
                             ev -> Optional.empty(),
                             auditLifecycleListeners.toArray(
@@ -157,7 +158,8 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
                                                                     resultGetDto,
                                                                     getKeyablesForCreateUpdateEtag(
                                                                             listEntryResultEntity)),
-                                                            listEntryResultEntity));
+                                                            ApplicationListEntryResultAudit.from(
+                                                                    listEntryResultEntity)));
                                         }));
 
         return getDto;
@@ -182,7 +184,9 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
                             return matchService.matchOnRequest(
                                     () -> {
                                         return auditService.processAudit(
-                                                BeanUtil.copyBean(success.getAppListEntryResult()),
+                                                ApplicationListEntryResultAudit.from(
+                                                        BeanUtil.copyBean(
+                                                                success.getAppListEntryResult())),
                                                 AppListEntryResultAuditOperation
                                                         .UPDATE_APP_LIST_ENTRY_RESULT,
                                                 req -> {
@@ -227,8 +231,10 @@ public class ApplicationEntryResultServiceImpl implements ApplicationEntryResult
                                                                             resultGetDto,
                                                                             getKeyablesForCreateUpdateEtag(
                                                                                     listEntryResultEntity)),
-                                                                    success
-                                                                            .getAppListEntryResult()));
+                                                                    ApplicationListEntryResultAudit
+                                                                            .from(
+                                                                                    success
+                                                                                            .getAppListEntryResult())));
                                                 });
                                     },
 

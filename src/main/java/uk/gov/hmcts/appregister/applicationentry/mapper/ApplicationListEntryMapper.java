@@ -29,6 +29,7 @@ import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
 import uk.gov.hmcts.appregister.common.enumeration.NameAddressCodeType;
 import uk.gov.hmcts.appregister.common.enumeration.PartyType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
+import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.OfficialMapper;
 import uk.gov.hmcts.appregister.common.mapper.WordingTemplateMapper;
@@ -39,6 +40,7 @@ import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ContactDetails;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetPrintDto;
@@ -128,6 +130,18 @@ public abstract class ApplicationListEntryMapper {
      */
     public LocalDate map(OffsetDateTime offsetDateTime) {
         return offsetDateTime == null ? null : offsetDateTime.toLocalDate();
+    }
+
+    public YesOrNo map(Boolean feeRequired) {
+        if (feeRequired == null) {
+            return null;
+        }
+
+        return feeRequired ? YesOrNo.YES : YesOrNo.NO;
+    }
+
+    public Short map(Integer sequenceNumber) {
+        return sequenceNumber == null ? null : sequenceNumber.shortValue();
     }
 
     /**
@@ -620,6 +634,93 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(target = "rnameaddress", ignore = true)
     @Mapping(target = "caseReference", ignore = true)
     public abstract ApplicationListEntry toApplicationListEntry(PayloadGetEntryInList payload);
+
+    /**
+     * This is used to create an audit entry using the GET dto for logging when entries are fetched
+     * for a single application list.
+     *
+     * @param payload Entity containing the list id path parameter for logging.
+     * @param filterDto Entity containing the GET query params for logging.
+     * @return ApplicationListEntry Entity containing the mapped values from the GET params.
+     */
+    @Mapping(target = "applicationList.uuid", source = "payload.listId")
+    @Mapping(target = "anamedaddress.name", source = "filterDto.applicantName")
+    @Mapping(target = "rnameaddress.name", source = "filterDto.respondentName")
+    @Mapping(target = "rnameaddress.postcode", source = "filterDto.respondentPostcode")
+    @Mapping(target = "accountNumber", source = "filterDto.accountReference")
+    @Mapping(target = "applicationCode.title", source = "filterDto.applicationTitle")
+    @Mapping(target = "applicationCode.feeDue", source = "filterDto.feeRequired")
+    @Mapping(target = "sequenceNumber", source = "filterDto.sequenceNumber")
+    @Mapping(target = "id", constant = "0L")
+    @Mapping(target = "applicationCode.code", ignore = true)
+    @Mapping(target = "applicationCode.wording", ignore = true)
+    @Mapping(target = "applicationCode.legislation", ignore = true)
+    @Mapping(target = "applicationCode.requiresRespondent", ignore = true)
+    @Mapping(target = "applicationCode.destinationEmail1", ignore = true)
+    @Mapping(target = "applicationCode.destinationEmail2", ignore = true)
+    @Mapping(target = "applicationCode.startDate", ignore = true)
+    @Mapping(target = "applicationCode.endDate", ignore = true)
+    @Mapping(target = "applicationCode.bulkRespondentAllowed", ignore = true)
+    @Mapping(target = "applicationCode.version", ignore = true)
+    @Mapping(target = "applicationCode.userName", ignore = true)
+    @Mapping(target = "applicationCode.feeReference", ignore = true)
+    @Mapping(target = "applicationCode.applicationListEntryList", ignore = true)
+    @Mapping(target = "numberOfBulkRespondents", ignore = true)
+    @Mapping(target = "applicationListEntryWording", ignore = true)
+    @Mapping(target = "entryRescheduled", ignore = true)
+    @Mapping(target = "caseReference", ignore = true)
+    @Mapping(target = "notes", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "bulkUpload", ignore = true)
+    @Mapping(target = "createdUser", ignore = true)
+    @Mapping(target = "tcepStatus", ignore = true)
+    @Mapping(target = "messageUuid", ignore = true)
+    @Mapping(target = "retryCount", ignore = true)
+    @Mapping(target = "lodgementDate", ignore = true)
+    @Mapping(target = "resolutions", ignore = true)
+    @Mapping(target = "officials", ignore = true)
+    @Mapping(target = "entryFeeStatuses", ignore = true)
+    @Mapping(target = "entryFeeIds", ignore = true)
+    @Mapping(target = "standardApplicant", ignore = true)
+    @Mapping(target = "anamedaddress.code", ignore = true)
+    @Mapping(target = "anamedaddress.id", ignore = true)
+    @Mapping(target = "anamedaddress.forename1", ignore = true)
+    @Mapping(target = "anamedaddress.forename2", ignore = true)
+    @Mapping(target = "anamedaddress.forename3", ignore = true)
+    @Mapping(target = "anamedaddress.title", ignore = true)
+    @Mapping(target = "anamedaddress.address1", ignore = true)
+    @Mapping(target = "anamedaddress.address2", ignore = true)
+    @Mapping(target = "anamedaddress.address3", ignore = true)
+    @Mapping(target = "anamedaddress.address4", ignore = true)
+    @Mapping(target = "anamedaddress.address5", ignore = true)
+    @Mapping(target = "anamedaddress.emailAddress", ignore = true)
+    @Mapping(target = "anamedaddress.telephoneNumber", ignore = true)
+    @Mapping(target = "anamedaddress.mobileNumber", ignore = true)
+    @Mapping(target = "anamedaddress.version", ignore = true)
+    @Mapping(target = "anamedaddress.userName", ignore = true)
+    @Mapping(target = "anamedaddress.dateOfBirth", ignore = true)
+    @Mapping(target = "anamedaddress.dmsId", ignore = true)
+    @Mapping(target = "rnameaddress.code", ignore = true)
+    @Mapping(target = "rnameaddress.id", ignore = true)
+    @Mapping(target = "rnameaddress.forename1", ignore = true)
+    @Mapping(target = "rnameaddress.forename2", ignore = true)
+    @Mapping(target = "rnameaddress.forename3", ignore = true)
+    @Mapping(target = "rnameaddress.title", ignore = true)
+    @Mapping(target = "rnameaddress.address1", ignore = true)
+    @Mapping(target = "rnameaddress.address2", ignore = true)
+    @Mapping(target = "rnameaddress.address3", ignore = true)
+    @Mapping(target = "rnameaddress.address4", ignore = true)
+    @Mapping(target = "rnameaddress.address5", ignore = true)
+    @Mapping(target = "rnameaddress.emailAddress", ignore = true)
+    @Mapping(target = "rnameaddress.telephoneNumber", ignore = true)
+    @Mapping(target = "rnameaddress.mobileNumber", ignore = true)
+    @Mapping(target = "rnameaddress.version", ignore = true)
+    @Mapping(target = "rnameaddress.userName", ignore = true)
+    @Mapping(target = "rnameaddress.dateOfBirth", ignore = true)
+    @Mapping(target = "rnameaddress.dmsId", ignore = true)
+    @Mapping(target = "uuid", ignore = true)
+    public abstract ApplicationListEntry toApplicationListEntry(
+            PayloadGetEntryInList payload, EntryApplicationListGetFilterDto filterDto);
 
     /**
      * This is used to create an audit entry using the GET dto for logging.

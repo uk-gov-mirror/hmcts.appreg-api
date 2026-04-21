@@ -22,6 +22,7 @@ import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
@@ -53,6 +54,7 @@ public abstract class AbstractApplicationEntryResultCrudTest extends BaseIntegra
     @Autowired protected TransactionalUnitOfWork unitOfWork;
     @Autowired protected ApplicationListRepository applicationListRepository;
     @Autowired protected ApplicationListEntryRepository applicationListEntryRepository;
+    @Autowired protected DataAuditRepository dataAuditRepository;
 
     public static final String WEB_CONTEXT = "application-lists";
 

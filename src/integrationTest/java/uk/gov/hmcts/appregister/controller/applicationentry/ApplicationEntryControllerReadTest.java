@@ -11,8 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntryByListIdSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
@@ -22,11 +26,16 @@ import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
+import uk.gov.hmcts.appregister.common.entity.DataAudit;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
+import uk.gov.hmcts.appregister.common.enumeration.NameAddressCodeType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
+import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.mapper.SortableField;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
+import uk.gov.hmcts.appregister.data.NameAddressTestData;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodePage;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
@@ -42,6 +51,8 @@ import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
 import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 
 public class ApplicationEntryControllerReadTest extends AbstractApplicationEntryCrudTest {
+
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     @Test
     @StabilityTest
@@ -197,6 +208,132 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                 problemDetail.getType());
     }
 
+    @Test
+    @DisplayName("GET Application List Entries persists read audit rows")
+    void givenValidRequest_whenGetApplicationListEntries_thenDataAuditRowsPersisted()
+            throws Exception {
+        // Create a realistic list + entry so the request passes through controller, service,
+        // mapper, audit listeners and finally into the DATA_AUDIT table.
+        val list = createAndSaveList(OPEN);
+        val applicationCode = buildApplicationCode("APPREAD");
+        applicationCode.setTitle("Read audit application title");
+        applicationCode.setFeeDue(YesOrNo.YES);
+        applicationCode.setApplicationListEntryList(null);
+        val persistedApplicationCode = persistance.save(applicationCode);
+
+        val entry = createEntry(list);
+        entry.setApplicationCode(persistedApplicationCode);
+        entry.setSequenceNumber((short) 7);
+        entry.setAccountNumber("ACC-123");
+
+        val applicantAddress = new NameAddressTestData().someOrganisation();
+        applicantAddress.setCode(NameAddressCodeType.APPLICANT);
+        applicantAddress.setAddress1("1 Audit Street");
+        applicantAddress.setName("Applicant Audit Org");
+        val persistedApplicantAddress = persistance.save(applicantAddress);
+        entry.setAnamedaddress(persistedApplicantAddress);
+
+        val respondentAddress = new NameAddressTestData().someOrganisation();
+        respondentAddress.setCode(NameAddressCodeType.RESPONDENT);
+        respondentAddress.setAddress1("2 Audit Street");
+        respondentAddress.setName("Respondent Audit Org");
+        respondentAddress.setPostcode("ZZ1 1ZZ");
+        val persistedRespondentAddress = persistance.save(respondentAddress);
+        entry.setRnameaddress(persistedRespondentAddress);
+
+        val persistedEntry = persistance.save(entry);
+        saveResolution(persistedEntry, "RC1");
+
+        // Remove setup-time audit rows so the assertions below only inspect the rows produced by
+        // the GET /application-lists/{listId}/entries request.
+        dataAuditRepository.deleteAll();
+
+        val token = createAdminToken().fetchTokenForRole();
+
+        // Perform the real API call with DB-backed query parameters that should each become a row
+        // in DATA_AUDIT.
+        val response =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(),
+                        getLocalUrl(CREATE_ENTRY_CONTEXT + "/" + list.getUuid() + "/entries"),
+                        token,
+                        rs ->
+                                rs.queryParam("applicantName", "Applicant Audit Org")
+                                        .queryParam("respondentName", "Respondent Audit Org")
+                                        .queryParam("respondentPostcode", "ZZ1 1ZZ")
+                                        .queryParam("accountReference", "ACC-123")
+                                        .queryParam(
+                                                "applicationTitle", "Read audit application title")
+                                        .queryParam("resulted", "RC1")
+                                        .queryParam("feeRequired", true)
+                                        .queryParam("sequenceNumber", 7),
+                        new OpenApiPageMetaData());
+
+        response.then().statusCode(HttpStatus.OK.value());
+        response.as(EntryPage.class);
+
+        val allAuditRows = dataAuditRepository.findAll();
+
+        // Assert the persisted rows directly so the vertical slice proves the backend is writing
+        // the legacy-style read audit data, not just logging it.
+        assertAuditRow(
+                allAuditRows,
+                TableNames.APPLICATION_LISTS,
+                "id",
+                list.getUuid().toString(),
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.APPLICATION_LISTS_ENTRY,
+                "ale_id",
+                "0",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.NAME_ADDRESS,
+                "name",
+                "Applicant Audit Org",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.NAME_ADDRESS,
+                "postcode",
+                "ZZ1 1ZZ",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.APPLICATION_LISTS_ENTRY,
+                "account_number",
+                "ACC-123",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.APPLICATION_CODES,
+                "application_code_title",
+                "Read audit application title",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.RESOLUTION_CODES,
+                "resolution_code",
+                "RC1",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.APPLICATION_CODES,
+                "fee_due",
+                YesOrNo.YES.name(),
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+        assertAuditRow(
+                allAuditRows,
+                TableNames.APPLICATION_LISTS_ENTRY,
+                "sequence_number",
+                "7",
+                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST);
+    }
+
     @StabilityTest
     public void testGetApplicationEntriesSearch() throws Exception {
         // create the token
@@ -289,6 +426,27 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
         assertThat(entryGetSummaryDto.getStatus()).isEqualTo(ApplicationListStatus.OPEN);
         assertThat(entryGetSummaryDto.getDate()).isEqualTo(LocalDate.parse("2025-04-21"));
         assertThat(entryGetSummaryDto.getListId()).isNotNull();
+    }
+
+    private void assertAuditRow(
+            List<DataAudit> auditRows,
+            String tableName,
+            String columnName,
+            String newValue,
+            AppListEntryAuditOperation operation) {
+        val row =
+                auditRows.stream()
+                        .filter(audit -> tableName.equals(audit.getTableName()))
+                        .filter(audit -> columnName.equals(audit.getColumnName()))
+                        .filter(audit -> newValue.equals(audit.getNewValue()))
+                        .filter(audit -> operation.getType().equals(audit.getUpdateType()))
+                        .filter(audit -> operation.getEventName().equals(audit.getEventName()))
+                        .findFirst()
+                        .orElseThrow();
+
+        assertThat(row.getOldValue()).isEmpty();
+        assertThat(row.getLink()).isNotBlank();
+        assertThat(row.getCreatedUser()).isNotBlank();
     }
 
     @StabilityTest

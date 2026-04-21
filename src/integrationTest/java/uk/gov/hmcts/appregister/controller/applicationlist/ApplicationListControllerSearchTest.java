@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.config.ApplicationListSortProperties;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.mapper.SortableField;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
@@ -44,6 +46,7 @@ import uk.gov.hmcts.appregister.testutils.util.DataAuditLogAsserter;
 public class ApplicationListControllerSearchTest extends AbstractApplicationListControllerCrudTest {
 
     @Autowired private ApplicationListSortProperties sortProperties;
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     @StabilityTest
     public void givenApplicationListSuccessfulSort_whenSearchWithAllSortKeys_thenSuccessResponse()
@@ -249,6 +252,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
         Assertions.assertEquals(listId, page.getContent().get(0).getId());
         Assertions.assertEquals(listId2, page.getContent().get(1).getId());
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "application_list_date",
+                        null,
+                        TEST_DATE.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @StabilityTest
@@ -577,6 +589,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
 
         // this check is to make sure that a default value is provided for the log when the
         // parameter is not needed.
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "al_id",
+                        null,
+                        "0",
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
+
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
@@ -947,6 +968,74 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                         id.toString(),
                         AppListAuditOperation.GET_APP_LIST.getType().name(),
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
+    }
+
+    @Test
+    @DisplayName("GET Application List persists read audit row")
+    void givenValidRequest_whenGetApplicationList_thenDataAuditRowPersisted() throws Exception {
+        // Use the real API so the request passes through controller, service, audit listeners and
+        // finally into the DATA_AUDIT table.
+        val token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        // First create a list that we can fetch back via GET /application-lists/{id}.
+        val req =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("List for read audit persistence")
+                        .status(ApplicationListStatus.OPEN)
+                        .cjaCode(VALID_CJA_CODE)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        val createResp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
+        createResp.then().statusCode(HttpStatus.CREATED.value());
+        val id = createResp.as(ApplicationListGetDetailDto.class).getId();
+
+        // Remove the create-audit rows so this test only inspects the rows produced by the read.
+        dataAuditRepository.deleteAll();
+
+        // Perform the real read that should write the GET audit rows.
+        val getResp =
+                restAssuredClient.executeGetRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+        getResp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
+
+        // Pull back the persisted row directly from the repository and match on the key fields we
+        // expect for an application list read.
+        val dataAudit =
+                dataAuditRepository.findAll().stream()
+                        .filter(audit -> TableNames.APPICATION_LIST.equals(audit.getTableName()))
+                        .filter(audit -> "id".equals(audit.getColumnName()))
+                        .filter(audit -> id.toString().equals(audit.getNewValue()))
+                        .filter(
+                                audit ->
+                                        AppListAuditOperation.GET_APP_LIST
+                                                .getType()
+                                                .equals(audit.getUpdateType()))
+                        .filter(
+                                audit ->
+                                        AppListAuditOperation.GET_APP_LIST
+                                                .getEventName()
+                                                .equals(audit.getEventName()))
+                        .findFirst()
+                        .orElseThrow();
+
+        // Assert the exact DATA_AUDIT content rather than just relying on log capture.
+        assertThat(dataAudit.getOldValue()).isEmpty();
+        assertThat(dataAudit.getNewValue()).isEqualTo(id.toString());
+        assertThat(dataAudit.getTableName()).isEqualTo(TableNames.APPICATION_LIST);
+        assertThat(dataAudit.getColumnName()).isEqualTo("id");
+        assertThat(dataAudit.getUpdateType())
+                .isEqualTo(AppListAuditOperation.GET_APP_LIST.getType());
+        assertThat(dataAudit.getEventName())
+                .isEqualTo(AppListAuditOperation.GET_APP_LIST.getEventName());
+        assertThat(dataAudit.getLink()).isNotBlank();
+        assertThat(dataAudit.getCreatedUser()).isNotBlank();
     }
 
     @Test

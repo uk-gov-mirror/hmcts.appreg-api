@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
+import lombok.val;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,11 +29,14 @@ import uk.gov.hmcts.appregister.common.async.reader.JpaDataReader;
 import uk.gov.hmcts.appregister.common.async.service.AsyncJobService;
 import uk.gov.hmcts.appregister.common.async.writer.CsvWriter;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.common.util.AppRegTempFileUtil;
 import uk.gov.hmcts.appregister.generated.model.JobType;
+import uk.gov.hmcts.appregister.report.audit.ReportAuditOperation;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.csv.ApplicationCodeCsvPojo;
 import uk.gov.hmcts.appregister.testutils.csv.ApplicationCodeCsvReaderComparator;
@@ -49,6 +53,8 @@ public class ReportingControllerGetTest extends BaseIntegration {
     @Autowired private AsyncJobService asyncJobService;
 
     @Autowired private ApplicationCodeRepository applicationCodeRepository;
+
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     private Function<Pageable, Page<ApplicationCode>> getApplicationCodesFunction =
             (pageable) -> {
@@ -179,5 +185,75 @@ public class ReportingControllerGetTest extends BaseIntegration {
                     JobError.JOB_DOES_NOT_HAVE_DATA_TO_GET_A_DOWNLOAD_STREAM.getCode(),
                     responseSpec);
         }
+    }
+
+    @Test
+    public void givenCompletedJob_whenWeDownloadTheCSV_thenDataAuditRowIsPersisted()
+            throws Exception {
+        val request =
+                JobTypeRequest.builder()
+                        .jobType(JobType.FEES_REPORT)
+                        .userName(userProvider.getUserId())
+                        .build();
+
+        // Seed the application codes that the report writer will later read back out to CSV.
+        try (val csvReaderForAppCode =
+                new CsvReader<>(
+                        getClass().getResourceAsStream("/appcodes.csv"),
+                        ApplicationCodeCsvPojo.class)) {
+            val jobProcessCsvReadLifecycle =
+                    new JobProcessCsvReadLifecycle(applicationCodeRepository);
+            val response =
+                    asyncJobService.startJob(
+                            request, csvReaderForAppCode, jobProcessCsvReadLifecycle);
+            response.getFuture().get();
+        }
+
+        val reader = new JpaDataReader<>(getApplicationCodesFunction);
+        val csvWriterLifecycle =
+                new JobProcessCsvWriteLifecycle(new CsvWriter<>(ApplicationCodeCsvPojo.class));
+
+        // Create the downloadable report blob that the endpoint will stream back to the caller.
+        val response = asyncJobService.startJob(request, reader, csvWriterLifecycle);
+        response.getFuture().get();
+
+        val tokenGenerator = getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        // Remove earlier audit rows so the assertions below only inspect this download request.
+        dataAuditRepository.deleteAll();
+
+        val responseSpec =
+                restAssuredClient.executeGetRequest(
+                        getLocalUrl(WEB_CONTEXT.formatted(response.getJobId().getId().toString())),
+                        tokenGenerator.fetchTokenForRole());
+
+        responseSpec.then().statusCode(200);
+        responseSpec.then().contentType("text/csv");
+
+        // Verify the GET audit row persisted for the requested report job UUID.
+        val persistedAuditRow =
+                dataAuditRepository.findAll().stream()
+                        .filter(row -> TableNames.ASYNC_JOBS.equals(row.getTableName()))
+                        .filter(row -> "id".equals(row.getColumnName()))
+                        .filter(
+                                row ->
+                                        response.getJobId()
+                                                .getId()
+                                                .toString()
+                                                .equals(row.getNewValue()))
+                        .findFirst()
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an asynch_jobs.id audit row for GET"
+                                                        + " /reports/jobs/{jobId}/download"));
+
+        Assertions.assertEquals("", persistedAuditRow.getOldValue());
+        Assertions.assertEquals(
+                ReportAuditOperation.DOWNLOAD_REPORT_AUDIT_EVENT.getEventName(),
+                persistedAuditRow.getEventName());
+        Assertions.assertEquals(
+                ReportAuditOperation.DOWNLOAD_REPORT_AUDIT_EVENT.getType(),
+                persistedAuditRow.getUpdateType());
     }
 }

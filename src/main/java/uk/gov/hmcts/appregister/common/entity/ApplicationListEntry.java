@@ -64,10 +64,12 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sa_sa_id")
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private StandardApplicant standardApplicant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ac_ac_id", nullable = false)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.READ})
     private ApplicationCode applicationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -81,13 +83,16 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
     private NameAddress rnameaddress;
 
     @Column(name = "number_of_bulk_respondents")
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private Short numberOfBulkRespondents;
 
     @Column(name = "application_list_entry_wording", nullable = false)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String applicationListEntryWording;
 
     @Column(name = "case_reference")
     @Size(max = 15)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String caseReference;
 
     @Column(name = "account_number")
@@ -97,14 +102,17 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @Column(name = "entry_rescheduled", nullable = false)
     @Size(max = 1)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String entryRescheduled;
 
     @Column(name = "notes")
     @Size(max = 4000)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String notes;
 
     @Column(name = "version", nullable = false)
     @Version
+    @Audit(action = {CrudEnum.UPDATE})
     private Long version;
 
     @Column(name = "bulk_upload")
@@ -114,6 +122,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
     private String createdUser;
 
     @Column(name = "sequence_number", nullable = false)
+    @Audit(action = {CrudEnum.READ})
     private Short sequenceNumber;
 
     @Column(name = "tcep_status")
