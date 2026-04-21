@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -988,7 +989,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     @org.springframework.transaction.annotation.Transactional
     public void move(UUID sourceListId, MoveEntriesDto moveEntriesDto) {
         var payload = new MoveEntriesPayload(sourceListId, moveEntriesDto);
-        ApplicationList targetList =
+        final ApplicationList targetList =
                 moveEntriesValidator.validate(payload, (req, success) -> success.getTargetList());
 
         Set<UUID> requestedIds = new HashSet<>(moveEntriesDto.getEntryIds());
@@ -997,18 +998,41 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                 applicationListEntryRepository.findExistingEntryIdsInSourceList(
                         sourceListId, requestedIds);
 
-        Set<UUID> missingIds = new HashSet<>(requestedIds);
-        missingIds.removeAll(existingIds);
+        if (existingIds.size() != requestedIds.size()) {
+            Set<UUID> missingIds = new HashSet<>(requestedIds);
+            missingIds.removeAll(existingIds);
 
-        if (!missingIds.isEmpty()) {
             throw new AppRegistryException(
                     ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                     "One or more entries were not found in the source list",
                     Map.of("invalid_entry_ids", missingIds.toString()));
         }
 
-        applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                existingIds, targetList, sourceListId);
+        List<ApplicationListEntry> entries = new ArrayList<>();
+        for (UUID entryId : requestedIds) {
+            ApplicationListEntry entry =
+                    applicationListEntryRepository
+                            .findByEntryUuidWithinListUuid(sourceListId, entryId)
+                            .orElseThrow(
+                                    () ->
+                                            new AppRegistryException(
+                                                    ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
+                                                    "One or more entries were not found in the source list",
+                                                    Map.of(
+                                                            "invalid_entry_ids",
+                                                            entryId.toString())));
+
+            entries.add(entry);
+        }
+
+        entries.sort(Comparator.comparing(ApplicationListEntry::getSequenceNumber));
+
+        for (ApplicationListEntry entry : entries) {
+            entry.setApplicationList(targetList);
+            entry.setSequenceNumber(allocateNextSequence(targetList.getId()));
+        }
+
+        applicationListEntryRepository.saveAll(entries);
 
         log.info(
                 "Completed bulk move for {} entries from list {}",
