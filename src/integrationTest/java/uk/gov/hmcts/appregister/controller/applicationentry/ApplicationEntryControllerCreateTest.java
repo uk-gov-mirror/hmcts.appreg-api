@@ -2278,6 +2278,55 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
     }
 
     @Test
+    @DisplayName(
+            "Create Application Entry persists write audit rows for standard applicant selection")
+    void givenStandardApplicantEntry_whenCreated_thenPersistStandardApplicantAuditRow()
+            throws Exception {
+        val entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto.setStandardApplicantCode("APP001");
+
+        val tokenGenerator = createAdminToken();
+
+        // Clear earlier audit history so this test only inspects the create request below.
+        dataAuditRepository.deleteAll();
+
+        // Use the real endpoint so the standard-applicant selection flows through the validator,
+        // mapper and audit listeners before we query DATA_AUDIT.
+        val responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(201);
+
+        val createdDto = responseSpecCreate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("APP001", createdDto.getStandardApplicantCode());
+
+        // The applicant choice is stored through STANDARD_APPLICANTS, so create audit should now
+        // include the selected standard applicant code.
+        val standardApplicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.STANDARD_APPLICANTS, "standard_applicant_code", "APP001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a standard_applicants.standard_applicant_code audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                standardApplicantAuditRow.getEventName());
+    }
+
+    @Test
     public void
             givenACNotRequireRespondent_BulkRespondentAllowed_RespondentAndNumberOfRespondentsNotProvided_then400()
                     throws Exception {

@@ -35,7 +35,7 @@ import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-@AuditEnabled(types = {CrudEnum.READ})
+@AuditEnabled(types = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.READ})
 public class StandardApplicant extends BaseUnmanagedChangeableEntity
         implements Accountable, Versionable, Keyable {
     @Id
@@ -46,7 +46,7 @@ public class StandardApplicant extends BaseUnmanagedChangeableEntity
     private Long id;
 
     @Column(name = "standard_applicant_code", nullable = false)
-    @Audit(action = {CrudEnum.READ})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.READ})
     @Pattern(
             regexp = "[a-zA-Z0-9\\-\\+\\._ ]*",
             message =

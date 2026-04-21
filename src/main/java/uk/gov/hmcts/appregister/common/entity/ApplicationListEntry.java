@@ -64,6 +64,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sa_sa_id")
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private StandardApplicant standardApplicant;
 
     @ManyToOne(fetch = FetchType.LAZY)

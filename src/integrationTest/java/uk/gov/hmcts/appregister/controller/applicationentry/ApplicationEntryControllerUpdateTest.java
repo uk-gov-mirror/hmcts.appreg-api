@@ -913,6 +913,49 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
     }
 
     @Test
+    @DisplayName(
+            "Update Application Entry persists write audit rows for standard applicant selection")
+    void givenStandardApplicantUpdate_whenUpdated_thenPersistStandardApplicantAuditRow()
+            throws Exception {
+        val entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setApplicant(null);
+        entryUpdateDto.setStandardApplicantCode("APP002");
+        entryUpdateDto.setNumberOfRespondents(null);
+
+        val tokenGenerator = createAdminToken();
+        val responseSpecCreate = createListEntryWithAllData();
+
+        // Ignore the audit rows produced by the setup create request so we only inspect the update.
+        dataAuditRepository.deleteAll();
+
+        // Update the entry through the real endpoint so the standard-applicant reassignment goes
+        // through the production validator, service and audit listener stack.
+        val responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        val updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("APP002", updatedDto.getStandardApplicantCode());
+
+        // The update should record the selected standard applicant code in DATA_AUDIT.
+        val missingAuditMessage =
+                "Expected a standard_applicants.standard_applicant_code update audit row";
+        val standardApplicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.STANDARD_APPLICANTS, "standard_applicant_code", "APP002")
+                        .orElseThrow(() -> new AssertionError(missingAuditMessage));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                standardApplicantAuditRow.getEventName());
+    }
+
+    @Test
     public void
             givenACNotRequireRespondent_BulkRespondentAllowed_RespondentAndNumberOfRespondentsNotProvided_then400()
                     throws Exception {
