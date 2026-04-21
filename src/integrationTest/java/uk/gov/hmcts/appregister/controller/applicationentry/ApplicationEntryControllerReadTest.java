@@ -897,7 +897,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         + applicationList.getUuid()
                                         + "/entries"),
                         tokenGenerator.fetchTokenForRole(),
-                        rs -> rs.queryParam("applicantName", "Turner"),
+                        rs -> rs.queryParam("applicantName", "John Turner"),
                         new OpenApiPageMetaData());
 
         responseSpec.then().statusCode(200);
@@ -936,7 +936,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         + applicationList.getUuid()
                                         + "/entries"),
                         tokenGenerator.fetchTokenForRole(),
-                        rs -> rs.queryParam("respondentName", "Johnson"),
+                        rs -> rs.queryParam("respondentName", "Sarah Johnson"),
                         new OpenApiPageMetaData());
 
         responseSpec.then().statusCode(200);
@@ -983,8 +983,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         + "/entries"),
                         tokenGenerator.fetchTokenForRole(),
                         rs ->
-                                rs.queryParam("applicantName", "Turner")
-                                        .queryParam("respondentName", "Johnson"),
+                                rs.queryParam("applicantName", "John Turner")
+                                        .queryParam("respondentName", "Sarah Johnson"),
                         new OpenApiPageMetaData());
 
         responseSpec.then().statusCode(200);

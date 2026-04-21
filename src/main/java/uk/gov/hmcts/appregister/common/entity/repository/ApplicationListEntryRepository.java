@@ -218,8 +218,9 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                             LIKE CONCAT('%', LOWER(cast(:otherLocationDescription AS string)), '%') ESCAPE '\\')
                     AND (:courtCode IS NULL OR LOWER(al.courtCode) = LOWER(cast(:courtCode AS string )))
                     AND (:cjaCode IS NULL OR LOWER(cja.code)=LOWER(cast(:cjaCode AS STRING )))
-                    AND (:applicantName IS NULL OR COALESCE(LOWER(ana.name), LOWER(CONCAT(COALESCE(ana.surname, ' '),
-                                        COALESCE(ana.forename1, ' '), COALESCE(ana.title, ' '))))
+                    AND (:applicantName IS NULL OR LOWER(COALESCE(
+                                        ana.name,
+                                        FUNCTION('concat_ws', ' ', ana.forename1, ana.surname)))
                             LIKE CONCAT('%', LOWER(cast(:applicantName AS string)) , '%') ESCAPE '\\'
                             AND ana.code='NA')
                     AND (:applicantOrganisation IS NULL OR LOWER(ana.name)
@@ -232,12 +233,9 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                             LIKE CONCAT('%', LOWER(cast(:standardApplicantCode AS string)), '%')  ESCAPE '\\')
                     AND (:status IS NULL OR :status=ale.applicationList.status)
                     AND (:respondentName IS NULL OR
-                                COALESCE(
+                                LOWER(COALESCE(
                                         rna.name,
-                                        LOWER(CONCAT(
-                                                COALESCE(rna.surname, ' '),
-                                                COALESCE(rna.forename1, ' '),
-                                                COALESCE(rna.title, ' '))))
+                                        FUNCTION('concat_ws', ' ', rna.forename1, rna.surname)))
                                         LIKE CONCAT('%', LOWER(cast(:respondentName AS string )), '%')
                                             ESCAPE '\\' AND rna.code='RE')
                     AND (:respondentOrganisation IS NULL OR LOWER(rna.name) LIKE CONCAT('%',
