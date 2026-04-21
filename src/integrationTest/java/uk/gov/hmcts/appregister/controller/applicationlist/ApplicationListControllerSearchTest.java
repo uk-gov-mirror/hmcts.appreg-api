@@ -1173,19 +1173,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                 page.getEntriesSummary().get(0).getPostCode().get());
         Assertions.assertEquals(
                 page.getEntriesSummary().get(0).getApplicant().get(),
-                entryGetDetailDto.getApplicant().getPerson().getName().getSurname()
-                        + ", "
-                        + entryGetDetailDto.getApplicant().getPerson().getName().getFirstForename()
-                        + ", "
-                        + entryGetDetailDto.getApplicant().getPerson().getName().getTitle());
+                entryGetDetailDto.getApplicant().getPerson().getName().getFirstForename()
+                        + " "
+                        + entryGetDetailDto.getApplicant().getPerson().getName().getSurname());
 
         Assertions.assertEquals(
                 page.getEntriesSummary().get(0).getRespondent().get(),
-                entryGetDetailDto.getRespondent().getPerson().getName().getSurname()
-                        + ", "
-                        + entryGetDetailDto.getRespondent().getPerson().getName().getFirstForename()
-                        + ", "
-                        + entryGetDetailDto.getRespondent().getPerson().getName().getTitle());
+                entryGetDetailDto.getRespondent().getPerson().getName().getFirstForename()
+                        + " "
+                        + entryGetDetailDto.getRespondent().getPerson().getName().getSurname());
     }
 
     @Test
