@@ -309,7 +309,9 @@ public class StandardApplicantRepositoryTest extends BaseRepositoryTest {
                                     PageRequest.of(0, 10, Sort.by("effectiveName").ascending()));
 
                     assertThat(results.getContent())
-                            .extracting(projection -> projection.getStandardApplicant().getApplicantCode())
+                            .extracting(
+                                    projection ->
+                                            projection.getStandardApplicant().getApplicantCode())
                             .containsSequence("APP-AMY", "APP-ORG", "APP-ZOE");
                 });
     }

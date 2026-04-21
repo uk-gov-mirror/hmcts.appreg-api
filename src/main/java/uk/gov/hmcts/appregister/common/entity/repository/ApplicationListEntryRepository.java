@@ -181,17 +181,13 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
                     ana.surname as applicantSurname,
                     CASE WHEN ana.name IS NOT NULL THEN
                          ana.name
-                    WHEN ana.surname IS NOT NULL AND ana.forename1 IS NOT NULL AND ana.title IS NOT NULL THEN
-                        CONCAT(ana.surname, ',', ana.forename1, ',', ana.title)
-                    WHEN ana.surname IS NOT NULL AND ana.forename1 IS NOT NULL AND ana.title IS NULL THEN
-                        CONCAT(ana.surname, ',', ana.forename1)
+                    WHEN ana.surname IS NOT NULL OR ana.forename1 IS NOT NULL THEN
+                        FUNCTION('concat_ws', ' ', ana.forename1, ana.surname)
                     END as applicantName,
                     CASE WHEN rna.name IS NOT NULL THEN
                          rna.name
-                    WHEN rna.surname IS NOT NULL AND rna.forename1 IS NOT NULL AND rna.title IS NOT NULL THEN
-                        CONCAT(rna.surname, ',', rna.forename1, ',', rna.title)
-                    WHEN rna.surname IS NOT NULL AND rna.forename1 IS NOT NULL AND rna.title IS NULL THEN
-                        CONCAT(rna.surname, ',', rna.forename1)
+                    WHEN rna.surname IS NOT NULL OR rna.forename1 IS NOT NULL THEN
+                        FUNCTION('concat_ws', ' ', rna.forename1, rna.surname)
                     END as respondentName,
                     rna.name as respondentOrganisation,
                     rna.surname as respondentSurname,
