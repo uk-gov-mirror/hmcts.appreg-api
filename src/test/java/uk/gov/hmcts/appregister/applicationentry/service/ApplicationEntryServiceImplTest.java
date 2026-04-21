@@ -1252,64 +1252,93 @@ public class ApplicationEntryServiceImplTest {
     }
 
     @Test
-    void move_performsBulkUpdate_whenValidRequest() {
-        ApplicationList targetList = new ApplicationList();
+    void move_updatesAndSavesEachEntry_whenValidRequest() {
+        val sourceListId = UUID.randomUUID();
+        val sourceList = new ApplicationList();
+        sourceList.setId(10L);
+        sourceList.setUuid(sourceListId);
+
+        val targetList = new ApplicationList();
+        targetList.setId(20L);
         targetList.setUuid(UUID.randomUUID());
 
-        // Two entry UUIDs requested
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
+        val id1 = UUID.randomUUID();
 
-        MoveEntriesDto dto = new MoveEntriesDto();
+        val entry1 = new ApplicationListEntry();
+        entry1.setId(101L);
+        entry1.setUuid(id1);
+        entry1.setApplicationList(sourceList);
+        entry1.setVersion(0L);
+
+        val entry2 = new ApplicationListEntry();
+        entry2.setId(102L);
+        val id2 = UUID.randomUUID();
+        entry2.setUuid(id2);
+        entry2.setApplicationList(sourceList);
+        entry2.setVersion(5L);
+
+        val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
         dto.setEntryIds(Set.of(id1, id2));
 
-        MoveEntriesValidationSuccess success = new MoveEntriesValidationSuccess();
+        val success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
         moveEntriesValidator.setSuccess(success);
 
-        // Mock repository to return rowsUpdated == requested size (2)
-        UUID sourceListId = UUID.randomUUID();
+        when(applicationListEntryRepository.findByUuidsInSourceList(eq(sourceListId), anySet()))
+                .thenReturn(List.of(entry1, entry2));
+        when(applicationListEntryRepository.save(any(ApplicationListEntry.class)))
+                .thenAnswer(
+                        invocation -> {
+                            val entry = invocation.getArgument(0, ApplicationListEntry.class);
+                            entry.setVersion(entry.getVersion() + 1);
+                            return entry;
+                        });
 
-        when(applicationListEntryRepository.findExistingEntryIdsInSourceList(
-                        eq(sourceListId), anySet()))
-                .thenReturn(Set.of(id1, id2));
-
-        when(applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        anySet(), eq(targetList), eq(sourceListId)))
-                .thenReturn(2);
-
-        // Act - should not throw
+        // Execute the move request exactly as the service receives it from the controller.
         service.move(sourceListId, dto);
 
-        // Verify the bulk update call was invoked once with the same source and target that the
-        // service was called with
+        // Each requested entry should now point at the target list and be saved individually so
+        // the audit framework can diff old and new values.
+        Assertions.assertEquals(targetList, entry1.getApplicationList());
+        Assertions.assertEquals(targetList, entry2.getApplicationList());
         verify(applicationListEntryRepository, times(1))
-                .bulkMoveByUuidAndSourceList(anySet(), eq(targetList), eq(sourceListId));
+                .findByUuidsInSourceList(eq(sourceListId), anySet());
+        verify(applicationListEntryRepository, times(2)).save(any(ApplicationListEntry.class));
     }
 
     @Test
-    void move_throws_whenBulkUpdateAffectsFewerRowsThanRequested() {
-        ApplicationList targetList = new ApplicationList();
+    void move_throws_whenSomeRequestedEntriesAreMissingFromSourceList() {
+        val sourceListId = UUID.randomUUID();
+        val sourceList = new ApplicationList();
+        sourceList.setId(10L);
+        sourceList.setUuid(sourceListId);
+
+        val targetList = new ApplicationList();
+        targetList.setId(20L);
         targetList.setUuid(UUID.randomUUID());
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
+        val id1 = UUID.randomUUID();
 
-        MoveEntriesDto dto = new MoveEntriesDto();
+        val entry1 = new ApplicationListEntry();
+        entry1.setId(101L);
+        entry1.setUuid(id1);
+        entry1.setApplicationList(sourceList);
+        entry1.setVersion(0L);
+        val id2 = UUID.randomUUID();
+
+        val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
         dto.setEntryIds(Set.of(id1, id2));
 
-        MoveEntriesValidationSuccess success = new MoveEntriesValidationSuccess();
+        val success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
         moveEntriesValidator.setSuccess(success);
 
-        // Simulate DB updated only 1 row even though 2 were requested
-        UUID sourceListId = UUID.randomUUID();
-        when(applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        anySet(), eq(targetList), eq(sourceListId)))
-                .thenReturn(1);
+        when(applicationListEntryRepository.findByUuidsInSourceList(eq(sourceListId), anySet()))
+                .thenReturn(List.of(entry1));
 
+        // A partial match must be rejected so the caller can see which entry IDs were invalid.
         assertThatThrownBy(() -> service.move(sourceListId, dto))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(

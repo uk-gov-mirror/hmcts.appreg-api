@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
+import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryMoveAudit;
 import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryReadAudit;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
@@ -1005,10 +1006,12 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                 moveEntriesValidator.validate(payload, (req, success) -> success.getTargetList());
 
         Set<UUID> requestedIds = new HashSet<>(moveEntriesDto.getEntryIds());
-
+        List<ApplicationListEntry> entriesToMove =
+                applicationListEntryRepository.findByUuidsInSourceList(sourceListId, requestedIds);
         Set<UUID> existingIds =
-                applicationListEntryRepository.findExistingEntryIdsInSourceList(
-                        sourceListId, requestedIds);
+                entriesToMove.stream()
+                        .map(ApplicationListEntry::getUuid)
+                        .collect(Collectors.toSet());
 
         Set<UUID> missingIds = new HashSet<>(requestedIds);
         missingIds.removeAll(existingIds);
@@ -1020,8 +1023,21 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                     Map.of("invalid_entry_ids", missingIds.toString()));
         }
 
-        applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                existingIds, targetList, sourceListId);
+        for (var entryToMove : entriesToMove) {
+            auditService.processAudit(
+                    ApplicationListEntryMoveAudit.from(entryToMove),
+                    AppListEntryAuditOperation.MOVE_APP_ENTRY,
+                    req -> {
+                        entryToMove.setApplicationList(targetList);
+                        var movedEntry =
+                                refreshEntity(applicationListEntryRepository.save(entryToMove));
+
+                        return Optional.of(
+                                new AuditableResult<>(
+                                        movedEntry.getUuid(),
+                                        ApplicationListEntryMoveAudit.from(movedEntry)));
+                    });
+        }
 
         log.info(
                 "Completed bulk move for {} entries from list {}",

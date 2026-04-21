@@ -245,7 +245,8 @@ public class ReportingControllerGetTest extends BaseIntegration {
                         .orElseThrow(
                                 () ->
                                         new AssertionError(
-                                                "Expected an asynch_jobs.id audit row for GET /reports/jobs/{jobId}/download"));
+                                                "Expected an asynch_jobs.id audit row for GET"
+                                                        + " /reports/jobs/{jobId}/download"));
 
         Assertions.assertEquals("", persistedAuditRow.getOldValue());
         Assertions.assertEquals(

@@ -106,6 +106,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @Column(name = "version", nullable = false)
     @Version
+    @Audit(action = {CrudEnum.UPDATE})
     private Long version;
 
     @Column(name = "bulk_upload")

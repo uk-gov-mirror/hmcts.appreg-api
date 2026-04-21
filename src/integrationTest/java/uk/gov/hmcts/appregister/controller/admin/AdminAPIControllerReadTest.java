@@ -75,7 +75,8 @@ public class AdminAPIControllerReadTest extends AbstractAdminAPICrudTest {
                         .orElseThrow(
                                 () ->
                                         new AssertionError(
-                                                "Expected a database_jobs.job_name audit row for GET /admin/jobs/{jobType}"));
+                                                "Expected a database_jobs.job_name audit row"
+                                                        + " for GET /admin/jobs/{jobType}"));
 
         assertEquals("", persistedAuditRow.getOldValue());
         assertEquals(
