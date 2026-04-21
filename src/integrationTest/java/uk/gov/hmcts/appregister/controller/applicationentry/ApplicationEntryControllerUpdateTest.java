@@ -834,6 +834,7 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
         entryUpdateDto.setNumberOfRespondents(5);
         entryUpdateDto.setFeeStatuses(null);
         entryUpdateDto.setApplicationCode("CT99001");
+        entryUpdateDto.setCaseReference("CASE-UPD-001");
         entryUpdateDto.setNotes("Updated audit notes");
         entryUpdateDto.setWordingFields(List.of(new TemplateSubstitution("Number", "5")));
 
@@ -857,6 +858,7 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
         Assertions.assertEquals("Updated audit notes", updatedDto.getNotes());
         Assertions.assertEquals(5, updatedDto.getNumberOfRespondents());
         Assertions.assertEquals("CT99001", updatedDto.getApplicationCode());
+        Assertions.assertEquals("CASE-UPD-001", updatedDto.getCaseReference());
 
         // Notes changed from the seeded value to the update payload value.
         val notesAuditRow =
@@ -910,6 +912,25 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
         Assertions.assertEquals(
                 AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
                 applicationCodeAuditRow.getEventName());
+
+        // Case reference is another DB-backed column on APPLICATION_LIST_ENTRIES and should record
+        // the old and new values on update.
+        val missingCaseReferenceAuditMessage =
+                "Expected an application_list_entries.case_reference update audit row";
+        val originalCaseReference =
+                responseSpecCreate.as(EntryGetDetailDto.class).getCaseReference();
+        val caseReferenceAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValueAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "case_reference",
+                                originalCaseReference,
+                                "CASE-UPD-001")
+                        .orElseThrow(() -> new AssertionError(missingCaseReferenceAuditMessage));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                caseReferenceAuditRow.getEventName());
     }
 
     @Test

@@ -2198,6 +2198,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
         entryCreateDto.setNumberOfRespondents(5);
         entryCreateDto.setFeeStatuses(null);
         entryCreateDto.setApplicationCode("CT99001");
+        entryCreateDto.setCaseReference("CASE-CRT-001");
         entryCreateDto.setNotes("Create audit notes");
         entryCreateDto.setWordingFields(List.of(new TemplateSubstitution("Number", "5")));
 
@@ -2224,6 +2225,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
         Assertions.assertEquals("Create audit notes", createdDto.getNotes());
         Assertions.assertEquals(5, createdDto.getNumberOfRespondents());
         Assertions.assertEquals("CT99001", createdDto.getApplicationCode());
+        Assertions.assertEquals("CASE-CRT-001", createdDto.getCaseReference());
 
         // Notes are stored directly on the entry row, so we expect a matching create audit row.
         val noteAuditRow =
@@ -2275,6 +2277,41 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                         .CREATE_APP_ENTRY_LIST
                         .getEventName(),
                 applicationCodeAuditRow.getEventName());
+
+        // Case reference is stored directly on the entry row and should be recorded on create.
+        val caseReferenceAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "case_reference",
+                                "CASE-CRT-001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.case_reference audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                caseReferenceAuditRow.getEventName());
+
+        // Entry rescheduled is defaulted in the mapper, so create audit should persist that DB
+        // column as well.
+        val entryRescheduledAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY, "entry_rescheduled", "N")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.entry_rescheduled audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                entryRescheduledAuditRow.getEventName());
     }
 
     @Test

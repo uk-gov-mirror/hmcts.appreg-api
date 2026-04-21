@@ -92,6 +92,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @Column(name = "case_reference")
     @Size(max = 15)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String caseReference;
 
     @Column(name = "account_number")
@@ -101,6 +102,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @Column(name = "entry_rescheduled", nullable = false)
     @Size(max = 1)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String entryRescheduled;
 
     @Column(name = "notes")
