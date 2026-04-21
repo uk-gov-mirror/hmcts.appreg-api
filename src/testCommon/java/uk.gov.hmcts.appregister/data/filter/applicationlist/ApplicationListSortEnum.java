@@ -55,7 +55,7 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
     STATUS(
             SortMetaDataDescriptor.<ApplicationList>builder()
                     .sortableOperationEnum(ApplicationListSortFieldEnum.STATUS)
-                    .sortableValueFunction(keyable -> keyable.getStatus().toString())
+                    .sortableValueFunction(keyable -> keyable.getStatus().getValue())
                     .sortGenerator(
                             new GenerateAccordingToSort<ApplicationList>() {
                                 @Override

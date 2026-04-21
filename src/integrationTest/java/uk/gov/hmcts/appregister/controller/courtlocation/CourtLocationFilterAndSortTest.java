@@ -1,10 +1,12 @@
 package uk.gov.hmcts.appregister.controller.courtlocation;
 
 import io.restassured.response.Response;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.data.NationalCourtHouseData;
@@ -19,6 +21,7 @@ import uk.gov.hmcts.appregister.testutils.controller.AbstractFilterAndSortContro
 import uk.gov.hmcts.appregister.testutils.controller.RestFilterEndpointDescription;
 import uk.gov.hmcts.appregister.testutils.controller.RestSortEndpointDescription;
 
+@Slf4j
 public class CourtLocationFilterAndSortTest
         extends AbstractFilterAndSortControllerTest<NationalCourtHouse> {
 
@@ -28,6 +31,7 @@ public class CourtLocationFilterAndSortTest
         // create the application code
         NationalCourtHouse nationalCourtHouse = new NationalCourtHouseData().someComplete();
         nationalCourtHouse.setEndDate(null);
+        nationalCourtHouse.setStartDate(LocalDate.now().minusDays(1));
 
         // process the scenario
         FilterableScenario<NationalCourtHouse> scenario =
@@ -57,6 +61,7 @@ public class CourtLocationFilterAndSortTest
         // create the application code
         NationalCourtHouse nationalCourtHouse = new NationalCourtHouseData().someComplete();
         nationalCourtHouse.setEndDate(null);
+        nationalCourtHouse.setStartDate(LocalDate.now().minusDays(1));
 
         // process the scenario
         List<NationalCourtHouse> nationalCourtHouses =

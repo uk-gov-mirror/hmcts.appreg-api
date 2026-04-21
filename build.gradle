@@ -2,7 +2,7 @@ plugins {
   id 'application'
   id 'jacoco'
   id 'io.spring.dependency-management' version '1.1.7'
-  id 'org.springframework.boot' version '4.0.2'
+  id 'org.springframework.boot' version '4.0.5'
   id 'com.github.ben-manes.versions' version '0.53.0'
   id 'org.sonarqube' version '6.3.1.5724'
   id 'org.openapi.generator' version '7.3.0'
@@ -15,6 +15,7 @@ plugins {
   id 'com.diffplug.spotless' version '8.2.1'
   id 'org.openrewrite.rewrite' version 'latest.release'
   id 'maven-publish'
+  id 'com.github.jk1.dependency-license-report' version '2.6'
 }
 
 /**
@@ -28,6 +29,7 @@ tasks.register('bundleOpenApi', org.openapitools.generator.gradle.plugin.tasks.G
   outputDir = layout.buildDirectory.file("specmerge").get()
     .asFile
     .path
+  inputs.files(fileTree("src/main/resources/openapi"))
 }
 
 /**
@@ -437,7 +439,7 @@ dependencies {
 
   implementation 'org.springframework.cloud:spring-cloud-starter'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
-  implementation "org.openapitools:jackson-databind-nullable:0.2.9"
+  implementation "org.openapitools:jackson-databind-nullable:0.2.10"
 
   // OAuth2 support
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-oauth2-resource-server'
@@ -452,7 +454,7 @@ dependencies {
 
   implementation 'jakarta.validation:jakarta.validation-api:3.1.1'
 
-  implementation 'io.swagger.core.v3:swagger-annotations:2.2.42'
+  implementation 'io.swagger.core.v3:swagger-annotations:2.2.48'
 
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0'
 
@@ -469,8 +471,14 @@ dependencies {
   // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
   implementation("com.fasterxml.jackson.core:jackson-annotations:2.21")
 
+  // Source: https://mvnrepository.com/artifact/com.opencsv/opencsv
+  implementation("com.opencsv:opencsv:5.12.0")
+
+  // Source: https://mvnrepository.com/artifact/commons-io/commons-io
+  implementation("commons-io:commons-io:2.21.0")
+
   // A hibernate library that generates column constants
-  annotationProcessor 'org.hibernate.orm:hibernate-jpamodelgen:6.6.42.Final'
+  annotationProcessor 'org.hibernate.orm:hibernate-jpamodelgen:6.6.48.Final'
 
   // Lombok
   compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.42'
@@ -493,20 +501,22 @@ dependencies {
   testImplementation("org.codehaus.groovy:groovy:3.0.25")
 
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-  testImplementation 'io.github.hakky54:logcaptor:2.12.2'
+  testImplementation 'io.github.hakky54:logcaptor:2.12.6'
   testImplementation 'org.testcontainers:testcontainers:1.21.4'
   testImplementation 'org.testcontainers:postgresql:1.21.4'
-  testImplementation 'io.github.hakky54:logcaptor:2.12.2'
+  testImplementation 'io.github.hakky54:logcaptor:2.12.6'
   testImplementation "org.wiremock.integrations:wiremock-spring-boot:4.1.0"
   testImplementation 'org.instancio:instancio-junit:5.5.1'
+
+  testImplementation "com.tngtech.archunit:archunit-junit5:1.4.1"
   testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
 
   rewrite group: 'org.openrewrite.recipe', name: 'rewrite-static-analysis', version: '2.16.0'
 
   // Updated Third-Party Dependencies
   implementation 'org.apache.commons:commons-lang3:3.20.0'
-  implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.52'
-  implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:10.1.52'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.21'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21'
 
   // Mapstruct dependency
   implementation 'org.mapstruct:mapstruct:1.6.3' // your version
@@ -591,6 +601,10 @@ openApiGenerate {
   ]
 }
 
+tasks.named('openApiGenerate') {
+  inputs.files(fileTree("src/main/resources/openapi"))
+}
+
 // Add a new jar that will be published to maven with the classifier -openapi
 tasks.register('openapiJarArtefact', Jar) {
   archiveClassifier = 'openapi'
@@ -629,5 +643,30 @@ publishing {
         password = System.getenv("AZURE_DEVOPS_ARTIFACT_TOKEN")
       }
     }
+  }
+
+  // Configuration for the license report plugin
+  licenseReport {
+    // Directory where reports will be generated
+    outputDir = "$buildDir/reports/dependency-license"
+
+    // Configurations to scan (adjust as needed)
+    configurations = ['runtimeClasspath']
+
+    // Renderers define output formats
+    renderers = [
+      new com.github.jk1.license.render.JsonReportRenderer(),
+      new com.github.jk1.license.render.SimpleHtmlReportRenderer()
+    ]
+
+    // Optional: filter out dependencies (example)
+    filters = [
+      new com.github.jk1.license.filter.LicenseBundleNormalizer()
+    ]
+
+    // Optional: exclude specific groups/modules
+    excludes = [
+      'com.example:excluded-library'
+    ]
   }
 }

@@ -15,6 +15,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import uk.gov.hmcts.appregister.audit.listener.diff.Audit;
 import uk.gov.hmcts.appregister.audit.listener.diff.AuditEnabled;
 import uk.gov.hmcts.appregister.common.entity.base.BaseUnmanagedChangeableEntity;
@@ -55,6 +56,7 @@ import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @AuditEnabled(types = {CrudEnum.READ})
+@ToString
 public class NationalCourtHouse extends BaseUnmanagedChangeableEntity
         implements Versionable, Keyable {
 

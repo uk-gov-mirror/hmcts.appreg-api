@@ -19,6 +19,7 @@ import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
+import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
@@ -74,9 +75,7 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
 
                                 return newPage.addContentItem(
                                         applicationCodeMapper.toApplicationCodeGetSummaryDto(
-                                                code,
-                                                feePair != null ? feePair.mainFee() : null,
-                                                feePair != null ? feePair.offsiteFee() : null));
+                                                code, feePair.mainFee(), feePair.offsiteFee()));
                             });
 
                     log.debug(
@@ -106,7 +105,9 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                             (payload, success) -> {
                                 FeePair feePair =
                                         feeService.resolveFeePair(
-                                                success.getApplicationCode().getFeeReference());
+                                                success.getApplicationCode().getFeeReference(),
+                                                payloadForGet.getDate());
+                                Fee offsiteFee = feePair.offsiteFee();
 
                                 AuditableResult<ApplicationCodeGetDetailDto, ApplicationCode>
                                         result =
@@ -115,13 +116,8 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                                                 .toApplicationCodeGetDetailDto(
                                                                         success
                                                                                 .getApplicationCode(),
-                                                                        feePair != null
-                                                                                ? feePair.mainFee()
-                                                                                : null,
-                                                                        feePair != null
-                                                                                ? feePair
-                                                                                        .offsiteFee()
-                                                                                : null),
+                                                                        feePair.mainFee(),
+                                                                        offsiteFee),
                                                         applicationCodeMapper.toEntity(
                                                                 payloadForGet));
 
@@ -131,7 +127,6 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                         payload.getDate());
                                 return Optional.of(result);
                             });
-                },
-                auditLifecycleListeners.toArray(new AuditOperationLifecycleListener[0]));
+                });
     }
 }

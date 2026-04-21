@@ -6,6 +6,7 @@ import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.ResponseEntity;
 
 public class ControllerLogAspectTest {
 
@@ -16,8 +17,11 @@ public class ControllerLogAspectTest {
         ControllerLogAspect controllerLogAspect = new ControllerLogAspect();
         Signature signature = Mockito.mock(Signature.class);
 
+        ResponseEntity<String> responseEntity = ResponseEntity.ok("Test Result");
+        responseEntity.getHeaders().add("Content-Type", "application/vnd.hmcts.appreg.v1+json");
+
         ProceedingJoinPoint customProceedingJoinPoint = Mockito.mock(ProceedingJoinPoint.class);
-        Mockito.when(customProceedingJoinPoint.proceed()).thenReturn("Test Result");
+        Mockito.when(customProceedingJoinPoint.proceed()).thenReturn(responseEntity);
         Mockito.when(customProceedingJoinPoint.getArgs()).thenReturn(new Object[] {"arg1", "arg2"});
         Mockito.when(customProceedingJoinPoint.getSignature()).thenReturn(signature);
 
@@ -26,10 +30,11 @@ public class ControllerLogAspectTest {
         Mockito.when(signature.getName()).thenReturn("testMethod");
 
         // call the aspect method
-        String result = (String) controllerLogAspect.logDuration(customProceedingJoinPoint);
+        ResponseEntity result =
+                (ResponseEntity) controllerLogAspect.logDuration(customProceedingJoinPoint);
 
         // assert the log messages are correct and the result is correct
-        Assertions.assertEquals("Test Result", result);
+        Assertions.assertEquals("Test Result", result.getBody());
         Assertions.assertTrue(
                 controllerAspectLog
                         .getDebugLogs()

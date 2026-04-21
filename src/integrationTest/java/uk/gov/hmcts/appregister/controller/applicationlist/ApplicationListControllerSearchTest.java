@@ -8,15 +8,18 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
 import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
+import uk.gov.hmcts.appregister.applicationlist.config.ApplicationListSortProperties;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
@@ -40,9 +43,12 @@ import uk.gov.hmcts.appregister.testutils.util.DataAuditLogAsserter;
 
 public class ApplicationListControllerSearchTest extends AbstractApplicationListControllerCrudTest {
 
+    @Autowired private ApplicationListSortProperties sortProperties;
+
     @StabilityTest
     public void givenApplicationListSuccessfulSort_whenSearchWithAllSortKeys_thenSuccessResponse()
             throws Exception {
+        Set<ApplicationListSortFieldEnum> disabledSortKeys = sortProperties.getDisabledEnums();
 
         // loop through all sort fields to make sure no errors occur
         for (ApplicationListSortFieldEnum applicationEntrySortFieldEnum :
@@ -64,16 +70,26 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
             responseSpec.then().statusCode(200);
             ApplicationListPage page = responseSpec.as(ApplicationListPage.class);
 
-            // make sure the order response marries with the request data
-            Assertions.assertEquals(1, page.getSort().getOrders().size());
-            Assertions.assertEquals(
-                    SortOrdersInner.DirectionEnum.DESC,
-                    page.getSort().getOrders().get(0).getDirection());
+            // Disabled sort keys should fall back to the default ordering.
+            if (disabledSortKeys.contains(applicationEntrySortFieldEnum)) {
+                Assertions.assertEquals(1, page.getSort().getOrders().size());
+                Assertions.assertEquals(
+                        SortOrdersInner.DirectionEnum.ASC,
+                        page.getSort().getOrders().getFirst().getDirection());
 
-            // make sure we only return externalised api sort data
-            Assertions.assertEquals(
-                    applicationEntrySortFieldEnum.getApiValue(),
-                    page.getSort().getOrders().get(0).getProperty());
+                Assertions.assertEquals(
+                        ApplicationListSortFieldEnum.DESCRIPTION.getApiValue(),
+                        page.getSort().getOrders().getFirst().getProperty());
+            } else {
+                // Enabled sort keys should be returned as requested.
+                Assertions.assertEquals(1, page.getSort().getOrders().size());
+                Assertions.assertEquals(
+                        SortOrdersInner.DirectionEnum.DESC,
+                        page.getSort().getOrders().getFirst().getDirection());
+                Assertions.assertEquals(
+                        applicationEntrySortFieldEnum.getApiValue(),
+                        page.getSort().getOrders().getFirst().getProperty());
+            }
         }
 
         Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
@@ -299,19 +315,19 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
     @StabilityTest
     public void givenApplicationList_whenSortByLocationDesc_thenCjaDescriptionPrecedesCourtName()
             throws Exception {
-
         // create the token
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // add initial list with court name 'Cardiff Crown Court'
+        // add an initial list
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
-                        .description("description")
+                        .description("Alpha description")
                         .status(ApplicationListStatus.OPEN)
-                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(VALID_CJA_CODE2)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
                         .durationMinutes(0);
 
@@ -319,10 +335,11 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add second list with cja description 'CJA_CE_DESCRIPTION'
-        createListReq.setCjaCode(VALID_CJA_CODE2);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
+        // add second list
+        createListReq.setDescription("Zulu description");
+        createListReq.setCjaCode(null);
+        createListReq.setOtherLocationDescription(null);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
         final UUID listId2 =
                 createApplicationListWithCourtCode(
@@ -340,48 +357,46 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                                 .build());
         createListResp.then().statusCode(HttpStatus.OK.value());
 
-        // assert order
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
-        Assertions.assertEquals(listId2, page.getContent().get(0).getId());
-        Assertions.assertEquals(listId, page.getContent().get(1).getId());
+
+        boolean locationSortDisabled =
+                sortProperties.getDisabledEnums().contains(ApplicationListSortFieldEnum.LOCATION);
+        assertOrder(page, locationSortDisabled, listId, listId2);
     }
 
     @StabilityTest
     public void givenApplicationListSuccessfulSort_whenSortByCjaLocation_thenSuccessResponse()
             throws Exception {
-
         // create the token
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // create a list with a cja code and location description
+        // add an initial list
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
-                        .description("description")
+                        .description("Alpha description")
                         .status(ApplicationListStatus.OPEN)
-                        .courtLocationCode(VALID_COURT_CODE)
+                        .cjaCode(VALID_CJA_CODE2)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
                         .durationHours(1)
                         .durationMinutes(0);
-
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
 
         UUID listId =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add a entry to the list
+        // add an entry to the list
         createEntry(listId);
 
-        // create a second list with same cja code and different location description
-        createListReq.setCjaCode(VALID_CJA_CODE);
-        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
-        createListReq.setCourtLocationCode(null);
+        // add second list
+        createListReq.setDescription("Zulu description");
+        createListReq.setCjaCode(null);
+        createListReq.setOtherLocationDescription(null);
+        createListReq.setCourtLocationCode(VALID_COURT_CODE);
 
-        UUID listId2 =
+        final UUID listId2 =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
@@ -406,8 +421,11 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
 
         // assert expected order
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
-        Assertions.assertEquals(listId2, page.getContent().get(0).getId());
-        Assertions.assertEquals(listId, page.getContent().get(1).getId());
+        Assertions.assertEquals(2, page.getContent().size());
+
+        boolean locationSortDisabled =
+                sortProperties.getDisabledEnums().contains(ApplicationListSortFieldEnum.LOCATION);
+        assertOrder(page, locationSortDisabled, listId, listId2);
     }
 
     @DisplayName("GET: default paging + default sort (description ASC)")
@@ -790,6 +808,47 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                         AppListAuditOperation.GET_APP_LIST.getType().name(),
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
+
+    // TODO: Re-enable and refactor this once we have clarified what endpoint we need disabling for
+    // - ARCPOC-992/1218
+    /*@Test
+    @DisplayName("GET: disabled sort key is ignored and default description ordering is used")
+    void givenDisabledSortKey_whenGet_then200AndDefaultOrderingApplied() throws Exception {
+        String prefix = uniquePrefix("disabled-sort");
+        LocalDate day = LocalDate.of(2025, 10, 15);
+        LocalTime slot = LocalTime.of(10, 30);
+
+        // Three rows with the same date/time so the requested TIME sort would not change anything.
+        // The default sort should therefore be visible as description ASC.
+        createWithCourt(prefix + " - Zebra", day, slot);
+        createWithCourt(prefix + " - Alpha", day, slot);
+        createWithCourt(prefix + " - Mango", day, slot);
+
+        var userToken =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        Response resp =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of(ApplicationListSortFieldEnum.TIME.getApiValue() + ",desc"),
+                        getLocalUrl(WEB_CONTEXT),
+                        userToken,
+                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
+                        new OpenApiPageMetaData());
+
+        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
+
+        ApplicationListPage page = resp.as(ApplicationListPage.class);
+
+        assertThat(page.getContent()).hasSize(3);
+        assertThat(page.getContent().get(0).getDescription()).endsWith("Alpha");
+        assertThat(page.getContent().get(1).getDescription()).endsWith("Mango");
+        assertThat(page.getContent().get(2).getDescription()).endsWith("Zebra");
+    }*/
 
     @Test
     @DisplayName("GET: does not return soft deleted list")

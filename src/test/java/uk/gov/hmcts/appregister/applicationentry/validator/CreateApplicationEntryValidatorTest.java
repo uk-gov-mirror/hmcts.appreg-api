@@ -21,22 +21,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
+import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
-import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
+import uk.gov.hmcts.appregister.common.service.BusinessDateProvider;
 import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.data.ApplicationCodeTestData;
 import uk.gov.hmcts.appregister.data.FeeTestData;
@@ -48,13 +51,16 @@ import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class CreateApplicationEntryValidatorTest {
+    private static final LocalDate TODAY_UK = LocalDate.of(2025, 10, 7);
+
     @Mock private ApplicationListRepository applicationListRepository;
 
     @Mock private ApplicationCodeRepository applicationCodeRepository;
 
-    @Mock private FeeRepository feeRepository;
+    @Mock private ApplicationFeeService feeService;
 
     @Mock private Clock clock;
+    @Mock private BusinessDateProvider businessDateProvider;
 
     @Mock private StandardApplicantRepository standardApplicantRepository;
 
@@ -73,6 +79,7 @@ public class CreateApplicationEntryValidatorTest {
         when(clock.instant()).thenReturn(Instant.now());
         when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
         when(clock.withZone(org.mockito.ArgumentMatchers.any(ZoneId.class))).thenReturn(clock);
+        when(businessDateProvider.currentUkDate()).thenReturn(TODAY_UK);
 
         AppListTestData appListTestData = new AppListTestData();
         applicationList = appListTestData.someComplete();
@@ -106,14 +113,10 @@ public class CreateApplicationEntryValidatorTest {
         fee.setId(1L);
         fee.setOffsite(true);
 
-        when(feeRepository.findByReferenceBetweenDateWithOffsite(
-                        eq(applicationCode.getFeeReference()),
-                        notNull(),
-                        eq(entryCreateDto.getHasOffsiteFee())))
-                .thenReturn(List.of(fee));
+        when(feeService.resolveFeePair(Mockito.notNull())).thenReturn(new FeePair(null, fee));
 
         when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
-                        entryCreateDto.getStandardApplicantCode(), LocalDate.now(clock)))
+                        entryCreateDto.getStandardApplicantCode(), TODAY_UK))
                 .thenReturn(List.of(standardApplicant));
     }
 
@@ -132,6 +135,7 @@ public class CreateApplicationEntryValidatorTest {
         applicationCode.setRequiresRespondent(YesOrNo.NO);
 
         entryCreateDto.setFeeStatuses(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         when(applicationCodeRepository.findByCodeAndDate(
                         eq(entryCreateDto.getApplicationCode()), notNull()))
@@ -156,6 +160,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto.setStandardApplicantCode(null);
         entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         // set application code to match the application code in the repository
         entryCreateDto.setApplicationCode("EF12121");
@@ -232,6 +237,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.getRespondent().setOrganisation(null);
         entryCreateDto.setStandardApplicantCode(null);
         entryCreateDto.getApplicant().setOrganisation(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         PayloadForCreate<EntryCreateDto> payload =
                 PayloadForCreate.<EntryCreateDto>builder()
@@ -339,7 +345,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.setNumberOfRespondents(null);
 
         when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
-                        entryCreateDto.getStandardApplicantCode(), LocalDate.now(clock)))
+                        entryCreateDto.getStandardApplicantCode(), TODAY_UK))
                 .thenReturn(List.of());
 
         PayloadForCreate<EntryCreateDto> payload =
@@ -359,15 +365,20 @@ public class CreateApplicationEntryValidatorTest {
     }
 
     @Test
-    void testStandardApplicantMultiple() {
+    void testStandardApplicantMultiple_prefersFirstRecord() {
         entryCreateDto.getRespondent().setOrganisation(null);
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto.getApplicant().setPerson(null);
         entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
+        CreateEntryDtoUtil.sanitiseFeeStatusesForDueRule(entryCreateDto.getFeeStatuses());
+
+        StandardApplicant preferredStandardApplicant = new StandardApplicant();
+        StandardApplicant alternativeStandardApplicant = new StandardApplicant();
         when(standardApplicantRepository.findStandardApplicantByCodeAndDate(
-                        entryCreateDto.getStandardApplicantCode(), LocalDate.now(clock)))
-                .thenReturn(List.of(new StandardApplicant(), new StandardApplicant()));
+                        entryCreateDto.getStandardApplicantCode(), TODAY_UK))
+                .thenReturn(List.of(preferredStandardApplicant, alternativeStandardApplicant));
 
         PayloadForCreate<EntryCreateDto> payload =
                 PayloadForCreate.<EntryCreateDto>builder()
@@ -375,14 +386,10 @@ public class CreateApplicationEntryValidatorTest {
                         .data(entryCreateDto)
                         .build();
 
-        // validate the payload
-        AppRegistryException appRegistryException =
-                Assertions.assertThrows(
-                        AppRegistryException.class,
-                        () -> createApplicationEntryValidator.validate(payload));
-        Assertions.assertEquals(
-                AppListEntryError.MULTIPLE_STANDARD_APPLICANT_EXIST.getCode().getAppCode(),
-                appRegistryException.getCode().getCode().getAppCode());
+        CreateApplicationEntryValidationSuccess success =
+                createApplicationEntryValidator.validate(payload, (validatable, result) -> result);
+
+        Assertions.assertSame(preferredStandardApplicant, success.getSa());
     }
 
     @Test
@@ -413,15 +420,21 @@ public class CreateApplicationEntryValidatorTest {
     }
 
     @Test
-    void testApplicantCodeMultiple() {
+    void testApplicantCodeMultiple_prefersFirstRecord() {
         entryCreateDto.getRespondent().setOrganisation(null);
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto.getApplicant().setPerson(null);
         entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
+
+        CreateEntryDtoUtil.sanitiseFeeStatusesForDueRule(entryCreateDto.getFeeStatuses());
+
+        ApplicationCode alternativeApplicationCode = new ApplicationCodeTestData().someComplete();
+        alternativeApplicationCode.setEndDate(TODAY_UK.plusDays(1));
 
         when(applicationCodeRepository.findByCodeAndDate(
                         eq(entryCreateDto.getApplicationCode()), notNull()))
-                .thenReturn(List.of(new ApplicationCode(), new ApplicationCode()));
+                .thenReturn(List.of(applicationCode, alternativeApplicationCode));
 
         PayloadForCreate<EntryCreateDto> payload =
                 PayloadForCreate.<EntryCreateDto>builder()
@@ -429,14 +442,10 @@ public class CreateApplicationEntryValidatorTest {
                         .data(entryCreateDto)
                         .build();
 
-        // validate the payload
-        AppRegistryException appRegistryException =
-                Assertions.assertThrows(
-                        AppRegistryException.class,
-                        () -> createApplicationEntryValidator.validate(payload));
-        Assertions.assertEquals(
-                AppListEntryError.MULTIPLE_APPLICATION_CODE_EXIST.getCode().getAppCode(),
-                appRegistryException.getCode().getCode().getAppCode());
+        CreateApplicationEntryValidationSuccess success =
+                createApplicationEntryValidator.validate(payload, (validatable, result) -> result);
+
+        Assertions.assertSame(applicationCode, success.getApplicationCode());
     }
 
     @Test
@@ -445,12 +454,13 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.setStandardApplicantCode(null);
         entryCreateDto.setNumberOfRespondents(null);
         entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         // Ensure we have a fee status and set it to DUE with a payment reference (invalid)
         FeeStatus feeStatus = new FeeStatus();
         feeStatus.setPaymentStatus(DUE);
         feeStatus.setPaymentReference("PAYREF-123");
-        feeStatus.setStatusDate(LocalDate.now(clock));
+        feeStatus.setStatusDate(TODAY_UK);
 
         entryCreateDto.setFeeStatuses(List.of(feeStatus));
 
@@ -520,6 +530,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto.setStandardApplicantCode(null);
         entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         // Ensure respondent exists (payload includes respondent)
         Assertions.assertNotNull(
@@ -554,6 +565,8 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.setRespondent(null);
         entryCreateDto.setFeeStatuses(null);
         entryCreateDto.setNumberOfRespondents(20);
+        entryCreateDto.setLodgementDate(LocalDate.now(clock));
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         when(applicationCodeRepository.findByCodeAndDate(
                         eq(entryCreateDto.getApplicationCode()), notNull()))
@@ -581,6 +594,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.setRespondent(null);
         entryCreateDto.setFeeStatuses(null);
         entryCreateDto.setNumberOfRespondents(20);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         when(applicationCodeRepository.findByCodeAndDate(
                         eq(entryCreateDto.getApplicationCode()), notNull()))
@@ -609,6 +623,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.setRespondent(null);
         entryCreateDto.setFeeStatuses(null);
         entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         when(applicationCodeRepository.findByCodeAndDate(
                         eq(entryCreateDto.getApplicationCode()), notNull()))
@@ -642,6 +657,7 @@ public class CreateApplicationEntryValidatorTest {
         entryCreateDto.setFeeStatuses(null);
         entryCreateDto.setApplicant(null);
         entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.setLodgementDate(TODAY_UK.minusDays(1));
 
         when(applicationCodeRepository.findByCodeAndDate(
                         eq(entryCreateDto.getApplicationCode()), notNull()))

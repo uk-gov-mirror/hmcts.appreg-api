@@ -18,23 +18,19 @@ public class ImplementedRestfulTest {
                     "POST /application-lists/{listId}/entries/results",
                     "POST /application-lists/{listId}/entries/bulk-import",
                     "DELETE /application-lists/{listId}/entries/{entryId}",
-                    "GET /jobs/{jobId}",
                     "POST /reports/private-prosecutors-index/jobs",
                     "POST /reports/activity-audit/jobs",
                     "POST /reports/list-maintenance/jobs",
                     "POST /reports/search-warrants/jobs",
-                    "GET /reports/jobs/{jobId}/download",
                     "POST /reports/duration/jobs",
                     "POST /reports/fees/jobs",
-                    "POST /reports/search-warrants/jobs",
-                    "GET /admin/jobs/{jobType}");
+                    "POST /reports/search-warrants/jobs");
 
     @Test
     public void testShouldNotBeImplemented() throws Exception {
         Map<String, Object> implemented = new RestImplementedStatusHealthIndicator().status();
 
         Assertions.assertTrue(implemented.size() > 0);
-
         // assert against the unimplemented endpoints.
         for (String endpoint : UNIMPLEMENTED_ENDPOINTS) {
             System.out.println(endpoint);
