@@ -142,14 +142,18 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
      * @param cjaCode The criminal justice area code to filter by.
      * @param applicantOrganisation The applicant organisation to filter by. Partial matches allowed
      * @param applicantSurname The applicant surname to filter by. Partial matches allowed
-     * @param applicantName The applicant name to filter by. Partial matches allowed
+     * @param applicantName The applicant display name to filter by. For people this matches
+     *     first-forename + surname; for organisations it matches organisation name. Partial matches
+     *     allowed
      * @param standardApplicantCode The standard applicant code to filter by. Partial matches
      *     allowed
      * @param status The status to filter by
      * @param respondentOrganisation The respondent organisation to filter by. Partial matches
      *     allowed
      * @param respondentSurname The respondent surname to filter by. Partial matches allowed
-     * @param respondentName The respondent name to filter by. Partial matches allowed
+     * @param respondentName The respondent display name to filter by. For people this matches
+     *     first-forename + surname; for organisations it matches organisation name. Partial matches
+     *     allowed
      * @param respondentPostcode The respondent postcode to filter by. Partial matches allowed
      * @param accountReference The account reference to filter by. Partial matches allowed
      * @param applicationTitle The application title to filter by. Partial matches allowed
