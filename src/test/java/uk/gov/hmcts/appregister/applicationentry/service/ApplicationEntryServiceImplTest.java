@@ -1263,7 +1263,6 @@ public class ApplicationEntryServiceImplTest {
         targetList.setUuid(UUID.randomUUID());
 
         val entryId1 = UUID.randomUUID();
-        val entryId2 = UUID.randomUUID();
 
         val entry1 = new ApplicationListEntry();
         entry1.setId(101L);
@@ -1272,6 +1271,7 @@ public class ApplicationEntryServiceImplTest {
         entry1.setSequenceNumber((short) 2);
         entry1.setVersion(0L);
 
+        val entryId2 = UUID.randomUUID();
         val entry2 = new ApplicationListEntry();
         entry2.setId(102L);
         entry2.setUuid(entryId2);
@@ -1333,7 +1333,6 @@ public class ApplicationEntryServiceImplTest {
         targetList.setUuid(UUID.randomUUID());
 
         val entryId1 = UUID.randomUUID();
-        val entryId2 = UUID.randomUUID();
 
         val entry1 = new ApplicationListEntry();
         entry1.setId(101L);
@@ -1341,6 +1340,7 @@ public class ApplicationEntryServiceImplTest {
         entry1.setApplicationList(sourceList);
         entry1.setVersion(0L);
 
+        val entryId2 = UUID.randomUUID();
         val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
         dto.setEntryIds(Set.of(entryId1, entryId2));
