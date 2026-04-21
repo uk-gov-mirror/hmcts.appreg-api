@@ -1,10 +1,14 @@
 package uk.gov.hmcts.appregister.testutils;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.AssertionFailure;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +20,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
+import uk.gov.hmcts.appregister.common.util.AppRegTempFileUtil;
 import uk.gov.hmcts.appregister.testutils.docker.PostgresCommand;
 import uk.gov.hmcts.appregister.testutils.stubs.wiremock.DatabasePersistance;
 
@@ -46,6 +51,19 @@ public abstract class BasePostgresIntegrationTest {
     public void beforeEachTest() {
         reset.resetSequences();
         reset.resetDbData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // ensure that we do not leave any temp files around.
+        if (AppRegTempFileUtil.doesTempFileExist()) {
+            // mark for deletion when the process ends
+            Arrays.asList(AppRegTempFileUtil.getTempFilesThatExist()).forEach(File::deleteOnExit);
+
+            throw new AssertionFailure(
+                    "You're code is not clearing up temp files that it creates, please make sure "
+                            + "you delete files by wrapping code in try/resources where necessary.");
+        }
     }
 
     @DynamicPropertySource
