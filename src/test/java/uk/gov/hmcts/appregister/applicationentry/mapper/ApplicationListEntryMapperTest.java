@@ -65,9 +65,11 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.applicationentry.model.PayloadGetEntryInList;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
@@ -95,6 +97,7 @@ import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ContactDetails;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetPrintDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
@@ -161,6 +164,39 @@ class ApplicationListEntryMapperTest {
                 applicationTitle,
                 feeRequired,
                 result);
+    }
+
+    @Test
+    void testToApplicationListEntryForListReadAudit_mapsDbBackedFilters() {
+        // Build the same path parameter + filter pair that the list-entry read endpoint receives.
+        val listId = UUID.randomUUID();
+        val payload = PayloadGetEntryInList.builder().listId(listId).build();
+
+        val filterDto = new EntryApplicationListGetFilterDto();
+        filterDto.setApplicantName("Applicant Audit Org");
+        filterDto.setRespondentName("Respondent Audit Org");
+        filterDto.setRespondentPostcode("ZZ1 1ZZ");
+        filterDto.setAccountReference("ACC-123");
+        filterDto.setApplicationTitle("Read audit application title");
+        filterDto.setFeeRequired(Boolean.TRUE);
+        filterDto.setSequenceNumber(7);
+
+        // Map into the existing ApplicationListEntry audit surrogate rather than inventing a
+        // separate audit-only type.
+        val mappedResult = mapper.toApplicationListEntry(payload, filterDto);
+
+        // Each assertion below corresponds to a database-backed field that should be available to
+        // the reflective auditor when a GET /application-lists/{listId}/entries request succeeds.
+        Assertions.assertEquals(0L, mappedResult.getId());
+        Assertions.assertEquals(listId, mappedResult.getApplicationList().getUuid());
+        Assertions.assertEquals("Applicant Audit Org", mappedResult.getAnamedaddress().getName());
+        Assertions.assertEquals("Respondent Audit Org", mappedResult.getRnameaddress().getName());
+        Assertions.assertEquals("ZZ1 1ZZ", mappedResult.getRnameaddress().getPostcode());
+        Assertions.assertEquals("ACC-123", mappedResult.getAccountNumber());
+        Assertions.assertEquals(
+                "Read audit application title", mappedResult.getApplicationCode().getTitle());
+        Assertions.assertEquals(YesOrNo.YES, mappedResult.getApplicationCode().getFeeDue());
+        Assertions.assertEquals(Short.valueOf((short) 7), mappedResult.getSequenceNumber());
     }
 
     @Test

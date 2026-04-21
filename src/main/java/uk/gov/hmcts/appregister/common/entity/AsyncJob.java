@@ -17,8 +17,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
+import uk.gov.hmcts.appregister.audit.listener.diff.Audit;
+import uk.gov.hmcts.appregister.audit.listener.diff.AuditEnabled;
 import uk.gov.hmcts.appregister.common.entity.base.Changeable;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.base.PreCreateUpdateEntityListener;
+import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 import uk.gov.hmcts.appregister.common.enumeration.JobStatusType;
 
 /**
@@ -33,7 +37,8 @@ import uk.gov.hmcts.appregister.common.enumeration.JobStatusType;
 @Setter
 @EntityListeners(PreCreateUpdateEntityListener.class)
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
-public class AsyncJob implements Changeable {
+@AuditEnabled(types = {CrudEnum.READ})
+public class AsyncJob implements Changeable, Keyable {
     @Id
     @Column(name = "aj_id", nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aj_gen")
@@ -43,6 +48,7 @@ public class AsyncJob implements Changeable {
 
     @Generated(event = EventType.INSERT)
     @Column(name = "id", insertable = false, updatable = false, columnDefinition = "uuid")
+    @Audit(action = {CrudEnum.READ})
     private java.util.UUID uuid;
 
     @Column(name = "job_state")
