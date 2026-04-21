@@ -696,7 +696,15 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
         // This ensures we don't keep old rows
         if (!feeStatuses.isEmpty()) {
-            appListEntryFeeStatusRepository.deleteAll(feeStatuses);
+            for (AppListEntryFeeStatus feeStatus : feeStatuses) {
+                auditService.processAudit(
+                        feeStatus,
+                        AppListEntryAuditOperation.DELETE_FEE_STATUS_ENTRY,
+                        req -> {
+                            appListEntryFeeStatusRepository.delete(feeStatus);
+                            return Optional.empty();
+                        });
+            }
             appListEntryFeeStatusRepository.flush();
         }
 

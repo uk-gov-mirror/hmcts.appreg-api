@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
@@ -38,6 +39,7 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.OfficialType;
 import uk.gov.hmcts.appregister.generated.model.Organisation;
 import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
@@ -2361,6 +2363,124 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                         .CREATE_APP_ENTRY_LIST
                         .getEventName(),
                 standardApplicantAuditRow.getEventName());
+    }
+
+    @Test
+    @DisplayName("Create Application Entry persists child-row audit fields")
+    void givenEntryWithChildRows_whenCreated_thenPersistChildAuditRows() throws Exception {
+        val entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        entryCreateDto.getApplicant().setPerson(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto.getApplicant().getOrganisation().setName("Applicant Audit Org");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setAddressLine1("1 Applicant Audit Street");
+        entryCreateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA12 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+
+        entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.getRespondent().getPerson().getName().setSurname("RespondentAudit");
+        entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("RS1 1RS");
+
+        val official = new Official();
+        official.setTitle("Ms");
+        official.setForename("Olivia");
+        official.setSurname("OfficialAudit");
+        official.setType(OfficialType.CLERK);
+        entryCreateDto.setOfficials(List.of(official));
+
+        val feeStatus = new FeeStatus();
+        feeStatus.setPaymentReference("PAY-CRT-001");
+        feeStatus.setPaymentStatus(PaymentStatus.PAID);
+        feeStatus.setStatusDate(LocalDate.of(2026, 1, 15));
+        entryCreateDto.setFeeStatuses(List.of(feeStatus));
+
+        val tokenGenerator = createAdminToken();
+
+        // Clear setup rows so the assertions below only inspect the create request under test.
+        dataAuditRepository.deleteAll();
+
+        // Exercise the real endpoint so the request flows through the mapper, service and audit
+        // listeners before we read DATA_AUDIT back.
+        val responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(201);
+
+        // Applicant organisation name is stored on NAME_ADDRESS and should be audited on create.
+        val applicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.NAME_ADDRESS, "name", "Applicant Audit Org")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a name_address.name applicant audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_APPLICANT.getEventName(),
+                applicantAuditRow.getEventName());
+
+        // Respondent surname is also stored through NAME_ADDRESS and should be audited separately.
+        val respondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.NAME_ADDRESS, "surname", "RespondentAudit")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a name_address.surname respondent audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName(),
+                respondentAuditRow.getEventName());
+
+        // Official rows are created as child records and should include the surname value.
+        val officialAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
+                                "surname",
+                                "OfficialAudit")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_official.surname audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getEventName(),
+                officialAuditRow.getEventName());
+
+        // Fee status rows should record their payment reference when they are created.
+        val feeStatusAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_FEE_STATUS,
+                                "alefs_payment_reference",
+                                "PAY-CRT-001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_fee_status payment reference audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY.getEventName(),
+                feeStatusAuditRow.getEventName());
     }
 
     @Test
