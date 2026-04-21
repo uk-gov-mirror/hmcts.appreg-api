@@ -68,7 +68,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ac_ac_id", nullable = false)
-    @Audit(action = {CrudEnum.READ})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.READ})
     private ApplicationCode applicationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -82,9 +82,11 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
     private NameAddress rnameaddress;
 
     @Column(name = "number_of_bulk_respondents")
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private Short numberOfBulkRespondents;
 
     @Column(name = "application_list_entry_wording", nullable = false)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String applicationListEntryWording;
 
     @Column(name = "case_reference")
@@ -102,6 +104,7 @@ public class ApplicationListEntry extends BaseChangeableAndDeletableEntity
 
     @Column(name = "notes")
     @Size(max = 4000)
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE})
     private String notes;
 
     @Column(name = "version", nullable = false)

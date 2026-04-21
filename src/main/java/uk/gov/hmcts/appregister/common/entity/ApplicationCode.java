@@ -47,7 +47,7 @@ import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @Getter
 @Setter
-@AuditEnabled(types = {CrudEnum.READ})
+@AuditEnabled(types = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.READ})
 public class ApplicationCode extends BaseUnmanagedChangeableEntity
         implements Accountable, Versionable, Keyable {
 
@@ -60,7 +60,7 @@ public class ApplicationCode extends BaseUnmanagedChangeableEntity
 
     @Column(name = "application_code", nullable = false)
     @Size(max = 10)
-    @Audit(action = {CrudEnum.READ})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.UPDATE, CrudEnum.READ})
     private String code;
 
     @Column(name = "application_code_title", nullable = false)

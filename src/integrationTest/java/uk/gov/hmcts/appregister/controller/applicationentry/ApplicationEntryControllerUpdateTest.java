@@ -8,15 +8,19 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.val;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
@@ -33,6 +37,7 @@ import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
 
 public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEntryCrudTest {
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     @Test
     public void givenASuccessfulUpdate_whenAllValueAreToBeUpdate_200Returned() throws Exception {
@@ -815,6 +820,96 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
 
         responseSpecCreate.then().statusCode(201);
         responseSpecUpdate.then().statusCode(200);
+    }
+
+    @Test
+    @DisplayName(
+            "Update Application Entry persists write audit rows for DB-backed low-hanging fields")
+    void givenBulkRespondentUpdate_whenUpdated_thenPersistWriteAuditRows() throws Exception {
+        // Seed an entry with explicit starting values so the update assertions can check old and
+        // new audit values directly from DATA_AUDIT.
+        val entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setRespondent(null);
+        entryUpdateDto.setStandardApplicantCode(null);
+        entryUpdateDto.setNumberOfRespondents(5);
+        entryUpdateDto.setFeeStatuses(null);
+        entryUpdateDto.setApplicationCode("CT99001");
+        entryUpdateDto.setNotes("Updated audit notes");
+        entryUpdateDto.setWordingFields(List.of(new TemplateSubstitution("Number", "5")));
+
+        val tokenGenerator = createAdminToken();
+        val responseSpecCreate =
+                createListEntryWithAllData(
+                        entryCreateDto -> entryCreateDto.setNotes("Original audit notes"));
+
+        // Ignore the audit rows produced by the setup create request so we only inspect the update.
+        dataAuditRepository.deleteAll();
+
+        val responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        val updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("Updated audit notes", updatedDto.getNotes());
+        Assertions.assertEquals(5, updatedDto.getNumberOfRespondents());
+        Assertions.assertEquals("CT99001", updatedDto.getApplicationCode());
+
+        // Notes changed from the seeded value to the update payload value.
+        val notesAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValueAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "notes",
+                                "Original audit notes",
+                                "Updated audit notes")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.notes update audit row"));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                notesAuditRow.getEventName());
+
+        // Bulk respondent count is new on update, so we check the new value and the update event.
+        val bulkRespondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "number_of_bulk_respondents",
+                                "5")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a number_of_bulk_respondents update audit row"));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                bulkRespondentAuditRow.getEventName());
+
+        // Application code should record the nested DB-backed code change from the original create
+        // code to the new bulk-respondent-capable code.
+        val originalApplicationCode =
+                responseSpecCreate.as(EntryGetDetailDto.class).getApplicationCode();
+        val applicationCodeAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValueAndNewValue(
+                                TableNames.APPLICATION_CODES,
+                                "application_code",
+                                originalApplicationCode,
+                                "CT99001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_codes.application_code update audit row"));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                applicationCodeAuditRow.getEventName());
     }
 
     @Test
