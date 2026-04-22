@@ -89,7 +89,7 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
                             name,
                             pageable);
 
-                    CodeAndName record = new CodeAndName(code, name);
+                    CodeAndName record = new CodeAndName(code, name, addressLine1, from, to);
                     AuditableResult<StandardApplicantPage, StandardApplicant> result =
                             new AuditableResult<>(newPage, mapper.toEntity(record));
 

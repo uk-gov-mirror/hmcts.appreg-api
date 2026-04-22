@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
+import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryMoveAudit;
+import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryReadAudit;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
 import uk.gov.hmcts.appregister.applicationentry.model.PayloadForUpdateEntry;
@@ -694,7 +697,15 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
         // This ensures we don't keep old rows
         if (!feeStatuses.isEmpty()) {
-            appListEntryFeeStatusRepository.deleteAll(feeStatuses);
+            for (AppListEntryFeeStatus feeStatus : feeStatuses) {
+                auditService.processAudit(
+                        feeStatus,
+                        AppListEntryAuditOperation.DELETE_FEE_STATUS_ENTRY,
+                        req -> {
+                            appListEntryFeeStatusRepository.delete(feeStatus);
+                            return Optional.empty();
+                        });
+            }
             appListEntryFeeStatusRepository.flush();
         }
 
@@ -944,71 +955,103 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
         return getApplicationListEntriesValidator.validate(
                 payloadForGet,
-                (req, success) -> {
-                    // get the entries for the list
-                    Page<ApplicationListEntryGetSummaryProjection> entries =
-                            applicationListEntryRepository.searchForGetSummary(
-                                    payloadForGet.getListId(),
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    filterDto.getApplicantName(),
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    filterDto.getRespondentName(),
-                                    filterDto.getRespondentPostcode(),
-                                    filterDto.getAccountReference(),
-                                    filterDto.getApplicationTitle(),
-                                    filterDto.getResulted(),
-                                    filterDto.getFeeRequired(),
-                                    filterDto.getSequenceNumber(),
-                                    pageable.getPageable());
+                (req, success) ->
+                        auditService.processAudit(
+                                null,
+                                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST,
+                                (r) -> {
+                                    // get the entries for the list
+                                    Page<ApplicationListEntryGetSummaryProjection> entries =
+                                            applicationListEntryRepository.searchForGetSummary(
+                                                    payloadForGet.getListId(),
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    filterDto.getApplicantName(),
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    filterDto.getRespondentName(),
+                                                    filterDto.getRespondentPostcode(),
+                                                    filterDto.getAccountReference(),
+                                                    filterDto.getApplicationTitle(),
+                                                    filterDto.getResulted(),
+                                                    filterDto.getFeeRequired(),
+                                                    filterDto.getSequenceNumber(),
+                                                    pageable.getPageable());
 
-                    EntryPage entryPage = buildEntryPage(entries, pageable);
+                                    EntryPage entryPage = buildEntryPage(entries, pageable);
 
-                    if (entryPage.getContent() == null) {
-                        entryPage.setContent(List.of());
-                    }
+                                    if (entryPage.getContent() == null) {
+                                        entryPage.setContent(List.of());
+                                    }
 
-                    log.debug(
-                            "Finished: Getting application list entries for list: {}",
-                            payloadForGet.getListId());
+                                    log.debug(
+                                            "Finished: Getting application list entries for list: {}",
+                                            payloadForGet.getListId());
 
-                    return entryPage;
-                });
+                                    return Optional.of(
+                                            new AuditableResult<>(
+                                                    entryPage,
+                                                    new ApplicationListEntryReadAudit(
+                                                            applicationListEntryMapStructMapper
+                                                                    .toApplicationListEntry(
+                                                                            payloadForGet,
+                                                                            filterDto),
+                                                            filterDto.getResulted())));
+                                }));
     }
 
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void move(UUID sourceListId, MoveEntriesDto moveEntriesDto) {
         var payload = new MoveEntriesPayload(sourceListId, moveEntriesDto);
-        ApplicationList targetList =
+        final ApplicationList targetList =
                 moveEntriesValidator.validate(payload, (req, success) -> success.getTargetList());
 
         Set<UUID> requestedIds = new HashSet<>(moveEntriesDto.getEntryIds());
-
+        List<ApplicationListEntry> entriesToMove =
+                applicationListEntryRepository.findByUuidsInSourceList(sourceListId, requestedIds);
         Set<UUID> existingIds =
-                applicationListEntryRepository.findExistingEntryIdsInSourceList(
-                        sourceListId, requestedIds);
+                entriesToMove.stream()
+                        .map(ApplicationListEntry::getUuid)
+                        .collect(Collectors.toSet());
 
-        Set<UUID> missingIds = new HashSet<>(requestedIds);
-        missingIds.removeAll(existingIds);
+        if (existingIds.size() != requestedIds.size()) {
+            Set<UUID> missingIds = new HashSet<>(requestedIds);
+            missingIds.removeAll(existingIds);
 
-        if (!missingIds.isEmpty()) {
             throw new AppRegistryException(
                     ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                     "One or more entries were not found in the source list",
                     Map.of("invalid_entry_ids", missingIds.toString()));
         }
 
-        applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                existingIds, targetList, sourceListId);
+        List<ApplicationListEntry> orderedEntriesToMove = new ArrayList<>(entriesToMove);
+        orderedEntriesToMove.sort(Comparator.comparing(ApplicationListEntry::getSequenceNumber));
+
+        for (ApplicationListEntry entryToMove : orderedEntriesToMove) {
+            auditService.processAudit(
+                    ApplicationListEntryMoveAudit.from(entryToMove),
+                    AppListEntryAuditOperation.MOVE_APP_ENTRY,
+                    req -> {
+                        entryToMove.setApplicationList(targetList);
+                        entryToMove.setSequenceNumber(allocateNextSequence(targetList.getId()));
+
+                        var movedEntry =
+                                refreshEntity(applicationListEntryRepository.save(entryToMove));
+
+                        return Optional.of(
+                                new AuditableResult<>(
+                                        movedEntry.getUuid(),
+                                        ApplicationListEntryMoveAudit.from(movedEntry)));
+                    });
+        }
 
         log.info(
                 "Completed bulk move for {} entries from list {}",

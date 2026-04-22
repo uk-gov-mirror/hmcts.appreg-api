@@ -55,7 +55,7 @@ public class ApplicationList extends BaseChangeableAndDeletableEntity
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "al_gen")
     @SequenceGenerator(name = "al_gen", sequenceName = "al_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
-    @Audit(action = {CrudEnum.CREATE, CrudEnum.DELETE, CrudEnum.UPDATE})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.DELETE, CrudEnum.UPDATE, CrudEnum.READ})
     private Long id;
 
     @Generated(event = EventType.INSERT)

@@ -394,6 +394,23 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
     Optional<ApplicationListEntry> findByEntryUuidWithinListUuid(UUID listId, UUID entryId);
 
     /**
+     * Finds all non-deleted entries in the specified source list that match the requested UUIDs.
+     *
+     * @param sourceListUuid the source list UUID
+     * @param requestedIds the requested entry UUIDs
+     * @return matching entries that are eligible to be moved
+     */
+    @Query(
+            """
+        SELECT ale
+        FROM ApplicationListEntry ale
+        WHERE ale.applicationList.uuid = :sourceListUuid
+        AND ale.uuid IN :requestedIds
+        AND (ale.deleted IS NULL OR ale.deleted <> 'Y')
+        """)
+    List<ApplicationListEntry> findByUuidsInSourceList(UUID sourceListUuid, Set<UUID> requestedIds);
+
+    /**
      * Bulk-move entries to a new application list using a single JPQL UPDATE. Returns number of
      * rows updated.
      *
@@ -406,7 +423,10 @@ public interface ApplicationListEntryRepository extends JpaRepository<Applicatio
      *     associated with this list will be updated
      * @return the number of rows updated; may be less than the number of provided UUIDs if some
      *     entries are not found in the source list
+     * @deprecated use the audited move flow in {@code ApplicationEntryServiceImpl#move(UUID,
+     *     MoveEntriesDto)} instead
      */
+    @Deprecated
     @Modifying
     @Query(
             """

@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,9 +19,9 @@ import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationentry.api.ApplicationEntrySortFieldEnum;
 import uk.gov.hmcts.appregister.applicationlist.api.ApplicationListSortFieldEnum;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
-import uk.gov.hmcts.appregister.applicationlist.config.ApplicationListSortProperties;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.mapper.SortableField;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
@@ -43,12 +43,11 @@ import uk.gov.hmcts.appregister.testutils.util.DataAuditLogAsserter;
 
 public class ApplicationListControllerSearchTest extends AbstractApplicationListControllerCrudTest {
 
-    @Autowired private ApplicationListSortProperties sortProperties;
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     @StabilityTest
     public void givenApplicationListSuccessfulSort_whenSearchWithAllSortKeys_thenSuccessResponse()
             throws Exception {
-        Set<ApplicationListSortFieldEnum> disabledSortKeys = sortProperties.getDisabledEnums();
 
         // loop through all sort fields to make sure no errors occur
         for (ApplicationListSortFieldEnum applicationEntrySortFieldEnum :
@@ -70,26 +69,16 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
             responseSpec.then().statusCode(200);
             ApplicationListPage page = responseSpec.as(ApplicationListPage.class);
 
-            // Disabled sort keys should fall back to the default ordering.
-            if (disabledSortKeys.contains(applicationEntrySortFieldEnum)) {
-                Assertions.assertEquals(1, page.getSort().getOrders().size());
-                Assertions.assertEquals(
-                        SortOrdersInner.DirectionEnum.ASC,
-                        page.getSort().getOrders().getFirst().getDirection());
+            // make sure the order response marries with the request data
+            Assertions.assertEquals(1, page.getSort().getOrders().size());
+            Assertions.assertEquals(
+                    SortOrdersInner.DirectionEnum.DESC,
+                    page.getSort().getOrders().get(0).getDirection());
 
-                Assertions.assertEquals(
-                        ApplicationListSortFieldEnum.DESCRIPTION.getApiValue(),
-                        page.getSort().getOrders().getFirst().getProperty());
-            } else {
-                // Enabled sort keys should be returned as requested.
-                Assertions.assertEquals(1, page.getSort().getOrders().size());
-                Assertions.assertEquals(
-                        SortOrdersInner.DirectionEnum.DESC,
-                        page.getSort().getOrders().getFirst().getDirection());
-                Assertions.assertEquals(
-                        applicationEntrySortFieldEnum.getApiValue(),
-                        page.getSort().getOrders().getFirst().getProperty());
-            }
+            // make sure we only return externalised api sort data
+            Assertions.assertEquals(
+                    applicationEntrySortFieldEnum.getApiValue(),
+                    page.getSort().getOrders().get(0).getProperty());
         }
 
         Assertions.assertTrue(ApplicationListSortFieldEnum.values().length > 0);
@@ -249,6 +238,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
         Assertions.assertEquals(listId, page.getContent().get(0).getId());
         Assertions.assertEquals(listId2, page.getContent().get(1).getId());
+
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "application_list_date",
+                        null,
+                        TEST_DATE.toString(),
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
     @StabilityTest
@@ -315,6 +313,7 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
     @StabilityTest
     public void givenApplicationList_whenSortByLocationDesc_thenCjaDescriptionPrecedesCourtName()
             throws Exception {
+
         // create the token
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
@@ -324,7 +323,7 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
-                        .description("Alpha description")
+                        .description("description")
                         .status(ApplicationListStatus.OPEN)
                         .cjaCode(VALID_CJA_CODE2)
                         .otherLocationDescription(VALID_OTHER_LOCATION)
@@ -335,11 +334,10 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add second list
-        createListReq.setDescription("Zulu description");
-        createListReq.setCjaCode(null);
-        createListReq.setOtherLocationDescription(null);
-        createListReq.setCourtLocationCode(VALID_COURT_CODE);
+        // add second list with cja description 'CJA_CE_DESCRIPTION'
+        createListReq.setCjaCode(VALID_CJA_CODE2);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
 
         final UUID listId2 =
                 createApplicationListWithCourtCode(
@@ -357,46 +355,48 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                                 .build());
         createListResp.then().statusCode(HttpStatus.OK.value());
 
+        // assert order
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
-
-        boolean locationSortDisabled =
-                sortProperties.getDisabledEnums().contains(ApplicationListSortFieldEnum.LOCATION);
-        assertOrder(page, locationSortDisabled, listId, listId2);
+        Assertions.assertEquals(listId2, page.getContent().get(0).getId());
+        Assertions.assertEquals(listId, page.getContent().get(1).getId());
     }
 
     @StabilityTest
     public void givenApplicationListSuccessfulSort_whenSortByCjaLocation_thenSuccessResponse()
             throws Exception {
+
         // create the token
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // add an initial list
+        // create a list with a cja code and location description
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
-                        .description("Alpha description")
+                        .description("description")
                         .status(ApplicationListStatus.OPEN)
-                        .cjaCode(VALID_CJA_CODE2)
-                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .courtLocationCode(VALID_COURT_CODE)
                         .durationHours(1)
                         .durationMinutes(0);
+
+        createListReq.setCjaCode(VALID_CJA_CODE);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
 
         UUID listId =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add an entry to the list
+        // add a entry to the list
         createEntry(listId);
 
-        // add second list
-        createListReq.setDescription("Zulu description");
-        createListReq.setCjaCode(null);
-        createListReq.setOtherLocationDescription(null);
-        createListReq.setCourtLocationCode(VALID_COURT_CODE);
+        // create a second list with same cja code and different location description
+        createListReq.setCjaCode(VALID_CJA_CODE);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
 
-        final UUID listId2 =
+        UUID listId2 =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
@@ -421,11 +421,8 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
 
         // assert expected order
         ApplicationListPage page = createListResp.as(ApplicationListPage.class);
-        Assertions.assertEquals(2, page.getContent().size());
-
-        boolean locationSortDisabled =
-                sortProperties.getDisabledEnums().contains(ApplicationListSortFieldEnum.LOCATION);
-        assertOrder(page, locationSortDisabled, listId, listId2);
+        Assertions.assertEquals(listId2, page.getContent().get(0).getId());
+        Assertions.assertEquals(listId, page.getContent().get(1).getId());
     }
 
     @DisplayName("GET: default paging + default sort (description ASC)")
@@ -577,6 +574,15 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
 
         // this check is to make sure that a default value is provided for the log when the
         // parameter is not needed.
+        differenceLogAsserter.assertDataAuditChange(
+                DataAuditLogAsserter.getDataAuditAssertion(
+                        TableNames.APPICATION_LIST,
+                        "al_id",
+                        null,
+                        "0",
+                        AppListAuditOperation.GET_APP_LIST.getType().name(),
+                        AppListAuditOperation.GET_APP_LIST.getEventName()));
+
         differenceLogAsserter.assertDataAuditChange(
                 DataAuditLogAsserter.getDataAuditAssertion(
                         TableNames.APPICATION_LIST,
@@ -809,47 +815,6 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
     }
 
-    // TODO: Re-enable and refactor this once we have clarified what endpoint we need disabling for
-    // - ARCPOC-992/1218
-    /*@Test
-    @DisplayName("GET: disabled sort key is ignored and default description ordering is used")
-    void givenDisabledSortKey_whenGet_then200AndDefaultOrderingApplied() throws Exception {
-        String prefix = uniquePrefix("disabled-sort");
-        LocalDate day = LocalDate.of(2025, 10, 15);
-        LocalTime slot = LocalTime.of(10, 30);
-
-        // Three rows with the same date/time so the requested TIME sort would not change anything.
-        // The default sort should therefore be visible as description ASC.
-        createWithCourt(prefix + " - Zebra", day, slot);
-        createWithCourt(prefix + " - Alpha", day, slot);
-        createWithCourt(prefix + " - Mango", day, slot);
-
-        var userToken =
-                getATokenWithValidCredentials()
-                        .roles(List.of(RoleEnum.USER))
-                        .build()
-                        .fetchTokenForRole();
-
-        Response resp =
-                restAssuredClient.executeGetRequestWithPaging(
-                        Optional.of(10),
-                        Optional.of(0),
-                        List.of(ApplicationListSortFieldEnum.TIME.getApiValue() + ",desc"),
-                        getLocalUrl(WEB_CONTEXT),
-                        userToken,
-                        rs -> rs.header("Accept", VND_JSON_V1).queryParam("description", prefix),
-                        new OpenApiPageMetaData());
-
-        resp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
-
-        ApplicationListPage page = resp.as(ApplicationListPage.class);
-
-        assertThat(page.getContent()).hasSize(3);
-        assertThat(page.getContent().get(0).getDescription()).endsWith("Alpha");
-        assertThat(page.getContent().get(1).getDescription()).endsWith("Mango");
-        assertThat(page.getContent().get(2).getDescription()).endsWith("Zebra");
-    }*/
-
     @Test
     @DisplayName("GET: does not return soft deleted list")
     void givenDefaults_whenGet_then200AndNoSoftDeletedSlot() throws Exception {
@@ -947,6 +912,74 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
                         id.toString(),
                         AppListAuditOperation.GET_APP_LIST.getType().name(),
                         AppListAuditOperation.GET_APP_LIST.getEventName()));
+    }
+
+    @Test
+    @DisplayName("GET Application List persists read audit row")
+    void givenValidRequest_whenGetApplicationList_thenDataAuditRowPersisted() throws Exception {
+        // Use the real API so the request passes through controller, service, audit listeners and
+        // finally into the DATA_AUDIT table.
+        val token =
+                getATokenWithValidCredentials()
+                        .roles(List.of(RoleEnum.USER))
+                        .build()
+                        .fetchTokenForRole();
+
+        // First create a list that we can fetch back via GET /application-lists/{id}.
+        val req =
+                new ApplicationListCreateDto()
+                        .date(TEST_DATE)
+                        .time(TEST_TIME)
+                        .description("List for read audit persistence")
+                        .status(ApplicationListStatus.OPEN)
+                        .cjaCode(VALID_CJA_CODE)
+                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .durationHours(1)
+                        .durationMinutes(0);
+
+        val createResp = restAssuredClient.executePostRequest(getLocalUrl(WEB_CONTEXT), token, req);
+        createResp.then().statusCode(HttpStatus.CREATED.value());
+        val id = createResp.as(ApplicationListGetDetailDto.class).getId();
+
+        // Remove the create-audit rows so this test only inspects the rows produced by the read.
+        dataAuditRepository.deleteAll();
+
+        // Perform the real read that should write the GET audit rows.
+        val getResp =
+                restAssuredClient.executeGetRequest(getLocalUrl(WEB_CONTEXT + "/" + id), token);
+        getResp.then().statusCode(HttpStatus.OK.value()).contentType(VND_JSON_V1);
+
+        // Pull back the persisted row directly from the repository and match on the key fields we
+        // expect for an application list read.
+        val dataAudit =
+                dataAuditRepository.findAll().stream()
+                        .filter(audit -> TableNames.APPICATION_LIST.equals(audit.getTableName()))
+                        .filter(audit -> "id".equals(audit.getColumnName()))
+                        .filter(audit -> id.toString().equals(audit.getNewValue()))
+                        .filter(
+                                audit ->
+                                        AppListAuditOperation.GET_APP_LIST
+                                                .getType()
+                                                .equals(audit.getUpdateType()))
+                        .filter(
+                                audit ->
+                                        AppListAuditOperation.GET_APP_LIST
+                                                .getEventName()
+                                                .equals(audit.getEventName()))
+                        .findFirst()
+                        .orElseThrow();
+
+        // Assert the exact DATA_AUDIT content rather than just relying on log capture.
+        assertThat(dataAudit.getOldValue()).isEmpty();
+        assertThat(dataAudit.getNewValue()).isEqualTo(id.toString());
+        assertThat(dataAudit.getTableName()).isEqualTo(TableNames.APPICATION_LIST);
+        assertThat(dataAudit.getColumnName()).isEqualTo("id");
+        assertThat(dataAudit.getUpdateType())
+                .isEqualTo(AppListAuditOperation.GET_APP_LIST.getType());
+        assertThat(dataAudit.getEventName())
+                .isEqualTo(AppListAuditOperation.GET_APP_LIST.getEventName());
+        assertThat(dataAudit.getLink()).isNotBlank();
+        assertThat(dataAudit.getCreatedUser()).isNotBlank();
     }
 
     @Test
