@@ -1055,7 +1055,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         + applicationList.getUuid()
                                         + "/entries"),
                         tokenGenerator.fetchTokenForRole(),
-                        rs -> rs.queryParam("applicantName", "Turner"),
+                        rs -> rs.queryParam("applicantName", "John Turner"),
                         new OpenApiPageMetaData());
 
         responseSpec.then().statusCode(200);
@@ -1094,7 +1094,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         + applicationList.getUuid()
                                         + "/entries"),
                         tokenGenerator.fetchTokenForRole(),
-                        rs -> rs.queryParam("respondentName", "Johnson"),
+                        rs -> rs.queryParam("respondentName", "Sarah Johnson"),
                         new OpenApiPageMetaData());
 
         responseSpec.then().statusCode(200);
@@ -1141,8 +1141,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                                         + "/entries"),
                         tokenGenerator.fetchTokenForRole(),
                         rs ->
-                                rs.queryParam("applicantName", "Turner")
-                                        .queryParam("respondentName", "Johnson"),
+                                rs.queryParam("applicantName", "John Turner")
+                                        .queryParam("respondentName", "Sarah Johnson"),
                         new OpenApiPageMetaData());
 
         responseSpec.then().statusCode(200);
@@ -1190,17 +1190,17 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
     public void testGetApplicationListEntriesSortsByApplicantName() throws Exception {
         ApplicationList list = createAndSaveList(OPEN);
 
-        ApplicationListEntry john = createEntry(list);
-        setApplicantName(john, "Mr", "John", "Smith");
-        persistance.save(john);
+        ApplicationListEntry zoe = createEntry(list);
+        setApplicantName(zoe, "Dr", "Zoe", "Anderson");
+        persistance.save(zoe);
 
-        ApplicationListEntry jane = createEntry(list);
-        setApplicantName(jane, "Ms", "Jane", "Doe");
-        persistance.save(jane);
+        ApplicationListEntry amy = createEntry(list);
+        setApplicantName(amy, "Mr", "Amy", "Zimmer");
+        persistance.save(amy);
 
-        ApplicationListEntry alex = createEntry(list);
-        setApplicantName(alex, "Dr", "Alex", "Taylor");
-        persistance.save(alex);
+        ApplicationListEntry bob = createEntry(list);
+        setApplicantName(bob, "Ms", "Bob", "Brown");
+        persistance.save(bob);
 
         TokenGenerator tokenGenerator = createAdminToken();
 
@@ -1225,7 +1225,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                         .toList();
 
         Assertions.assertEquals(
-                List.of("ms jane doe", "mr john smith", "dr alex taylor"), applicantNames);
+                List.of("mr amy zimmer", "ms bob brown", "dr zoe anderson"), applicantNames);
     }
 
     @Test
@@ -1233,20 +1233,20 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
     public void testGetApplicationListEntriesSortsByRespondentName() throws Exception {
         ApplicationList list = createAndSaveList(OPEN);
 
-        ApplicationListEntry john = createEntry(list);
-        setRespondentName(john, "Mr", "John", "Smith");
-        john.getRnameaddress().setDateOfBirth(LocalDate.of(1990, 1, 1));
-        persistance.save(john);
+        ApplicationListEntry zoe = createEntry(list);
+        setRespondentName(zoe, "Dr", "Zoe", "Anderson");
+        zoe.getRnameaddress().setDateOfBirth(LocalDate.of(1990, 1, 1));
+        persistance.save(zoe);
 
-        ApplicationListEntry jane = createEntry(list);
-        setRespondentName(jane, "Ms", "Jane", "Doe");
-        jane.getRnameaddress().setDateOfBirth(LocalDate.of(1985, 5, 5));
-        persistance.save(jane);
+        ApplicationListEntry amy = createEntry(list);
+        setRespondentName(amy, "Mr", "Amy", "Zimmer");
+        amy.getRnameaddress().setDateOfBirth(LocalDate.of(1985, 5, 5));
+        persistance.save(amy);
 
-        ApplicationListEntry alex = createEntry(list);
-        setRespondentName(alex, "Dr", "Alex", "Taylor");
-        alex.getRnameaddress().setDateOfBirth(LocalDate.of(1975, 9, 9));
-        persistance.save(alex);
+        ApplicationListEntry bob = createEntry(list);
+        setRespondentName(bob, "Ms", "Bob", "Brown");
+        bob.getRnameaddress().setDateOfBirth(LocalDate.of(1975, 9, 9));
+        persistance.save(bob);
 
         TokenGenerator tokenGenerator = createAdminToken();
 
@@ -1271,7 +1271,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                         .toList();
 
         Assertions.assertEquals(
-                List.of("ms jane doe", "mr john smith", "dr alex taylor"), respondentNames);
+                List.of("mr amy zimmer", "ms bob brown", "dr zoe anderson"), respondentNames);
 
         List<LocalDate> respondentDobs =
                 page.getContent().stream()
@@ -1281,8 +1281,8 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
         Assertions.assertEquals(
                 List.of(
                         LocalDate.of(1985, 5, 5),
-                        LocalDate.of(1990, 1, 1),
-                        LocalDate.of(1975, 9, 9)),
+                        LocalDate.of(1975, 9, 9),
+                        LocalDate.of(1990, 1, 1)),
                 respondentDobs);
     }
 
