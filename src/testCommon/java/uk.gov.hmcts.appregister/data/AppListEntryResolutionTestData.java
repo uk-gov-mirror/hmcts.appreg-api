@@ -1,6 +1,14 @@
 package uk.gov.hmcts.appregister.data;
 
+import org.instancio.Instancio;
+import org.instancio.settings.Keys;
+import org.instancio.settings.Settings;
+
+import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
+import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
+import uk.gov.hmcts.appregister.testutils.data.Persistable;
+import static org.instancio.Select.field;
 
 public class AppListEntryResolutionTestData
         implements uk.gov.hmcts.appregister.testutils.data.Persistable<
@@ -12,5 +20,15 @@ public class AppListEntryResolutionTestData
     @Override
     public AppListEntryResolution.AppListEntryResolutionBuilder someMinimal() {
         return AppListEntryResolution.builder().resolutionOfficer("Officer").version(1L);
+    }
+
+    @Override
+    public AppListEntryResolution someComplete() {
+        Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
+        return Instancio.of(AppListEntryResolution.class)
+                .ignore(field(AppListEntryResolution::getId))
+                .ignore(field(AppListEntryResolution::getVersion))
+                .withSettings(settings)
+                .create();
     }
 }

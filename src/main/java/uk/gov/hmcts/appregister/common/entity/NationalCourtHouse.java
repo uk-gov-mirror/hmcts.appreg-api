@@ -56,7 +56,6 @@ import uk.gov.hmcts.appregister.common.enumeration.CrudEnum;
 @Setter
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @AuditEnabled(types = {CrudEnum.READ})
-@ToString
 public class NationalCourtHouse extends BaseUnmanagedChangeableEntity
         implements Versionable, Keyable {
 

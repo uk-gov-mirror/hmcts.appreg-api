@@ -6,5 +6,11 @@ package uk.gov.hmcts.appregister.data.filter.meta;
  * meta descriptor and how that sort value can be set on the keyable.
  */
 public interface SortMetaDescriptorEnum<T> {
+
+    /**
+     * A descriptor that describes a sort field that can be sorted and the associated value
+     * we should apply.
+     * @return The sort descriptor.
+     * */
     SortMetaDataDescriptor<T> getDescriptor();
 }

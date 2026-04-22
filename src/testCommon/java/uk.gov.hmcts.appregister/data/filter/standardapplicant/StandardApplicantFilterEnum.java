@@ -24,7 +24,7 @@ public enum StandardApplicantFilterEnum implements FilterMetaDescriptorEnum<Stan
                                         filterFieldData.getKeyableValues().getValue().toString());
                                 return filterFieldData;
                             })
-                    .build()),
+                    .build());/*,
     NAME(
             FilterFieldDataMetaDescriptor.<StandardApplicant>builder()
                     .queryName("name")
@@ -53,7 +53,7 @@ public enum StandardApplicantFilterEnum implements FilterMetaDescriptorEnum<Stan
                                     return filterFieldData;
                                 }
                             })
-                    .build());
+                    .build());*/
 
     private FilterFieldDataMetaDescriptor<StandardApplicant> filterFieldDataDescriptor;
 

@@ -10,13 +10,14 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.data.filter.FilterScenarioFactory;
 import uk.gov.hmcts.appregister.data.filter.FilterableScenario;
 import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListFilterEnum;
-import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListMixin;
+import uk.gov.hmcts.appregister.data.filter.ApplicationListMixin;
 import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListSortEnum;
-import uk.gov.hmcts.appregister.data.filter.applicationlist.NameAddressMixin;
+import uk.gov.hmcts.appregister.data.filter.NameAddressMixin;
 import uk.gov.hmcts.appregister.data.filter.exception.FilterProcessingException;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
@@ -28,7 +29,6 @@ import uk.gov.hmcts.appregister.util.CopyUtil;
 public class ApplicationListFilterAndSortTest
         extends AbstractFilterAndSortControllerTest<ApplicationList> {
 
-    @Autowired private EntityManager entityManager;
 
     @Override
     protected Stream<RestFilterEndpointDescription<ApplicationList>> getFilterDescriptions()
@@ -51,7 +51,7 @@ public class ApplicationListFilterAndSortTest
         RestFilterEndpointDescription<ApplicationList> restFilterDescription =
                 new RestFilterEndpointDescription<>();
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setUrl(getLocalUrl("application-lists"));
+        restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("application-lists"));
         restFilterDescription.setSortDescriptors(Arrays.asList(ApplicationListSortEnum.values()));
 
         // gets all of the combinations of filters based on the start data
@@ -81,7 +81,7 @@ public class ApplicationListFilterAndSortTest
         for (ApplicationListSortEnum applicationCodeSortEnum : ApplicationListSortEnum.values()) {
             RestSortEndpointDescription<ApplicationList> restFilterDescription =
                     new RestSortEndpointDescription<>();
-            restFilterDescription.setUrl(getLocalUrl("application-lists"));
+            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("application-lists"));
             restFilterDescription.setSortDescriptors(applicationCodeSortEnum);
             restFilterDescription.setExpectedToBeGenerated(applicationCodes);
             restFilterDescription.setAllAvailableSortDescriptors(
@@ -93,10 +93,15 @@ public class ApplicationListFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ApplicationList> keyable, Response response) {
+    protected boolean assertResponseInOrder(List<ApplicationList> keyable, Response response,
+                                            List<ApplicationList> exclude) {
         ApplicationListPage page = response.as(ApplicationListPage.class);
         List<ApplicationListGetSummaryDto> content = page.getContent();
 
+        // assert the excludes are not in the response
+        assertExcluded(response, exclude);
+
+        // assert the order of the response is correct and all keys that are expected are there
         int expectedIndex = 0;
 
         for (ApplicationListGetSummaryDto item : content) {
@@ -114,10 +119,12 @@ public class ApplicationListFilterAndSortTest
         return true;
     }
 
-    @Override
-    protected boolean assertPageSize(int size, Response response) {
+    private void assertExcluded(Response response, List<ApplicationList> exclude) {
         ApplicationListPage page = response.as(ApplicationListPage.class);
-        return size == page.getContent().size();
+        List<ApplicationListGetSummaryDto> content = page.getContent();
+        for (ApplicationList keyable : exclude) {
+            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getId().equals(keyable.getUuid())));
+        }
     }
 
     @Override

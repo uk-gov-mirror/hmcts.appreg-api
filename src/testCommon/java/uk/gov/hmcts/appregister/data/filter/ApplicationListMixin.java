@@ -1,4 +1,4 @@
-package uk.gov.hmcts.appregister.data.filter.applicationlist;
+package uk.gov.hmcts.appregister.data.filter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

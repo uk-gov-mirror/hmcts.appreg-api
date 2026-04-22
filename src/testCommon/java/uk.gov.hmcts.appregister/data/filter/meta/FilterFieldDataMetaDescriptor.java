@@ -30,8 +30,8 @@ public class FilterFieldDataMetaDescriptor<T extends Keyable> {
     /**
      * Apply the filter to the keyable.
      *
-     * @param count The record number of the filter field data.
-     * @param keyable The keyable to apply the filter to.
+     * @param count The record number of records being generated.
+     * @param keyable The keyable to apply the filter value to.
      * @return The filter field data that is generated according to the filter metadata.
      */
     public FilterFieldData<T> apply(int count, T keyable) {

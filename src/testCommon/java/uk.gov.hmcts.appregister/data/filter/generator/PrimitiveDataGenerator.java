@@ -80,6 +80,15 @@ public class PrimitiveDataGenerator {
     }
 
     /**
+     * gets a day with a day decrement.
+     *
+     * @param count The count to use.
+     */
+    public static LocalDate getDateBefore(int count) {
+        return DATE.minusDays(count);
+    }
+
+    /**
      * gets a time.
      *
      * @param count The count to use

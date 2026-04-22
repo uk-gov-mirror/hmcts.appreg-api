@@ -27,49 +27,57 @@ public enum StandardApplicantSortEnum implements SortMetaDescriptorEnum<Standard
                                             PrimitiveDataGenerator.generate(count, 10));
                                 }
                             })
-                    .build());
-    // TODO: Fix this test. Sort is not correct
-    /*
-        TITLE(
-                SortMetaDataDescriptor.<StandardApplicant>builder()
-                        .sortableOperationEnum(StandardApplicantSortFieldEnum.NAME)
-                        .sortableValueFunction(keyable -> {
-                            String name = "";
-                            String forename = "";
-                            String surname = "";
+                    .build()),
+    ADDRESS_LINE_1(
+        SortMetaDataDescriptor.<StandardApplicant>builder()
+            .sortableOperationEnum(StandardApplicantSortFieldEnum.ADDRESS_LINE_1)
+            .sortableValueFunction(StandardApplicant::getAddressLine1)
+            .sortGenerator(
+                new GenerateAccordingToSort<StandardApplicant>() {
+                    @Override
+                    public void apply(
+                        int count,
+                        StandardApplicant keyable,
+                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
+                        keyable.setAddressLine1(
+                            PrimitiveDataGenerator.generate(count, 35));
+                    }
+                })
+            .build()),
+    FROM(
+        SortMetaDataDescriptor.<StandardApplicant>builder()
+            .sortableOperationEnum(StandardApplicantSortFieldEnum.FROM)
+            .sortableValueFunction(StandardApplicant::getApplicantStartDate)
+            .sortGenerator(
+                new GenerateAccordingToSort<StandardApplicant>() {
+                    @Override
+                    public void apply(
+                        int count,
+                        StandardApplicant keyable,
+                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
+                        keyable.setApplicantStartDate(
+                            PrimitiveDataGenerator.getDateBefore(count));
+                    }
+                })
+            .build()),
+    TO(
+        SortMetaDataDescriptor.<StandardApplicant>builder()
+            .sortableOperationEnum(StandardApplicantSortFieldEnum.TO)
+            .sortableValueFunction(StandardApplicant::getApplicantEndDate)
+            .sortGenerator(
+                new GenerateAccordingToSort<StandardApplicant>() {
+                    @Override
+                    public void apply(
+                        int count,
+                        StandardApplicant keyable,
+                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
+                        keyable.setApplicantEndDate(
+                            PrimitiveDataGenerator.getDate(count));
+                    }
+                })
+            .build());
 
-                            if (keyable.getName() != null) {
-                                name = keyable.getName();
-                            }
-                            if (keyable.getApplicantForename1() != null) {
-                                forename = keyable.getApplicantForename1();
-                            }
 
-                            if (keyable.getApplicantSurname() != null) {
-                                surname = keyable.getApplicantSurname();
-                            }
-                            return name + " " + forename + " " + surname;
-                        })
-                        .sortGenerator(
-                                new GenerateAccordingToSort<StandardApplicant>() {
-                                    @Override
-                                    public void apply(
-                                            int count,
-                                            StandardApplicant keyable,
-                                            SortMetaDataDescriptor<StandardApplicant> descriptor) {
-                                        if (count % 2 == 0) {
-                                            keyable.setName(PrimitiveDataGenerator.generate(count, 35));
-                                            keyable.setApplicantSurname(null);
-                                            keyable.setApplicantForename1(null);
-                                        } else {
-                                            keyable.setApplicantForename1(PrimitiveDataGenerator.generate(count, 35));
-                                            keyable.setApplicantSurname(PrimitiveDataGenerator.generate(count, 35));
-                                            keyable.setName(null);
-                                        }
-                                    }
-                                })
-                        .build());
-    */
     private SortMetaDataDescriptor<StandardApplicant> sortDataDescriptor;
 
     StandardApplicantSortEnum(SortMetaDataDescriptor<StandardApplicant> sortDataDescriptor) {

@@ -40,7 +40,7 @@ public class ApplicationCodeFilterSortTest
         RestFilterEndpointDescription<ApplicationCode> restFilterDescription =
                 new RestFilterEndpointDescription<>();
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setUrl(getLocalUrl("application-codes"));
+        restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("application-codes"));
         restFilterDescription.setSortDescriptors(Arrays.asList(ApplicationCodeSortEnum.values()));
 
         // gets all of the combinations of filters
@@ -67,7 +67,7 @@ public class ApplicationCodeFilterSortTest
         for (ApplicationCodeSortEnum applicationCodeSortEnum : ApplicationCodeSortEnum.values()) {
             RestSortEndpointDescription<ApplicationCode> restFilterDescription =
                     new RestSortEndpointDescription<>();
-            restFilterDescription.setUrl(getLocalUrl("application-codes"));
+            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("application-codes"));
             restFilterDescription.setSortDescriptors(applicationCodeSortEnum);
             restFilterDescription.setExpectedToBeGenerated(applicationCodes);
             restFilterDescription.setAllAvailableSortDescriptors(
@@ -79,21 +79,19 @@ public class ApplicationCodeFilterSortTest
     }
 
     @Override
-    protected boolean assertPageSize(int size, Response response) {
-        ApplicationCodePage page = response.as(ApplicationCodePage.class);
-        return size == page.getContent().size();
-    }
-
-    @Override
     protected ApplicationCode saveToDatabase(ApplicationCode keyable) {
         return this.persistance.save(keyable);
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ApplicationCode> keyable, Response response) {
+    protected boolean assertResponseInOrder(List<ApplicationCode> keyable, Response response, List<ApplicationCode> exclude) {
         ApplicationCodePage page = response.as(ApplicationCodePage.class);
         List<ApplicationCodeGetSummaryDto> content = page.getContent();
 
+        // assert excluded
+        assertExcluded(response, exclude);
+
+        // asserts included and order
         int expectedIndex = 0;
 
         for (ApplicationCodeGetSummaryDto item : content) {
@@ -109,6 +107,14 @@ public class ApplicationCodeFilterSortTest
         }
 
         return true;
+    }
+
+    private void assertExcluded(Response response, List<ApplicationCode> exclude) {
+        ApplicationCodePage page = response.as(ApplicationCodePage.class);
+        List<ApplicationCodeGetSummaryDto> content = page.getContent();
+        for (ApplicationCode keyable : exclude) {
+            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getApplicationCode().equals(keyable.getCode())));
+        }
     }
 
     private void assertKeyableForSummary(

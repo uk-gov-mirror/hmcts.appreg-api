@@ -1,6 +1,8 @@
 package uk.gov.hmcts.appregister.controller.standardapplicant;
 
 import io.restassured.response.Response;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +30,8 @@ public class StandardApplicantFilterAndSortTest
             throws Exception {
         // create the application code
         StandardApplicant standardApplicant = new StandardApplicantTestData().someComplete();
+        standardApplicant.setApplicantStartDate(LocalDate.now().minusDays(1));
+        standardApplicant.setApplicantEndDate(LocalDate.now().plusDays(1));
 
         // process the scenario
         FilterableScenario<StandardApplicant> scenario =
@@ -40,7 +44,7 @@ public class StandardApplicantFilterAndSortTest
         RestFilterEndpointDescription<StandardApplicant> restFilterDescription =
                 new RestFilterEndpointDescription<>();
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setUrl(getLocalUrl("standard-applicants"));
+        restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("standard-applicants"));
         restFilterDescription.setSortDescriptors(Arrays.asList(StandardApplicantSortEnum.values()));
 
         // gets all of the combinations of filters based on the start data
@@ -55,6 +59,8 @@ public class StandardApplicantFilterAndSortTest
             throws Exception {
         // create the application code
         StandardApplicant standardApplicant = new StandardApplicantTestData().someComplete();
+        standardApplicant.setApplicantStartDate(LocalDate.now().minusDays(1));
+        standardApplicant.setApplicantEndDate(null);
 
         // process the scenario
         List<StandardApplicant> criminalJusticeAreas =
@@ -67,7 +73,7 @@ public class StandardApplicantFilterAndSortTest
                 StandardApplicantSortEnum.values()) {
             RestSortEndpointDescription<StandardApplicant> restFilterDescription =
                     new RestSortEndpointDescription<>();
-            restFilterDescription.setUrl(getLocalUrl("standard-applicants"));
+            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("standard-applicants"));
             restFilterDescription.setSortDescriptors(standardApplicantSortEnum);
             restFilterDescription.setExpectedToBeGenerated(criminalJusticeAreas);
             restFilterDescription.setAllAvailableSortDescriptors(
@@ -79,10 +85,15 @@ public class StandardApplicantFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<StandardApplicant> keyable, Response response) {
+    protected boolean assertResponseInOrder(List<StandardApplicant> keyable, Response response,
+                                            List<StandardApplicant> exclude) {
         StandardApplicantPage page = response.as(StandardApplicantPage.class);
         List<StandardApplicantGetSummaryDto> content = page.getContent();
 
+        // assert the excludes are not in the response
+        assertExcluded(response, exclude);
+
+        // assert the order of the response is correct and all keys that are expected are there
         int expectedIndex = 0;
 
         for (StandardApplicantGetSummaryDto item : content) {
@@ -100,17 +111,18 @@ public class StandardApplicantFilterAndSortTest
         return true;
     }
 
-    @Override
-    protected boolean assertPageSize(int size, Response response) {
+    private void assertExcluded(Response response, List<StandardApplicant> exclude) {
         StandardApplicantPage page = response.as(StandardApplicantPage.class);
-        return size == page.getContent().size();
+        List<StandardApplicantGetSummaryDto> content = page.getContent();
+        for (StandardApplicant keyable : exclude) {
+            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getCode().equals(keyable.getApplicantCode())));
+        }
     }
 
     private void assertKeyableForSummary(
             StandardApplicant keyable, StandardApplicantGetSummaryDto dto) {
         Assertions.assertEquals(keyable.getApplicantCode(), dto.getCode());
         Assertions.assertEquals(keyable.getApplicantStartDate(), dto.getStartDate());
-        Assertions.assertEquals(keyable.getApplicantEndDate(), dto.getEndDate().get());
         if (keyable.getName() == null) {
             ApplicantAssertion.validatePerson(dto.getApplicant().getPerson(), keyable);
         } else {

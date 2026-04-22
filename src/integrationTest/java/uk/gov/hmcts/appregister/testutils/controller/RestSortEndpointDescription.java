@@ -1,5 +1,6 @@
 package uk.gov.hmcts.appregister.testutils.controller;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +21,16 @@ public class RestSortEndpointDescription<T extends Keyable> {
 
     private List<T> expectedToBeGenerated = new ArrayList<>();
 
-    /** The url to call. */
-    private URL url;
+    @FunctionalInterface
+    public interface getUrlFunctionInterface<T extends Keyable> {
+        URL getUrl(T keyable) throws IOException;
+    }
+
+    /**
+     * The url that we need to call for this sort test. Used to get the url to
+     * make the rest call for the sort.
+     */
+    private RestFilterEndpointDescription.getUrlFunctionInterface<T> getUrlFunction;
 
     public void setExpectedToBeGenerated(List<T> expectedToBeGeneratedLst) {
         expectedToBeGenerated =
@@ -34,7 +43,6 @@ public class RestSortEndpointDescription<T extends Keyable> {
     }
 
     public RestSortEndpointDescription(RestSortEndpointDescription<T> description) {
-        setUrl(description.getUrl());
         sortDescriptors = description.sortDescriptors;
     }
 

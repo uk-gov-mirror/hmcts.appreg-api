@@ -45,7 +45,7 @@ public class CourtLocationFilterAndSortTest
         RestFilterEndpointDescription<NationalCourtHouse> restFilterDescription =
                 new RestFilterEndpointDescription<>();
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setUrl(getLocalUrl("court-locations"));
+        restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("court-locations"));
         restFilterDescription.setSortDescriptors(Arrays.asList(CourtLocationSortEnum.values()));
 
         // gets all of the combinations of filters based on the start data
@@ -75,7 +75,7 @@ public class CourtLocationFilterAndSortTest
         for (CourtLocationSortEnum courtLocationSortEnum : CourtLocationSortEnum.values()) {
             RestSortEndpointDescription<NationalCourtHouse> restFilterDescription =
                     new RestSortEndpointDescription<>();
-            restFilterDescription.setUrl(getLocalUrl("court-locations"));
+            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("court-locations"));
             restFilterDescription.setSortDescriptors(courtLocationSortEnum);
             restFilterDescription.setExpectedToBeGenerated(nationalCourtHouses);
             restFilterDescription.setAllAvailableSortDescriptors(
@@ -87,10 +87,14 @@ public class CourtLocationFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<NationalCourtHouse> keyable, Response response) {
+    protected boolean assertResponseInOrder(List<NationalCourtHouse> keyable, Response response, List<NationalCourtHouse> exclude) {
         CourtLocationPage page = response.as(CourtLocationPage.class);
         List<CourtLocationGetSummaryDto> content = page.getContent();
 
+        // assert the excludes are not in the response
+        assertExcluded(response, exclude);
+
+        // assert the order of the response is correct and all keys that are expected are there
         int expectedIndex = 0;
 
         for (CourtLocationGetSummaryDto item : content) {
@@ -110,11 +114,14 @@ public class CourtLocationFilterAndSortTest
         return true;
     }
 
-    @Override
-    protected boolean assertPageSize(int size, Response response) {
+    private void assertExcluded(Response response, List<NationalCourtHouse> exclude) {
         CourtLocationPage page = response.as(CourtLocationPage.class);
-        return size == page.getContent().size();
+        List<CourtLocationGetSummaryDto> content = page.getContent();
+        for (NationalCourtHouse keyable : exclude) {
+            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getLocationCode().equals(keyable.getCourtLocationCode())));
+        }
     }
+
 
     @Override
     protected NationalCourtHouse saveToDatabase(NationalCourtHouse keyable) {

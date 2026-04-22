@@ -1,8 +1,11 @@
 package uk.gov.hmcts.appregister.testutils.controller;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -24,13 +27,21 @@ public class RestFilterEndpointDescription<T extends Keyable> {
     /** The sort descriptors that can be used to sort the results along side the filter. */
     private List<SortMetaDescriptorEnum<T>> sortDescriptors;
 
-    /** The url to call. */
-    private URL url;
+    @FunctionalInterface
+    public interface getUrlFunctionInterface<T extends Keyable> {
+        URL getUrl(T keyable) throws IOException;
+    }
+
+    /**
+     * gets the url that we need to call for this filter test.
+     * Used to get the url to make the rest call for the filter.
+     */
+    private getUrlFunctionInterface<T> getUrlFunction;
 
     public RestFilterEndpointDescription(RestFilterEndpointDescription<T> description) {
-        setUrl(description.getUrl());
         filterableScenario = description.filterableScenario;
         sortDescriptors = description.sortDescriptors;
+        getUrlFunction = description.getUrlFunction;
     }
 
     /**

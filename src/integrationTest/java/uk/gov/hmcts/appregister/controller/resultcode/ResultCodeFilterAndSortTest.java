@@ -39,7 +39,7 @@ public class ResultCodeFilterAndSortTest
         RestFilterEndpointDescription<ResolutionCode> restFilterDescription =
                 new RestFilterEndpointDescription<>();
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setUrl(getLocalUrl("result-codes"));
+        restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("result-codes"));
         restFilterDescription.setSortDescriptors(Arrays.asList(ResultCodeSortEnum.values()));
 
         // gets all of the combinations of filters based on the start data
@@ -65,7 +65,7 @@ public class ResultCodeFilterAndSortTest
         for (ResultCodeSortEnum resultCodeSortEnum : ResultCodeSortEnum.values()) {
             RestSortEndpointDescription<ResolutionCode> restFilterDescription =
                     new RestSortEndpointDescription<>();
-            restFilterDescription.setUrl(getLocalUrl("result-codes"));
+            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("result-codes"));
             restFilterDescription.setSortDescriptors(resultCodeSortEnum);
             restFilterDescription.setExpectedToBeGenerated(criminalJusticeAreas);
             restFilterDescription.setAllAvailableSortDescriptors(
@@ -77,10 +77,14 @@ public class ResultCodeFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ResolutionCode> keyable, Response response) {
+    protected boolean assertResponseInOrder(List<ResolutionCode> keyable, Response response, List<ResolutionCode> exclude) {
         ResultCodePage page = response.as(ResultCodePage.class);
         List<ResultCodeGetSummaryDto> content = page.getContent();
 
+        // assert the excludes are not in the response
+        assertExcluded(response, exclude);
+
+        // assert the order of the response is correct and all keys that are expected are there
         int expectedIndex = 0;
 
         for (ResultCodeGetSummaryDto item : content) {
@@ -98,10 +102,12 @@ public class ResultCodeFilterAndSortTest
         return true;
     }
 
-    @Override
-    protected boolean assertPageSize(int size, Response response) {
+    private void assertExcluded(Response response, List<ResolutionCode> exclude) {
         ResultCodePage page = response.as(ResultCodePage.class);
-        return size == page.getContent().size();
+        List<ResultCodeGetSummaryDto> content = page.getContent();
+        for (ResolutionCode keyable : exclude) {
+            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getResultCode().equals(keyable.getResultCode())));
+        }
     }
 
     private void assertKeyableForSummary(ResolutionCode keyable, ResultCodeGetSummaryDto dto) {

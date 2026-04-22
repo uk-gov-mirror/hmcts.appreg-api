@@ -17,12 +17,12 @@ public class SortMetaDataDescriptor<T> {
     /** The order of the sort. */
     @Builder.Default String order = SortableField.ASC;
 
-    /** The enum to determine the api value used in production code. */
+    /** The enum to determine the api value used to sort. */
     SortableOperationEnum sortableOperationEnum;
 
     /** The generator to use to generate the sort value. */
     GenerateAccordingToSort<T> sortGenerator;
 
-    /** Returns the function that allows us to get a value to sort. */
+    /** Returns the function that allows us to get the value to sort. */
     Function<T, Object> sortableValueFunction;
 }

@@ -39,7 +39,7 @@ public class CriminalJusticeAreaFilterAndSortTest
         RestFilterEndpointDescription<CriminalJusticeArea> restFilterDescription =
                 new RestFilterEndpointDescription<>();
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setUrl(getLocalUrl("criminal-justice-areas"));
+        restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("criminal-justice-areas"));
         restFilterDescription.setSortDescriptors(
                 Arrays.asList(CriminalJusticeAreaSortEnum.values()));
 
@@ -67,7 +67,7 @@ public class CriminalJusticeAreaFilterAndSortTest
                 CriminalJusticeAreaSortEnum.values()) {
             RestSortEndpointDescription<CriminalJusticeArea> restFilterDescription =
                     new RestSortEndpointDescription<>();
-            restFilterDescription.setUrl(getLocalUrl("criminal-justice-areas"));
+            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("criminal-justice-areas"));
             restFilterDescription.setSortDescriptors(criminalJusticeAreaSortEnum);
             restFilterDescription.setExpectedToBeGenerated(criminalJusticeAreas);
             restFilterDescription.setAllAvailableSortDescriptors(
@@ -79,10 +79,14 @@ public class CriminalJusticeAreaFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<CriminalJusticeArea> keyable, Response response) {
+    protected boolean assertResponseInOrder(List<CriminalJusticeArea> keyable, Response response, List<CriminalJusticeArea> exclude) {
         CriminalJusticeAreaPage page = response.as(CriminalJusticeAreaPage.class);
         List<CriminalJusticeAreaGetDto> content = page.getContent();
 
+        // assert the excludes are not in the response
+        assertExcluded(response, exclude);
+
+        // assert the order of the response is correct and all keys that are expected are there
         int expectedIndex = 0;
 
         for (CriminalJusticeAreaGetDto item : content) {
@@ -100,10 +104,18 @@ public class CriminalJusticeAreaFilterAndSortTest
         return true;
     }
 
-    @Override
-    protected boolean assertPageSize(int size, Response response) {
+    private void assertExcluded(Response response, List<CriminalJusticeArea> exclude) {
         CriminalJusticeAreaPage page = response.as(CriminalJusticeAreaPage.class);
-        return size == page.getContent().size();
+        List<CriminalJusticeAreaGetDto> content = page.getContent();
+
+        for (CriminalJusticeAreaGetDto item : content) {
+            for (CriminalJusticeArea excluded : exclude) {
+                if (excluded.getCode().equals(item.getCode())) {
+                    throw new FilterProcessingException(
+                            "Excluded code %s was found in the response".formatted(excluded.getCode()));
+                }
+            }
+        }
     }
 
     private void assertKeyableForSummary(

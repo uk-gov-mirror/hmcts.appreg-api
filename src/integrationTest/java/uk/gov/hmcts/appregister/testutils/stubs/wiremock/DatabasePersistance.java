@@ -126,7 +126,7 @@ public class DatabasePersistance {
     @Transactional
     public ApplicationListEntry save(ApplicationListEntry entry) {
 
-        if (entry.getApplicationCode() != null) {
+        if (entry.getApplicationCode() != null && entry.getApplicationCode().getId() == null) {
             save(entry.getApplicationCode());
         }
 
@@ -134,19 +134,29 @@ public class DatabasePersistance {
             save(entry.getApplicationList());
         }
 
-        if (entry.getStandardApplicant() != null) {
+        if (entry.getStandardApplicant() != null && entry.getStandardApplicant().getId() == null) {
             save(entry.getStandardApplicant());
         }
 
-        if (entry.getRnameaddress() != null) {
+        if (entry.getRnameaddress() != null && entry.getRnameaddress().getId() == null) {
             save(entry.getRnameaddress());
         }
 
-        if (entry.getAnamedaddress() != null) {
+        if (entry.getAnamedaddress() != null && entry.getAnamedaddress().getId() == null) {
             save(entry.getAnamedaddress());
         }
 
-        return refreshEntity(applicationListEntryRepository.saveAndFlush(entry));
+        // add the resolution pointing to the list
+        ApplicationListEntry applicationListEntry =  applicationListEntryRepository.saveAndFlush(entry);
+
+        if (entry.getResolutions() != null) {
+            for (AppListEntryResolution resolution : entry.getResolutions()) {
+                resolution.setApplicationList(applicationListEntry);
+                save(resolution);
+            }
+        }
+
+        return applicationListEntry;
     }
 
     @Transactional
@@ -157,10 +167,10 @@ public class DatabasePersistance {
 
         if (entry.getEntries() != null) {
             boolean alreadyProcessed =
-                    entry.getEntries().stream()
-                            .filter(e -> e.getApplicationList() == entry)
-                            .toList()
-                            .isEmpty();
+                entry.getEntries().stream()
+                    .filter(e -> e.getApplicationList() == entry)
+                    .toList()
+                    .isEmpty();
             if (!alreadyProcessed) {
                 for (ApplicationListEntry alEntry : entry.getEntries()) {
                     alEntry.setApplicationList(entry);
@@ -184,11 +194,11 @@ public class DatabasePersistance {
     @Transactional
     public AppListEntryResolution save(AppListEntryResolution entryResult) {
 
-        if (entryResult.getApplicationList() != null) {
+        if (entryResult.getApplicationList() != null && entryResult.getApplicationList().getUuid() == null) {
             save(entryResult.getApplicationList());
         }
 
-        if (entryResult.getResolutionCode() != null) {
+        if (entryResult.getResolutionCode() != null && entryResult.getResolutionCode().getId() == null) {
             save(entryResult.getResolutionCode());
         }
 
