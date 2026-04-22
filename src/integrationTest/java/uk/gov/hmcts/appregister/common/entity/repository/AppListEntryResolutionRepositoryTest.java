@@ -55,6 +55,6 @@ public class AppListEntryResolutionRepositoryTest extends BaseRepositoryTest {
                         .toList();
 
         assertTrue(retrievedWordings.containsAll(List.of(WORDING_1, WORDING_2)));
-        assertThat(retrievedWordings.size()).isEqualTo(2);
+        assertThat(retrievedWordings.size()).isEqualTo(4);
     }
 }

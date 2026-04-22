@@ -79,7 +79,10 @@ public class CriminalJusticeAreaFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<CriminalJusticeArea> keyable, Response response, List<CriminalJusticeArea> exclude) {
+    protected boolean assertResponseInOrder(
+            List<CriminalJusticeArea> keyable,
+            Response response,
+            List<CriminalJusticeArea> exclude) {
         CriminalJusticeAreaPage page = response.as(CriminalJusticeAreaPage.class);
         List<CriminalJusticeAreaGetDto> content = page.getContent();
 
@@ -112,7 +115,8 @@ public class CriminalJusticeAreaFilterAndSortTest
             for (CriminalJusticeArea excluded : exclude) {
                 if (excluded.getCode().equals(item.getCode())) {
                     throw new FilterProcessingException(
-                            "Excluded code %s was found in the response".formatted(excluded.getCode()));
+                            "Excluded code %s was found in the response"
+                                    .formatted(excluded.getCode()));
                 }
             }
         }

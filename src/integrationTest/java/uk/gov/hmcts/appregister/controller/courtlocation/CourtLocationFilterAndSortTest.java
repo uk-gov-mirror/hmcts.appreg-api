@@ -87,7 +87,8 @@ public class CourtLocationFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<NationalCourtHouse> keyable, Response response, List<NationalCourtHouse> exclude) {
+    protected boolean assertResponseInOrder(
+            List<NationalCourtHouse> keyable, Response response, List<NationalCourtHouse> exclude) {
         CourtLocationPage page = response.as(CourtLocationPage.class);
         List<CourtLocationGetSummaryDto> content = page.getContent();
 
@@ -118,10 +119,14 @@ public class CourtLocationFilterAndSortTest
         CourtLocationPage page = response.as(CourtLocationPage.class);
         List<CourtLocationGetSummaryDto> content = page.getContent();
         for (NationalCourtHouse keyable : exclude) {
-            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getLocationCode().equals(keyable.getCourtLocationCode())));
+            Assertions.assertFalse(
+                    content.stream()
+                            .anyMatch(
+                                    dto ->
+                                            dto.getLocationCode()
+                                                    .equals(keyable.getCourtLocationCode())));
         }
     }
-
 
     @Override
     protected NationalCourtHouse saveToDatabase(NationalCourtHouse keyable) {

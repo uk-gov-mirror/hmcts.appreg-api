@@ -31,6 +31,7 @@ public class AppListTestData
                         .ignore(field(ApplicationList::getId))
                         .ignore(field(ApplicationList::getCja))
                         .ignore(field(ApplicationList::getUuid))
+                        .ignore(field(ApplicationList::getVersion))
                         .withSettings(settings)
                         .create();
         list.setDeleted(false);

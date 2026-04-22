@@ -147,7 +147,8 @@ public class DatabasePersistance {
         }
 
         // add the resolution pointing to the list
-        ApplicationListEntry applicationListEntry =  applicationListEntryRepository.saveAndFlush(entry);
+        ApplicationListEntry applicationListEntry =
+                applicationListEntryRepository.saveAndFlush(entry);
 
         if (entry.getResolutions() != null) {
             for (AppListEntryResolution resolution : entry.getResolutions()) {
@@ -167,10 +168,10 @@ public class DatabasePersistance {
 
         if (entry.getEntries() != null) {
             boolean alreadyProcessed =
-                entry.getEntries().stream()
-                    .filter(e -> e.getApplicationList() == entry)
-                    .toList()
-                    .isEmpty();
+                    entry.getEntries().stream()
+                            .filter(e -> e.getApplicationList() == entry)
+                            .toList()
+                            .isEmpty();
             if (!alreadyProcessed) {
                 for (ApplicationListEntry alEntry : entry.getEntries()) {
                     alEntry.setApplicationList(entry);
@@ -194,11 +195,13 @@ public class DatabasePersistance {
     @Transactional
     public AppListEntryResolution save(AppListEntryResolution entryResult) {
 
-        if (entryResult.getApplicationList() != null && entryResult.getApplicationList().getUuid() == null) {
+        if (entryResult.getApplicationList() != null
+                && entryResult.getApplicationList().getUuid() == null) {
             save(entryResult.getApplicationList());
         }
 
-        if (entryResult.getResolutionCode() != null && entryResult.getResolutionCode().getId() == null) {
+        if (entryResult.getResolutionCode() != null
+                && entryResult.getResolutionCode().getId() == null) {
             save(entryResult.getResolutionCode());
         }
 

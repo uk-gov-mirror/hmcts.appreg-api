@@ -22,15 +22,15 @@ public class RestSortEndpointDescription<T extends Keyable> {
     private List<T> expectedToBeGenerated = new ArrayList<>();
 
     @FunctionalInterface
-    public interface getUrlFunctionInterface<T extends Keyable> {
+    public interface GetUrlFunction<T extends Keyable> {
         URL getUrl(T keyable) throws IOException;
     }
 
     /**
-     * The url that we need to call for this sort test. Used to get the url to
-     * make the rest call for the sort.
+     * The url that we need to call for this sort test. Used to get the url to make the rest call
+     * for the sort.
      */
-    private RestFilterEndpointDescription.getUrlFunctionInterface<T> getUrlFunction;
+    private RestFilterEndpointDescription.GetUrlFunction<T> getUrlFunction;
 
     public void setExpectedToBeGenerated(List<T> expectedToBeGeneratedLst) {
         expectedToBeGenerated =

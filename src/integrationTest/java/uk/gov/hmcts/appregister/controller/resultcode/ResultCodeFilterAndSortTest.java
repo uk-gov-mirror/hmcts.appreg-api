@@ -77,7 +77,8 @@ public class ResultCodeFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ResolutionCode> keyable, Response response, List<ResolutionCode> exclude) {
+    protected boolean assertResponseInOrder(
+            List<ResolutionCode> keyable, Response response, List<ResolutionCode> exclude) {
         ResultCodePage page = response.as(ResultCodePage.class);
         List<ResultCodeGetSummaryDto> content = page.getContent();
 
@@ -106,7 +107,9 @@ public class ResultCodeFilterAndSortTest
         ResultCodePage page = response.as(ResultCodePage.class);
         List<ResultCodeGetSummaryDto> content = page.getContent();
         for (ResolutionCode keyable : exclude) {
-            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getResultCode().equals(keyable.getResultCode())));
+            Assertions.assertFalse(
+                    content.stream()
+                            .anyMatch(dto -> dto.getResultCode().equals(keyable.getResultCode())));
         }
     }
 

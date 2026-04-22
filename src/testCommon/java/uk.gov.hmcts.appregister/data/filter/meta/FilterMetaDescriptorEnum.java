@@ -10,9 +10,9 @@ import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 public interface FilterMetaDescriptorEnum<T extends Keyable> {
 
     /**
-     * An enumeration entry for a filter descriptor. the filter descriptor
-     * describes a specific column that can be filtered and the associated value we
-     * are applying.
+     * An enumeration entry for a filter descriptor. the filter descriptor describes a specific
+     * column that can be filtered and the associated value we are applying.
+     *
      * @return The filter descriptor.
      */
     FilterFieldDataMetaDescriptor<T> getDescriptor();

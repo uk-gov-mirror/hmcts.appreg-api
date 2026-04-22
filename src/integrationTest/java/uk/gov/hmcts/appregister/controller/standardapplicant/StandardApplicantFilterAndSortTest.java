@@ -1,7 +1,6 @@
 package uk.gov.hmcts.appregister.controller.standardapplicant;
 
 import io.restassured.response.Response;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,8 +84,8 @@ public class StandardApplicantFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<StandardApplicant> keyable, Response response,
-                                            List<StandardApplicant> exclude) {
+    protected boolean assertResponseInOrder(
+            List<StandardApplicant> keyable, Response response, List<StandardApplicant> exclude) {
         StandardApplicantPage page = response.as(StandardApplicantPage.class);
         List<StandardApplicantGetSummaryDto> content = page.getContent();
 
@@ -115,7 +114,9 @@ public class StandardApplicantFilterAndSortTest
         StandardApplicantPage page = response.as(StandardApplicantPage.class);
         List<StandardApplicantGetSummaryDto> content = page.getContent();
         for (StandardApplicant keyable : exclude) {
-            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getCode().equals(keyable.getApplicantCode())));
+            Assertions.assertFalse(
+                    content.stream()
+                            .anyMatch(dto -> dto.getCode().equals(keyable.getApplicantCode())));
         }
     }
 

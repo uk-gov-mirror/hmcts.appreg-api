@@ -183,6 +183,7 @@ public class ReflectiveAuditorTest {
     @Test
     public void testDeleteAppListAuditData() {
         ApplicationList appList = new AppListTestData().someComplete();
+        appList.setVersion(1L);
         appList.setId(123L);
         appList.setUuid(UUID.randomUUID());
         ReflectiveAuditor reflectiveAuditDifferentiator = new ReflectiveAuditor(true);

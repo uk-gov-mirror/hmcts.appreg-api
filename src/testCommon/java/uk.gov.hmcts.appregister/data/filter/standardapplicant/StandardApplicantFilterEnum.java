@@ -24,36 +24,36 @@ public enum StandardApplicantFilterEnum implements FilterMetaDescriptorEnum<Stan
                                         filterFieldData.getKeyableValues().getValue().toString());
                                 return filterFieldData;
                             })
-                    .build());/*,
-    NAME(
-            FilterFieldDataMetaDescriptor.<StandardApplicant>builder()
-                    .queryName("name")
-                    .partialSupport(true)
-                    .caseInsensitive(true)
-                    .filterGenerator(
-                            (count, keyable, descriptor) -> {
-                                FilterFieldData<StandardApplicant> filterFieldData =
-                                        FilterFieldDataGenerator.getFieldDataWithString(
-                                                count, descriptor, keyable, 35);
+                    .build()); /*,
+                               NAME(
+                                       FilterFieldDataMetaDescriptor.<StandardApplicant>builder()
+                                               .queryName("name")
+                                               .partialSupport(true)
+                                               .caseInsensitive(true)
+                                               .filterGenerator(
+                                                       (count, keyable, descriptor) -> {
+                                                           FilterFieldData<StandardApplicant> filterFieldData =
+                                                                   FilterFieldDataGenerator.getFieldDataWithString(
+                                                                           count, descriptor, keyable, 35);
 
-                                if (count % 2 == 0) {
-                                    keyable.setName(
-                                            filterFieldData
-                                                    .getKeyableValues()
-                                                    .getValue()
-                                                    .toString());
-                                    return filterFieldData;
-                                } else {
-                                    keyable.setName(null);
-                                    keyable.setApplicantForename1(
-                                            filterFieldData
-                                                    .getKeyableValues()
-                                                    .getValue()
-                                                    .toString());
-                                    return filterFieldData;
-                                }
-                            })
-                    .build());*/
+                                                           if (count % 2 == 0) {
+                                                               keyable.setName(
+                                                                       filterFieldData
+                                                                               .getKeyableValues()
+                                                                               .getValue()
+                                                                               .toString());
+                                                               return filterFieldData;
+                                                           } else {
+                                                               keyable.setName(null);
+                                                               keyable.setApplicantForename1(
+                                                                       filterFieldData
+                                                                               .getKeyableValues()
+                                                                               .getValue()
+                                                                               .toString());
+                                                               return filterFieldData;
+                                                           }
+                                                       })
+                                               .build());*/
 
     private FilterFieldDataMetaDescriptor<StandardApplicant> filterFieldDataDescriptor;
 

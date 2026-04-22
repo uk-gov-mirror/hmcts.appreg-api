@@ -11,7 +11,7 @@ public class PrimitiveDataGenerator {
 
     /** The characters that we can use to generate a string. */
     private static final String CHARACTERS =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            "ABCDFGHIJKLNOPQRTUVWXYZabcdfghijklnopqrtuvwxyz0123456789";
 
     /** The baseline time. */
     private static final LocalTime TIME = LocalTime.of(14, 0, 0);

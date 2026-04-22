@@ -29,54 +29,53 @@ public enum StandardApplicantSortEnum implements SortMetaDescriptorEnum<Standard
                             })
                     .build()),
     ADDRESS_LINE_1(
-        SortMetaDataDescriptor.<StandardApplicant>builder()
-            .sortableOperationEnum(StandardApplicantSortFieldEnum.ADDRESS_LINE_1)
-            .sortableValueFunction(StandardApplicant::getAddressLine1)
-            .sortGenerator(
-                new GenerateAccordingToSort<StandardApplicant>() {
-                    @Override
-                    public void apply(
-                        int count,
-                        StandardApplicant keyable,
-                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
-                        keyable.setAddressLine1(
-                            PrimitiveDataGenerator.generate(count, 35));
-                    }
-                })
-            .build()),
+            SortMetaDataDescriptor.<StandardApplicant>builder()
+                    .sortableOperationEnum(StandardApplicantSortFieldEnum.ADDRESS_LINE_1)
+                    .sortableValueFunction(StandardApplicant::getAddressLine1)
+                    .sortGenerator(
+                            new GenerateAccordingToSort<StandardApplicant>() {
+                                @Override
+                                public void apply(
+                                        int count,
+                                        StandardApplicant keyable,
+                                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
+                                    keyable.setAddressLine1(
+                                            PrimitiveDataGenerator.generate(count, 35));
+                                }
+                            })
+                    .build()),
     FROM(
-        SortMetaDataDescriptor.<StandardApplicant>builder()
-            .sortableOperationEnum(StandardApplicantSortFieldEnum.FROM)
-            .sortableValueFunction(StandardApplicant::getApplicantStartDate)
-            .sortGenerator(
-                new GenerateAccordingToSort<StandardApplicant>() {
-                    @Override
-                    public void apply(
-                        int count,
-                        StandardApplicant keyable,
-                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
-                        keyable.setApplicantStartDate(
-                            PrimitiveDataGenerator.getDateBefore(count));
-                    }
-                })
-            .build()),
+            SortMetaDataDescriptor.<StandardApplicant>builder()
+                    .sortableOperationEnum(StandardApplicantSortFieldEnum.FROM)
+                    .sortableValueFunction(StandardApplicant::getApplicantStartDate)
+                    .sortGenerator(
+                            new GenerateAccordingToSort<StandardApplicant>() {
+                                @Override
+                                public void apply(
+                                        int count,
+                                        StandardApplicant keyable,
+                                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
+                                    keyable.setApplicantStartDate(
+                                            PrimitiveDataGenerator.getDateBefore(count));
+                                }
+                            })
+                    .build()),
     TO(
-        SortMetaDataDescriptor.<StandardApplicant>builder()
-            .sortableOperationEnum(StandardApplicantSortFieldEnum.TO)
-            .sortableValueFunction(StandardApplicant::getApplicantEndDate)
-            .sortGenerator(
-                new GenerateAccordingToSort<StandardApplicant>() {
-                    @Override
-                    public void apply(
-                        int count,
-                        StandardApplicant keyable,
-                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
-                        keyable.setApplicantEndDate(
-                            PrimitiveDataGenerator.getDate(count));
-                    }
-                })
-            .build());
-
+            SortMetaDataDescriptor.<StandardApplicant>builder()
+                    .sortableOperationEnum(StandardApplicantSortFieldEnum.TO)
+                    .sortableValueFunction(StandardApplicant::getApplicantEndDate)
+                    .sortGenerator(
+                            new GenerateAccordingToSort<StandardApplicant>() {
+                                @Override
+                                public void apply(
+                                        int count,
+                                        StandardApplicant keyable,
+                                        SortMetaDataDescriptor<StandardApplicant> descriptor) {
+                                    keyable.setApplicantEndDate(
+                                            PrimitiveDataGenerator.getDate(count));
+                                }
+                            })
+                    .build());
 
     private SortMetaDataDescriptor<StandardApplicant> sortDataDescriptor;
 

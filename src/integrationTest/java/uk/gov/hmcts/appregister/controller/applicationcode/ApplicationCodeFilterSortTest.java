@@ -84,7 +84,8 @@ public class ApplicationCodeFilterSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ApplicationCode> keyable, Response response, List<ApplicationCode> exclude) {
+    protected boolean assertResponseInOrder(
+            List<ApplicationCode> keyable, Response response, List<ApplicationCode> exclude) {
         ApplicationCodePage page = response.as(ApplicationCodePage.class);
         List<ApplicationCodeGetSummaryDto> content = page.getContent();
 
@@ -113,7 +114,9 @@ public class ApplicationCodeFilterSortTest
         ApplicationCodePage page = response.as(ApplicationCodePage.class);
         List<ApplicationCodeGetSummaryDto> content = page.getContent();
         for (ApplicationCode keyable : exclude) {
-            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getApplicationCode().equals(keyable.getCode())));
+            Assertions.assertFalse(
+                    content.stream()
+                            .anyMatch(dto -> dto.getApplicationCode().equals(keyable.getCode())));
         }
     }
 

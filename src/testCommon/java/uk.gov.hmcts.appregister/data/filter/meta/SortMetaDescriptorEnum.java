@@ -8,9 +8,10 @@ package uk.gov.hmcts.appregister.data.filter.meta;
 public interface SortMetaDescriptorEnum<T> {
 
     /**
-     * A descriptor that describes a sort field that can be sorted and the associated value
-     * we should apply.
+     * A descriptor that describes a sort field that can be sorted and the associated value we
+     * should apply.
+     *
      * @return The sort descriptor.
-     * */
+     */
     SortMetaDataDescriptor<T> getDescriptor();
 }

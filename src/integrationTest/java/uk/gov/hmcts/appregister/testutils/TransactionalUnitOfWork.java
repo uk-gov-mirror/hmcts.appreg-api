@@ -42,13 +42,4 @@ public class TransactionalUnitOfWork {
             throw new RuntimeException(e);
         }
     }
-
-    @Transactional
-    public void inTransactionWithException(ThrowingRunnable supplier) {
-        try {
-             supplier.run();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

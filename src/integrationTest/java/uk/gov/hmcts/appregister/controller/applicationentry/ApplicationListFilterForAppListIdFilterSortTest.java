@@ -1,31 +1,30 @@
 package uk.gov.hmcts.appregister.controller.applicationentry;
 
 import io.restassured.response.Response;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeId;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.data.AppListEntryTestData;
-import uk.gov.hmcts.appregister.data.AppListTestData;
 import uk.gov.hmcts.appregister.data.filter.AppListEntryFeeIdMixin;
+import uk.gov.hmcts.appregister.data.filter.ApplicationListMixin;
 import uk.gov.hmcts.appregister.data.filter.FilterScenarioFactory;
 import uk.gov.hmcts.appregister.data.filter.FilterableScenario;
-import uk.gov.hmcts.appregister.data.filter.ApplicationListMixin;
 import uk.gov.hmcts.appregister.data.filter.NameAddressMixin;
 import uk.gov.hmcts.appregister.data.filter.applicationlistentry.ApplicationListFilterForAppListIdEnum;
 import uk.gov.hmcts.appregister.data.filter.applicationlistentry.ApplicationListSortForAppListIdEnum;
 import uk.gov.hmcts.appregister.data.filter.exception.FilterProcessingException;
-import uk.gov.hmcts.appregister.generated.model.ApplicationCodePage;
 import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.testutils.controller.AbstractFilterAndSortControllerTest;
@@ -34,21 +33,15 @@ import uk.gov.hmcts.appregister.testutils.controller.RestSortEndpointDescription
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 import uk.gov.hmcts.appregister.util.CopyUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
-
-public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFilterAndSortControllerTest<ApplicationListEntry> {
-    @Autowired
-    private ApplicationListRepository applicationListRepository;
+public class ApplicationListFilterForAppListIdFilterSortTest
+        extends AbstractFilterAndSortControllerTest<ApplicationListEntry> {
+    @Autowired private ApplicationListRepository applicationListRepository;
 
     private ApplicationList applicationListToMapTo;
 
     @Override
     protected Stream<RestFilterEndpointDescription<ApplicationListEntry>> getFilterDescriptions()
-        throws Exception {
+            throws Exception {
 
         applicationListToMapTo = applicationListRepository.findById(1L).get();
 
@@ -61,36 +54,39 @@ public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFil
         CopyUtil.registerMixin(AppListEntryFeeId.class, AppListEntryFeeIdMixin.class);
 
         RestFilterEndpointDescription<ApplicationListEntry> restFilterDescription =
-            new RestFilterEndpointDescription<>();
+                new RestFilterEndpointDescription<>();
 
         // create the application code
-        ApplicationListEntry applicationListEntry = new AppListEntryTestData().someMinimal().build();
+        ApplicationListEntry applicationListEntry =
+                new AppListEntryTestData().someMinimal().build();
 
         // process the scenario
         FilterableScenario<ApplicationListEntry> scenario =
-            FilterScenarioFactory.createFilterScenario(
-                applicationListEntry,
-                Arrays.asList(ApplicationListFilterForAppListIdEnum.values()),
-                Arrays.asList(ApplicationListSortForAppListIdEnum.values())
-            );
+                FilterScenarioFactory.createFilterScenario(
+                        applicationListEntry,
+                        Arrays.asList(ApplicationListFilterForAppListIdEnum.values()),
+                        Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
 
         // lets set the rest endpoint
         restFilterDescription.setFilterableScenario(scenario);
-        restFilterDescription.setGetUrlFunction((keyable) -> getLocalUrl("application-lists/%s/entries".formatted(
-            keyable
-                .getApplicationList().getUuid())));
-        restFilterDescription.setSortDescriptors(Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
+        restFilterDescription.setGetUrlFunction(
+                (keyable) ->
+                        getLocalUrl(
+                                "application-lists/%s/entries"
+                                        .formatted(keyable.getApplicationList().getUuid())));
+        restFilterDescription.setSortDescriptors(
+                Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
 
         // gets all of the combinations of filters
         return Stream.of(
-            restFilterDescription
-                .getForScenario(restFilterDescription.getFilterableScenario())
-                .toArray(new RestFilterEndpointDescription[0]));
+                restFilterDescription
+                        .getForScenario(restFilterDescription.getFilterableScenario())
+                        .toArray(new RestFilterEndpointDescription[0]));
     }
 
     @Override
     protected Stream<RestSortEndpointDescription<ApplicationListEntry>> getSortDescriptions()
-        throws Exception {
+            throws Exception {
 
         applicationListToMapTo = applicationListRepository.findById(1L).get();
 
@@ -104,28 +100,32 @@ public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFil
 
         // get all of the sort endpoint descriptions
         List<RestSortEndpointDescription<ApplicationListEntry>> sortEndpointDescriptions =
-            new ArrayList<>();
+                new ArrayList<>();
 
         // create the list entry
-        ApplicationListEntry applicationListEntry = new AppListEntryTestData().someMinimal().build();
+        ApplicationListEntry applicationListEntry =
+                new AppListEntryTestData().someMinimal().build();
 
         // process the scenario
         List<ApplicationListEntry> applicationListEntries =
-            FilterScenarioFactory.createSort(
-                applicationListEntry, Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
+                FilterScenarioFactory.createSort(
+                        applicationListEntry,
+                        Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
 
-
-        for (ApplicationListSortForAppListIdEnum applicationCodeSortEnum : ApplicationListSortForAppListIdEnum.values()) {
+        for (ApplicationListSortForAppListIdEnum applicationCodeSortEnum :
+                ApplicationListSortForAppListIdEnum.values()) {
             RestSortEndpointDescription<ApplicationListEntry> restFilterDescription =
-                new RestSortEndpointDescription<>();
-            restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("application-lists/%s/entries"
-                                                                             .formatted(key.getApplicationList().getUuid())));
+                    new RestSortEndpointDescription<>();
+            restFilterDescription.setGetUrlFunction(
+                    (key) ->
+                            getLocalUrl(
+                                    "application-lists/%s/entries"
+                                            .formatted(key.getApplicationList().getUuid())));
             restFilterDescription.setSortDescriptors(applicationCodeSortEnum);
             restFilterDescription.setExpectedToBeGenerated(applicationListEntries);
             restFilterDescription.setAllAvailableSortDescriptors(
-                Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
+                    Arrays.asList(ApplicationListSortForAppListIdEnum.values()));
             sortEndpointDescriptions.add(restFilterDescription);
-
         }
 
         return Stream.of(sortEndpointDescriptions.toArray(new RestSortEndpointDescription[0]));
@@ -139,7 +139,10 @@ public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFil
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ApplicationListEntry> keyable, Response response, List<ApplicationListEntry> exclude) {
+    protected boolean assertResponseInOrder(
+            List<ApplicationListEntry> keyable,
+            Response response,
+            List<ApplicationListEntry> exclude) {
         EntryPage page = response.as(EntryPage.class);
         List<EntryGetSummaryDto> content = page.getContent();
 
@@ -151,7 +154,7 @@ public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFil
 
         for (EntryGetSummaryDto item : content) {
             if (expectedIndex < keyable.size()
-                && keyable.get(expectedIndex).getUuid().equals(item.getId())) {
+                    && keyable.get(expectedIndex).getUuid().equals(item.getId())) {
                 assertKeyableForSummary(keyable.get(expectedIndex), item);
                 expectedIndex++;
             }
@@ -166,6 +169,7 @@ public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFil
 
     /**
      * asserts that the entries in the response are not in the exclude list.
+     *
      * @param exclude The entries to exclude from the response.
      */
     private void assertExcluded(Response response, List<ApplicationListEntry> exclude) {
@@ -173,15 +177,16 @@ public class ApplicationListFilterForAppListIdFilterSortTest extends AbstractFil
         List<EntryGetSummaryDto> content = page.getContent();
 
         for (ApplicationListEntry entry : exclude) {
-            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getId().equals(entry.getUuid())));
+            Assertions.assertFalse(
+                    content.stream().anyMatch(dto -> dto.getId().equals(entry.getUuid())));
         }
     }
 
-    private void assertKeyableForSummary(
-        ApplicationListEntry keyable, EntryGetSummaryDto dto) {
+    private void assertKeyableForSummary(ApplicationListEntry keyable, EntryGetSummaryDto dto) {
         Assertions.assertEquals(keyable.getAccountNumber(), dto.getAccountNumber().get());
         Assertions.assertEquals(keyable.getApplicationCode().getTitle(), dto.getApplicationTitle());
         Assertions.assertEquals(keyable.getSequenceNumber().intValue(), dto.getSequenceNumber());
-        Assertions.assertEquals(keyable.getApplicationCode().getFeeDue().isYes(), dto.getIsFeeRequired());
+        Assertions.assertEquals(
+                keyable.getApplicationCode().getFeeDue().isYes(), dto.getIsFeeRequired());
     }
 }

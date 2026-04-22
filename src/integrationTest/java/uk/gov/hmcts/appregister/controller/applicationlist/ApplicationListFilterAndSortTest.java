@@ -1,23 +1,20 @@
 package uk.gov.hmcts.appregister.controller.applicationlist;
 
 import io.restassured.response.Response;
-import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
-import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
-import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.data.AppListTestData;
+import uk.gov.hmcts.appregister.data.filter.ApplicationListMixin;
 import uk.gov.hmcts.appregister.data.filter.FilterScenarioFactory;
 import uk.gov.hmcts.appregister.data.filter.FilterableScenario;
-import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListFilterEnum;
-import uk.gov.hmcts.appregister.data.filter.ApplicationListMixin;
-import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListSortEnum;
 import uk.gov.hmcts.appregister.data.filter.NameAddressMixin;
+import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListFilterEnum;
+import uk.gov.hmcts.appregister.data.filter.applicationlist.ApplicationListSortEnum;
 import uk.gov.hmcts.appregister.data.filter.exception.FilterProcessingException;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListPage;
@@ -28,7 +25,6 @@ import uk.gov.hmcts.appregister.util.CopyUtil;
 
 public class ApplicationListFilterAndSortTest
         extends AbstractFilterAndSortControllerTest<ApplicationList> {
-
 
     @Override
     protected Stream<RestFilterEndpointDescription<ApplicationList>> getFilterDescriptions()
@@ -72,7 +68,7 @@ public class ApplicationListFilterAndSortTest
         applicationCode.setEntries(List.of());
 
         // process the scenario
-        List<ApplicationList> applicationCodes =
+        List<ApplicationList> applicationLists =
                 FilterScenarioFactory.createSort(
                         applicationCode, Arrays.asList(ApplicationListSortEnum.values()));
 
@@ -83,7 +79,7 @@ public class ApplicationListFilterAndSortTest
                     new RestSortEndpointDescription<>();
             restFilterDescription.setGetUrlFunction((key) -> getLocalUrl("application-lists"));
             restFilterDescription.setSortDescriptors(applicationCodeSortEnum);
-            restFilterDescription.setExpectedToBeGenerated(applicationCodes);
+            restFilterDescription.setExpectedToBeGenerated(applicationLists);
             restFilterDescription.setAllAvailableSortDescriptors(
                     Arrays.asList(ApplicationListSortEnum.values()));
             sortEndpointDescriptions.add(restFilterDescription);
@@ -93,8 +89,8 @@ public class ApplicationListFilterAndSortTest
     }
 
     @Override
-    protected boolean assertResponseInOrder(List<ApplicationList> keyable, Response response,
-                                            List<ApplicationList> exclude) {
+    protected boolean assertResponseInOrder(
+            List<ApplicationList> keyable, Response response, List<ApplicationList> exclude) {
         ApplicationListPage page = response.as(ApplicationListPage.class);
         List<ApplicationListGetSummaryDto> content = page.getContent();
 
@@ -123,7 +119,8 @@ public class ApplicationListFilterAndSortTest
         ApplicationListPage page = response.as(ApplicationListPage.class);
         List<ApplicationListGetSummaryDto> content = page.getContent();
         for (ApplicationList keyable : exclude) {
-            Assertions.assertFalse(content.stream().anyMatch(dto -> dto.getId().equals(keyable.getUuid())));
+            Assertions.assertFalse(
+                    content.stream().anyMatch(dto -> dto.getId().equals(keyable.getUuid())));
         }
     }
 

@@ -126,6 +126,7 @@ public enum ApplicationListSortEnum implements SortMetaDescriptorEnum<Applicatio
                                         entry.setStandardApplicant(saApplicant);
                                         entry.setAnamedaddress(applicant);
                                         entry.setRnameaddress(respondent);
+                                        entry.setApplicationList(null);
                                         keyable.getEntries().add(entry);
                                     }
                                 }

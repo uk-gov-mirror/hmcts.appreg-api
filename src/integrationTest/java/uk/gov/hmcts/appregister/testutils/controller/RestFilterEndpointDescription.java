@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -28,15 +26,15 @@ public class RestFilterEndpointDescription<T extends Keyable> {
     private List<SortMetaDescriptorEnum<T>> sortDescriptors;
 
     @FunctionalInterface
-    public interface getUrlFunctionInterface<T extends Keyable> {
+    public interface GetUrlFunction<T extends Keyable> {
         URL getUrl(T keyable) throws IOException;
     }
 
     /**
-     * gets the url that we need to call for this filter test.
-     * Used to get the url to make the rest call for the filter.
+     * gets the url that we need to call for this filter test. Used to get the url to make the rest
+     * call for the filter.
      */
-    private getUrlFunctionInterface<T> getUrlFunction;
+    private GetUrlFunction<T> getUrlFunction;
 
     public RestFilterEndpointDescription(RestFilterEndpointDescription<T> description) {
         filterableScenario = description.filterableScenario;
