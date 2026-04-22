@@ -369,23 +369,26 @@ public class ApplicationListControllerSearchTest extends AbstractApplicationList
         TokenGenerator tokenGenerator =
                 getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
 
-        // add an initial list
+        // create a list with a cja code and location description
         var createListReq =
                 new ApplicationListCreateDto()
                         .date(TEST_DATE)
                         .time(TEST_TIME)
                         .description("description")
                         .status(ApplicationListStatus.OPEN)
-                        .cjaCode(VALID_CJA_CODE2)
-                        .otherLocationDescription(VALID_OTHER_LOCATION)
+                        .courtLocationCode(VALID_COURT_CODE)
                         .durationHours(1)
                         .durationMinutes(0);
+
+        createListReq.setCjaCode(VALID_CJA_CODE);
+        createListReq.setOtherLocationDescription(VALID_OTHER_LOCATION);
+        createListReq.setCourtLocationCode(null);
 
         UUID listId =
                 createApplicationListWithCourtCode(
                         tokenGenerator.fetchTokenForRole(), createListReq);
 
-        // add an entry to the list
+        // add a entry to the list
         createEntry(listId);
 
         // create a second list with same cja code and different location description
