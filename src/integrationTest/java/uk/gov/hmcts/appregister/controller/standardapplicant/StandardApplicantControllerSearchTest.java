@@ -1623,6 +1623,50 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
         Assertions.assertEquals(sortedDates, dates);
     }
 
+    @Test
+    public void givenApplicantsWithBlankName_whenSortByName_thenFallbackToForenameAndSurname()
+            throws Exception {
+        var activeDate = LocalDate.now();
+        savePersonStandardApplicant("SABLANK002", "   ", "Zoe", "Alpha", activeDate, null);
+        savePersonStandardApplicant("SABLANK001", "", "Adam", "Bravo", activeDate, null);
+
+        var tokenGenerator = getATokenWithValidCredentials().roles(List.of(RoleEnum.ADMIN)).build();
+
+        Response responseSpec =
+                restAssuredClient.executeGetRequestWithPaging(
+                        Optional.of(10),
+                        Optional.of(0),
+                        List.of("name,asc"),
+                        getLocalUrl(WEB_CONTEXT),
+                        tokenGenerator.fetchTokenForRole(),
+                        new StandardApplicantRequestFilter(
+                                Optional.of("SABLANK"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()),
+                        new OpenApiPageMetaData());
+
+        responseSpec.then().statusCode(200);
+
+        StandardApplicantPage page = responseSpec.as(StandardApplicantPage.class);
+        Assertions.assertEquals(2, page.getContent().size());
+        Assertions.assertEquals("SABLANK001", page.getContent().get(0).getCode());
+        Assertions.assertEquals(
+                "Adam",
+                page.getContent().get(0).getApplicant().getPerson().getName().getFirstForename());
+        Assertions.assertEquals(
+                "Bravo",
+                page.getContent().get(0).getApplicant().getPerson().getName().getSurname());
+        Assertions.assertEquals("SABLANK002", page.getContent().get(1).getCode());
+        Assertions.assertEquals(
+                "Zoe",
+                page.getContent().get(1).getApplicant().getPerson().getName().getFirstForename());
+        Assertions.assertEquals(
+                "Alpha",
+                page.getContent().get(1).getApplicant().getPerson().getName().getSurname());
+    }
+
     @RequiredArgsConstructor
     static class StandardApplicantRequestFilter implements UnaryOperator<RequestSpecification> {
         private final Optional<String> code;
@@ -1672,6 +1716,35 @@ public class StandardApplicantControllerSearchTest extends AbstractSecurityContr
             standardApplicant.setApplicantForename2(null);
             standardApplicant.setApplicantForename3(null);
             standardApplicant.setApplicantSurname(null);
+            standardApplicant.setApplicantStartDate(startDate);
+            standardApplicant.setApplicantEndDate(endDate);
+            persistance.save(standardApplicant);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    private void savePersonStandardApplicant(
+            String code,
+            String name,
+            String forename,
+            String surname,
+            LocalDate startDate,
+            LocalDate endDate)
+            throws Exception {
+        var jwt = TokenGenerator.builder().build().getJwtFromToken();
+        var auth = new JwtAuthenticationToken(jwt, List.of());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        try {
+            StandardApplicant standardApplicant = new StandardApplicantTestData().someComplete();
+            standardApplicant.setApplicantCode(code);
+            standardApplicant.setName(name);
+            standardApplicant.setApplicantTitle("Ms");
+            standardApplicant.setApplicantForename1(forename);
+            standardApplicant.setApplicantForename2(null);
+            standardApplicant.setApplicantForename3(null);
+            standardApplicant.setApplicantSurname(surname);
             standardApplicant.setApplicantStartDate(startDate);
             standardApplicant.setApplicantEndDate(endDate);
             persistance.save(standardApplicant);
