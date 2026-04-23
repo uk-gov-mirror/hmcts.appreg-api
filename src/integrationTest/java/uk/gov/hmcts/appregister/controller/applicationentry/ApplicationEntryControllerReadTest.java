@@ -747,7 +747,7 @@ public class ApplicationEntryControllerReadTest extends AbstractApplicationEntry
                         Optional.of(10),
                         Optional.of(0),
                         List.of(
-                                ApplicationEntrySortFieldEnum.LEGISLATION.getApiValue()
+                                ApplicationEntrySortFieldEnum.APPLICATION_TITLE.getApiValue()
                                         + ","
                                         + "desc"),
                         getLocalUrl(WEB_CONTEXT),

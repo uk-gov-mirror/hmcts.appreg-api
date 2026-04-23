@@ -9,8 +9,8 @@ import uk.gov.hmcts.appregister.common.api.SortableOperationEnum;
 public enum ApplicationEntrySortFieldEnum implements SortableOperationEnum {
     // ensure we always add id to guarantee a consistent sort order in searches
     DATE("date", "id", "date"),
-    APPLICANT("applicant", "id", "applicantName"),
-    RESPONDENT("respondent", "id", "respondentName"),
+    APPLICANT("applicantName", "id", "applicantName"),
+    RESPONDENT("respondentName", "id", "respondentName"),
     APPLICATION_TITLE("applicationTitle", "id", "applicationTitle"),
     FEE_REQUIRED("feeRequired", "id", "feeRequired"),
     RESULTED("resulted", "id", "resulted"),
