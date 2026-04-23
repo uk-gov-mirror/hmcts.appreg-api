@@ -44,10 +44,6 @@ public abstract class ApplicationCodeMapper {
      */
     @Named("mapFee")
     public JsonNullable<ApplicationCodeGetSummaryDtoFeeAmount> map(Fee fee) {
-        if (fee == null || fee.getAmount() == null) {
-            return JsonNullable.undefined();
-        }
-
         long pence = CurrencyUtil.getPennies(fee);
 
         ApplicationCodeGetSummaryDtoFeeAmount dto = new ApplicationCodeGetSummaryDtoFeeAmount();
@@ -73,10 +69,6 @@ public abstract class ApplicationCodeMapper {
 
     @Named("mapOffsite")
     public JsonNullable<ApplicationCodeGetSummaryDtoOffsiteFeeAmount> mapOffsite(Fee fee) {
-        if (fee == null || fee.getAmount() == null) {
-            return JsonNullable.undefined();
-        }
-
         long pence = CurrencyUtil.getPennies(fee);
 
         ApplicationCodeGetSummaryDtoOffsiteFeeAmount dto =
