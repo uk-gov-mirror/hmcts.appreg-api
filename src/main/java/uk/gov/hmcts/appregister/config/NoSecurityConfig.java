@@ -32,8 +32,11 @@ public class NoSecurityConfig {
     }
 
     @Bean
+    @SuppressWarnings("java:S4502")
     SecurityFilterChain noSecurityFilterChain(HttpSecurity http) {
-        http.csrf(csrf -> csrf.ignoringRequestMatchers(request -> true))
+        // This profile is local-only, disables authentication entirely, and is restricted to
+        // loopback binding by verifyLoopbackAddress.
+        http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         return http.build();
