@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
-import uk.gov.hmcts.appregister.data.filter.meta.SortMetaDescriptorEnum;
+import uk.gov.hmcts.appregister.filter.meta.SortMetaDescriptorEnum;
 import uk.gov.hmcts.appregister.util.CopyUtil;
 
 @Getter

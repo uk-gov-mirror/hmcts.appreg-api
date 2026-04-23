@@ -3,7 +3,7 @@ package uk.gov.hmcts.appregister.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import uk.gov.hmcts.appregister.data.filter.exception.FilterProcessingException;
+import uk.gov.hmcts.appregister.filter.exception.FilterProcessingException;
 
 /**
  * A utility supporting deep copying using Jackson.

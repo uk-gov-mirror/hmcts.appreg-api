@@ -26,10 +26,11 @@ import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
+import uk.gov.hmcts.appregister.data.Persistable;
 
 /**
  * A global persistence class that knows how to persist objects. Specifically ones that have been
- * created using the {@link uk.gov.hmcts.appregister.testutils.data.Persistable}
+ * created using the {@link Persistable}
  */
 @Component
 @RequiredArgsConstructor
