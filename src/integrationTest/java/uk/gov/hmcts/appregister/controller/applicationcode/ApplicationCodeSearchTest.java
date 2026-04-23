@@ -347,12 +347,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
         // assert the first auth code record
         ApplicationCodeGetDetailDto applicationCodeDto =
                 generateDefaultApplicationCodeGetDetailDtoAssertionPayload(
-                    Optional.of(FEE_DESCRIPTION),
-                    Optional.of(50.0),
-                    Optional.of("CO1.1"),
-                    Optional.of(OFFSITE_FEE_DESCRIPTION3),
-                    Optional.of(70.0),
-                    Optional.of("CO1.1"));
+                        Optional.of(FEE_DESCRIPTION),
+                        Optional.of(50.0),
+                        Optional.of("CO1.1"),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION3),
+                        Optional.of(70.0),
+                        Optional.of("CO1.1"));
 
         assertApplicationCode(response, applicationCodeDto);
 
@@ -398,9 +398,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
 
         ApplicationCodeGetDetailDto applicationCodeDto =
                 generateDefaultApplicationCodeGetDetailDtoAssertionPayload(
-                     Optional.empty(), Optional.empty(),
-                        Optional.empty(), Optional.of(OFFSITE_FEE_DESCRIPTION3),
-                        Optional.of(40.0), Optional.of("CO1.1"));
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION3),
+                        Optional.of(40.0),
+                        Optional.of("CO1.1"));
 
         assertApplicationCode(response, applicationCodeDto);
 

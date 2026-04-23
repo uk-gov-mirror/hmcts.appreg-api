@@ -35,10 +35,10 @@ public class AbstractApplicationCodeEntryCrudTest extends BaseIntegration {
             "Application to state a case for the High Court";
 
     protected static final String OFFSITE_FEE_DESCRIPTION2 =
-        "Liability Order – Council Tax and NDR";
+            "Liability Order – Council Tax and NDR";
 
     protected static final String OFFSITE_FEE_DESCRIPTION3 =
-        "Offsite: JP perform function away from court";
+            "Offsite: JP perform function away from court";
 
     protected static final String APPCODE_CODE = "AD99002";
     protected static final String DUPLICATE_APPCODE_CODE = "MS99006";
