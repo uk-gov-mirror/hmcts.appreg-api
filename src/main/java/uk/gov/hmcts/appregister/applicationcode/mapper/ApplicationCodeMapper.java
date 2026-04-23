@@ -1,7 +1,5 @@
 package uk.gov.hmcts.appregister.applicationcode.mapper;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import lombok.Setter;
 import org.mapstruct.InjectionStrategy;
@@ -18,6 +16,7 @@ import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.mapper.WordingTemplateMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
+import uk.gov.hmcts.appregister.common.util.CurrencyUtil;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationCodeGetSummaryDtoFeeAmount;
@@ -49,12 +48,7 @@ public abstract class ApplicationCodeMapper {
             return JsonNullable.undefined();
         }
 
-        // Expecting NUMERIC(9,2) mapped to BigDecimal scale=2
-        BigDecimal pounds = fee.getAmount();
-
-        BigDecimal scaled = pounds.setScale(2, RoundingMode.UNNECESSARY);
-
-        long pence = scaled.movePointRight(2).longValueExact();
+        long pence = CurrencyUtil.getPennies(fee);
 
         ApplicationCodeGetSummaryDtoFeeAmount dto = new ApplicationCodeGetSummaryDtoFeeAmount();
         dto.setValue(pence);
@@ -83,12 +77,7 @@ public abstract class ApplicationCodeMapper {
             return JsonNullable.undefined();
         }
 
-        // Expecting NUMERIC(9,2) mapped to BigDecimal scale=2
-        BigDecimal pounds = fee.getAmount();
-
-        BigDecimal scaled = pounds.setScale(2, RoundingMode.UNNECESSARY);
-
-        long pence = scaled.movePointRight(2).longValueExact();
+        long pence = CurrencyUtil.getPennies(fee);
 
         ApplicationCodeGetSummaryDtoOffsiteFeeAmount dto =
                 new ApplicationCodeGetSummaryDtoOffsiteFeeAmount();
