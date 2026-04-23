@@ -22,14 +22,14 @@ class NoSecurityConfigTest {
     @Test
     void verifyLoopbackAddress_rejectsBlankAddress() {
         assertThatThrownBy(() -> NoSecurityConfig.verifyLoopbackAddress(" "))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(NoSecurityConfigurationException.class)
                 .hasMessageContaining("loopback");
     }
 
     @Test
     void verifyLoopbackAddress_rejectsNonLoopbackAddress() {
         assertThatThrownBy(() -> NoSecurityConfig.verifyLoopbackAddress("0.0.0.0"))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(NoSecurityConfigurationException.class)
                 .hasMessageContaining("loopback");
     }
 }

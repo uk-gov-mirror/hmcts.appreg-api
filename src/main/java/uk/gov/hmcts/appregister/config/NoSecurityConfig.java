@@ -32,7 +32,7 @@ public class NoSecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain noSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain noSecurityFilterChain(HttpSecurity http) {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
@@ -41,17 +41,17 @@ public class NoSecurityConfig {
 
     static InetAddress verifyLoopbackAddress(String serverAddress) {
         if (!StringUtils.hasText(serverAddress)) {
-            throw new IllegalStateException(LOOPBACK_ONLY_MESSAGE);
+            throw new NoSecurityConfigurationException(LOOPBACK_ONLY_MESSAGE);
         }
 
         try {
             InetAddress bindAddress = InetAddress.getByName(serverAddress);
             if (!bindAddress.isLoopbackAddress()) {
-                throw new IllegalStateException(LOOPBACK_ONLY_MESSAGE);
+                throw new NoSecurityConfigurationException(LOOPBACK_ONLY_MESSAGE);
             }
             return bindAddress;
         } catch (UnknownHostException exception) {
-            throw new IllegalStateException(LOOPBACK_ONLY_MESSAGE, exception);
+            throw new NoSecurityConfigurationException(LOOPBACK_ONLY_MESSAGE, exception);
         }
     }
 }

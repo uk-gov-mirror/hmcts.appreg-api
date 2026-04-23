@@ -10,21 +10,21 @@ class NoSecurityConfigCoverageIntegrationTest {
     @Test
     void verifyLoopbackAddress_rejectsBlankAddress() {
         assertThatThrownBy(() -> NoSecurityConfig.verifyLoopbackAddress(" "))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(NoSecurityConfigurationException.class)
                 .hasMessageContaining("loopback");
     }
 
     @Test
     void verifyLoopbackAddress_rejectsNonLoopbackAddress() {
         assertThatThrownBy(() -> NoSecurityConfig.verifyLoopbackAddress("0.0.0.0"))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(NoSecurityConfigurationException.class)
                 .hasMessageContaining("loopback");
     }
 
     @Test
     void verifyLoopbackAddress_rejectsUnknownHost() {
         assertThatThrownBy(() -> NoSecurityConfig.verifyLoopbackAddress("not-a-real-host.invalid"))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(NoSecurityConfigurationException.class)
                 .hasMessageContaining("loopback")
                 .hasCauseInstanceOf(UnknownHostException.class);
     }
