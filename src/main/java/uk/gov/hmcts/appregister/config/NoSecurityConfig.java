@@ -33,7 +33,7 @@ public class NoSecurityConfig {
 
     @Bean
     SecurityFilterChain noSecurityFilterChain(HttpSecurity http) {
-        http.csrf(csrf -> csrf.disable())
+        http.csrf(csrf -> csrf.ignoringRequestMatchers(request -> true))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         return http.build();
