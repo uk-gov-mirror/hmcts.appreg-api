@@ -84,16 +84,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
         // assert
         ApplicationCodeGetSummaryDto applicationCodeDto =
                 generateDefaultApplicationCodeGetSummaryDtoAssertionPayload(
-<<<<<<< Updated upstream
-                        Optional.of(FEE_DESCRIPTION), Optional.of(200.0), Optional.of(155.0));
-=======
                         Optional.of(FEE_DESCRIPTION),
                         Optional.of(200.0),
                         Optional.of("CO1.1"),
                         Optional.of(OFFSITE_FEE_DESCRIPTION),
-                        Optional.of(30.0),
-                        Optional.of("CO1.1"));
->>>>>>> Stashed changes
+                        Optional.of(155.0),
+                        Optional.of("CO2.1"));
 
         assertApplicationCode(page.getContent().get(1), applicationCodeDto);
 
@@ -142,16 +138,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
         // assert
         ApplicationCodeGetSummaryDto applicationCodeDto =
                 generateDefaultApplicationCodeGetSummaryDtoAssertionPayload(
-<<<<<<< Updated upstream
-                        Optional.of(FEE_DESCRIPTION), Optional.of(200.0), Optional.of(155.0));
-=======
                         Optional.of(FEE_DESCRIPTION),
                         Optional.of(200.0),
                         Optional.of("CO1.1"),
                         Optional.of(OFFSITE_FEE_DESCRIPTION),
-                        Optional.of(30.0),
-                        Optional.of("CO1.1"));
->>>>>>> Stashed changes
+                        Optional.of(155.0),
+                        Optional.of("CO2.1"));
 
         assertApplicationCode(page.getContent().get(1), applicationCodeDto);
 
@@ -202,16 +194,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
 
         ApplicationCodeGetSummaryDto applicationCodeDto =
                 generateDefaultApplicationCodeGetSummaryDtoAssertionPayload(
-<<<<<<< Updated upstream
-                        Optional.empty(), Optional.empty(), Optional.of(0.5));
-=======
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of(OFFSITE_FEE_DESCRIPTION),
-                        Optional.of(70.0),
-                        Optional.of("CO1.1"));
->>>>>>> Stashed changes
+                        Optional.of(OFFSITE_FEE_DESCRIPTION2),
+                        Optional.of(0.50),
+                        Optional.of("CO4.1"));
 
         assertApplicationCode(page.getContent().get(1), applicationCodeDto);
 
@@ -266,16 +254,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
 
         ApplicationCodeGetDetailDto applicationCodeDto =
                 generateDefaultApplicationCodeGetDetailDtoAssertionPayload(
-<<<<<<< Updated upstream
-                        Optional.of(FEE_DESCRIPTION), Optional.of(50.0), Optional.of(70.0));
-=======
                         Optional.of(FEE_DESCRIPTION),
-                        Optional.of(200.0),
+                        Optional.of(50.0),
                         Optional.of("CO1.1"),
-                        Optional.of(OFFSITE_FEE_DESCRIPTION),
-                        Optional.of(30.0),
+                        Optional.of(OFFSITE_FEE_DESCRIPTION3),
+                        Optional.of(70.0),
                         Optional.of("CO1.1"));
->>>>>>> Stashed changes
 
         assertApplicationCode(responseContent, applicationCodeDto);
 
@@ -363,16 +347,12 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
         // assert the first auth code record
         ApplicationCodeGetDetailDto applicationCodeDto =
                 generateDefaultApplicationCodeGetDetailDtoAssertionPayload(
-<<<<<<< Updated upstream
-                        Optional.of(FEE_DESCRIPTION), Optional.of(50.0), Optional.of(70.0));
-=======
-                        Optional.of(FEE_DESCRIPTION),
-                        Optional.of(200.0),
-                        Optional.of("CO1.1"),
-                        Optional.of(OFFSITE_FEE_DESCRIPTION),
-                        Optional.of(30.0),
-                        Optional.of("CO1.1"));
->>>>>>> Stashed changes
+                    Optional.of(FEE_DESCRIPTION),
+                    Optional.of(50.0),
+                    Optional.of("CO1.1"),
+                    Optional.of(OFFSITE_FEE_DESCRIPTION3),
+                    Optional.of(70.0),
+                    Optional.of("CO1.1"));
 
         assertApplicationCode(response, applicationCodeDto);
 
@@ -418,13 +398,9 @@ public class ApplicationCodeSearchTest extends AbstractApplicationCodeEntryCrudT
 
         ApplicationCodeGetDetailDto applicationCodeDto =
                 generateDefaultApplicationCodeGetDetailDtoAssertionPayload(
-<<<<<<< Updated upstream
-                        Optional.empty(), Optional.empty(), Optional.of(40.0));
-=======
-                        Optional.empty(), Optional.empty(),
-                        Optional.empty(), Optional.of(OFFSITE_FEE_DESCRIPTION),
-                        Optional.of(70.0), Optional.of("CO1.1"));
->>>>>>> Stashed changes
+                     Optional.empty(), Optional.empty(),
+                        Optional.empty(), Optional.of(OFFSITE_FEE_DESCRIPTION3),
+                        Optional.of(40.0), Optional.of("CO1.1"));
 
         assertApplicationCode(response, applicationCodeDto);
 
