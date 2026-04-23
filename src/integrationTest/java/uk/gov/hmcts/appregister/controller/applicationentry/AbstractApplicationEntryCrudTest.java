@@ -1,19 +1,29 @@
 package uk.gov.hmcts.appregister.controller.applicationentry;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.appregister.common.enumeration.YesOrNo.NO;
 
+import com.nimbusds.jose.JOSEException;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import java.math.BigDecimal;
+import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -22,22 +32,36 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
+import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
+import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
+import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.NameAddress;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
+import uk.gov.hmcts.appregister.common.enumeration.NameAddressCodeType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
+import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.common.security.UserProvider;
 import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.data.AppListTestData;
+import uk.gov.hmcts.appregister.data.ApplicationCodeTestData;
+import uk.gov.hmcts.appregister.data.FeeTestData;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
+import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
+import uk.gov.hmcts.appregister.generated.model.FullName;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
@@ -78,6 +102,8 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
     @Autowired protected TransactionalUnitOfWork unitOfWork;
     @Autowired protected ApplicationListRepository applicationListRepository;
     @Autowired protected ApplicationListEntryRepository applicationListEntryRepository;
+    @Autowired protected AppListEntryFeeRepository appListEntryFeeRepository;
+    @Autowired protected ApplicationCodeRepository applicationCodeRepository;
 
     protected static final LocalDate TEST_DATE = LocalDate.of(2025, 10, 15);
     protected static final LocalTime TEST_TIME = LocalTime.of(10, 30);
@@ -318,6 +344,14 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
 
     protected void validateEntryCreationResponse(
             EntryCreateDto entryCreateDto, EntryGetDetailDto response, String wordingSpec) {
+        final List<FeeStatus> expectedFeeStatuses =
+                entryCreateDto.getFeeStatuses() == null
+                        ? List.of()
+                        : entryCreateDto.getFeeStatuses();
+        final List<Official> expectedOfficials =
+                entryCreateDto.getOfficials() == null ? List.of() : entryCreateDto.getOfficials();
+        final List<Official> actualOfficials =
+                response.getOfficials() == null ? List.of() : response.getOfficials();
 
         if (entryCreateDto.getApplicant() != null) {
             Assertions.assertEquals(entryCreateDto.getApplicant(), response.getApplicant());
@@ -342,34 +376,35 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         Assertions.assertNotNull(response.getId());
         Assertions.assertEquals(
                 entryCreateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
+        Assertions.assertNotNull(response.getLodgementDate());
         Assertions.assertEquals(entryCreateDto.getLodgementDate(), response.getLodgementDate());
         Assertions.assertEquals(entryCreateDto.getHasOffsiteFee(), response.getHasOffsiteFee());
 
-        for (int i = 0; i < response.getFeeStatuses().size(); i++) {
+        Assertions.assertEquals(expectedFeeStatuses.size(), response.getFeeStatuses().size());
+
+        for (int i = 0; i < expectedFeeStatuses.size(); i++) {
             Assertions.assertEquals(
-                    entryCreateDto.getFeeStatuses().get(i).getPaymentReference(),
+                    expectedFeeStatuses.get(i).getPaymentReference(),
                     response.getFeeStatuses().get(i).getPaymentReference());
             Assertions.assertEquals(
-                    entryCreateDto.getFeeStatuses().get(i).getStatusDate(),
+                    expectedFeeStatuses.get(i).getStatusDate(),
                     response.getFeeStatuses().get(i).getStatusDate());
             Assertions.assertEquals(
-                    entryCreateDto.getFeeStatuses().get(i).getPaymentStatus(),
+                    expectedFeeStatuses.get(i).getPaymentStatus(),
                     response.getFeeStatuses().get(i).getPaymentStatus());
         }
 
-        for (int i = 0; i < response.getOfficials().size(); i++) {
+        Assertions.assertEquals(expectedOfficials.size(), actualOfficials.size());
+
+        for (int i = 0; i < actualOfficials.size(); i++) {
             Assertions.assertEquals(
-                    entryCreateDto.getOfficials().get(i).getType(),
-                    response.getOfficials().get(i).getType());
+                    expectedOfficials.get(i).getType(), actualOfficials.get(i).getType());
             Assertions.assertEquals(
-                    entryCreateDto.getOfficials().get(i).getSurname(),
-                    response.getOfficials().get(i).getSurname());
+                    expectedOfficials.get(i).getSurname(), actualOfficials.get(i).getSurname());
             Assertions.assertEquals(
-                    entryCreateDto.getOfficials().get(i).getTitle(),
-                    response.getOfficials().get(i).getTitle());
+                    expectedOfficials.get(i).getTitle(), actualOfficials.get(i).getTitle());
             Assertions.assertEquals(
-                    entryCreateDto.getOfficials().get(i).getForename(),
-                    response.getOfficials().get(i).getForename());
+                    expectedOfficials.get(i).getForename(), actualOfficials.get(i).getForename());
         }
     }
 
@@ -378,6 +413,10 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
             EntryGetDetailDto response,
             String wordingSpec,
             List<FeeStatus> expectedFees) {
+        final List<Official> expectedOfficials =
+                entryUpdateDto.getOfficials() == null ? List.of() : entryUpdateDto.getOfficials();
+        final List<Official> actualOfficials =
+                response.getOfficials() == null ? List.of() : response.getOfficials();
 
         if (entryUpdateDto.getApplicant() != null) {
             Assertions.assertEquals(entryUpdateDto.getApplicant(), response.getApplicant());
@@ -400,7 +439,6 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         Assertions.assertNotNull(response.getId());
         Assertions.assertEquals(
                 entryUpdateDto.getNumberOfRespondents(), response.getNumberOfRespondents());
-        Assertions.assertEquals(entryUpdateDto.getLodgementDate(), response.getLodgementDate());
         Assertions.assertEquals(entryUpdateDto.getHasOffsiteFee(), response.getHasOffsiteFee());
 
         // Replace semantics: response should match exactly what was sent in the update
@@ -418,19 +456,17 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
                     response.getFeeStatuses().get(i).getPaymentStatus());
         }
 
-        for (int i = 0; i < response.getOfficials().size(); i++) {
+        Assertions.assertEquals(expectedOfficials.size(), actualOfficials.size());
+
+        for (int i = 0; i < actualOfficials.size(); i++) {
             Assertions.assertEquals(
-                    entryUpdateDto.getOfficials().get(i).getType(),
-                    response.getOfficials().get(i).getType());
+                    expectedOfficials.get(i).getType(), actualOfficials.get(i).getType());
             Assertions.assertEquals(
-                    entryUpdateDto.getOfficials().get(i).getSurname(),
-                    response.getOfficials().get(i).getSurname());
+                    expectedOfficials.get(i).getSurname(), actualOfficials.get(i).getSurname());
             Assertions.assertEquals(
-                    entryUpdateDto.getOfficials().get(i).getTitle(),
-                    response.getOfficials().get(i).getTitle());
+                    expectedOfficials.get(i).getTitle(), actualOfficials.get(i).getTitle());
             Assertions.assertEquals(
-                    entryUpdateDto.getOfficials().get(i).getForename(),
-                    response.getOfficials().get(i).getForename());
+                    expectedOfficials.get(i).getForename(), actualOfficials.get(i).getForename());
         }
     }
 
@@ -537,8 +573,6 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         final EntryUpdateDto updateDto =
                 Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
 
-        final List<Official> officials = Instancio.ofList(Official.class).size(4).create();
-
         updateDto.getApplicant().setPerson(null);
         updateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA13 1BB");
         updateDto
@@ -612,7 +646,7 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
 
         updateDto.getRespondent().setOrganisation(null);
         updateDto.setStandardApplicantCode(null);
-        updateDto.setOfficials(officials);
+        updateDto.setOfficials(CreateEntryDtoUtil.validOfficials());
 
         updateDto.setApplicationCode("ZS99007");
         updateDto.setHasOffsiteFee(true);
@@ -628,6 +662,58 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         return updateDto;
     }
 
+    protected ApplicationCode saveActiveApplicationCode(
+            String code, String feeReference, LocalDate endDate, String title) {
+        ApplicationCode applicationCode = new ApplicationCodeTestData().someComplete();
+        applicationCode.setCode(code);
+        applicationCode.setTitle(title);
+        applicationCode.setWording(
+                "Application for a warrant to enter premises at {TEXT|Premises Address|15} for date "
+                        + "{DATE|Premises Date|10}");
+        applicationCode.setFeeReference(feeReference);
+        applicationCode.setFeeDue(YesOrNo.YES);
+        applicationCode.setRequiresRespondent(YesOrNo.YES);
+        applicationCode.setBulkRespondentAllowed(YesOrNo.YES);
+        applicationCode.setStartDate(LocalDate.now().minusDays(10));
+        applicationCode.setEndDate(endDate);
+        return persistance.save(applicationCode);
+    }
+
+    protected Fee saveActiveFee(
+            String reference,
+            String description,
+            BigDecimal amount,
+            boolean offsite,
+            LocalDate endDate) {
+        Fee fee = new FeeTestData().someComplete();
+        fee.setReference(reference);
+        fee.setDescription(description);
+        fee.setAmount(amount);
+        fee.setOffsite(offsite);
+        fee.setStartDate(LocalDate.now().minusDays(10));
+        fee.setEndDate(endDate);
+        return persistance.save(fee);
+    }
+
+    protected Long getSelectedApplicationCodeId(UUID entryUuid) {
+        return unitOfWork.inTransaction(
+                () ->
+                        applicationListEntryRepository
+                                .findByUuid(entryUuid)
+                                .orElseThrow()
+                                .getApplicationCode()
+                                .getId());
+    }
+
+    protected List<Fee> getSelectedFees(UUID entryUuid) {
+        return unitOfWork.inTransaction(
+                () -> {
+                    ApplicationListEntry entry =
+                            applicationListEntryRepository.findByUuid(entryUuid).orElseThrow();
+                    return appListEntryFeeRepository.getFeeForEntryId(entry.getId());
+                });
+    }
+
     public record SuccessCreateEntryResponse(EntryGetDetailDto getDetailDto, Response response) {}
 
     protected ApplicationListEntry createEntry(ApplicationList list) {
@@ -639,5 +725,216 @@ public abstract class AbstractApplicationEntryCrudTest extends BaseIntegration {
         var list = new AppListTestData().someMinimal().status(status).build();
         persistance.save(list);
         return list;
+    }
+
+    public void saveResolution(ApplicationListEntry sourceEntry, String resultCode) {
+        ResolutionCode resolutionCode = new ResolutionCode();
+        resolutionCode.setResultCode(resultCode);
+        resolutionCode.setTitle(resultCode + " title");
+        resolutionCode.setWording(resultCode + " wording");
+        resolutionCode.setLegislation("Test legislation");
+        resolutionCode.setStartDate(LocalDate.now());
+        resolutionCode.setChangedBy(1L);
+        resolutionCode.setChangedDate(OffsetDateTime.now());
+        resolutionCode = persistance.save(resolutionCode);
+
+        ApplicationCode persistedCode =
+                applicationCodeRepository
+                        .findById(sourceEntry.getApplicationCode().getId())
+                        .orElseThrow();
+
+        ApplicationCode applicationCodeCopy = createApplicationCodeCopy(persistedCode);
+
+        ApplicationListEntry persistedEntry =
+                applicationListEntryRepository.findById(sourceEntry.getId()).orElseThrow();
+
+        ApplicationList persistedList =
+                applicationListRepository
+                        .findById(persistedEntry.getApplicationList().getId())
+                        .orElseThrow();
+
+        ApplicationListEntry entryCopy =
+                createApplicationListEntryCopy(persistedEntry, persistedList, applicationCodeCopy);
+
+        AppListEntryResolution entryResolution = new AppListEntryResolution();
+        entryResolution.setApplicationList(entryCopy);
+        entryResolution.setResolutionCode(resolutionCode);
+        entryResolution.setResolutionWording(resultCode + " wording");
+        entryResolution.setResolutionOfficer("Test officer");
+
+        persistance.save(entryResolution);
+    }
+
+    public static @NotNull ApplicationCode createApplicationCodeCopy(
+            ApplicationCode persistedCode) {
+        ApplicationCode applicationCodeCopy = new ApplicationCode();
+        applicationCodeCopy.setId(persistedCode.getId());
+        applicationCodeCopy.setVersion(persistedCode.getVersion());
+        applicationCodeCopy.setCode(persistedCode.getCode());
+        applicationCodeCopy.setTitle(persistedCode.getTitle());
+        applicationCodeCopy.setWording(persistedCode.getWording());
+        applicationCodeCopy.setLegislation(persistedCode.getLegislation());
+        applicationCodeCopy.setFeeDue(persistedCode.getFeeDue());
+        applicationCodeCopy.setRequiresRespondent(persistedCode.getRequiresRespondent());
+        applicationCodeCopy.setBulkRespondentAllowed(persistedCode.getBulkRespondentAllowed());
+        applicationCodeCopy.setStartDate(persistedCode.getStartDate());
+        applicationCodeCopy.setChangedBy(persistedCode.getChangedBy());
+        applicationCodeCopy.setChangedDate(persistedCode.getChangedDate());
+        applicationCodeCopy.setCreatedUser(persistedCode.getCreatedUser());
+        applicationCodeCopy.setApplicationListEntryList(null);
+        return applicationCodeCopy;
+    }
+
+    public static @NotNull ApplicationListEntry createApplicationListEntryCopy(
+            ApplicationListEntry persistedEntry,
+            ApplicationList persistedList,
+            ApplicationCode applicationCodeCopy) {
+        ApplicationListEntry entryCopy = new ApplicationListEntry();
+        entryCopy.setId(persistedEntry.getId());
+        entryCopy.setUuid(persistedEntry.getUuid());
+        entryCopy.setVersion(persistedEntry.getVersion());
+        entryCopy.setApplicationList(persistedList);
+        entryCopy.setApplicationCode(applicationCodeCopy);
+        entryCopy.setApplicationListEntryWording(persistedEntry.getApplicationListEntryWording());
+        entryCopy.setEntryRescheduled(persistedEntry.getEntryRescheduled());
+        entryCopy.setSequenceNumber(persistedEntry.getSequenceNumber());
+        entryCopy.setLodgementDate(persistedEntry.getLodgementDate());
+        entryCopy.setCreatedUser(persistedEntry.getCreatedUser());
+        entryCopy.setAccountNumber(persistedEntry.getAccountNumber());
+        entryCopy.setCaseReference(persistedEntry.getCaseReference());
+        entryCopy.setBulkUpload(persistedEntry.getBulkUpload());
+        entryCopy.setRetryCount(persistedEntry.getRetryCount());
+        entryCopy.setTcepStatus(persistedEntry.getTcepStatus());
+        entryCopy.setNotes(persistedEntry.getNotes());
+        return entryCopy;
+    }
+
+    public ApplicationCode buildApplicationCode(String code) {
+        ApplicationCode applicationCode = new ApplicationCode();
+        applicationCode.setCode(code);
+        applicationCode.setTitle("Test title");
+        applicationCode.setWording("Test wording");
+        applicationCode.setLegislation("Test legislation");
+        applicationCode.setFeeDue(NO);
+        applicationCode.setRequiresRespondent(NO);
+        applicationCode.setBulkRespondentAllowed(NO);
+        applicationCode.setStartDate(LocalDate.now());
+        applicationCode.setChangedBy(1L);
+        applicationCode.setChangedDate(OffsetDateTime.now());
+        applicationCode.setCreatedUser("email");
+        return applicationCode;
+    }
+
+    public ApplicationCode createApplicationCode(String code, boolean clearEntries) {
+        ApplicationCode applicationCode = buildApplicationCode(code);
+        if (clearEntries) {
+            applicationCode.setApplicationListEntryList(null);
+        }
+        return persistance.save(applicationCode);
+    }
+
+    public void saveResolutions(ApplicationListEntry entry, String... resultCodes) {
+        ApplicationListEntry currentEntry = entry;
+        for (String resultCode : resultCodes) {
+            currentEntry =
+                    applicationListEntryRepository.findById(currentEntry.getId()).orElseThrow();
+            saveResolution(currentEntry, resultCode);
+        }
+    }
+
+    public Response executeGetEntries(UUID listUuid, int size, int page)
+            throws MalformedURLException, JOSEException {
+        TokenGenerator tokenGenerator = createAdminToken();
+        return restAssuredClient.executeGetRequestWithPaging(
+                Optional.of(size),
+                Optional.of(page),
+                List.of(),
+                getLocalUrl(CREATE_ENTRY_CONTEXT + "/" + listUuid + "/entries"),
+                tokenGenerator.fetchTokenForRole());
+    }
+
+    public EntryGetSummaryDto findEntry(EntryPage page, UUID entryUuid) {
+        return page.getContent().stream()
+                .filter(item -> entryUuid.equals(item.getId()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    public void assertResultCodes(EntryGetSummaryDto dto, String... expectedCodes) {
+        assertThat(dto.getIsResulted()).isTrue();
+        assertEquals(expectedCodes.length, dto.getResulted().size());
+
+        Set<String> codes =
+                dto.getResulted().stream()
+                        .map(ResultCodeGetSummaryDto::getResultCode)
+                        .collect(Collectors.toSet());
+
+        assertEquals(Set.of(expectedCodes), codes);
+    }
+
+    public void setApplicantName(
+            ApplicationListEntry entry, String title, String forename, String surname) {
+        NameAddress applicant = entry.getAnamedaddress();
+        if (applicant == null) {
+            applicant = new NameAddress();
+            applicant.setCode(NameAddressCodeType.APPLICANT);
+            applicant.setAddress1("1 Test Street");
+            entry.setAnamedaddress(applicant);
+        }
+
+        applicant.setTitle(title);
+        applicant.setForename1(forename);
+        applicant.setSurname(surname);
+    }
+
+    public void setRespondentName(
+            ApplicationListEntry entry, String title, String forename, String surname) {
+        NameAddress respondent = entry.getRnameaddress();
+        if (respondent == null) {
+            respondent = new NameAddress();
+            respondent.setCode(NameAddressCodeType.RESPONDENT);
+            respondent.setAddress1("2 Test Street");
+            entry.setRnameaddress(respondent);
+        }
+
+        respondent.setTitle(title);
+        respondent.setForename1(forename);
+        respondent.setSurname(surname);
+    }
+
+    public String renderApplicantName(EntryGetSummaryDto dto) {
+        if (dto.getApplicant() == null || dto.getApplicant().getPerson() == null) {
+            return "";
+        }
+
+        FullName name = dto.getApplicant().getPerson().getName();
+        if (name == null) {
+            return "";
+        }
+
+        return String.join(
+                        " ",
+                        Optional.ofNullable(name.getTitle()).orElse(""),
+                        Optional.ofNullable(name.getFirstForename()).orElse(""),
+                        Optional.ofNullable(name.getSurname()).orElse(""))
+                .trim();
+    }
+
+    public String renderRespondentName(EntryGetSummaryDto dto) {
+        if (dto.getRespondent() == null || dto.getRespondent().getPerson() == null) {
+            return "";
+        }
+
+        FullName name = dto.getRespondent().getPerson().getName();
+        if (name == null) {
+            return "";
+        }
+
+        return String.join(
+                        " ",
+                        Optional.ofNullable(name.getTitle()).orElse(""),
+                        Optional.ofNullable(name.getFirstForename()).orElse(""),
+                        Optional.ofNullable(name.getSurname()).orElse(""))
+                .trim();
     }
 }

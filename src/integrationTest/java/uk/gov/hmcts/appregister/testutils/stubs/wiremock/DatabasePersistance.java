@@ -1,7 +1,11 @@
 package uk.gov.hmcts.appregister.testutils.stubs.wiremock;
 
+import jakarta.persistence.EntityManager;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.AppListEntrySequenceMapping;
@@ -16,6 +20,7 @@ import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.NationalCourtHouse;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
+import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryResolutionRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntrySequenceMappingRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
@@ -65,6 +70,8 @@ public class DatabasePersistance {
 
     @Autowired private AppListEntrySequenceMappingRepository appListEntrySequenceMappingRepository;
 
+    @Autowired private EntityManager entityManager;
+
     public ApplicationCode save(ApplicationCode data) {
 
         if (data.getApplicationListEntryList() != null) {
@@ -107,12 +114,19 @@ public class DatabasePersistance {
     }
 
     public NationalCourtHouse save(NationalCourtHouse data) {
+        if (data.getChangedBy() == null) {
+            data.setChangedBy(-125L);
+        }
+        if (data.getChangedDate() == null) {
+            data.setChangedDate(OffsetDateTime.now(ZoneOffset.UTC));
+        }
         return nationalCourtHouseRepository.saveAndFlush(data);
     }
 
+    @Transactional
     public ApplicationListEntry save(ApplicationListEntry entry) {
 
-        if (entry.getApplicationCode() != null) {
+        if (entry.getApplicationCode() != null && entry.getApplicationCode().getId() == null) {
             save(entry.getApplicationCode());
         }
 
@@ -120,27 +134,54 @@ public class DatabasePersistance {
             save(entry.getApplicationList());
         }
 
-        if (entry.getStandardApplicant() != null) {
+        if (entry.getStandardApplicant() != null && entry.getStandardApplicant().getId() == null) {
             save(entry.getStandardApplicant());
         }
 
-        if (entry.getRnameaddress() != null) {
+        if (entry.getRnameaddress() != null && entry.getRnameaddress().getId() == null) {
             save(entry.getRnameaddress());
         }
 
-        if (entry.getAnamedaddress() != null) {
+        if (entry.getAnamedaddress() != null && entry.getAnamedaddress().getId() == null) {
             save(entry.getAnamedaddress());
         }
 
-        return applicationListEntryRepository.saveAndFlush(entry);
+        // add the resolution pointing to the list
+        ApplicationListEntry applicationListEntry =
+                applicationListEntryRepository.saveAndFlush(entry);
+
+        if (entry.getResolutions() != null) {
+            for (AppListEntryResolution resolution : entry.getResolutions()) {
+                resolution.setApplicationList(applicationListEntry);
+                save(resolution);
+            }
+        }
+
+        return applicationListEntry;
     }
 
+    @Transactional
     public ApplicationList save(ApplicationList entry) {
         if (entry.getCja() != null) {
             save(entry.getCja());
         }
 
-        return applicationListRepository.saveAndFlush(entry);
+        if (entry.getEntries() != null) {
+            boolean alreadyProcessed =
+                    entry.getEntries().stream()
+                            .filter(e -> e.getApplicationList() == entry)
+                            .toList()
+                            .isEmpty();
+            if (!alreadyProcessed) {
+                for (ApplicationListEntry alEntry : entry.getEntries()) {
+                    alEntry.setApplicationList(entry);
+                    save(alEntry);
+                }
+            }
+        }
+
+        ApplicationList saved = applicationListRepository.saveAndFlush(entry);
+        return refreshEntity(saved);
     }
 
     public StandardApplicant save(StandardApplicant data) {
@@ -151,13 +192,16 @@ public class DatabasePersistance {
         return applicationListEntryOfficialRepository.saveAndFlush(data);
     }
 
+    @Transactional
     public AppListEntryResolution save(AppListEntryResolution entryResult) {
 
-        if (entryResult.getApplicationList() != null) {
+        if (entryResult.getApplicationList() != null
+                && entryResult.getApplicationList().getUuid() == null) {
             save(entryResult.getApplicationList());
         }
 
-        if (entryResult.getResolutionCode() != null) {
+        if (entryResult.getResolutionCode() != null
+                && entryResult.getResolutionCode().getId() == null) {
             save(entryResult.getResolutionCode());
         }
 
@@ -170,5 +214,16 @@ public class DatabasePersistance {
 
     public AppListEntrySequenceMapping save(AppListEntrySequenceMapping data) {
         return appListEntrySequenceMappingRepository.saveAndFlush(data);
+    }
+
+    /**
+     * Reloads the entity so DB-generated fields (e.g. UUID via gen_random_uuid()) are available
+     * immediately after save. Calls: - flush(): force the INSERT - refresh(): reselect the row with
+     * DB defaults/triggers
+     */
+    public <T extends Keyable> T refreshEntity(T entity) {
+        entityManager.flush();
+        entityManager.refresh(entity);
+        return entity;
     }
 }

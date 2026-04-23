@@ -9,9 +9,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.assertion.ConstraintAssertion;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
-import utils.ConstraintAssertion;
 
 public class ApplicationEntryDtoTest {
 
@@ -84,7 +84,7 @@ public class ApplicationEntryDtoTest {
         List<ConstraintViolation<Object>> listConstraint = constraintValidator.stream().toList();
 
         // assert
-        Assertions.assertEquals(6, constraintValidator.size());
+        Assertions.assertEquals(5, constraintValidator.size());
 
         ConstraintAssertion.assertPropertyValue(
                 listConstraint, "accountNumber", "size must be between 1 and 20");

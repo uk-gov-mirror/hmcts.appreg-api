@@ -3,25 +3,35 @@ package uk.gov.hmcts.appregister.controller.applicationentry;
 import static uk.gov.hmcts.appregister.generated.model.PaymentStatus.DUE;
 
 import io.restassured.response.Response;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.val;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Matchers;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ProblemDetail;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
+import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.OfficialType;
+import uk.gov.hmcts.appregister.generated.model.Organisation;
+import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.client.OpenApiPageMetaData;
 import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
@@ -32,6 +42,7 @@ import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
 
 public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEntryCrudTest {
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     @Test
     public void givenASuccessfulUpdate_whenAllValueAreToBeUpdate_200Returned() throws Exception {
@@ -43,6 +54,8 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
         differenceLogAsserter.assertNoErrors();
 
         Response responseSpecCreate = createListEntryWithAllData();
+        EntryGetDetailDto createdDetail = responseSpecCreate.as(EntryGetDetailDto.class);
+        LocalDate createdDate = createdDetail.getLodgementDate();
 
         var tokenGenerator = createAdminToken();
         Response responseSpecUpdate =
@@ -51,12 +64,13 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
                         tokenGenerator.fetchTokenForRole(),
                         entryUpdateDto);
 
-        responseSpecCreate.then().statusCode(201);
         responseSpecUpdate.then().statusCode(200);
 
         EntryGetDetailDto updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
-        EntryGetDetailDto createDDto = responseSpecCreate.as(EntryGetDetailDto.class);
 
+        // make sure the update does not change the lodgement date and the
+        // date it was created persists
+        Assertions.assertEquals(createdDate, updatedDto.getLodgementDate());
         validateEntryUpdateResponse(
                 entryUpdateDto,
                 updatedDto,
@@ -188,6 +202,54 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
                         "1",
                         AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getType().name(),
                         AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName()));
+    }
+
+    @Test
+    public void
+            givenOverlappingActiveApplicationCodesAndFees_whenUpdateListEntry_thenPreferNullEndDateRecords()
+                    throws Exception {
+        LocalDate today = LocalDate.now();
+        String applicationCodeValue = "ZZ90002";
+        String feeReference = "ZZ2.1";
+
+        saveActiveApplicationCode(
+                applicationCodeValue,
+                feeReference,
+                today.plusDays(30),
+                "Fallback overlapping application code");
+        final var preferredCode =
+                saveActiveApplicationCode(
+                        applicationCodeValue, feeReference, null, "Preferred application code");
+
+        saveActiveFee(
+                feeReference,
+                "Fallback overlapping fee",
+                BigDecimal.valueOf(222),
+                false,
+                today.plusDays(30));
+        final var preferredFee =
+                saveActiveFee(feeReference, "Preferred fee", BigDecimal.valueOf(111), false, null);
+
+        Response responseSpecCreate = createListEntryWithAllData();
+        EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setApplicationCode(applicationCodeValue);
+        entryUpdateDto.setHasOffsiteFee(false);
+        entryUpdateDto.setNumberOfRespondents(null);
+
+        var tokenGenerator = createAdminToken();
+        Response responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        EntryGetDetailDto updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals(
+                preferredCode.getId(), getSelectedApplicationCodeId(updatedDto.getId()));
+        Assertions.assertEquals(
+                preferredFee.getId(), getSelectedFees(updatedDto.getId()).getFirst().getId());
     }
 
     @Test
@@ -766,6 +828,372 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
     }
 
     @Test
+    @DisplayName(
+            "Update Application Entry persists write audit rows for DB-backed low-hanging fields")
+    void givenBulkRespondentUpdate_whenUpdated_thenPersistWriteAuditRows() throws Exception {
+        // Seed an entry with explicit starting values so the update assertions can check old and
+        // new audit values directly from DATA_AUDIT.
+        val entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setRespondent(null);
+        entryUpdateDto.setStandardApplicantCode(null);
+        entryUpdateDto.setNumberOfRespondents(5);
+        entryUpdateDto.setFeeStatuses(null);
+        entryUpdateDto.setApplicationCode("CT99001");
+        entryUpdateDto.setCaseReference("CASE-UPD-001");
+        entryUpdateDto.setNotes("Updated audit notes");
+        entryUpdateDto.setWordingFields(List.of(new TemplateSubstitution("Number", "5")));
+
+        val tokenGenerator = createAdminToken();
+        val responseSpecCreate =
+                createListEntryWithAllData(
+                        entryCreateDto -> entryCreateDto.setNotes("Original audit notes"));
+
+        // Ignore the audit rows produced by the setup create request so we only inspect the update.
+        dataAuditRepository.deleteAll();
+
+        val responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        val updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("Updated audit notes", updatedDto.getNotes());
+        Assertions.assertEquals(5, updatedDto.getNumberOfRespondents());
+        Assertions.assertEquals("CT99001", updatedDto.getApplicationCode());
+        Assertions.assertEquals("CASE-UPD-001", updatedDto.getCaseReference());
+
+        // Notes changed from the seeded value to the update payload value.
+        val notesAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValueAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "notes",
+                                "Original audit notes",
+                                "Updated audit notes")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.notes update audit row"));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                notesAuditRow.getEventName());
+
+        // Bulk respondent count is new on update, so we check the new value and the update event.
+        val bulkRespondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "number_of_bulk_respondents",
+                                "5")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a number_of_bulk_respondents update audit row"));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                bulkRespondentAuditRow.getEventName());
+
+        // Application code should record the nested DB-backed code change from the original create
+        // code to the new bulk-respondent-capable code.
+        val originalApplicationCode =
+                responseSpecCreate.as(EntryGetDetailDto.class).getApplicationCode();
+        val applicationCodeAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValueAndNewValue(
+                                TableNames.APPLICATION_CODES,
+                                "application_code",
+                                originalApplicationCode,
+                                "CT99001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_codes.application_code update audit row"));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                applicationCodeAuditRow.getEventName());
+
+        // Case reference is another DB-backed column on APPLICATION_LIST_ENTRIES and should record
+        // the old and new values on update.
+        val missingCaseReferenceAuditMessage =
+                "Expected an application_list_entries.case_reference update audit row";
+        val originalCaseReference =
+                responseSpecCreate.as(EntryGetDetailDto.class).getCaseReference();
+        val caseReferenceAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValueAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "case_reference",
+                                originalCaseReference,
+                                "CASE-UPD-001")
+                        .orElseThrow(() -> new AssertionError(missingCaseReferenceAuditMessage));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                caseReferenceAuditRow.getEventName());
+    }
+
+    @Test
+    @DisplayName(
+            "Update Application Entry persists write audit rows for standard applicant selection")
+    void givenStandardApplicantUpdate_whenUpdated_thenPersistStandardApplicantAuditRow()
+            throws Exception {
+        val entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setApplicant(null);
+        entryUpdateDto.setStandardApplicantCode("APP002");
+        entryUpdateDto.setNumberOfRespondents(null);
+
+        val tokenGenerator = createAdminToken();
+        val responseSpecCreate = createListEntryWithAllData();
+
+        // Ignore the audit rows produced by the setup create request so we only inspect the update.
+        dataAuditRepository.deleteAll();
+
+        // Update the entry through the real endpoint so the standard-applicant reassignment goes
+        // through the production validator, service and audit listener stack.
+        val responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        val updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("APP002", updatedDto.getStandardApplicantCode());
+
+        // The update should record the selected standard applicant code in DATA_AUDIT.
+        val missingAuditMessage =
+                "Expected a standard_applicants.standard_applicant_code update audit row";
+        val standardApplicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.STANDARD_APPLICANTS, "standard_applicant_code", "APP002")
+                        .orElseThrow(() -> new AssertionError(missingAuditMessage));
+
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.UPDATE_APP_ENTRY_LIST.getEventName(),
+                standardApplicantAuditRow.getEventName());
+    }
+
+    @Test
+    @DisplayName("Update Application Entry persists child-row create and delete audit fields")
+    void givenEntryWithChildRows_whenUpdated_thenPersistChildCreateAndDeleteAuditRows()
+            throws Exception {
+        val entryUpdateDto = getCorrectUpdateDataDto();
+
+        entryUpdateDto.setNumberOfRespondents(null);
+        entryUpdateDto.getApplicant().setPerson(null);
+        entryUpdateDto.getApplicant().getOrganisation().setName("Applicant Updated Org");
+        entryUpdateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA12 1AA");
+        entryUpdateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryUpdateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+        entryUpdateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of(null));
+
+        entryUpdateDto.getRespondent().setOrganisation(null);
+        entryUpdateDto.getRespondent().getPerson().getName().setSurname("RespondentUpdated");
+
+        val updatedOfficial = new Official();
+        updatedOfficial.setTitle("Mrs");
+        updatedOfficial.setForename("Uma");
+        updatedOfficial.setSurname("OfficialUpdated");
+        updatedOfficial.setType(OfficialType.MAGISTRATE);
+        entryUpdateDto.setOfficials(List.of(updatedOfficial));
+
+        val updatedFeeStatus = new FeeStatus();
+        updatedFeeStatus.setPaymentReference("PAY-UPD-001");
+        updatedFeeStatus.setPaymentStatus(PaymentStatus.REMITTED);
+        updatedFeeStatus.setStatusDate(LocalDate.of(2026, 2, 1));
+        entryUpdateDto.setFeeStatuses(List.of(updatedFeeStatus));
+
+        val entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.getApplicant().setPerson(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto.getApplicant().getOrganisation().setName("Applicant Original Org");
+        entryCreateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA12 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of(null));
+        entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.getRespondent().getPerson().getName().setSurname("RespondentOriginal");
+
+        val originalOfficial = new Official();
+        originalOfficial.setTitle("Mr");
+        originalOfficial.setForename("Oscar");
+        originalOfficial.setSurname("OfficialOriginal");
+        originalOfficial.setType(OfficialType.CLERK);
+        entryCreateDto.setOfficials(List.of(originalOfficial));
+
+        val originalFeeStatus = new FeeStatus();
+        originalFeeStatus.setPaymentReference("PAY-OLD-001");
+        originalFeeStatus.setPaymentStatus(PaymentStatus.PAID);
+        originalFeeStatus.setStatusDate(LocalDate.of(2026, 1, 1));
+        entryCreateDto.setFeeStatuses(List.of(originalFeeStatus));
+
+        val tokenGenerator = createAdminToken();
+        val responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(201);
+
+        // Ignore the setup create rows so these assertions only inspect the update request.
+        dataAuditRepository.deleteAll();
+
+        // Drive the real update endpoint so all child replacements run through the production
+        // delete/create audit operations.
+        val responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        // Updating the applicant creates a replacement NAME_ADDRESS row with the new value.
+        val createdApplicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.NAME_ADDRESS, "name", "Applicant Updated Org")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a created name_address.name applicant audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_APPLICANT.getEventName(),
+                createdApplicantAuditRow.getEventName());
+
+        // The old applicant row should also be deleted and audited separately.
+        val deletedApplicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.NAME_ADDRESS, "name", "Applicant Original Org")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a deleted name_address.name applicant audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.DELETE_APPLICANT.getEventName(),
+                deletedApplicantAuditRow.getEventName());
+
+        // Respondent replacement follows the same create/delete pattern on NAME_ADDRESS.
+        val createdRespondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.NAME_ADDRESS, "surname", "RespondentUpdated")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a created name_address.surname respondent audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName(),
+                createdRespondentAuditRow.getEventName());
+
+        val deletedRespondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.NAME_ADDRESS, "surname", "RespondentOriginal")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a deleted name_address.surname respondent audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.DELETE_RESPONDENT.getEventName(),
+                deletedRespondentAuditRow.getEventName());
+
+        // Officials are replaced on update, so we expect both delete and create rows.
+        val createdOfficialAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
+                                "surname",
+                                "OfficialUpdated")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a created app_list_entry_official.surname audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getEventName(),
+                createdOfficialAuditRow.getEventName());
+
+        val deletedOfficialAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
+                                "surname",
+                                "OfficialOriginal")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a deleted app_list_entry_official.surname audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.DELETE_OFFICIAL_ENTRY.getEventName(),
+                deletedOfficialAuditRow.getEventName());
+
+        // Fee statuses should now audit both the removed row and the replacement row on update.
+        val missingCreatedFeeStatusAuditMessage =
+                "Expected a created fee-status payment reference audit row";
+        val createdFeeStatusAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_FEE_STATUS,
+                                "alefs_payment_reference",
+                                "PAY-UPD-001")
+                        .orElseThrow(() -> new AssertionError(missingCreatedFeeStatusAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY.getEventName(),
+                createdFeeStatusAuditRow.getEventName());
+
+        val missingDeletedFeeStatusAuditMessage =
+                "Expected a deleted fee-status payment reference audit row";
+        val deletedFeeStatusAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LISTS_FEE_STATUS,
+                                "alefs_payment_reference",
+                                "PAY-OLD-001")
+                        .orElseThrow(() -> new AssertionError(missingDeletedFeeStatusAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.DELETE_FEE_STATUS_ENTRY.getEventName(),
+                deletedFeeStatusAuditRow.getEventName());
+    }
+
+    @Test
     public void
             givenACNotRequireRespondent_BulkRespondentAllowed_RespondentAndNumberOfRespondentsNotProvided_then400()
                     throws Exception {
@@ -841,5 +1269,82 @@ public class ApplicationEntryControllerUpdateTest extends AbstractApplicationEnt
                                         .BULK_RESPONDENT_NUMBER_AND_RESPONDENT_MUTUALLY_EXCLUSIVE
                                         .getCode()
                                         .getAppCode()));
+    }
+
+    @Test
+    void givenTooManyMagistrates_whenUpdateEntry_thenReturn400() throws Exception {
+        Response responseSpecCreate = createListEntryWithAllData();
+        EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setOfficials(
+                List.of(
+                        buildOfficial("Ms", "Maya", "One", OfficialType.MAGISTRATE),
+                        buildOfficial("Mr", "Miles", "Two", OfficialType.MAGISTRATE),
+                        buildOfficial("Mrs", "Mina", "Three", OfficialType.MAGISTRATE),
+                        buildOfficial("Mr", "Marco", "Four", OfficialType.MAGISTRATE)));
+
+        Response responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        createAdminToken().fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(400);
+        ProblemAssertUtil.assertEquals(
+                AppListEntryError.TOO_MANY_MAGISTRATES.getCode(), responseSpecUpdate);
+    }
+
+    @Test
+    void givenTooManyCourtOfficials_whenUpdateEntry_thenReturn400() throws Exception {
+        Response responseSpecCreate = createListEntryWithAllData();
+        EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setOfficials(
+                List.of(
+                        buildOfficial("Ms", "Maya", "One", OfficialType.MAGISTRATE),
+                        buildOfficial("Mr", "Chris", "CourtOne", OfficialType.CLERK),
+                        buildOfficial("Mrs", "Clare", "CourtTwo", OfficialType.CLERK)));
+
+        Response responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        createAdminToken().fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(400);
+        ProblemAssertUtil.assertEquals(
+                AppListEntryError.TOO_MANY_COURT_OFFICIALS.getCode(), responseSpecUpdate);
+    }
+
+    @Test
+    void givenNoOfficials_whenUpdateEntry_thenReturn200() throws Exception {
+        Response responseSpecCreate = createListEntryWithAllData();
+        EntryUpdateDto entryUpdateDto = getCorrectUpdateDataDto();
+        entryUpdateDto.setNumberOfRespondents(null);
+        entryUpdateDto.setOfficials(List.of());
+
+        Response responseSpecUpdate =
+                restAssuredClient.executePutRequest(
+                        HeaderUtil.getLocation(responseSpecCreate),
+                        createAdminToken().fetchTokenForRole(),
+                        entryUpdateDto);
+
+        responseSpecUpdate.then().statusCode(200);
+
+        EntryGetDetailDto updatedDto = responseSpecUpdate.as(EntryGetDetailDto.class);
+        validateEntryUpdateResponse(
+                entryUpdateDto,
+                updatedDto,
+                "Application for a warrant to enter premises at {{Premises Address}} for date {{Premises Date}}",
+                entryUpdateDto.getFeeStatuses());
+        Assertions.assertTrue(updatedDto.getOfficials().isEmpty());
+    }
+
+    private static Official buildOfficial(
+            String title, String forename, String surname, OfficialType type) {
+        Official official = new Official();
+        official.setTitle(title);
+        official.setForename(forename);
+        official.setSurname(surname);
+        official.setType(type);
+        return official;
     }
 }

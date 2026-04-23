@@ -1,0 +1,25 @@
+package uk.gov.hmcts.appregister.data;
+
+import static org.instancio.Select.field;
+
+import java.time.LocalDate;
+import org.instancio.Instancio;
+import org.instancio.settings.Keys;
+import org.instancio.settings.Settings;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
+
+public class ResolutionCodeTestData
+        implements Persistable<ResolutionCode, ResolutionCode.ResolutionCodeBuilder> {
+
+    @Override
+    public ResolutionCode someComplete() {
+        Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
+        return Instancio.of(ResolutionCode.class)
+                .ignore(field(ResolutionCode::getId))
+                .ignore(field(ResolutionCode::getVersion))
+                .set(field(ResolutionCode::getStartDate), LocalDate.now().minusDays(10))
+                .set(field(ResolutionCode::getEndDate), LocalDate.now().plusDays(10))
+                .withSettings(settings)
+                .create();
+    }
+}

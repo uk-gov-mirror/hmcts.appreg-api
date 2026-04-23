@@ -2,6 +2,8 @@ package uk.gov.hmcts.appregister.applicationentry.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.notNull;
@@ -22,8 +24,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
@@ -53,8 +55,10 @@ import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationListEnt
 import uk.gov.hmcts.appregister.applicationentry.validator.GetEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
+import uk.gov.hmcts.appregister.applicationfee.service.ApplicationFeeService;
 import uk.gov.hmcts.appregister.applicationlist.audit.AppListAuditOperation;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidationSuccess;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidator;
 import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
@@ -76,7 +80,9 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.entity.base.Keyable;
 import uk.gov.hmcts.appregister.common.entity.repository.AppListEntryFeeRepository;
@@ -97,6 +103,8 @@ import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryResolutionProjection;
+import uk.gov.hmcts.appregister.common.service.BusinessDateProvider;
 import uk.gov.hmcts.appregister.common.template.wording.WordingTemplateSentence;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.data.AppListEntryFeeStatusTestData;
@@ -112,10 +120,12 @@ import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
+import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.MoveEntriesDto;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 
 @Slf4j
@@ -176,6 +186,9 @@ public class ApplicationEntryServiceImplTest {
     @Mock private EntityManager entityManager;
 
     @Mock private ApplicantMapper applicantMapper;
+    @Mock private BusinessDateProvider businessDateProvider;
+
+    @Mock private ApplicationFeeService feeService;
 
     private ApplicationEntryService service;
 
@@ -184,8 +197,8 @@ public class ApplicationEntryServiceImplTest {
             new DummyCreateApplicationEntryValidator(
                     applicationListRepository,
                     applicationCodeRepository,
-                    feeRepository,
-                    clock,
+                    feeService,
+                    businessDateProvider,
                     standardApplicantRepository);
 
     @Spy
@@ -203,8 +216,8 @@ public class ApplicationEntryServiceImplTest {
             new DummyUpdateApplicationEntryValidator(
                     applicationListRepository,
                     applicationCodeRepository,
-                    feeRepository,
-                    clock,
+                    feeService,
+                    businessDateProvider,
                     standardApplicantRepository,
                     applicationListEntryRepository);
 
@@ -221,12 +234,11 @@ public class ApplicationEntryServiceImplTest {
     void setUp() {
         when(clock.instant()).thenReturn(Instant.now());
         when(clock.getZone()).thenReturn(Clock.systemUTC().getZone());
+        when(businessDateProvider.currentUkDate()).thenReturn(LocalDate.of(2025, 10, 7));
 
         Fee fee = new FeeTestData().someComplete();
         fee.setId(-1L);
         fee.setOffsite(true);
-        when(feeRepository.findByReferenceBetweenDateWithOffsite("CO1.1", LocalDate.now(), true))
-                .thenReturn(List.of(fee));
 
         service =
                 new ApplicationEntryServiceImpl(
@@ -250,7 +262,8 @@ public class ApplicationEntryServiceImplTest {
                         entityManager,
                         getEntryValidator,
                         getApplicationListEntriesValidator,
-                        clock);
+                        clock,
+                        businessDateProvider);
     }
 
     @Test
@@ -279,7 +292,8 @@ public class ApplicationEntryServiceImplTest {
                         entityManager,
                         getEntryValidator,
                         getApplicationListEntriesValidator,
-                        clock);
+                        clock,
+                        businessDateProvider);
 
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
@@ -305,7 +319,6 @@ public class ApplicationEntryServiceImplTest {
 
         when(applicationListEntryGetSummaryProjection.getRespondentSurname())
                 .thenReturn("ressurname");
-        when(applicationListEntryGetSummaryProjection.getResult()).thenReturn(null);
         when(applicationListEntryGetSummaryProjection.getFeeRequired()).thenReturn(YesOrNo.NO);
         when(applicationListEntryGetSummaryProjection.getStatus()).thenReturn(Status.OPEN);
 
@@ -338,6 +351,7 @@ public class ApplicationEntryServiceImplTest {
                         eq(null),
                         eq(null),
                         eq(null),
+                        eq(null),
                         eq(mockPage)))
                 .thenReturn(page);
 
@@ -354,6 +368,98 @@ public class ApplicationEntryServiceImplTest {
 
         Assertions.assertNotNull(entryPage.getContent().get(0).getApplicant());
         Assertions.assertNotNull(entryPage.getContent().get(0).getRespondent());
+    }
+
+    @Test
+    void testSearchReturnsAllResultCodes() {
+        Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
+
+        EntryGetFilterDto filterDto =
+                Instancio.of(EntryGetFilterDto.class).withSettings(settings).create();
+        filterDto.setStatus(ApplicationListStatus.OPEN);
+
+        ApplicationListEntryGetSummaryProjection projection =
+                mock(ApplicationListEntryGetSummaryProjection.class);
+
+        Long entryId = 1L;
+        when(projection.getId()).thenReturn(entryId);
+        when(projection.getApplicationOrganisation()).thenReturn("org1");
+        when(projection.getApplicantSurname()).thenReturn("surname");
+        when(projection.getAnameAddress()).thenReturn(new NameAddress());
+        when(projection.getRnameAddress()).thenReturn(new NameAddress());
+        when(projection.getDateOfAl()).thenReturn(LocalDate.now());
+        when(projection.getAccountReference()).thenReturn("accref");
+        when(projection.getCjaCode()).thenReturn("cjacode");
+        when(projection.getCourtCode()).thenReturn("courtcode");
+        when(projection.getLegislation()).thenReturn("leg");
+        when(projection.getTitle()).thenReturn("title");
+        when(projection.getRespondentSurname()).thenReturn("ressurname");
+        when(projection.getFeeRequired()).thenReturn(YesOrNo.NO);
+        when(projection.getStatus()).thenReturn(Status.OPEN);
+
+        Pageable mockPage = mock(Pageable.class);
+        when(mockPage.getPageNumber()).thenReturn(0);
+
+        Page<ApplicationListEntryGetSummaryProjection> resultPage =
+                new PageImpl<>(List.of(projection), mockPage, 1);
+
+        when(applicationListEntryMapStructMapper.toStatus(ApplicationListStatus.OPEN))
+                .thenReturn(Status.OPEN);
+
+        when(applicationListEntryRepository.searchForGetSummary(
+                        any(),
+                        anyBoolean(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(Pageable.class)))
+                .thenReturn(resultPage);
+
+        EntryGetSummaryDto summaryDto = new EntryGetSummaryDto();
+        summaryDto.setResulted(new ArrayList<>());
+        summaryDto.setIsResulted(false);
+        when(applicationListEntryMapStructMapper.toEntrySummary(any())).thenReturn(summaryDto);
+
+        ApplicationListEntryResolutionProjection resolution1 =
+                mock(ApplicationListEntryResolutionProjection.class);
+        ApplicationListEntryResolutionProjection resolution2 =
+                mock(ApplicationListEntryResolutionProjection.class);
+
+        when(resolution1.getEntryId()).thenReturn(entryId);
+        when(resolution2.getEntryId()).thenReturn(entryId);
+
+        when(resolution1.getResolutionCode()).thenReturn(mock(ResolutionCode.class));
+        when(resolution2.getResolutionCode()).thenReturn(mock(ResolutionCode.class));
+
+        when(applicationListEntryRepository.findResolutionCodesByEntryIds(anyList()))
+                .thenReturn(List.of(resolution1, resolution2));
+
+        when(applicationListEntryMapStructMapper.toResultCodeGetSummaryDto(any()))
+                .thenReturn(new ResultCodeGetSummaryDto());
+
+        PagingWrapper wrapper = PagingWrapper.of(List.of(), mockPage);
+
+        EntryPage response = service.search(filterDto, wrapper);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals(1, response.getContent().size());
+        Assertions.assertTrue(response.getContent().getFirst().getIsResulted());
+        Assertions.assertEquals(2, response.getContent().getFirst().getResulted().size());
     }
 
     @Test
@@ -383,10 +489,16 @@ public class ApplicationEntryServiceImplTest {
         fee.setOffsite(false);
         fee.setId(-2L);
 
+        FeeTestData feeTestDataOffsite = new FeeTestData();
+        Fee feeOffsite = feeTestDataOffsite.someComplete();
+        feeOffsite.setOffsite(true);
+        feeOffsite.setId(-3L);
+
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         EntryCreateDto entryCreateDto =
                 Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        entryCreateDto.setHasOffsiteFee(true);
 
         AppListEntryFeeStatusTestData appListEntryFeeStatusTestData =
                 new AppListEntryFeeStatusTestData();
@@ -473,17 +585,13 @@ public class ApplicationEntryServiceImplTest {
         when(applicationListEntryRepository.save(applicationListEntry))
                 .thenReturn(applicationListEntry);
 
-        when(feeRepository.findByReferenceBetweenDateWithOffsite(
-                        eq(code.getFeeReference()),
-                        notNull(),
-                        eq(entryCreateDto.getHasOffsiteFee())))
-                .thenReturn(List.of(fee));
+        FeePair pair = new FeePair(fee, feeOffsite);
 
         // setup validation success response containing all validated data
         success =
                 CreateApplicationEntryValidationSuccess.builder()
                         .wordingSentence(WordingTemplateSentence.with(code.getWording()))
-                        .fee(fee)
+                        .fee(pair)
                         .applicationCode(code)
                         .sa(sa)
                         .applicationList(appList)
@@ -491,21 +599,28 @@ public class ApplicationEntryServiceImplTest {
 
         AppListEntryFeeId appListFee = new AppListEntryFeeId();
         appListFee.setAppListEntryId(applicationListEntry.getId());
-        appListFee.setFeeId(fee.getId());
+        appListFee.setFeeId(pair.mainFee().getId());
 
-        ArgumentCaptor<AppListEntryFeeId> captor = ArgumentCaptor.forClass(AppListEntryFeeId.class);
-        when(appListEntryFeeRepository.save(captor.capture())).thenReturn(appListFee);
+        AppListEntryFeeId offsiteAppListFee = new AppListEntryFeeId();
+        offsiteAppListFee.setAppListEntryId(applicationListEntry.getId());
+        offsiteAppListFee.setFeeId(pair.offsiteFee().getId());
+
+        when(appListEntryFeeRepository.save(appListFee)).thenReturn(appListFee);
+        when(appListEntryFeeRepository.save(offsiteAppListFee)).thenReturn(appListFee);
 
         // dummy the mapping of the response
 
         EntryGetDetailDto entryGetDetailDto =
                 Instancio.of(EntryGetDetailDto.class).withSettings(settings).create();
         when(applicationListEntryMapStructMapper.toEntryGetDetailDto(
-                        applicationListEntry, statusLst, fee, officialLst, sa))
+                        applicationListEntry, statusLst, pair, officialLst, sa))
                 .thenReturn(entryGetDetailDto);
 
         // run the test
         MatchResponse<EntryGetDetailDto> response = service.createEntry(payload);
+
+        ArgumentCaptor<AppListEntryFeeId> captor = ArgumentCaptor.forClass(AppListEntryFeeId.class);
+        verify(appListEntryFeeRepository, times(2)).save(captor.capture());
 
         // now assert the response is mapped correctly
         Assertions.assertEquals(entryGetDetailDto, response.getPayload());
@@ -535,8 +650,12 @@ public class ApplicationEntryServiceImplTest {
         verify(appListEntryOfficialRepository, times(entryCreateDto.getOfficials().size()))
                 .save(appListOfficialCaptor.capture());
 
-        Assertions.assertEquals(-1, captor.getValue().getAppListEntryId());
-        Assertions.assertEquals(-2, captor.getValue().getFeeId());
+        Assertions.assertEquals(-1, captor.getAllValues().get(0).getAppListEntryId());
+        Assertions.assertEquals(appListFee.getFeeId(), captor.getAllValues().get(0).getFeeId());
+
+        Assertions.assertEquals(-1, captor.getAllValues().get(1).getAppListEntryId());
+        Assertions.assertEquals(
+                offsiteAppListFee.getFeeId(), captor.getAllValues().get(1).getFeeId());
 
         Assertions.assertEquals(applicant, appCaptorName.getAllValues().get(0));
         Assertions.assertEquals(respondent, appCaptorName.getAllValues().get(1));
@@ -605,9 +724,6 @@ public class ApplicationEntryServiceImplTest {
         offsiteFee.setOffsite(true);
         offsiteFee.setId(3L);
 
-        when(feeRepository.findByReferenceBetweenDateWithOffsite("CO1.1", LocalDate.now(), true))
-                .thenReturn(List.of(offsiteFee));
-
         // wording substitution and application code lookup
         TemplateSubstitution t1 = new TemplateSubstitution();
         t1.setKey("Applicant officer");
@@ -635,10 +751,12 @@ public class ApplicationEntryServiceImplTest {
         when(applicationListEntryRepository.save(applicationListEntry))
                 .thenReturn(applicationListEntry);
 
+        FeePair pair = new FeePair(new Fee(), new Fee());
+
         success =
                 CreateApplicationEntryValidationSuccess.builder()
                         .wordingSentence(WordingTemplateSentence.with(code.getWording()))
-                        .fee(fee)
+                        .fee(pair)
                         .applicationCode(code)
                         .sa(sa)
                         .applicationList(appList)
@@ -647,7 +765,7 @@ public class ApplicationEntryServiceImplTest {
         EntryGetDetailDto entryGetDetailDto =
                 Instancio.of(EntryGetDetailDto.class).withSettings(settings).create();
         when(applicationListEntryMapStructMapper.toEntryGetDetailDto(
-                        applicationListEntry, statusLst, fee, officialLst, sa))
+                        applicationListEntry, statusLst, pair, officialLst, sa))
                 .thenReturn(entryGetDetailDto);
 
         // simulate no existing mapping
@@ -759,10 +877,12 @@ public class ApplicationEntryServiceImplTest {
         when(applicationListEntryRepository.save(applicationListEntry))
                 .thenReturn(applicationListEntry);
 
+        FeePair pair = new FeePair(new Fee(), new Fee());
+
         success =
                 CreateApplicationEntryValidationSuccess.builder()
                         .wordingSentence(WordingTemplateSentence.with(code.getWording()))
-                        .fee(fee)
+                        .fee(pair)
                         .applicationCode(code)
                         .sa(sa)
                         .applicationList(appList)
@@ -779,7 +899,7 @@ public class ApplicationEntryServiceImplTest {
         EntryGetDetailDto entryGetDetailDto =
                 Instancio.of(EntryGetDetailDto.class).withSettings(settings).create();
         when(applicationListEntryMapStructMapper.toEntryGetDetailDto(
-                        applicationListEntry, statusLst, fee, officialLst, sa))
+                        applicationListEntry, statusLst, pair, officialLst, sa))
                 .thenReturn(entryGetDetailDto);
 
         // Existing mapping scenario
@@ -818,6 +938,8 @@ public class ApplicationEntryServiceImplTest {
     @Test
     void testToEntryGetDetailDto() {
         ApplicationListEntry applicationListEntry = new AppListEntryTestData().someComplete();
+        applicationListEntry.setId(1L);
+
         ApplicationList applicationList = new AppListTestData().someComplete();
 
         getEntryValidationSuccess =
@@ -860,6 +982,7 @@ public class ApplicationEntryServiceImplTest {
     @Test
     void testToEntryGetDetailDtoNoFees() {
         ApplicationListEntry applicationListEntry = new AppListEntryTestData().someComplete();
+        applicationListEntry.setId(1L);
         ApplicationList applicationList = new AppListTestData().someComplete();
 
         getEntryValidationSuccess =
@@ -902,6 +1025,9 @@ public class ApplicationEntryServiceImplTest {
         ApplicationListEntryGetSummaryProjection applicationListEntryGetSummaryProjection =
                 mock(ApplicationListEntryGetSummaryProjection.class);
 
+        Long entryId = 1L;
+        when(applicationListEntryGetSummaryProjection.getId()).thenReturn(entryId);
+
         when(applicationListEntryGetSummaryProjection.getApplicationOrganisation())
                 .thenReturn("org1");
         when(applicationListEntryGetSummaryProjection.getApplicantSurname()).thenReturn("surname");
@@ -919,7 +1045,6 @@ public class ApplicationEntryServiceImplTest {
 
         when(applicationListEntryGetSummaryProjection.getRespondentSurname())
                 .thenReturn("ressurname");
-        when(applicationListEntryGetSummaryProjection.getResult()).thenReturn(null);
         when(applicationListEntryGetSummaryProjection.getFeeRequired()).thenReturn(YesOrNo.NO);
         when(applicationListEntryGetSummaryProjection.getStatus()).thenReturn(Status.OPEN);
 
@@ -954,15 +1079,39 @@ public class ApplicationEntryServiceImplTest {
                         eq(entryGetFilterDto.getRespondentPostcode()),
                         eq(entryGetFilterDto.getAccountReference()),
                         eq(entryGetFilterDto.getApplicationTitle()),
+                        eq(entryGetFilterDto.getResulted()),
                         eq(entryGetFilterDto.getFeeRequired()),
                         eq(entryGetFilterDto.getSequenceNumber()),
                         eq(mockPage)))
                 .thenReturn(dbPage);
 
+        EntryGetSummaryDto summaryDto = new EntryGetSummaryDto();
+        summaryDto.setResulted(new ArrayList<>());
+        summaryDto.setIsResulted(false);
+
+        when(applicationListEntryMapStructMapper.toEntrySummary(any())).thenReturn(summaryDto);
+        when(applicationListEntryMapStructMapper.toApplicationListEntry(
+                        any(PayloadGetEntryInList.class),
+                        any(EntryApplicationListGetFilterDto.class)))
+                .thenReturn(new ApplicationListEntry());
+
+        when(applicationListEntryMapStructMapper.toResultCodeGetSummaryDto(any()))
+                .thenReturn(new ResultCodeGetSummaryDto());
+
+        PagingWrapper wrapper = PagingWrapper.of(List.of(), mockPage);
+
         PayloadGetEntryInList payloadGetEntryInList =
                 PayloadGetEntryInList.builder().listId(applicationList.getUuid()).build();
 
-        PagingWrapper wrapper = PagingWrapper.of(List.of(), mockPage);
+        ApplicationListEntryResolutionProjection resolutionProjection =
+                mock(ApplicationListEntryResolutionProjection.class);
+
+        when(resolutionProjection.getEntryId()).thenReturn(entryId);
+
+        when(resolutionProjection.getResolutionCode()).thenReturn(mock(ResolutionCode.class));
+
+        when(applicationListEntryRepository.findResolutionCodesByEntryIds(anyList()))
+                .thenReturn(List.of(resolutionProjection));
 
         // test
         EntryPage response =
@@ -972,6 +1121,79 @@ public class ApplicationEntryServiceImplTest {
         // assert
         Assertions.assertNotNull(response);
         Assertions.assertEquals(1, response.getContent().size());
+        Assertions.assertEquals(1, response.getContent().getFirst().getResulted().size());
+        Assertions.assertTrue(response.getContent().getFirst().getIsResulted());
+
+        // The read endpoint now goes through the audit service, so the mapper must build the
+        // audit surrogate from the path parameter and query-string filter.
+        verify(applicationListEntryMapStructMapper)
+                .toApplicationListEntry(payloadGetEntryInList, entryGetFilterDto);
+    }
+
+    @Test
+    void testGetApplicationListEntries_buildsAuditEntityFromPayloadAndFilter() {
+        // Arrange a simple successful search so we can focus on whether the service builds the
+        // correct audit payload for the read operation.
+        val applicationList = new AppListTestData().someComplete();
+        when(applicationListRepository.findByUuid(applicationList.getUuid()))
+                .thenReturn(Optional.of(applicationList));
+
+        val entryGetFilterDto = new EntryApplicationListGetFilterDto();
+        entryGetFilterDto.setApplicantName("Applicant Audit Org");
+        entryGetFilterDto.setRespondentName("Respondent Audit Org");
+        entryGetFilterDto.setRespondentPostcode("ZZ1 1ZZ");
+        entryGetFilterDto.setAccountReference("ACC-123");
+        entryGetFilterDto.setApplicationTitle("Read audit application title");
+        entryGetFilterDto.setFeeRequired(Boolean.TRUE);
+        entryGetFilterDto.setSequenceNumber(7);
+
+        val mockPage = mock(Pageable.class);
+        when(mockPage.getPageNumber()).thenReturn(0);
+        val wrapper = PagingWrapper.of(List.of(), mockPage);
+        val dbPage = new PageImpl<ApplicationListEntryGetSummaryProjection>(List.of(), mockPage, 0);
+
+        when(applicationListEntryRepository.searchForGetSummary(
+                        eq(applicationList.getUuid()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(entryGetFilterDto.getApplicantName()),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(null),
+                        eq(entryGetFilterDto.getRespondentName()),
+                        eq(entryGetFilterDto.getRespondentPostcode()),
+                        eq(entryGetFilterDto.getAccountReference()),
+                        eq(entryGetFilterDto.getApplicationTitle()),
+                        eq(entryGetFilterDto.getResulted()),
+                        eq(entryGetFilterDto.getFeeRequired()),
+                        eq(entryGetFilterDto.getSequenceNumber()),
+                        eq(mockPage)))
+                .thenReturn(dbPage);
+
+        val payloadGetEntryInList =
+                PayloadGetEntryInList.builder().listId(applicationList.getUuid()).build();
+        val auditEntity = new ApplicationListEntry();
+
+        when(applicationListEntryMapStructMapper.toApplicationListEntry(
+                        payloadGetEntryInList, entryGetFilterDto))
+                .thenReturn(auditEntity);
+
+        // Act by calling the service through the same public method the controller uses.
+        val response =
+                service.getApplicationListEntries(
+                        payloadGetEntryInList, wrapper, entryGetFilterDto);
+
+        // Assert the business response still comes back, and the mapper is asked for the exact
+        // payload/filter pair that should be written to DATA_AUDIT.
+        Assertions.assertNotNull(response);
+        verify(applicationListEntryMapStructMapper)
+                .toApplicationListEntry(payloadGetEntryInList, entryGetFilterDto);
     }
 
     @Test
@@ -1013,6 +1235,7 @@ public class ApplicationEntryServiceImplTest {
                         eq(entryGetFilterDto.getRespondentPostcode()),
                         eq(entryGetFilterDto.getAccountReference()),
                         eq(entryGetFilterDto.getApplicationTitle()),
+                        eq(entryGetFilterDto.getResulted()),
                         eq(entryGetFilterDto.getFeeRequired()),
                         eq(entryGetFilterDto.getSequenceNumber()),
                         eq(mockPage)))
@@ -1032,71 +1255,118 @@ public class ApplicationEntryServiceImplTest {
     }
 
     @Test
-    void move_performsBulkUpdate_whenValidRequest() {
-        ApplicationList targetList = new ApplicationList();
+    void move_resequencesEntries_whenValidRequest() {
+        val sourceListId = UUID.randomUUID();
+        val sourceList = new ApplicationList();
+        sourceList.setId(10L);
+        sourceList.setUuid(sourceListId);
+
+        val targetList = new ApplicationList();
+        targetList.setId(20L);
         targetList.setUuid(UUID.randomUUID());
 
-        // Two entry UUIDs requested
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
+        val entryId1 = UUID.randomUUID();
 
-        MoveEntriesDto dto = new MoveEntriesDto();
+        val entry1 = new ApplicationListEntry();
+        entry1.setId(101L);
+        entry1.setUuid(entryId1);
+        entry1.setApplicationList(sourceList);
+        entry1.setSequenceNumber((short) 2);
+        entry1.setVersion(0L);
+
+        val entryId2 = UUID.randomUUID();
+        val entry2 = new ApplicationListEntry();
+        entry2.setId(102L);
+        entry2.setUuid(entryId2);
+        entry2.setApplicationList(sourceList);
+        entry2.setSequenceNumber((short) 1);
+        entry2.setVersion(5L);
+
+        val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
-        dto.setEntryIds(Set.of(id1, id2));
+        dto.setEntryIds(Set.of(entryId1, entryId2));
 
-        MoveEntriesValidationSuccess success = new MoveEntriesValidationSuccess();
+        val success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
         moveEntriesValidator.setSuccess(success);
 
-        // Mock repository to return rowsUpdated == requested size (2)
-        UUID sourceListId = UUID.randomUUID();
+        when(applicationListEntryRepository.findByUuidsInSourceList(eq(sourceListId), anySet()))
+                .thenReturn(List.of(entry1, entry2));
 
-        when(applicationListEntryRepository.findExistingEntryIdsInSourceList(
-                        eq(sourceListId), anySet()))
-                .thenReturn(Set.of(id1, id2));
+        val mapping =
+                AppListEntrySequenceMapping.builder()
+                        .alId(targetList.getId())
+                        .aleLastSequence(2)
+                        .build();
+        when(appListEntrySequenceMappingRepository.findByAlIdForUpdate(targetList.getId()))
+                .thenReturn(Optional.of(mapping));
 
-        when(applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        anySet(), eq(targetList), eq(sourceListId)))
-                .thenReturn(2);
+        when(applicationListEntryRepository.save(any(ApplicationListEntry.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0, ApplicationListEntry.class));
 
-        // Act - should not throw
+        ArgumentCaptor<ApplicationListEntry> savedEntryCaptor =
+                ArgumentCaptor.forClass(ApplicationListEntry.class);
+
         service.move(sourceListId, dto);
 
-        // Verify the bulk update call was invoked once with the same source and target that the
-        // service was called with
         verify(applicationListEntryRepository, times(1))
-                .bulkMoveByUuidAndSourceList(anySet(), eq(targetList), eq(sourceListId));
+                .findByUuidsInSourceList(eq(sourceListId), anySet());
+        verify(applicationListEntryRepository, times(2)).save(savedEntryCaptor.capture());
+
+        List<ApplicationListEntry> savedEntries = savedEntryCaptor.getAllValues();
+        Assertions.assertEquals(2, savedEntries.size());
+        Assertions.assertSame(entry2, savedEntries.get(0));
+        Assertions.assertSame(entry1, savedEntries.get(1));
+        Assertions.assertSame(targetList, savedEntries.get(0).getApplicationList());
+        Assertions.assertSame(targetList, savedEntries.get(1).getApplicationList());
+        Assertions.assertEquals((short) 3, savedEntries.get(0).getSequenceNumber());
+        Assertions.assertEquals((short) 4, savedEntries.get(1).getSequenceNumber());
+        Assertions.assertEquals(4, mapping.getAleLastSequence());
     }
 
     @Test
-    void move_throws_whenBulkUpdateAffectsFewerRowsThanRequested() {
-        ApplicationList targetList = new ApplicationList();
+    void move_throws_whenSomeRequestedEntriesAreMissingFromSourceList() {
+        val sourceListId = UUID.randomUUID();
+        val sourceList = new ApplicationList();
+        sourceList.setId(10L);
+        sourceList.setUuid(sourceListId);
+
+        val targetList = new ApplicationList();
+        targetList.setId(20L);
         targetList.setUuid(UUID.randomUUID());
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
+        val entryId1 = UUID.randomUUID();
 
-        MoveEntriesDto dto = new MoveEntriesDto();
+        val entry1 = new ApplicationListEntry();
+        entry1.setId(101L);
+        entry1.setUuid(entryId1);
+        entry1.setApplicationList(sourceList);
+        entry1.setVersion(0L);
+
+        val entryId2 = UUID.randomUUID();
+        val dto = new MoveEntriesDto();
         dto.setTargetListId(targetList.getUuid());
-        dto.setEntryIds(Set.of(id1, id2));
+        dto.setEntryIds(Set.of(entryId1, entryId2));
 
-        MoveEntriesValidationSuccess success = new MoveEntriesValidationSuccess();
+        val success = new MoveEntriesValidationSuccess();
         success.setTargetList(targetList);
         moveEntriesValidator.setSuccess(success);
 
-        // Simulate DB updated only 1 row even though 2 were requested
-        UUID sourceListId = UUID.randomUUID();
-        when(applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        anySet(), eq(targetList), eq(sourceListId)))
-                .thenReturn(1);
+        when(applicationListEntryRepository.findByUuidsInSourceList(eq(sourceListId), anySet()))
+                .thenReturn(List.of(entry1));
 
         assertThatThrownBy(() -> service.move(sourceListId, dto))
                 .isInstanceOf(AppRegistryException.class)
                 .satisfies(
-                        ex ->
-                                Assertions.assertEquals(
-                                        ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
-                                        ((AppRegistryException) ex).getCode()));
+                        ex -> {
+                            AppRegistryException appEx = (AppRegistryException) ex;
+                            Assertions.assertEquals(
+                                    ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST, appEx.getCode());
+                        });
+
+        verify(applicationListEntryRepository, times(1))
+                .findByUuidsInSourceList(eq(sourceListId), anySet());
+        verify(applicationListEntryRepository, times(0)).save(any(ApplicationListEntry.class));
     }
 
     @Test
@@ -1106,7 +1376,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.SOURCE_LIST_NOT_FOUND,
                                 "No source application list found for UUID"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
 
@@ -1123,7 +1393,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.TARGET_LIST_NOT_FOUND,
                                 "No target application list found for UUID"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(UUID.randomUUID());
@@ -1140,7 +1410,7 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.INVALID_LIST_STATUS, "Source list not open"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
 
@@ -1156,10 +1426,11 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.INVALID_LIST_STATUS, "Target list not open"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setTargetListId(UUID.randomUUID());
+        dto.setEntryIds(Set.of(UUID.randomUUID()));
 
         assertThatThrownBy(() -> service.move(UUID.randomUUID(), dto))
                 .isInstanceOf(AppRegistryException.class)
@@ -1173,9 +1444,11 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.ENTRY_NOT_PROVIDED, "No entry IDs provided"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
+        dto.setTargetListId(UUID.randomUUID());
+        dto.setEntryIds(null);
 
         assertThatThrownBy(() -> service.move(UUID.randomUUID(), dto))
                 .isInstanceOf(AppRegistryException.class)
@@ -1189,7 +1462,7 @@ public class ApplicationEntryServiceImplTest {
                         new AppRegistryException(
                                 ApplicationListError.ENTRY_NOT_PROVIDED, "No entry IDs provided"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setEntryIds(Set.of());
@@ -1207,7 +1480,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                                 "No application list entry found"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setEntryIds(Set.of(UUID.randomUUID()));
@@ -1225,7 +1498,7 @@ public class ApplicationEntryServiceImplTest {
                                 ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                                 "Application list entry does not belong to source list"))
                 .when(moveEntriesValidator)
-                .validate(any(MoveEntriesDto.class), any());
+                .validate(any(MoveEntriesPayload.class), any());
 
         MoveEntriesDto dto = new MoveEntriesDto();
         dto.setEntryIds(Set.of(UUID.randomUUID()));
@@ -1236,20 +1509,19 @@ public class ApplicationEntryServiceImplTest {
                 .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
     }
 
-    @Setter
     class DummyCreateApplicationEntryValidator extends CreateApplicationEntryValidator {
 
         public DummyCreateApplicationEntryValidator(
                 ApplicationListRepository applicationListRepository,
                 ApplicationCodeRepository applicationCodeRepository,
-                FeeRepository feeRepository,
-                Clock clock,
+                ApplicationFeeService feeService,
+                BusinessDateProvider businessDateProvider,
                 StandardApplicantRepository standardApplicantRepository) {
             super(
                     applicationListRepository,
                     applicationCodeRepository,
-                    feeRepository,
-                    clock,
+                    feeService,
+                    businessDateProvider,
                     standardApplicantRepository);
         }
 
@@ -1314,15 +1586,15 @@ public class ApplicationEntryServiceImplTest {
         public DummyUpdateApplicationEntryValidator(
                 ApplicationListRepository applicationListRepository,
                 ApplicationCodeRepository applicationCodeRepository,
-                FeeRepository feeRepository,
-                Clock clock,
+                ApplicationFeeService feeService,
+                BusinessDateProvider businessDateProvider,
                 StandardApplicantRepository standardApplicantRepository,
                 ApplicationListEntryRepository applicationListEntryRepository) {
             super(
                     applicationListRepository,
                     applicationCodeRepository,
-                    feeRepository,
-                    clock,
+                    feeService,
+                    businessDateProvider,
                     standardApplicantRepository,
                     applicationListEntryRepository);
         }
@@ -1366,7 +1638,6 @@ public class ApplicationEntryServiceImplTest {
         }
     }
 
-    @Setter
     static class DummyMoveEntriesValidator extends MoveEntriesValidator {
 
         private MoveEntriesValidationSuccess success;
@@ -1375,18 +1646,17 @@ public class ApplicationEntryServiceImplTest {
             super(applicationListRepository);
         }
 
-        @Override
-        public <R> R validate(
-                MoveEntriesDto dto,
-                java.util.function.BiFunction<MoveEntriesDto, MoveEntriesValidationSuccess, R>
-                        createSupplier) {
-
-            return createSupplier.apply(dto, success);
+        void setSuccess(MoveEntriesValidationSuccess success) {
+            this.success = success;
         }
 
         @Override
-        public DummyMoveEntriesValidator withSourceList(UUID id) {
-            return this;
+        public <R> R validate(
+                MoveEntriesPayload payload,
+                java.util.function.BiFunction<MoveEntriesPayload, MoveEntriesValidationSuccess, R>
+                        createSupplier) {
+
+            return createSupplier.apply(payload, success);
         }
     }
 }

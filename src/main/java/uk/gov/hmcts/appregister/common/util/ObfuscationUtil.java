@@ -3,7 +3,9 @@ package uk.gov.hmcts.appregister.common.util;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -56,6 +58,11 @@ public class ObfuscationUtil {
             maskingModule.addSerializer(NameAddress.class, new NameAddressSensitiveSerializer());
 
             ObjectMapper mapper = new ObjectMapper();
+            mapper.setConfig(
+                    mapper.getSerializationConfig()
+                            .with(MapperFeature.REQUIRE_HANDLERS_FOR_JAVA8_OPTIONALS));
+            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
             mapper.registerModule(maskingModule);
             mapper.registerModule(new JsonNullableModule());
             mapper.registerModule(new JavaTimeModule());

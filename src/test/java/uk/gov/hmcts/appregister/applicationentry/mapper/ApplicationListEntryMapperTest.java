@@ -65,14 +65,17 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.appregister.applicationentry.model.PayloadGetEntryInList;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryFeeStatus;
 import uk.gov.hmcts.appregister.common.entity.AppListEntryOfficial;
 import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.Fee;
+import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
 import uk.gov.hmcts.appregister.common.enumeration.FeeStatusType;
@@ -94,6 +97,7 @@ import uk.gov.hmcts.appregister.generated.model.Applicant;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListEntrySummary;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ContactDetails;
+import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetPrintDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
@@ -155,11 +159,44 @@ class ApplicationListEntryMapperTest {
                 model,
                 accountNumber,
                 "Mustafa's Org",
-                "Mustafa, Ahmed, His Majesty",
+                "Ahmed Mustafa",
                 postCode,
                 applicationTitle,
                 feeRequired,
                 result);
+    }
+
+    @Test
+    void testToApplicationListEntryForListReadAudit_mapsDbBackedFilters() {
+        // Build the same path parameter + filter pair that the list-entry read endpoint receives.
+        val listId = UUID.randomUUID();
+        val payload = PayloadGetEntryInList.builder().listId(listId).build();
+
+        val filterDto = new EntryApplicationListGetFilterDto();
+        filterDto.setApplicantName("Applicant Audit Org");
+        filterDto.setRespondentName("Respondent Audit Org");
+        filterDto.setRespondentPostcode("ZZ1 1ZZ");
+        filterDto.setAccountReference("ACC-123");
+        filterDto.setApplicationTitle("Read audit application title");
+        filterDto.setFeeRequired(Boolean.TRUE);
+        filterDto.setSequenceNumber(7);
+
+        // Map into the existing ApplicationListEntry audit surrogate rather than inventing a
+        // separate audit-only type.
+        val mappedResult = mapper.toApplicationListEntry(payload, filterDto);
+
+        // Each assertion below corresponds to a database-backed field that should be available to
+        // the reflective auditor when a GET /application-lists/{listId}/entries request succeeds.
+        Assertions.assertEquals(0L, mappedResult.getId());
+        Assertions.assertEquals(listId, mappedResult.getApplicationList().getUuid());
+        Assertions.assertEquals("Applicant Audit Org", mappedResult.getAnamedaddress().getName());
+        Assertions.assertEquals("Respondent Audit Org", mappedResult.getRnameaddress().getName());
+        Assertions.assertEquals("ZZ1 1ZZ", mappedResult.getRnameaddress().getPostcode());
+        Assertions.assertEquals("ACC-123", mappedResult.getAccountNumber());
+        Assertions.assertEquals(
+                "Read audit application title", mappedResult.getApplicationCode().getTitle());
+        Assertions.assertEquals(YesOrNo.YES, mappedResult.getApplicationCode().getFeeDue());
+        Assertions.assertEquals(Short.valueOf((short) 7), mappedResult.getSequenceNumber());
     }
 
     @Test
@@ -237,7 +274,7 @@ class ApplicationListEntryMapperTest {
                 list.getFirst(),
                 accountNumber1,
                 "Mustafa's Org",
-                "Mustafa, Ahmed, His Majesty",
+                "Ahmed Mustafa",
                 postCode1,
                 applicationTitle1,
                 feeRequired1,
@@ -249,7 +286,7 @@ class ApplicationListEntryMapperTest {
                 list.getLast(),
                 accountNumber2,
                 "Mustafa's Org",
-                "Johnson, Sarah",
+                "Sarah Johnson",
                 postCode2,
                 applicationTitle2,
                 feeRequired2,
@@ -452,7 +489,6 @@ class ApplicationListEntryMapperTest {
 
         when(applicationListEntryGetSummaryProjection.getRespondentSurname())
                 .thenReturn("ressurname");
-        when(applicationListEntryGetSummaryProjection.getResult()).thenReturn("2");
         when(applicationListEntryGetSummaryProjection.getFeeRequired()).thenReturn(YesOrNo.NO);
         when(applicationListEntryGetSummaryProjection.getStatus()).thenReturn(Status.CLOSED);
 
@@ -613,7 +649,6 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(
                 "rforename2",
                 mappedResult.getRespondent().getPerson().getName().getSecondForename().get());
-        Assertions.assertTrue(mappedResult.getIsResulted());
         Assertions.assertFalse(mappedResult.getIsFeeRequired());
         Assertions.assertEquals(ApplicationListStatus.CLOSED, mappedResult.getStatus());
         Assertions.assertEquals(uuidForProjection.toString(), mappedResult.getId().toString());
@@ -667,6 +702,9 @@ class ApplicationListEntryMapperTest {
                 uk.gov.hmcts.appregister.common.enumeration.OfficialType.MAGISTRATE);
 
         Fee fee = feeTestData.someComplete();
+        Fee offsite = feeTestData.someComplete();
+
+        FeePair feePair = new FeePair(fee, offsite);
 
         // execute the mapping
         mapper.setApplicantMapper(new ApplicantMapperImpl());
@@ -676,7 +714,7 @@ class ApplicationListEntryMapperTest {
                 mapper.toEntryGetDetailDto(
                         appListEntry,
                         List.of(applicationListStatus, applicationListStatus2),
-                        fee,
+                        feePair,
                         List.of(appListEntryOfficial, appListEntryOfficial2),
                         null);
 

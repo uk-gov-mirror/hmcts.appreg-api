@@ -24,7 +24,7 @@ properties:
   respondent:
     description: Name of the person or organisation responding to the application.
     example: "Jane Smith"
-    $ref: '../participants/applicant.yaml'
+    $ref: '../participants/respondent.yaml'
 
   applicationTitle:
     type: string
@@ -62,7 +62,10 @@ properties:
     example: 1
 
   resulted:
-    $ref: "../result-codes/result-code-get-summary-dto.yaml"
+    type: array
+    description: List of result codes applied to this application list entry.
+    items:
+      $ref: "../result-codes/result-code-get-summary-dto.yaml"
 
   status:
     $ref: '../application-lists/application-list-status.yaml'

@@ -1,6 +1,7 @@
 package uk.gov.hmcts.appregister.common.projection;
 
 import java.time.LocalDate;
+import java.util.List;
 import uk.gov.hmcts.appregister.common.entity.NameAddress;
 import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.StandardApplicant;
@@ -16,22 +17,20 @@ public interface ApplicationListEntryGetSummaryProjection {
 
     YesOrNo getFeeRequired();
 
-    String getResult();
-
     String getCjaCode();
 
     String getOtherLocationDescription();
 
     NameAddress getAnameAddress();
 
-    /** The applicant name that is a combination of surname, name and title. */
+    /** Applicant display name for sorting/filtering summaries. */
     String getApplicantName();
 
     String getStandardApplicantCode();
 
     NameAddress getRnameAddress();
 
-    /** The respondent name that is a combination of surname, name and title. */
+    /** Respondent display name for sorting/filtering summaries. */
     String getRespondentName();
 
     Status getStatus();
@@ -60,5 +59,5 @@ public interface ApplicationListEntryGetSummaryProjection {
 
     Integer getSequenceNumber();
 
-    ResolutionCode getResolutionCode();
+    List<ResolutionCode> getResolutionCodes();
 }

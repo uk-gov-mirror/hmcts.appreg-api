@@ -7,6 +7,8 @@ import static uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil.assertEq
 import io.restassured.response.Response;
 import java.util.List;
 import java.util.UUID;
+import lombok.val;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -16,7 +18,6 @@ import uk.gov.hmcts.appregister.common.entity.TableNames;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.util.EtagUtil;
 import uk.gov.hmcts.appregister.data.ResolutionCodeTestData;
-import uk.gov.hmcts.appregister.testutils.util.DataAuditLogAsserter;
 
 public class ApplicationEntryResultControllerDeleteTest
         extends AbstractApplicationEntryResultCrudTest {
@@ -24,19 +25,24 @@ public class ApplicationEntryResultControllerDeleteTest
     @Test
     @DisplayName("Delete Application List Entry Result: 204 when valid IDs")
     void givenValidIds_whenDelete_then204() throws Exception {
-        var list = createAndSaveList(OPEN);
-        var entry = createEntry(list);
+        val list = createAndSaveList(OPEN);
+        val entry = createEntry(list);
         persistance.save(entry);
 
-        var resolutionCode = new ResolutionCodeTestData().someComplete();
-        var entryResult = createAndSaveResolution(entry, resolutionCode);
+        val resolutionCode = new ResolutionCodeTestData().someComplete();
+        val entryResult = createAndSaveResolution(entry, resolutionCode);
 
-        var token = getToken();
+        val token = getToken();
 
         // compute the current server-style ETag
-        String expectedEtag = EtagUtil.generateEtag(List.of(entryResult));
+        val expectedEtag = EtagUtil.generateEtag(List.of(entryResult));
 
-        Response resp =
+        // Remove the setup rows so the assertions below only examine the delete request.
+        dataAuditRepository.deleteAll();
+
+        // Call the real endpoint so the delete runs through etag checks, repository delete and
+        // the audit listeners before we inspect DATA_AUDIT.
+        val resp =
                 deleteResult(
                         list.getUuid(),
                         entry.getUuid(),
@@ -46,29 +52,96 @@ public class ApplicationEntryResultControllerDeleteTest
 
         resp.then().statusCode(HttpStatus.NO_CONTENT.value());
 
-        differenceLogAsserter.assertDataAuditChange(
-                DataAuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
-                        "version",
-                        null,
-                        null,
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getType()
-                                .name(),
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getEventName()));
+        // Delete audit should include the generated resolution identifier so the removed row can
+        // be tied back to the original database record.
+        val resultIdAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "aler_id",
+                                entryResult.getId().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.aler_id delete audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT.getEventName(),
+                resultIdAuditRow.getEventName());
 
-        differenceLogAsserter.assertDataAuditChange(
-                DataAuditLogAsserter.getDataAuditAssertion(
-                        TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
-                        "aler_id",
-                        null,
-                        null,
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getType()
-                                .name(),
-                        AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT
-                                .getEventName()));
+        // The owning entry id should also be written on delete now that ale_ale_id has delete
+        // audit coverage.
+        val entryIdAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "ale_ale_id",
+                                entry.getId().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.ale_ale_id delete audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT.getEventName(),
+                entryIdAuditRow.getEventName());
+
+        // The resolution code foreign key is part of the deleted row and should be captured too.
+        val resolutionCodeAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "rc_rc_id",
+                                entryResult.getResolutionCode().getId().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.rc_rc_id delete audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT.getEventName(),
+                resolutionCodeAuditRow.getEventName());
+
+        // Delete audit should preserve the wording that was on the row before it was removed.
+        val missingWordingAuditMessage =
+                "Expected an app_list_entry_resolutions.al_entry_resolution_wording delete audit row";
+        val wordingAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "al_entry_resolution_wording",
+                                entryResult.getResolutionWording())
+                        .orElseThrow(() -> new AssertionError(missingWordingAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT.getEventName(),
+                wordingAuditRow.getEventName());
+
+        // Officer is another database-backed field on the removed row and should be persisted in
+        // the audit trail.
+        val missingOfficerAuditMessage =
+                "Expected an app_list_entry_resolutions.al_entry_resolution_officer delete audit row";
+        val officerAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "al_entry_resolution_officer",
+                                entryResult.getResolutionOfficer())
+                        .orElseThrow(() -> new AssertionError(missingOfficerAuditMessage));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT.getEventName(),
+                officerAuditRow.getEventName());
+
+        // Version is the final lifecycle field we expect to retain when the row is deleted.
+        val versionAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndOldValue(
+                                TableNames.APPLICATION_LIST_ENTRY_RESOLUTIONS,
+                                "version",
+                                entryResult.getVersion().toString())
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_resolutions.version delete audit row"));
+        Assertions.assertEquals(
+                AppListEntryResultAuditOperation.DELETE_APP_LIST_ENTRY_RESULT.getEventName(),
+                versionAuditRow.getEventName());
     }
 
     @Test
@@ -128,7 +201,6 @@ public class ApplicationEntryResultControllerDeleteTest
     void givenEtagMismatch_whenDelete_then412() throws Exception {
         var list = createAndSaveList(OPEN);
         var entry = createEntry(list);
-        persistance.save(entry);
 
         var resolutionCode = new ResolutionCodeTestData().someComplete();
         var entryResult = createAndSaveResolution(entry, resolutionCode);

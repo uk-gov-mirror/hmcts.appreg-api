@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.BiFunction;
 import lombok.Setter;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import uk.gov.hmcts.appregister.audit.event.BaseAuditEvent;
+import uk.gov.hmcts.appregister.audit.event.CompleteEvent;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationLifecycleListener;
 import uk.gov.hmcts.appregister.audit.listener.AuditOperationSlf4jLogger;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
@@ -36,10 +39,8 @@ import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantReposi
 import uk.gov.hmcts.appregister.common.mapper.ApplicantMapperImpl;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
+import uk.gov.hmcts.appregister.common.projection.StandardApplicantEnrichedProjection;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
-import uk.gov.hmcts.appregister.data.StandardApplicantTestData;
-import uk.gov.hmcts.appregister.generated.model.StandardApplicantGetDetailDto;
-import uk.gov.hmcts.appregister.generated.model.StandardApplicantPage;
 import uk.gov.hmcts.appregister.standardapplicant.audit.StandardApplicantOperation;
 import uk.gov.hmcts.appregister.standardapplicant.mapper.StandardApplicantMapperImpl;
 import uk.gov.hmcts.appregister.standardapplicant.validator.StandardApplicantExistsValidator;
@@ -83,51 +84,86 @@ public class StandardApplicantServiceTest {
         when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
         when(clock.withZone(org.mockito.ArgumentMatchers.eq(ukZone))).thenReturn(clock);
 
-        String code = "APP001";
-        String name = "John Doe";
-        Pageable pageable = PageRequest.of(0, 2);
+        val code = "APP001";
+        val name = "John Doe";
+        val addressLine1 = "123 Main Street";
+        val from = LocalDate.now().minusDays(10);
+        val to = LocalDate.now().plusDays(10);
+        val pageable = PageRequest.of(0, 2);
 
-        StandardApplicantTestData standardApplicantTestData = new StandardApplicantTestData();
+        val standardApplicant1 = mock(StandardApplicant.class);
+        val standardApplicant2 = mock(StandardApplicant.class);
 
-        PageImpl<StandardApplicant> pageImpl =
-                new PageImpl<>(
-                        java.util.List.of(
-                                standardApplicantTestData.someComplete(),
-                                standardApplicantTestData.someComplete()),
-                        pageable,
-                        2);
+        when(standardApplicant1.getApplicantCode()).thenReturn("APP001");
+        when(standardApplicant1.getName()).thenReturn("John Doe");
+        when(standardApplicant1.getApplicantStartDate()).thenReturn(from);
+        when(standardApplicant1.getApplicantEndDate()).thenReturn(to);
 
-        when(repository.search(eq(code), eq(name), isNotNull(), eq(pageable))).thenReturn(pageImpl);
+        when(standardApplicant2.getApplicantCode()).thenReturn("APP002");
+        when(standardApplicant2.getName()).thenReturn("Jane Doe");
+        when(standardApplicant2.getApplicantStartDate()).thenReturn(from.plusDays(1));
+        when(standardApplicant2.getApplicantEndDate()).thenReturn(to.plusDays(1));
 
-        PagingWrapper wrapper = PagingWrapper.of(List.of(), pageable);
+        val projection1 = mock(StandardApplicantEnrichedProjection.class);
+        val projection2 = mock(StandardApplicantEnrichedProjection.class);
 
-        StandardApplicantPage standardApplicantPage =
-                standardApplicantService.findAll(code, name, wrapper);
+        when(projection1.getStandardApplicant()).thenReturn(standardApplicant1);
+        when(projection1.getEffectiveName()).thenReturn("John Doe");
+
+        when(projection2.getStandardApplicant()).thenReturn(standardApplicant2);
+        when(projection2.getEffectiveName()).thenReturn("Jane Doe");
+
+        val pageImpl = new PageImpl<>(java.util.List.of(projection1, projection2), pageable, 2);
+
+        when(repository.search(
+                        eq(code),
+                        eq(name),
+                        eq(addressLine1),
+                        eq(from),
+                        eq(to),
+                        isNotNull(),
+                        eq(pageable)))
+                .thenReturn(pageImpl);
+
+        val wrapper = PagingWrapper.of(List.of(), pageable);
+
+        val standardApplicantPage =
+                standardApplicantService.findAll(code, name, addressLine1, from, to, wrapper);
+
+        verify(repository)
+                .search(
+                        eq(code),
+                        eq(name),
+                        eq(addressLine1),
+                        eq(from),
+                        eq(to),
+                        isNotNull(),
+                        eq(pageable));
 
         Assertions.assertEquals(2, standardApplicantPage.getTotalElements());
         Assertions.assertEquals(
-                pageImpl.getContent().get(0).getApplicantCode(),
-                standardApplicantPage.getContent().get(0).getCode());
+                pageImpl.getContent().getFirst().getStandardApplicant().getApplicantCode(),
+                standardApplicantPage.getContent().getFirst().getCode());
         Assertions.assertEquals(
-                pageImpl.getContent().get(0).getName(),
+                pageImpl.getContent().getFirst().getStandardApplicant().getName(),
                 standardApplicantPage
                         .getContent()
-                        .get(0)
+                        .getFirst()
                         .getApplicant()
                         .getOrganisation()
                         .getName());
         Assertions.assertEquals(
-                pageImpl.getContent().get(0).getApplicantStartDate(),
+                pageImpl.getContent().get(0).getStandardApplicant().getApplicantStartDate(),
                 standardApplicantPage.getContent().get(0).getStartDate());
         Assertions.assertEquals(
-                pageImpl.getContent().get(0).getApplicantEndDate(),
+                pageImpl.getContent().get(0).getStandardApplicant().getApplicantEndDate(),
                 standardApplicantPage.getContent().get(0).getEndDate().get());
 
         Assertions.assertEquals(
-                pageImpl.getContent().get(1).getApplicantCode(),
+                pageImpl.getContent().get(1).getStandardApplicant().getApplicantCode(),
                 standardApplicantPage.getContent().get(1).getCode());
         Assertions.assertEquals(
-                pageImpl.getContent().get(1).getName(),
+                pageImpl.getContent().get(1).getStandardApplicant().getName(),
                 standardApplicantPage
                         .getContent()
                         .get(1)
@@ -135,10 +171,10 @@ public class StandardApplicantServiceTest {
                         .getOrganisation()
                         .getName());
         Assertions.assertEquals(
-                pageImpl.getContent().get(1).getApplicantStartDate(),
+                pageImpl.getContent().get(1).getStandardApplicant().getApplicantStartDate(),
                 standardApplicantPage.getContent().get(1).getStartDate());
         Assertions.assertEquals(
-                pageImpl.getContent().get(1).getApplicantEndDate(),
+                pageImpl.getContent().get(1).getStandardApplicant().getApplicantEndDate(),
                 standardApplicantPage.getContent().get(1).getEndDate().get());
 
         verify(auditOperationService)
@@ -151,11 +187,10 @@ public class StandardApplicantServiceTest {
 
     @Test
     public void testGetByCode() {
-        String code = "APP001";
-        LocalDate date = LocalDate.now();
+        val code = "APP001";
+        val date = LocalDate.now();
 
-        StandardApplicantGetDetailDto standardApplicantGetDetailDto =
-                standardApplicantService.findByCode(code, date);
+        val standardApplicantGetDetailDto = standardApplicantService.findByCode(code, date);
 
         Assertions.assertEquals(standardApplicantGetDetailDto.getCode(), code);
         Assertions.assertEquals(standardApplicantGetDetailDto.getStartDate(), date);
@@ -168,8 +203,117 @@ public class StandardApplicantServiceTest {
                         notNull());
     }
 
+    @Test
+    void testGetByCode_auditsRequestedLookupCriteria() {
+        val code = "APP001";
+        val standardApplicant = new StandardApplicant();
+        standardApplicant.setApplicantCode(code);
+        standardApplicant.setName("John Doe");
+        standardApplicant.setApplicantStartDate(LocalDate.of(2020, 1, 1));
+        validator.setSuccess(standardApplicant);
+
+        val listener = new CapturingAuditListener();
+        val localService =
+                new StandardApplicationServiceImpl(
+                        repository,
+                        standardApplicantMapper,
+                        clock,
+                        ukZone,
+                        pageMapper,
+                        validator,
+                        new AuditOperationServiceImpl(new ObjectMapper(), List.of(listener)),
+                        List.of(listener),
+                        new ApplicantMapperImpl());
+
+        val date = LocalDate.of(2025, 1, 1);
+        val actual = localService.findByCode(code, date);
+
+        Assertions.assertEquals(code, actual.getCode());
+        Assertions.assertNotNull(listener.getCompleteEvent());
+        val audited = (StandardApplicant) listener.getCompleteEvent().getNewValue();
+        Assertions.assertNotSame(standardApplicant, audited);
+        Assertions.assertEquals(code, audited.getApplicantCode());
+        Assertions.assertEquals(date, audited.getApplicantStartDate());
+    }
+
+    @Test
+    void testGetAll_auditsRequestedSearchCriteria() {
+        when(clock.instant()).thenReturn(Instant.now().plus(1, ChronoUnit.DAYS));
+        when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+        when(clock.withZone(org.mockito.ArgumentMatchers.eq(ukZone))).thenReturn(clock);
+
+        val code = "APP001";
+        val name = "John Doe";
+        val addressLine1 = "123 Main Street";
+        val from = LocalDate.of(2026, 4, 1);
+        val to = LocalDate.of(2026, 12, 31);
+        val pageable = PageRequest.of(0, 2);
+
+        val applicant = mock(StandardApplicant.class);
+        val projection = mock(StandardApplicantEnrichedProjection.class);
+
+        when(applicant.getApplicantCode()).thenReturn(code);
+        when(applicant.getName()).thenReturn(name);
+        when(applicant.getApplicantStartDate()).thenReturn(from);
+        when(applicant.getApplicantEndDate()).thenReturn(to);
+        when(projection.getStandardApplicant()).thenReturn(applicant);
+        when(projection.getEffectiveName()).thenReturn(name);
+        when(repository.search(
+                        eq(code),
+                        eq(name),
+                        eq(addressLine1),
+                        eq(from),
+                        eq(to),
+                        isNotNull(),
+                        eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(projection), pageable, 1));
+
+        val listener = new CapturingAuditListener();
+        val localService =
+                new StandardApplicationServiceImpl(
+                        repository,
+                        standardApplicantMapper,
+                        clock,
+                        ukZone,
+                        pageMapper,
+                        validator,
+                        new AuditOperationServiceImpl(new ObjectMapper(), List.of(listener)),
+                        List.of(listener),
+                        new ApplicantMapperImpl());
+
+        // Execute the search with every currently in-scope DB-backed filter populated so the
+        // resulting audit surrogate can be asserted directly.
+        localService.findAll(
+                code, name, addressLine1, from, to, PagingWrapper.of(List.of(), pageable));
+
+        Assertions.assertNotNull(listener.getCompleteEvent());
+        val audited = (StandardApplicant) listener.getCompleteEvent().getNewValue();
+        Assertions.assertEquals(code, audited.getApplicantCode());
+        Assertions.assertEquals(name, audited.getName());
+        Assertions.assertEquals(addressLine1, audited.getAddressLine1());
+        Assertions.assertEquals(from, audited.getApplicantStartDate());
+        Assertions.assertEquals(to, audited.getApplicantEndDate());
+    }
+
+    private static final class CapturingAuditListener implements AuditOperationLifecycleListener {
+        private CompleteEvent completeEvent;
+
+        @Override
+        public void eventPerformed(BaseAuditEvent event) {
+            if (event instanceof CompleteEvent complete) {
+                completeEvent = complete;
+            }
+        }
+
+        private CompleteEvent getCompleteEvent() {
+            return completeEvent;
+        }
+    }
+
     @Setter
     static class DummyStandardApplicantExistsValidator extends StandardApplicantExistsValidator {
+        private StandardApplicant success;
+
         public DummyStandardApplicantExistsValidator(StandardApplicantRepository repository) {
             super(repository);
         }
@@ -178,11 +322,12 @@ public class StandardApplicantServiceTest {
         public <R> R validate(
                 PayloadForGet saId,
                 BiFunction<PayloadForGet, StandardApplicant, R> createApplicationSupplier) {
-            return createApplicationSupplier.apply(saId, validateId());
+            return createApplicationSupplier.apply(
+                    saId, success != null ? success : defaultApplicant());
         }
 
-        private StandardApplicant validateId() {
-            StandardApplicant standardApplicant = new StandardApplicant();
+        private StandardApplicant defaultApplicant() {
+            val standardApplicant = new StandardApplicant();
             standardApplicant.setApplicantCode("APP001");
             standardApplicant.setName("John Doe");
             standardApplicant.setApplicantStartDate(LocalDate.now());

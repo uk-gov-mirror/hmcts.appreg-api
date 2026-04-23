@@ -3,19 +3,22 @@ package uk.gov.hmcts.appregister.applicationentry.service;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
+import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryMoveAudit;
+import uk.gov.hmcts.appregister.applicationentry.audit.ApplicationListEntryReadAudit;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryEntityMapper;
 import uk.gov.hmcts.appregister.applicationentry.mapper.ApplicationListEntryMapper;
 import uk.gov.hmcts.appregister.applicationentry.model.PayloadForUpdateEntry;
@@ -27,6 +30,7 @@ import uk.gov.hmcts.appregister.applicationentry.validator.GetApplicationListEnt
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidationSuccess;
 import uk.gov.hmcts.appregister.applicationentry.validator.UpdateApplicationEntryValidator;
 import uk.gov.hmcts.appregister.applicationlist.exception.ApplicationListError;
+import uk.gov.hmcts.appregister.applicationlist.model.MoveEntriesPayload;
 import uk.gov.hmcts.appregister.applicationlist.validator.MoveEntriesValidator;
 import uk.gov.hmcts.appregister.audit.model.AuditableResult;
 import uk.gov.hmcts.appregister.audit.service.AuditOperationService;
@@ -55,16 +59,20 @@ import uk.gov.hmcts.appregister.common.mapper.ApplicantMapper;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForCreate;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
+import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryResolutionProjection;
+import uk.gov.hmcts.appregister.common.service.BusinessDateProvider;
 import uk.gov.hmcts.appregister.common.util.BeanUtil;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
 import uk.gov.hmcts.appregister.generated.model.EntryApplicationListGetFilterDto;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetFilterDto;
+import uk.gov.hmcts.appregister.generated.model.EntryGetSummaryDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.MoveEntriesDto;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.ResultCodeGetSummaryDto;
 
 @Component
 @RequiredArgsConstructor
@@ -109,6 +117,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
     private final GetApplicationListEntriesValidator getApplicationListEntriesValidator;
 
     private final Clock clock;
+    private final BusinessDateProvider businessDateProvider;
 
     @Override
     public EntryPage search(EntryGetFilterDto filterDto, PagingWrapper pageable) {
@@ -145,18 +154,11 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                     null,
                                     null,
                                     null,
+                                    null,
                                     pageable.getPageable());
 
                     // breaks name into individual and/or organisation parts
-                    EntryPage newPage = new EntryPage();
-                    pageMapper.toPage(resultPage, newPage, pageable.getSortStrings());
-
-                    // Map each entity to a summary DTO and add to the page content
-                    resultPage.forEach(
-                            entry -> {
-                                newPage.addContentItem(
-                                        applicationListEntryMapStructMapper.toEntrySummary(entry));
-                            });
+                    EntryPage newPage = buildEntryPage(resultPage, pageable);
 
                     log.debug(
                             "Finished: Find Application Entry for criteria: {} with paging: {}",
@@ -376,7 +378,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
             CreateApplicationEntryValidationSuccess success,
             ApplicationListEntry listEntryEntity,
             PayloadForCreate<EntryCreateDto> entryCreateDto) {
-        if (success.getFee() != null) {
+        if (success.getFee() != null && success.getFee().mainFee() != null) {
             // save and audit
             auditService.processAudit(
                     AppListEntryAuditOperation.CREATE_FEE_ENTRY,
@@ -385,7 +387,7 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                         // fees
                         AppListEntryFeeId appListEntryFeeId = new AppListEntryFeeId();
                         appListEntryFeeId.setAppListEntryId(listEntryEntity.getId());
-                        appListEntryFeeId.setFeeId(success.getFee().getId());
+                        appListEntryFeeId.setFeeId(success.getFee().mainFee().getId());
                         var savedAppListEntryFeeId =
                                 appListEntryFeeRepository.save(appListEntryFeeId);
 
@@ -394,35 +396,31 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                 appListEntryFeeId.getFeeId(),
                                 appListEntryFeeId.getAppListEntryId());
 
-                        if (entryCreateDto.getData().getHasOffsiteFee()) {
-                            var offsiteFee =
-                                    feeRepository
-                                            .findByReferenceBetweenDateWithOffsite(
-                                                    "CO1.1", LocalDate.now(clock), true)
-                                            .stream()
-                                            .findFirst();
+                        return Optional.of(new AuditableResult<>(null, savedAppListEntryFeeId));
+                    });
+        }
 
-                            var offsiteFeeEntry =
-                                    appListEntryFeeRepository
-                                            .getEntryFeesForEntry(listEntryEntity.getId())
-                                            .stream()
-                                            .filter(
-                                                    fee ->
-                                                            fee.getFeeId()
-                                                                    .equals(
-                                                                            offsiteFee
-                                                                                    .get()
-                                                                                    .getId()))
-                                            .findAny();
+        if ((success.getFee() != null
+                        && success.getFee().offsiteFee() != null
+                        && entryCreateDto.getData() != null
+                        && entryCreateDto.getData().getHasOffsiteFee() != null)
+                && entryCreateDto.getData().getHasOffsiteFee()) {
+            // save the offsite fee
+            auditService.processAudit(
+                    AppListEntryAuditOperation.CREATE_FEE_ENTRY,
+                    req -> {
+                        // create the link between the entry and the
+                        // fees
+                        AppListEntryFeeId appListEntryFeeId = new AppListEntryFeeId();
+                        appListEntryFeeId.setAppListEntryId(listEntryEntity.getId());
+                        appListEntryFeeId.setFeeId(success.getFee().offsiteFee().getId());
+                        var savedAppListEntryFeeId =
+                                appListEntryFeeRepository.save(appListEntryFeeId);
 
-                            if (!offsiteFeeEntry.isPresent()) {
-                                AppListEntryFeeId offsiteEntryFee = new AppListEntryFeeId();
-                                offsiteEntryFee.setFeeId(offsiteFee.get().getId());
-                                offsiteEntryFee.setAppListEntryId(
-                                        appListEntryFeeId.getAppListEntryId());
-                                appListEntryFeeRepository.saveAndFlush(offsiteEntryFee);
-                            }
-                        }
+                        log.debug(
+                                "Created Offsite Fee: {} to Entry: {} mapping: {}",
+                                appListEntryFeeId.getFeeId(),
+                                appListEntryFeeId.getAppListEntryId());
 
                         return Optional.of(new AuditableResult<>(null, savedAppListEntryFeeId));
                     });
@@ -699,7 +697,15 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
         // This ensures we don't keep old rows
         if (!feeStatuses.isEmpty()) {
-            appListEntryFeeStatusRepository.deleteAll(feeStatuses);
+            for (AppListEntryFeeStatus feeStatus : feeStatuses) {
+                auditService.processAudit(
+                        feeStatus,
+                        AppListEntryAuditOperation.DELETE_FEE_STATUS_ENTRY,
+                        req -> {
+                            appListEntryFeeStatusRepository.delete(feeStatus);
+                            return Optional.empty();
+                        });
+            }
             appListEntryFeeStatusRepository.flush();
         }
 
@@ -743,34 +749,34 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                 appListEntryFeeRepository.getEntryFeesForEntry(
                         success.getApplicationEntryId().getId());
         for (AppListEntryFeeId feeId : appListEntryFeeIdList) {
-            // if the fee is not the one we are updating delete it
-            if (success.getFee() == null
-                    || feeId.getFeeId().longValue() != success.getFee().getId()) {
-                auditService.processAudit(
-                        feeId,
-                        AppListEntryAuditOperation.DELETE_FEE_ENTRY,
-                        req -> {
-                            appListEntryFeeRepository.delete(feeId);
-                            return Optional.empty();
-                        });
-            }
+            auditService.processAudit(
+                    feeId,
+                    AppListEntryAuditOperation.DELETE_FEE_ENTRY,
+                    req -> {
+                        appListEntryFeeRepository.delete(feeId);
+                        return Optional.empty();
+                    });
         }
 
         appListEntryFeeRepository.flush();
 
         // if we have a fee, remove all other fees associated with the entry
-        if (success.getFee() != null) {
-            log.debug("A fee update is present for fee {}", success.getFee().getId());
+        if (success.getFee() != null && success.getFee().mainFee() != null) {
+            log.debug("A fee update is present for fee {}", success.getFee().mainFee().getId());
 
             Optional<AppListEntryFeeId> appListEntryFeeId =
                     appListEntryFeeRepository.getEntryFeesForFee(
-                            success.getApplicationEntryId().getId(), success.getFee().getId());
+                            success.getApplicationEntryId().getId(),
+                            success.getFee().mainFee().getId());
 
             // if we have no fees associated then create a new one
             if (!appListEntryFeeId.isPresent()) {
                 log.debug(
                         "Adding new fee {} to entry %s {}",
-                        success.getFee().getId(), success.getApplicationEntryId().getId());
+                        success.getFee().mainFee().getId(),
+                        success.getApplicationEntryId().getId());
+
+                // the main fee
                 auditService.processAudit(
                         AppListEntryAuditOperation.CREATE_FEE_ENTRY,
                         req -> {
@@ -779,41 +785,10 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                             AppListEntryFeeId newAppListEntryFeeId = new AppListEntryFeeId();
                             newAppListEntryFeeId.setAppListEntryId(
                                     success.getApplicationEntryId().getId());
-                            newAppListEntryFeeId.setFeeId(success.getFee().getId());
+                            newAppListEntryFeeId.setFeeId(success.getFee().mainFee().getId());
 
                             newAppListEntryFeeId =
                                     appListEntryFeeRepository.save(newAppListEntryFeeId);
-
-                            if (Boolean.TRUE.equals(updateEntry.getData().getHasOffsiteFee())) {
-                                var offsiteFee =
-                                        feeRepository
-                                                .findByReferenceBetweenDateWithOffsite(
-                                                        "CO1.1", LocalDate.now(clock), true)
-                                                .stream()
-                                                .findFirst();
-
-                                var offsiteFeeEntry =
-                                        appListEntryFeeRepository
-                                                .getEntryFeesForEntry(
-                                                        success.getApplicationEntryId().getId())
-                                                .stream()
-                                                .filter(
-                                                        fee ->
-                                                                fee.getFeeId()
-                                                                        .equals(
-                                                                                offsiteFee
-                                                                                        .get()
-                                                                                        .getId()))
-                                                .findAny();
-
-                                if (!offsiteFeeEntry.isPresent()) {
-                                    AppListEntryFeeId offsiteEntryFee = new AppListEntryFeeId();
-                                    offsiteEntryFee.setFeeId(offsiteFee.get().getId());
-                                    offsiteEntryFee.setAppListEntryId(
-                                            success.getApplicationEntryId().getId());
-                                    appListEntryFeeRepository.save(offsiteEntryFee);
-                                }
-                            }
 
                             log.debug(
                                     "Created Fee: {} to Entry: {} mapping: {}",
@@ -821,6 +796,42 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                                     newAppListEntryFeeId.getAppListEntryId());
 
                             return Optional.of(new AuditableResult<>(null, newAppListEntryFeeId));
+                        });
+            }
+        }
+
+        // update the offsite
+        if (success.getFee() != null
+                && success.getFee().offsiteFee() != null
+                && updateEntry.getData() != null
+                && (updateEntry.getData().getHasOffsiteFee() != null)
+                && (updateEntry.getData().getHasOffsiteFee())) {
+            Optional<AppListEntryFeeId> appListEntryOffsiteFeeId =
+                    appListEntryFeeRepository.getEntryFeesForFee(
+                            success.getApplicationEntryId().getId(),
+                            success.getFee().offsiteFee().getId());
+
+            // add the offsite fee
+            if (!appListEntryOffsiteFeeId.isPresent() && success.getFee().offsiteFee() != null) {
+                log.debug(
+                        "Adding new offsite fee {} to entry %s {}",
+                        success.getFee().offsiteFee().getId(),
+                        success.getApplicationEntryId().getId());
+                auditService.processAudit(
+                        AppListEntryAuditOperation.CREATE_FEE_ENTRY,
+                        req -> {
+                            AppListEntryFeeId offsiteEntryFee = new AppListEntryFeeId();
+                            offsiteEntryFee.setFeeId(success.getFee().offsiteFee().getId());
+                            offsiteEntryFee.setAppListEntryId(
+                                    success.getApplicationEntryId().getId());
+                            offsiteEntryFee = appListEntryFeeRepository.save(offsiteEntryFee);
+
+                            log.debug(
+                                    "Created Offsite Fee: {} to Entry: {} mapping: {}",
+                                    offsiteEntryFee.getFeeId(),
+                                    offsiteEntryFee.getAppListEntryId());
+
+                            return Optional.of(new AuditableResult<>(null, offsiteEntryFee));
                         });
             }
         }
@@ -944,78 +955,103 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
 
         return getApplicationListEntriesValidator.validate(
                 payloadForGet,
-                (req, success) -> {
-                    // get the entries for the list
-                    Page<ApplicationListEntryGetSummaryProjection> entries =
-                            applicationListEntryRepository.searchForGetSummary(
-                                    payloadForGet.getListId(),
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    filterDto.getApplicantName(),
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    filterDto.getRespondentName(),
-                                    filterDto.getRespondentPostcode(),
-                                    filterDto.getAccountReference(),
-                                    filterDto.getApplicationTitle(),
-                                    filterDto.getFeeRequired(),
-                                    filterDto.getSequenceNumber(),
-                                    pageable.getPageable());
+                (req, success) ->
+                        auditService.processAudit(
+                                null,
+                                AppListEntryAuditOperation.SEARCH_APP_ENTRY_LIST,
+                                (r) -> {
+                                    // get the entries for the list
+                                    Page<ApplicationListEntryGetSummaryProjection> entries =
+                                            applicationListEntryRepository.searchForGetSummary(
+                                                    payloadForGet.getListId(),
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    filterDto.getApplicantName(),
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    null,
+                                                    filterDto.getRespondentName(),
+                                                    filterDto.getRespondentPostcode(),
+                                                    filterDto.getAccountReference(),
+                                                    filterDto.getApplicationTitle(),
+                                                    filterDto.getResulted(),
+                                                    filterDto.getFeeRequired(),
+                                                    filterDto.getSequenceNumber(),
+                                                    pageable.getPageable());
 
-                    EntryPage entryPage = new EntryPage();
-                    pageMapper.toPage(entries, entryPage, pageable.getSortStrings());
+                                    EntryPage entryPage = buildEntryPage(entries, pageable);
 
-                    entries.forEach(
-                            entry -> {
-                                entryPage.addContentItem(
-                                        applicationListEntryMapStructMapper.toEntrySummary(entry));
-                            });
+                                    if (entryPage.getContent() == null) {
+                                        entryPage.setContent(List.of());
+                                    }
 
-                    if (entryPage.getContent() == null) {
-                        entryPage.setContent(List.of());
-                    }
+                                    log.debug(
+                                            "Finished: Getting application list entries for list: {}",
+                                            payloadForGet.getListId());
 
-                    log.debug(
-                            "Finished: Getting application list entries for list: {}",
-                            payloadForGet.getListId());
-
-                    return entryPage;
-                });
+                                    return Optional.of(
+                                            new AuditableResult<>(
+                                                    entryPage,
+                                                    new ApplicationListEntryReadAudit(
+                                                            applicationListEntryMapStructMapper
+                                                                    .toApplicationListEntry(
+                                                                            payloadForGet,
+                                                                            filterDto),
+                                                            filterDto.getResulted())));
+                                }));
     }
 
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void move(UUID sourceListId, MoveEntriesDto moveEntriesDto) {
-        ApplicationList targetList =
-                moveEntriesValidator
-                        .withSourceList(sourceListId)
-                        .validate(moveEntriesDto, (req, success) -> success.getTargetList());
+        var payload = new MoveEntriesPayload(sourceListId, moveEntriesDto);
+        final ApplicationList targetList =
+                moveEntriesValidator.validate(payload, (req, success) -> success.getTargetList());
 
         Set<UUID> requestedIds = new HashSet<>(moveEntriesDto.getEntryIds());
-
+        List<ApplicationListEntry> entriesToMove =
+                applicationListEntryRepository.findByUuidsInSourceList(sourceListId, requestedIds);
         Set<UUID> existingIds =
-                applicationListEntryRepository.findExistingEntryIdsInSourceList(
-                        sourceListId, requestedIds);
+                entriesToMove.stream()
+                        .map(ApplicationListEntry::getUuid)
+                        .collect(Collectors.toSet());
 
-        Set<UUID> missingIds = new HashSet<>(requestedIds);
-        missingIds.removeAll(existingIds);
+        if (existingIds.size() != requestedIds.size()) {
+            Set<UUID> missingIds = new HashSet<>(requestedIds);
+            missingIds.removeAll(existingIds);
 
-        if (!missingIds.isEmpty()) {
             throw new AppRegistryException(
                     ApplicationListError.ENTRY_NOT_IN_SOURCE_LIST,
                     "One or more entries were not found in the source list",
                     Map.of("invalid_entry_ids", missingIds.toString()));
         }
 
-        applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                existingIds, targetList, sourceListId);
+        List<ApplicationListEntry> orderedEntriesToMove = new ArrayList<>(entriesToMove);
+        orderedEntriesToMove.sort(Comparator.comparing(ApplicationListEntry::getSequenceNumber));
+
+        for (ApplicationListEntry entryToMove : orderedEntriesToMove) {
+            auditService.processAudit(
+                    ApplicationListEntryMoveAudit.from(entryToMove),
+                    AppListEntryAuditOperation.MOVE_APP_ENTRY,
+                    req -> {
+                        entryToMove.setApplicationList(targetList);
+                        entryToMove.setSequenceNumber(allocateNextSequence(targetList.getId()));
+
+                        var movedEntry =
+                                refreshEntity(applicationListEntryRepository.save(entryToMove));
+
+                        return Optional.of(
+                                new AuditableResult<>(
+                                        movedEntry.getUuid(),
+                                        ApplicationListEntryMoveAudit.from(movedEntry)));
+                    });
+        }
 
         log.info(
                 "Completed bulk move for {} entries from list {}",
@@ -1035,10 +1071,11 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
                     entry.getEntryFeeIds().stream().map(AppListEntryFeeId::getFeeId).toList();
 
             if (!feeIds.isEmpty()) {
-                List<Fee> fees = feeRepository.findByIdsBetweenDate(feeIds, LocalDate.now(clock));
+                List<Fee> fees =
+                        feeRepository.findByIdsBetweenDate(
+                                feeIds, businessDateProvider.currentUkDate());
 
-                // take the first fee offsite if it exists
-                return !fees.isEmpty() && fees.getFirst().isOffsite();
+                return fees.stream().anyMatch(Fee::isOffsite);
             }
         }
         return false;
@@ -1093,5 +1130,61 @@ public class ApplicationEntryServiceImpl implements ApplicationEntryService {
         mapping.setAleLastSequence(next);
 
         return (short) next;
+    }
+
+    private ResultCodeGetSummaryDto toResultCodeGetSummaryDto(
+            ApplicationListEntryResolutionProjection projection) {
+        return applicationListEntryMapStructMapper.toResultCodeGetSummaryDto(
+                projection.getResolutionCode());
+    }
+
+    private Map<Long, List<ResultCodeGetSummaryDto>> getCodesByEntryId(
+            Page<ApplicationListEntryGetSummaryProjection> resultPage) {
+
+        List<Long> entryIds =
+                resultPage.getContent().stream()
+                        .map(ApplicationListEntryGetSummaryProjection::getId)
+                        .toList();
+
+        if (entryIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ApplicationListEntryResolutionProjection> resolutionProjections =
+                applicationListEntryRepository.findResolutionCodesByEntryIds(entryIds);
+
+        return resolutionProjections.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                ApplicationListEntryResolutionProjection::getEntryId,
+                                Collectors.mapping(
+                                        this::toResultCodeGetSummaryDto, Collectors.toList())));
+    }
+
+    private EntryPage buildEntryPage(
+            Page<ApplicationListEntryGetSummaryProjection> resultPage, PagingWrapper pageable) {
+
+        Map<Long, List<ResultCodeGetSummaryDto>> codesByEntryId = getCodesByEntryId(resultPage);
+
+        EntryPage entryPage = new EntryPage();
+        pageMapper.toPage(resultPage, entryPage, pageable.getSortStrings());
+
+        resultPage
+                .getContent()
+                .forEach(
+                        entry -> {
+                            EntryGetSummaryDto entrySummary =
+                                    applicationListEntryMapStructMapper.toEntrySummary(entry);
+
+                            List<ResultCodeGetSummaryDto> resultCodes =
+                                    codesByEntryId.getOrDefault(entry.getId(), List.of());
+
+                            entrySummary.setResulted(resultCodes);
+                            entrySummary.setIsResulted(!resultCodes.isEmpty());
+
+                            entryPage.addContentItem(entrySummary);
+                        });
+
+        return entryPage;
     }
 }

@@ -3,26 +3,32 @@ package uk.gov.hmcts.appregister.controller.applicationentry;
 import static uk.gov.hmcts.appregister.generated.model.PaymentStatus.DUE;
 
 import io.restassured.response.Response;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.val;
 import org.hamcrest.Matchers;
 import org.instancio.Instancio;
 import org.instancio.settings.Keys;
 import org.instancio.settings.Settings;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation;
 import uk.gov.hmcts.appregister.applicationentry.exception.AppListEntryError;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
 import uk.gov.hmcts.appregister.common.entity.TableNames;
+import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListCreateDto;
@@ -33,7 +39,9 @@ import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryPage;
 import uk.gov.hmcts.appregister.generated.model.FeeStatus;
 import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.OfficialType;
 import uk.gov.hmcts.appregister.generated.model.Organisation;
+import uk.gov.hmcts.appregister.generated.model.PaymentStatus;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.annotation.StabilityTest;
 import uk.gov.hmcts.appregister.testutils.token.TokenAndJwksKey;
@@ -41,9 +49,11 @@ import uk.gov.hmcts.appregister.testutils.token.TokenGenerator;
 import uk.gov.hmcts.appregister.testutils.util.DataAuditLogAsserter;
 import uk.gov.hmcts.appregister.testutils.util.HeaderUtil;
 import uk.gov.hmcts.appregister.testutils.util.PagingAssertionUtil;
+import uk.gov.hmcts.appregister.testutils.util.ProblemAssertUtil;
 import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
 
 public class ApplicationEntryControllerCreateTest extends AbstractApplicationEntryCrudTest {
+    @Autowired private DataAuditRepository dataAuditRepository;
 
     @Test
     public void givenValidRequest_whenCreateListEntry_thenReturn201() throws Exception {
@@ -62,6 +72,7 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
 
         var tokenGenerator = createAdminToken();
 
+        entryCreateDto.setLodgementDate(LocalDate.now().minusDays(1));
         SuccessCreateEntryResponse createdDto =
                 createEntryWithUniqueSurname(tokenGenerator, entryCreateDto, surnameToLookup);
 
@@ -123,6 +134,73 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
     }
 
     @Test
+    void givenTooManyMagistrates_whenCreateEntry_thenReturn400() throws Exception {
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setLodgementDate(LocalDate.now().minusDays(1));
+        entryCreateDto.setOfficials(
+                List.of(
+                        buildOfficial("Ms", "Maya", "One", OfficialType.MAGISTRATE),
+                        buildOfficial("Mr", "Miles", "Two", OfficialType.MAGISTRATE),
+                        buildOfficial("Mrs", "Mina", "Three", OfficialType.MAGISTRATE),
+                        buildOfficial("Mr", "Marco", "Four", OfficialType.MAGISTRATE)));
+
+        Response response =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        createAdminToken().fetchTokenForRole(),
+                        entryCreateDto);
+
+        response.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        ProblemAssertUtil.assertEquals(AppListEntryError.TOO_MANY_MAGISTRATES.getCode(), response);
+    }
+
+    @Test
+    void givenTooManyCourtOfficials_whenCreateEntry_thenReturn400() throws Exception {
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setLodgementDate(LocalDate.now().minusDays(1));
+        entryCreateDto.setOfficials(
+                List.of(
+                        buildOfficial("Ms", "Maya", "One", OfficialType.MAGISTRATE),
+                        buildOfficial("Mr", "Chris", "CourtOne", OfficialType.CLERK),
+                        buildOfficial("Mrs", "Clare", "CourtTwo", OfficialType.CLERK)));
+
+        Response response =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        createAdminToken().fetchTokenForRole(),
+                        entryCreateDto);
+
+        response.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        ProblemAssertUtil.assertEquals(
+                AppListEntryError.TOO_MANY_COURT_OFFICIALS.getCode(), response);
+    }
+
+    @Test
+    void givenNoOfficials_whenCreateEntry_thenReturn201() throws Exception {
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        String surnameToLookup = UUID.randomUUID().toString();
+        entryCreateDto.setOfficials(List.of());
+        entryCreateDto.setLodgementDate(LocalDate.now().minusDays(1));
+
+        SuccessCreateEntryResponse createdDto =
+                createEntryWithUniqueSurname(createAdminToken(), entryCreateDto, surnameToLookup);
+
+        validateEntryCreationResponse(
+                entryCreateDto,
+                createdDto.getDetailDto(),
+                "Application for a warrant to enter premises at {{Premises Address}} for date {{Premises Date}}");
+        Assertions.assertTrue(createdDto.getDetailDto().getOfficials().isEmpty());
+    }
+
+    @Test
     public void givenValidRequest_whenCreateListEntryWithEnforcementFineCode_thenReturn201()
             throws Exception {
         EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
@@ -135,10 +213,13 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
         // set the enforcement fine code
         entryCreateDto.setApplicationCode("EF1213");
         entryCreateDto.setAccountNumber("1234567890");
+        entryCreateDto.setLodgementDate(null);
 
         SuccessCreateEntryResponse createdDto =
                 createEntryWithUniqueSurname(tokenGenerator, entryCreateDto, surnameToLookup);
 
+        // set to current date for assertion to match
+        entryCreateDto.setLodgementDate(LocalDate.now());
         Assertions.assertNotNull(HeaderUtil.getETag(createdDto.response()));
 
         validateEntryCreationResponse(
@@ -219,6 +300,72 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                 createdDto.getDetailDto(),
                 "Request for a certificate of satisfaction of "
                         + "debt registered in the register of judgements, orders and fines");
+    }
+
+    @Test
+    public void givenPaymentReferenceWithFifteenCharacters_whenCreateListEntry_thenReturn201()
+            throws Exception {
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        Assertions.assertNotNull(entryCreateDto.getFeeStatuses());
+        Assertions.assertFalse(entryCreateDto.getFeeStatuses().isEmpty());
+
+        FeeStatus feeStatus = entryCreateDto.getFeeStatuses().getFirst();
+        feeStatus.setPaymentStatus(PaymentStatus.PAID);
+        feeStatus.setStatusDate(LocalDate.now());
+        feeStatus.setPaymentReference("123451234512345");
+
+        var tokenGenerator = createAdminToken();
+
+        SuccessCreateEntryResponse createdDto =
+                createEntryWithUniqueSurname(
+                        tokenGenerator, entryCreateDto, UUID.randomUUID().toString());
+
+        Assertions.assertEquals(
+                "123451234512345",
+                createdDto.getDetailDto().getFeeStatuses().getFirst().getPaymentReference());
+    }
+
+    @Test
+    public void
+            givenOverlappingActiveApplicationCodesAndFees_whenCreateListEntry_thenPreferNullEndDateRecords()
+                    throws Exception {
+        LocalDate today = LocalDate.now();
+        String applicationCodeValue = "ZZ90001";
+        String feeReference = "ZZ1.1";
+
+        saveActiveApplicationCode(
+                applicationCodeValue,
+                feeReference,
+                today.plusDays(30),
+                "Fallback overlapping application code");
+        final var preferredCode =
+                saveActiveApplicationCode(
+                        applicationCodeValue, feeReference, null, "Preferred application code");
+
+        saveActiveFee(
+                feeReference,
+                "Fallback overlapping fee",
+                BigDecimal.valueOf(222),
+                false,
+                today.plusDays(30));
+        final var preferredFee =
+                saveActiveFee(feeReference, "Preferred fee", BigDecimal.valueOf(111), false, null);
+
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicationCode(applicationCodeValue);
+        entryCreateDto.setHasOffsiteFee(false);
+
+        SuccessCreateEntryResponse createdDto =
+                createEntryWithUniqueSurname(
+                        createAdminToken(), entryCreateDto, UUID.randomUUID().toString());
+
+        Assertions.assertEquals(
+                preferredCode.getId(),
+                getSelectedApplicationCodeId(createdDto.getDetailDto().getId()));
+        Assertions.assertEquals(
+                preferredFee.getId(),
+                getSelectedFees(createdDto.getDetailDto().getId()).getFirst().getId());
     }
 
     @Test
@@ -521,6 +668,40 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                         .getType()
                         .get(),
                 problemDetail.getType());
+    }
+
+    @Test
+    public void
+            givenAnInvalidCreateEntryRequest_whenPaymentReferenceIsLongerThanFifteenCharacters_then400IsReturned()
+                    throws Exception {
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        Assertions.assertNotNull(entryCreateDto.getFeeStatuses());
+        Assertions.assertFalse(entryCreateDto.getFeeStatuses().isEmpty());
+
+        FeeStatus feeStatus = entryCreateDto.getFeeStatuses().getFirst();
+        feeStatus.setPaymentStatus(PaymentStatus.PAID);
+        feeStatus.setStatusDate(LocalDate.now());
+        feeStatus.setPaymentReference("1234512345123456");
+
+        var tokenGenerator = createAdminToken();
+
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(400);
+
+        Map<String, Object> errors = responseSpecCreate.jsonPath().getMap("errors");
+
+        Assertions.assertEquals(
+                "size must be between 1 and 15", errors.get("feeStatuses[0].paymentReference"));
     }
 
     @StabilityTest
@@ -2078,6 +2259,304 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
     }
 
     @Test
+    @DisplayName(
+            "Create Application Entry persists write audit rows for DB-backed low-hanging fields")
+    void givenBulkRespondentEntry_whenCreated_thenPersistWriteAuditRows() throws Exception {
+        val entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.setStandardApplicantCode(null);
+        entryCreateDto.setNumberOfRespondents(5);
+        entryCreateDto.setFeeStatuses(null);
+        entryCreateDto.setApplicationCode("CT99001");
+        entryCreateDto.setCaseReference("CASE-CRT-001");
+        entryCreateDto.setNotes("Create audit notes");
+        entryCreateDto.setWordingFields(List.of(new TemplateSubstitution("Number", "5")));
+
+        val tokenGenerator = createAdminToken();
+
+        // Clear earlier audit history so these assertions only inspect the create request below.
+        dataAuditRepository.deleteAll();
+
+        // Exercise the real controller endpoint so the request passes through the mapper, service
+        // layer and audit listener before we read the DATA_AUDIT rows back.
+        val responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(201);
+
+        val createdDto = responseSpecCreate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("Create audit notes", createdDto.getNotes());
+        Assertions.assertEquals(5, createdDto.getNumberOfRespondents());
+        Assertions.assertEquals("CT99001", createdDto.getApplicationCode());
+        Assertions.assertEquals("CASE-CRT-001", createdDto.getCaseReference());
+
+        // Notes are stored directly on the entry row, so we expect a matching create audit row.
+        val noteAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY, "notes", "Create audit notes")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.notes audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                noteAuditRow.getEventName());
+
+        // Bulk respondent count is another real column on APPLICATION_LIST_ENTRIES.
+        val bulkRespondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "number_of_bulk_respondents",
+                                "5")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a number_of_bulk_respondents audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                bulkRespondentAuditRow.getEventName());
+
+        // Application code is stored through the related APPLICATION_CODES row, so write audit
+        // should now include that nested DB-backed field as well.
+        val applicationCodeAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_CODES, "application_code", "CT99001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_codes.application_code audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                applicationCodeAuditRow.getEventName());
+
+        // Case reference is stored directly on the entry row and should be recorded on create.
+        val caseReferenceAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY,
+                                "case_reference",
+                                "CASE-CRT-001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.case_reference audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                caseReferenceAuditRow.getEventName());
+
+        // Entry rescheduled is defaulted in the mapper, so create audit should persist that DB
+        // column as well.
+        val entryRescheduledAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_ENTRY, "entry_rescheduled", "N")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an application_list_entries.entry_rescheduled audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                entryRescheduledAuditRow.getEventName());
+    }
+
+    @Test
+    @DisplayName(
+            "Create Application Entry persists write audit rows for standard applicant selection")
+    void givenStandardApplicantEntry_whenCreated_thenPersistStandardApplicantAuditRow()
+            throws Exception {
+        val entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setApplicant(null);
+        entryCreateDto.setStandardApplicantCode("APP001");
+
+        val tokenGenerator = createAdminToken();
+
+        // Clear earlier audit history so this test only inspects the create request below.
+        dataAuditRepository.deleteAll();
+
+        // Use the real endpoint so the standard-applicant selection flows through the validator,
+        // mapper and audit listeners before we query DATA_AUDIT.
+        val responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(201);
+
+        val createdDto = responseSpecCreate.as(EntryGetDetailDto.class);
+        Assertions.assertEquals("APP001", createdDto.getStandardApplicantCode());
+
+        // The applicant choice is stored through STANDARD_APPLICANTS, so create audit should now
+        // include the selected standard applicant code.
+        val standardApplicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.STANDARD_APPLICANTS, "standard_applicant_code", "APP001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a standard_applicants.standard_applicant_code audit row"));
+
+        Assertions.assertEquals(
+                uk.gov.hmcts.appregister.applicationentry.audit.AppListEntryAuditOperation
+                        .CREATE_APP_ENTRY_LIST
+                        .getEventName(),
+                standardApplicantAuditRow.getEventName());
+    }
+
+    @Test
+    @DisplayName("Create Application Entry persists child-row audit fields")
+    void givenEntryWithChildRows_whenCreated_thenPersistChildAuditRows() throws Exception {
+        val entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+
+        entryCreateDto.getApplicant().setPerson(null);
+        entryCreateDto.getApplicant().setOrganisation(Instancio.create(Organisation.class));
+        entryCreateDto.getApplicant().getOrganisation().setName("Applicant Audit Org");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setAddressLine1("1 Applicant Audit Street");
+        entryCreateDto.getApplicant().getOrganisation().getContactDetails().setPostcode("AA12 1AA");
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setPhone(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setMobile(JsonNullable.of(null));
+        entryCreateDto
+                .getApplicant()
+                .getOrganisation()
+                .getContactDetails()
+                .setEmail(JsonNullable.of("applicant.audit@test.com"));
+
+        entryCreateDto.getRespondent().setOrganisation(null);
+        entryCreateDto.getRespondent().getPerson().getName().setSurname("RespondentAudit");
+        entryCreateDto.getRespondent().getPerson().getContactDetails().setPostcode("RS1 1RS");
+
+        val official = new Official();
+        official.setTitle("Ms");
+        official.setForename("Olivia");
+        official.setSurname("OfficialAudit");
+        official.setType(OfficialType.CLERK);
+        entryCreateDto.setOfficials(List.of(official));
+
+        val feeStatus = new FeeStatus();
+        feeStatus.setPaymentReference("PAY-CRT-001");
+        feeStatus.setPaymentStatus(PaymentStatus.PAID);
+        feeStatus.setStatusDate(LocalDate.of(2026, 1, 15));
+        entryCreateDto.setFeeStatuses(List.of(feeStatus));
+
+        val tokenGenerator = createAdminToken();
+
+        // Clear setup rows so the assertions below only inspect the create request under test.
+        dataAuditRepository.deleteAll();
+
+        // Exercise the real endpoint so the request flows through the mapper, service and audit
+        // listeners before we read DATA_AUDIT back.
+        val responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        responseSpecCreate.then().statusCode(201);
+
+        // Applicant organisation name is stored on NAME_ADDRESS and should be audited on create.
+        val applicantAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.NAME_ADDRESS, "name", "Applicant Audit Org")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a name_address.name applicant audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_APPLICANT.getEventName(),
+                applicantAuditRow.getEventName());
+
+        // Respondent surname is also stored through NAME_ADDRESS and should be audited separately.
+        val respondentAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.NAME_ADDRESS, "surname", "RespondentAudit")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected a name_address.surname respondent audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_RESPONDENT.getEventName(),
+                respondentAuditRow.getEventName());
+
+        // Official rows are created as child records and should include the surname value.
+        val officialAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLCATION_LISTS_ENTRY_OFFICIAL,
+                                "surname",
+                                "OfficialAudit")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_official.surname audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_OFFICIAL_ENTRY.getEventName(),
+                officialAuditRow.getEventName());
+
+        // Fee status rows should record their payment reference when they are created.
+        val feeStatusAuditRow =
+                dataAuditRepository
+                        .findDataAuditForTableAndColumnAndNewValue(
+                                TableNames.APPLICATION_LISTS_FEE_STATUS,
+                                "alefs_payment_reference",
+                                "PAY-CRT-001")
+                        .orElseThrow(
+                                () ->
+                                        new AssertionError(
+                                                "Expected an app_list_entry_fee_status payment reference audit row"));
+        Assertions.assertEquals(
+                AppListEntryAuditOperation.CREATE_FEE_STATUS_ENTRY.getEventName(),
+                feeStatusAuditRow.getEventName());
+    }
+
+    @Test
     public void
             givenACNotRequireRespondent_BulkRespondentAllowed_RespondentAndNumberOfRespondentsNotProvided_then400()
                     throws Exception {
@@ -2211,5 +2690,45 @@ public class ApplicationEntryControllerCreateTest extends AbstractApplicationEnt
                         "applicant.person.name.firstForename",
                         "applicant.person.name.secondForename"),
                 new ArrayList<>(errors.keySet()));
+    }
+
+    @Test
+    public void givenAFailureCreate_whenLodgementDateIsInTheFuture_400Returned() throws Exception {
+        // setup the payload
+        EntryCreateDto entryCreateDto = CreateEntryDtoUtil.getCorrectCreateEntryDto();
+        entryCreateDto.setLodgementDate(LocalDate.now().plusDays(1));
+
+        TokenGenerator tokenGenerator = createAdminToken();
+
+        Response responseSpecCreate =
+                restAssuredClient.executePostRequest(
+                        getLocalUrl(
+                                CREATE_ENTRY_CONTEXT
+                                        + "/"
+                                        + getOpenApplicationListId()
+                                        + "/entries"),
+                        tokenGenerator.fetchTokenForRole(),
+                        entryCreateDto);
+
+        // assert the response
+        responseSpecCreate
+                .then()
+                .statusCode(400)
+                .body(
+                        "type",
+                        Matchers.equalTo(
+                                AppListEntryError.LODGEMENT_DATE_CANNOT_BE_IN_FUTURE
+                                        .getCode()
+                                        .getAppCode()));
+    }
+
+    private static Official buildOfficial(
+            String title, String forename, String surname, OfficialType type) {
+        Official official = new Official();
+        official.setTitle(title);
+        official.setForename(forename);
+        official.setSurname(surname);
+        official.setType(type);
+        return official;
     }
 }

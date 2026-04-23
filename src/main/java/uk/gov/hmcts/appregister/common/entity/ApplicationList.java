@@ -17,7 +17,7 @@ import jakarta.persistence.Version;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Set;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -55,7 +55,7 @@ public class ApplicationList extends BaseChangeableAndDeletableEntity
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "al_gen")
     @SequenceGenerator(name = "al_gen", sequenceName = "al_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
-    @Audit(action = {CrudEnum.CREATE, CrudEnum.DELETE, CrudEnum.UPDATE})
+    @Audit(action = {CrudEnum.CREATE, CrudEnum.DELETE, CrudEnum.UPDATE, CrudEnum.READ})
     private Long id;
 
     @Generated(event = EventType.INSERT)
@@ -119,7 +119,7 @@ public class ApplicationList extends BaseChangeableAndDeletableEntity
     private Long version;
 
     @OneToMany(mappedBy = "applicationList")
-    private Set<ApplicationListEntry> entries;
+    private List<ApplicationListEntry> entries;
 
     public boolean isOpen() {
         return this.status == Status.OPEN;

@@ -10,6 +10,7 @@ import static uk.gov.hmcts.appregister.testutils.util.ApplicationListEntryUtil.s
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,14 +26,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.hmcts.appregister.common.entity.AppListEntryResolution;
 import uk.gov.hmcts.appregister.common.entity.ApplicationList;
 import uk.gov.hmcts.appregister.common.entity.ApplicationListEntry;
+import uk.gov.hmcts.appregister.common.entity.ResolutionCode;
 import uk.gov.hmcts.appregister.common.entity.base.EntryCount;
 import uk.gov.hmcts.appregister.common.enumeration.NameAddressCodeType;
 import uk.gov.hmcts.appregister.common.enumeration.Status;
 import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryGetSummaryProjection;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryPrintProjection;
+import uk.gov.hmcts.appregister.common.projection.ApplicationListEntryResolutionProjection;
 import uk.gov.hmcts.appregister.common.projection.ApplicationListEntrySummaryProjection;
 import uk.gov.hmcts.appregister.data.AppListEntryTestData;
 import uk.gov.hmcts.appregister.data.AppListTestData;
@@ -161,13 +165,13 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                 saveApplicationListEntry(entityManager, persistance, list, sequenceNumber2);
 
         // When: page 0 size 1
-        Pageable page = PageRequest.of(0, 1);
+        Pageable page = PageRequest.of(0, 1, Sort.by("sequenceNumber").ascending());
         Page<ApplicationListEntrySummaryProjection> page0 =
                 applicationListEntryRepository.findSummariesById(
                         data1.getApplicationList().getUuid(), page);
 
         // And: page 1 size 1
-        page = PageRequest.of(1, 1);
+        page = PageRequest.of(1, 1, Sort.by("sequenceNumber").ascending());
         Page<ApplicationListEntrySummaryProjection> page1 =
                 applicationListEntryRepository.findSummariesById(
                         data1.getApplicationList().getUuid(), page);
@@ -434,7 +438,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         Page<ApplicationListEntryGetSummaryProjection> page0 =
                 applicationListEntryRepository.searchForGetSummary(
                         null, false, null, null, null, null, null, null, null, null, null, null,
-                        null, null, null, null, null, null, null, page);
+                        null, null, null, null, null, null, null, null, page);
 
         // Then
         assertThat(page0.getTotalElements()).isEqualTo(11);
@@ -463,7 +467,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         Page<ApplicationListEntryGetSummaryProjection> page0 =
                 applicationListEntryRepository.searchForGetSummary(
                         null, null, null, null, null, null, null, null, null, null, null, null,
-                        null, null, null, null, null, null, null, page);
+                        null, null, null, null, null, null, null, null, page);
 
         ApplicationListEntryGetSummaryProjection projection0 = page0.getContent().get(4);
 
@@ -471,6 +475,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         Page<ApplicationListEntryGetSummaryProjection> page1 =
                 applicationListEntryRepository.searchForGetSummary(
                         UUID.fromString(projection0.getListId()),
+                        null,
                         null,
                         null,
                         null,
@@ -531,6 +536,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
+                        null,
                         page);
 
         // Then
@@ -587,6 +593,7 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         "Turn",
                         null,
                         "AB11 2CD",
+                        null,
                         null,
                         null,
                         null,
@@ -663,117 +670,11 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
+                        null,
                         page);
 
         // Then: only the non-deleted entry is returned
         assertThat(result.getTotalElements()).isEqualTo(1);
-    }
-
-    @Test
-    @Transactional
-    public void testBulkMoveByUuidAndSourceList_movesOnlyMatchingEntriesAndReturnsCount() {
-        // Given: source, target and other lists
-        ApplicationList sourceList = new AppListTestData().someMinimal().build();
-        persistance.save(sourceList);
-
-        ApplicationList targetList = new AppListTestData().someMinimal().build();
-        persistance.save(targetList);
-
-        ApplicationList otherList = new AppListTestData().someMinimal().build();
-        persistance.save(otherList);
-
-        // Create entries:
-        // - two entries in the source list that we expect to be moved
-        // - one entry in the source list that is NOT in the uuid set (should not move)
-        // - one entry in a different list that is included in the uuid set but must NOT move
-        UUID moveUuid1 = saveEntryInSourceList(sourceList).getUuid();
-        UUID moveUuid2 = saveEntryInSourceList(sourceList).getUuid();
-        saveEntryInSourceList(sourceList);
-        UUID wrongListUuid = saveEntryInSourceList(otherList).getUuid();
-
-        // When: call the repository bulk-move with a set that includes moveUuid1, moveUuid2 and
-        // wrongListUuid
-        Set<UUID> uuidsToMove = Set.of(moveUuid1, moveUuid2, wrongListUuid);
-
-        entityManager.flush();
-        entityManager.clear();
-
-        int updatedCount =
-                applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        uuidsToMove, targetList, sourceList.getUuid());
-
-        // Then: only the two entries in the source list are moved, and the method returns 2
-        assertEquals(
-                2,
-                updatedCount,
-                "Should report two rows updated (only entries in source list moved)");
-    }
-
-    @Test
-    @Transactional
-    public void testBulkMoveByUuidAndSourceList_whenAnyEntryIsDeleted_movesOnlyNonDeleted() {
-        // Given: source and target lists
-        ApplicationList sourceList = new AppListTestData().someMinimal().build();
-        persistance.save(sourceList);
-
-        ApplicationList targetList = new AppListTestData().someMinimal().build();
-        persistance.save(targetList);
-
-        // And: two entries in the source list
-        ApplicationListEntry activeEntry = saveEntryInSourceList(sourceList);
-        ApplicationListEntry deletedEntry = saveEntryInSourceList(sourceList);
-
-        // Mark one entry as deleted
-        deletedEntry.setDeleted(true);
-        persistance.save(deletedEntry);
-
-        // Prepare the UUID set (both entries requested)
-        Set<UUID> uuidsToMove = Set.of(activeEntry.getUuid(), deletedEntry.getUuid());
-
-        entityManager.flush();
-        entityManager.clear();
-
-        // When: attempting bulk move including a deleted entry
-        int updatedCount =
-                applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        uuidsToMove, targetList, sourceList.getUuid());
-
-        entityManager.flush();
-        entityManager.clear();
-
-        // Then: only the non-deleted entry is moved
-        // Expect updatedCount == 1 (only activeEntry moved)
-        assertEquals(1, updatedCount, "Only non-deleted entries should be moved");
-
-        // Reload entries to verify their lists and deleted flags
-        ApplicationListEntry movedActive =
-                entityManager
-                        .createQuery(
-                                "SELECT e FROM ApplicationListEntry e WHERE e.uuid = :uuid",
-                                ApplicationListEntry.class)
-                        .setParameter("uuid", activeEntry.getUuid())
-                        .getSingleResult();
-
-        ApplicationListEntry stillDeleted =
-                entityManager
-                        .createQuery(
-                                "SELECT e FROM ApplicationListEntry e WHERE e.uuid = :uuid",
-                                ApplicationListEntry.class)
-                        .setParameter("uuid", deletedEntry.getUuid())
-                        .getSingleResult();
-
-        // activeEntry should now point at targetList
-        assertEquals(
-                targetList.getUuid(),
-                movedActive.getApplicationList().getUuid(),
-                "Active entry should have been moved to the target list");
-
-        // deletedEntry should remain in the source list and still be marked deleted
-        assertEquals(
-                sourceList.getUuid(),
-                stillDeleted.getApplicationList().getUuid(),
-                "Deleted entry should remain in the source list");
-        assertTrue(stillDeleted.isDeleted(), "Deleted entry should still be marked deleted");
     }
 
     @Test
@@ -891,60 +792,13 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
                         null,
                         null,
                         null,
+                        null,
                         Pageable.ofSize(10));
 
         // Then: the entry added is the entry returned
         Assertions.assertThat(applicationListEntryList.getPageable().getPageSize() == 1);
         Assertions.assertThat(savedEntry.getUuid().toString())
                 .isEqualTo(applicationListEntryList.stream().findFirst().get().getUuid());
-    }
-
-    @Test
-    @Transactional
-    public void testBulkMoveByUuidAndSourceList_movesOnlyEntriesInSourceList() {
-        // Given
-        ApplicationList sourceList = new AppListTestData().someMinimal().build();
-        persistance.save(sourceList);
-
-        ApplicationList targetList = new AppListTestData().someMinimal().build();
-        persistance.save(targetList);
-
-        ApplicationList otherList = new AppListTestData().someMinimal().build();
-        persistance.save(otherList);
-
-        ApplicationListEntry sourceEntry1 = saveEntryInSourceList(sourceList);
-        ApplicationListEntry sourceEntry2 = saveEntryInSourceList(sourceList);
-        ApplicationListEntry otherListEntry = saveEntryInSourceList(otherList);
-
-        Set<UUID> entryUuids =
-                Set.of(sourceEntry1.getUuid(), sourceEntry2.getUuid(), otherListEntry.getUuid());
-
-        entityManager.flush();
-        entityManager.clear();
-
-        // When
-        int updatedCount =
-                applicationListEntryRepository.bulkMoveByUuidAndSourceList(
-                        entryUuids, targetList, sourceList.getUuid());
-
-        entityManager.flush();
-        entityManager.clear();
-
-        // Then
-        assertEquals(2, updatedCount, "Only entries in the source list should be updated");
-
-        ApplicationListEntry moved1 =
-                applicationListEntryRepository.findByUuid(sourceEntry1.getUuid()).orElseThrow();
-
-        ApplicationListEntry moved2 =
-                applicationListEntryRepository.findByUuid(sourceEntry2.getUuid()).orElseThrow();
-
-        ApplicationListEntry untouchedOther =
-                applicationListEntryRepository.findByUuid(otherListEntry.getUuid()).orElseThrow();
-
-        assertEquals(targetList.getUuid(), moved1.getApplicationList().getUuid());
-        assertEquals(targetList.getUuid(), moved2.getApplicationList().getUuid());
-        assertEquals(otherList.getUuid(), untouchedOther.getApplicationList().getUuid());
     }
 
     @Test
@@ -979,6 +833,45 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         assertFalse(result.contains(otherUuid));
     }
 
+    @Test
+    @Transactional
+    public void testFindResolutionCodesByEntryIds_returnsAllResolutionCodesForEachEntry() {
+        ApplicationList list = new AppListTestData().someMinimal().build();
+        persistance.save(list);
+
+        ApplicationListEntry entry1 =
+                saveApplicationListEntry(entityManager, persistance, list, (short) 1);
+        ApplicationListEntry entry2 =
+                saveApplicationListEntry(entityManager, persistance, list, (short) 2);
+
+        saveResolution(entry1, "RC1");
+        saveResolution(entry1, "RC2");
+        saveResolution(entry2, "RC3");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        List<ApplicationListEntryResolutionProjection> result =
+                applicationListEntryRepository.findResolutionCodesByEntryIds(
+                        List.of(entry1.getId(), entry2.getId()));
+
+        List<String> entry1Codes =
+                result.stream()
+                        .filter(p -> p.getEntryId().equals(entry1.getId()))
+                        .map(p -> p.getResolutionCode().getResultCode())
+                        .toList();
+
+        List<String> entry2Codes =
+                result.stream()
+                        .filter(p -> p.getEntryId().equals(entry2.getId()))
+                        .map(p -> p.getResolutionCode().getResultCode())
+                        .toList();
+
+        assertTrue(entry1Codes.contains("RC1"));
+        assertTrue(entry1Codes.contains("RC2"));
+        assertTrue(entry2Codes.contains("RC3"));
+    }
+
     private ApplicationListEntry saveEntryInSourceList(ApplicationList sourceList) {
         ApplicationListEntry moveEntry1 = new AppListEntryTestData().someMinimal().build();
         moveEntry1.setApplicationList(sourceList);
@@ -986,5 +879,24 @@ public class AppListEntryRepositoryTest extends BaseRepositoryTest {
         entityManager.refresh(moveEntry1);
 
         return moveEntry1;
+    }
+
+    private void saveResolution(ApplicationListEntry entry, String resultCode) {
+        ResolutionCode code = new ResolutionCode();
+        code.setResultCode(resultCode);
+        code.setTitle(resultCode + " title");
+        code.setWording(resultCode + " wording");
+        code.setLegislation("Test legislation");
+        code.setStartDate(LocalDate.now());
+        code.setChangedBy(1L);
+        code.setChangedDate(OffsetDateTime.now());
+
+        AppListEntryResolution entryResolution = new AppListEntryResolution();
+        entryResolution.setApplicationList(entry);
+        entryResolution.setResolutionCode(code);
+        entryResolution.setResolutionWording(resultCode + " wording");
+        entryResolution.setResolutionOfficer("Test officer");
+
+        persistance.save(entryResolution);
     }
 }

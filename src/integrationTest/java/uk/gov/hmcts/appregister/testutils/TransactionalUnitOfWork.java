@@ -9,6 +9,16 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 public class TransactionalUnitOfWork {
+    @FunctionalInterface
+    public interface ThrowingSupplier<T> {
+        T get() throws Exception;
+    }
+
+    @FunctionalInterface
+    public interface ThrowingRunnable {
+        void run() throws Exception;
+    }
+
     @Transactional()
     public void inTransaction(Runnable runnable) {
         runnable.run();
@@ -17,6 +27,15 @@ public class TransactionalUnitOfWork {
     @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
     @Transactional
     public <T> T inTransaction(Supplier<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Transactional
+    public <T> T inTransactionWithExceptionAndReturn(ThrowingSupplier<T> supplier) {
         try {
             return supplier.get();
         } catch (Exception e) {

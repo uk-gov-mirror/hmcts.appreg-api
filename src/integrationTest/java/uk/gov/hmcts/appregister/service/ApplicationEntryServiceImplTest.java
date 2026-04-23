@@ -44,6 +44,8 @@ import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.EntryUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.FullName;
+import uk.gov.hmcts.appregister.generated.model.Official;
+import uk.gov.hmcts.appregister.generated.model.OfficialType;
 import uk.gov.hmcts.appregister.generated.model.TemplateSubstitution;
 import uk.gov.hmcts.appregister.testutils.BaseIntegration;
 import uk.gov.hmcts.appregister.testutils.TransactionalUnitOfWork;
@@ -91,8 +93,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
 
         // create the create entry payload
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.setLodgementDate(LocalDate.now());
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto
                 .getApplicant()
@@ -162,7 +164,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                             "Request to copy documents",
                             "Request to copy documents",
                             List.of(),
-                            1);
+                            2);
                 });
     }
 
@@ -171,8 +173,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
 
         // create the create entry payload
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.setLodgementDate(LocalDate.now());
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto
                 .getApplicant()
@@ -251,8 +253,8 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
     @Test
     public void createEntryWithRespondentWithoutFeeDueNoBulkRespondent() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.setLodgementDate(LocalDate.now());
 
         TemplateSubstitution substitution = new TemplateSubstitution();
         substitution.setKey("Reference");
@@ -341,9 +343,10 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
     public void createEntryWithCodeFeeReferencingOffsiteFeeExpectSingleFeeRecord() {
         // create the create entry payload
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.setOfficials(limitOfficials(entryCreateDto.getOfficials()));
         entryCreateDto.getApplicant().setOrganisation(null);
+        entryCreateDto.setLodgementDate(LocalDate.now());
         entryCreateDto
                 .getApplicant()
                 .getPerson()
@@ -459,7 +462,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                             "Request for copy documents on computer disc or in electronic form",
                             "Request for copy documents on computer disc or in electronic form",
                             List.of(),
-                            1);
+                            2);
                 });
     }
 
@@ -468,8 +471,9 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
             createEntryWithCodeFeeNotReferencingOffsiteFeeButOffsiteFeeAttachedExpectTwoFeeRecords() {
         // create the create entry payload
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.setOfficials(limitOfficials(entryCreateDto.getOfficials()));
+        entryCreateDto.setLodgementDate(LocalDate.now());
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto
                 .getApplicant()
@@ -598,7 +602,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                             "Application for a warrant to enter premises at {{Premises Address}}"
                                     + " for date {{Premises Date}}",
                             List.of(substitution, substitution1),
-                            2);
+                            1);
                 });
     }
 
@@ -609,8 +613,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         // build the payload
-        EntryUpdateDto entryUpdateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        EntryUpdateDto entryUpdateDto = createEntryUpdateDto(settings);
         entryUpdateDto.getApplicant().setOrganisation(null);
         entryUpdateDto
                 .getApplicant()
@@ -716,7 +719,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                 "Request to copy documents",
                 List.of(),
                 List.of(),
-                1);
+                2);
     }
 
     @Test
@@ -750,8 +753,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                 BeanUtil.copyBean(applicationListEntry.get().getAnamedaddress());
 
         // build the payload
-        EntryUpdateDto entryUpdateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        EntryUpdateDto entryUpdateDto = createEntryUpdateDto(settings);
 
         entryUpdateDto.setNumberOfRespondents(null);
         entryUpdateDto.setApplicant(null);
@@ -817,7 +819,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         // make sure the fee is mapped correctly to the entry
         List<Fee> fees =
                 appListEntryFeeRepository.getFeeForEntryId(applicationListEntry.get().getId());
-        Assertions.assertEquals(2, fees.size());
+        Assertions.assertEquals(1, fees.size());
         Assertions.assertTrue(
                 fees.stream()
                         .anyMatch(
@@ -858,7 +860,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                         + "for date {{Premises Date}}",
                 entryUpdateDto.getWordingFields(),
                 List.of(),
-                2);
+                1);
     }
 
     @Test
@@ -891,8 +893,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         final NameAddress applicantBeforeUpdate =
                 BeanUtil.copyBean(applicationListEntry.get().getAnamedaddress());
 
-        final EntryUpdateDto updateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        final EntryUpdateDto updateDto = createEntryUpdateDto(settings);
         updateDto.getApplicant().setOrganisation(null);
         updateDto.getApplicant().getPerson().getName().setSecondForename(JsonNullable.of(null));
         updateDto.getApplicant().getPerson().getName().setThirdForename(JsonNullable.of(null));
@@ -902,6 +903,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         updateDto.getRespondent().getPerson().getName().setThirdForename(JsonNullable.of(null));
         updateDto.getRespondent().getPerson().getContactDetails().setPostcode("AA1 1AA");
 
+        updateDto.setHasOffsiteFee(false);
         updateDto.setNumberOfRespondents(null);
         updateDto.setApplicationCode("MS99007");
         updateDto.setStandardApplicantCode(null);
@@ -1012,8 +1014,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         final NameAddress applicantBeforeUpdate =
                 BeanUtil.copyBean(applicationListEntry.get().getAnamedaddress());
 
-        final EntryUpdateDto updateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        final EntryUpdateDto updateDto = createEntryUpdateDto(settings);
         // set the organisation and person applicant to null so we use the standard applicant
         updateDto.getApplicant().setOrganisation(null);
         updateDto.getApplicant().setPerson(null);
@@ -1106,8 +1107,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         // build the payload
-        EntryUpdateDto entryUpdateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        EntryUpdateDto entryUpdateDto = createEntryUpdateDto(settings);
         entryUpdateDto.getApplicant().setOrganisation(null);
         entryUpdateDto
                 .getApplicant()
@@ -1204,7 +1204,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                 "Request for copy documents on computer disc or in electronic form",
                 List.of(),
                 List.of(),
-                1);
+                2);
     }
 
     @Test
@@ -1215,8 +1215,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
         // build the payload
-        EntryUpdateDto entryUpdateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        EntryUpdateDto entryUpdateDto = createEntryUpdateDto(settings);
         entryUpdateDto.getApplicant().setOrganisation(null);
         entryUpdateDto.getRespondent().setOrganisation(null);
         entryUpdateDto
@@ -1330,7 +1329,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                         + " {{Premises Address}} for date {{Premises Date}}",
                 List.of(substitution, substitution1),
                 List.of(),
-                2);
+                1);
     }
 
     @Test
@@ -1347,8 +1346,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         Assertions.assertTrue(applicationListEntry.isPresent());
 
         // Build an update that goes through updateFees() and creates a new fee mapping
-        EntryUpdateDto entryUpdateDto =
-                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        EntryUpdateDto entryUpdateDto = createEntryUpdateDto(settings);
 
         entryUpdateDto.getApplicant().setOrganisation(null);
         entryUpdateDto
@@ -1400,6 +1398,50 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         Assertions.assertFalse(fees.stream().anyMatch(Fee::isOffsite));
     }
 
+    @Test
+    @Transactional
+    public void createEntryWithNullHasOffsiteFeeDoesNotThrow() {
+        // create the create entry payload
+        Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.getApplicant().setOrganisation(null);
+        entryCreateDto
+                .getApplicant()
+                .getPerson()
+                .getName()
+                .setSecondForename(JsonNullable.of(null));
+        entryCreateDto.getApplicant().getPerson().getName().setThirdForename(JsonNullable.of(null));
+        entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("AA1 1AA");
+
+        entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(null);
+
+        // no respondent for this code
+        entryCreateDto.setRespondent(null);
+        entryCreateDto.setApplicationCode("AD99001");
+        entryCreateDto.setStandardApplicantCode(null);
+        entryCreateDto.setWordingFields(null);
+        entryCreateDto.setHasOffsiteFee(null);
+
+        CreateEntryDtoUtil.sanitiseFeeStatusesForDueRule(entryCreateDto.getFeeStatuses());
+
+        // run the test
+        unitOfWork.inTransaction(
+                () -> {
+                    ApplicationList applicationList =
+                            applicationListRepository
+                                    .findAll(Sort.by(Sort.Direction.ASC, "id"))
+                                    .getFirst();
+                    PayloadForCreate<EntryCreateDto> payloadForCreate =
+                            PayloadForCreate.<EntryCreateDto>builder()
+                                    .id(applicationList.getUuid())
+                                    .data(entryCreateDto)
+                                    .build();
+                    return Assertions.assertDoesNotThrow(
+                            () -> applicationEntryService.createEntry(payloadForCreate));
+                });
+    }
+
     // useful method to create an entry with respondent, bulk respondent and fee statuses for update
     // purposes
 
@@ -1411,9 +1453,10 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
     private UUID createEntryWithBulkRespondentAndApplicantWithFeeStatusesForTest() {
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
 
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
+        entryCreateDto.setOfficials(limitOfficials(entryCreateDto.getOfficials()));
         entryCreateDto.getApplicant().setOrganisation(null);
+        entryCreateDto.setLodgementDate(LocalDate.now());
 
         entryCreateDto
                 .getApplicant()
@@ -1497,7 +1540,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                 .setPhone(JsonNullable.of(null));
 
         entryCreateDto.setNumberOfRespondents(null);
-
+        entryCreateDto.setHasOffsiteFee(true);
         entryCreateDto.setApplicationCode("MS99007");
         entryCreateDto.setStandardApplicantCode(null);
 
@@ -1558,7 +1601,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                             "Application for a warrant to enter premises at "
                                     + "{{Premises Address}} for date {{Premises Date}}",
                             entryCreateDto.getWordingFields(),
-                            1);
+                            2);
                 });
 
         return response.getPayload().getId();
@@ -1567,8 +1610,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
     public UUID createEntryNoRespondentWithOffsiteFeeForTest() {
         // create the create entry payload
         Settings settings = Settings.create().set(Keys.BEAN_VALIDATION_ENABLED, true);
-        final EntryCreateDto entryCreateDto =
-                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        final EntryCreateDto entryCreateDto = createEntryCreateDto(settings);
         entryCreateDto.getApplicant().setOrganisation(null);
         entryCreateDto
                 .getApplicant()
@@ -1579,6 +1621,7 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
         entryCreateDto.getApplicant().getPerson().getContactDetails().setPostcode("AA1 1AA");
 
         entryCreateDto.setNumberOfRespondents(null);
+        entryCreateDto.setLodgementDate(LocalDate.now());
 
         // no respondent for this code
         entryCreateDto.setRespondent(null);
@@ -1633,5 +1676,56 @@ public class ApplicationEntryServiceImplTest extends BaseIntegration {
                             1);
                 });
         return response.getPayload().getId();
+    }
+
+    private EntryCreateDto createEntryCreateDto(Settings settings) {
+        EntryCreateDto entryCreateDto =
+                Instancio.of(EntryCreateDto.class).withSettings(settings).create();
+        entryCreateDto.setOfficials(limitOfficials(entryCreateDto.getOfficials()));
+        return entryCreateDto;
+    }
+
+    private EntryUpdateDto createEntryUpdateDto(Settings settings) {
+        EntryUpdateDto entryUpdateDto =
+                Instancio.of(EntryUpdateDto.class).withSettings(settings).create();
+        entryUpdateDto.setOfficials(limitOfficials(entryUpdateDto.getOfficials()));
+        return entryUpdateDto;
+    }
+
+    private List<Official> limitOfficials(List<Official> officials) {
+        if (officials == null || officials.isEmpty()) {
+            return officials;
+        }
+
+        int magistrates = 0;
+        int clerks = 0;
+        List<Official> limitedOfficials = new java.util.ArrayList<>();
+
+        for (Official official : officials) {
+            if (official == null || official.getType() == null) {
+                limitedOfficials.add(official);
+                continue;
+            }
+
+            if (official.getType() == OfficialType.MAGISTRATE) {
+                if (magistrates < 3) {
+                    limitedOfficials.add(official);
+                    magistrates++;
+                }
+                continue;
+            }
+
+            if (official.getType() == OfficialType.CLERK) {
+                if (clerks < 1) {
+                    limitedOfficials.add(official);
+                    clerks++;
+                }
+                continue;
+            }
+
+            limitedOfficials.add(official);
+        }
+
+        return limitedOfficials;
     }
 }

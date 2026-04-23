@@ -18,15 +18,19 @@ import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeReposito
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListEntryRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationListRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationRegisterRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.AsyncJobRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.CriminalJusticeAreaRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.DataAuditRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.FeeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.NameAddressRepository;
+import uk.gov.hmcts.appregister.common.entity.repository.NationalCourtHouseRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.ResolutionCodeRepository;
 import uk.gov.hmcts.appregister.common.entity.repository.StandardApplicantRepository;
+import uk.gov.hmcts.appregister.data.Persistable;
 
 /**
  * A global persistence class that knows how to persist objects. Specifically ones that have been
- * created using the {@link uk.gov.hmcts.appregister.testutils.data.Persistable}
+ * created using the {@link Persistable}
  */
 @Component
 @RequiredArgsConstructor
@@ -55,9 +59,15 @@ public class DatabaseReset {
 
     @Autowired private final DataAuditRepository dataAuditRepository;
 
+    @Autowired private final FeeRepository feeRepository;
+
     @Autowired private final ApplicationRegisterRepository applicationRegisterRepository;
 
     @Autowired private final StandardApplicantRepository standardApplicantRepository;
+
+    @Autowired private final NationalCourtHouseRepository nationalCourtHouseRepository;
+
+    @Autowired private final AsyncJobRepository asyncJonRepository;
 
     @Autowired
     private final AppListEntrySequenceMappingRepository appListEntrySequenceMappingRepository;
@@ -89,6 +99,8 @@ public class DatabaseReset {
         appListEntryResolutionRepository.deleteAll(
                 appListEntryResolutionRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
+        feeRepository.deleteAll(feeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
         resolutionCodeRepository.deleteAll(
                 resolutionCodeRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
@@ -111,8 +123,17 @@ public class DatabaseReset {
         criminalJusticeAreaRepository.deleteAll(
                 criminalJusticeAreaRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
+        nationalCourtHouseRepository.deleteAll(
+                nationalCourtHouseRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
         standardApplicantRepository.deleteAll(
                 standardApplicantRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
+        nationalCourtHouseRepository.deleteAll(
+                nationalCourtHouseRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
+
+        asyncJonRepository.deleteAll(
+                asyncJonRepository.findByIdGreaterThanEqual(SEQUENCE_START_VALUE));
 
         dataAuditRepository.deleteAll();
     }
