@@ -4,6 +4,15 @@
 !gradle/wrapper/gradle-wrapper.jar
 *.class
 bin/main/application.yaml
+/bin/default/
+/bin/functionalTest/
+/bin/generated-sources/
+/bin/generated-test-sources/
+/bin/integrationTest/
+/bin/main/
+/bin/smokeTest/
+/bin/test/
+/bin/testCommon/
 /flyway/*.toml
 
 ### STS ###
