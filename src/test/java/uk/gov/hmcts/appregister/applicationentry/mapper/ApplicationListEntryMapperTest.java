@@ -788,6 +788,9 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(
                 appListEntry.getAccountNumber(), entryGetDetailDto.getAccountNumber());
         Assertions.assertEquals(
+                appListEntry.getApplicationCode().getId(),
+                entryGetDetailDto.getApplicationCodeId());
+        Assertions.assertEquals(
                 appListEntry.getApplicationCode().getCode(),
                 entryGetDetailDto.getApplicationCode());
         Assertions.assertEquals(
@@ -905,6 +908,9 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(
                 appListEntry.getAccountNumber(), entryGetDetailDto.getAccountNumber());
         Assertions.assertEquals(
+                appListEntry.getApplicationCode().getId(),
+                entryGetDetailDto.getApplicationCodeId());
+        Assertions.assertEquals(
                 appListEntry.getApplicationCode().getCode(),
                 entryGetDetailDto.getApplicationCode());
         Assertions.assertNull(entryGetDetailDto.getStandardApplicantCode());
@@ -963,6 +969,9 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(appListEntry.getNotes(), entryGetDetailDto.getNotes());
         Assertions.assertEquals(
                 appListEntry.getAccountNumber(), entryGetDetailDto.getAccountNumber());
+        Assertions.assertEquals(
+                appListEntry.getApplicationCode().getId(),
+                entryGetDetailDto.getApplicationCodeId());
         Assertions.assertEquals(
                 appListEntry.getApplicationCode().getCode(),
                 entryGetDetailDto.getApplicationCode());
@@ -1024,6 +1033,9 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(appListEntry.getNotes(), entryGetDetailDto.getNotes());
         Assertions.assertEquals(
                 appListEntry.getAccountNumber(), entryGetDetailDto.getAccountNumber());
+        Assertions.assertEquals(
+                appListEntry.getApplicationCode().getId(),
+                entryGetDetailDto.getApplicationCodeId());
         Assertions.assertEquals(
                 appListEntry.getApplicationCode().getCode(),
                 entryGetDetailDto.getApplicationCode());

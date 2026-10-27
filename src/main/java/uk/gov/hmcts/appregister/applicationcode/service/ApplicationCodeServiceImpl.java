@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.appregister.applicationcode.audit.AppCodeAuditOperation;
+import uk.gov.hmcts.appregister.applicationcode.exception.ApplicationCodeError;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
 import uk.gov.hmcts.appregister.applicationcode.mapper.CodeAndTitle;
 import uk.gov.hmcts.appregister.applicationcode.validator.GetApplicationCodeValidator;
@@ -21,6 +22,7 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
+import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
 import uk.gov.hmcts.appregister.common.util.PagingWrapper;
@@ -104,6 +106,30 @@ public class ApplicationCodeServiceImpl implements ApplicationCodeService {
                                     newPage, applicationCodeMapper.toEntity(codeAndTitle));
 
                     return Optional.of(result);
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApplicationCodeGetDetailDto findById(Long id, LocalDate date) {
+        return auditService.processAudit(
+                null,
+                AppCodeAuditOperation.GET_APPLICATION_CODE_AUDIT_EVENT,
+                req -> {
+                    var code =
+                            repository
+                                    .findById(id)
+                                    .orElseThrow(
+                                            () ->
+                                                    new AppRegistryException(
+                                                            ApplicationCodeError.CODE_NOT_FOUND,
+                                                            "No application code found for ID %s"
+                                                                    .formatted(id)));
+                    var fees = feeService.resolveFeePair(code.getFeeReference(), date);
+                    var detail =
+                            applicationCodeMapper.toApplicationCodeGetDetailDto(
+                                    code, fees.mainFee(), fees.offsiteFee());
+                    return Optional.of(new AuditableResult<>(detail, code));
                 });
     }
 

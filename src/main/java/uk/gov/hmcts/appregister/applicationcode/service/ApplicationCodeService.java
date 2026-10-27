@@ -20,4 +20,7 @@ public interface ApplicationCodeService {
      * @return The dto containing application code details
      */
     ApplicationCodeGetDetailDto findByCode(PayloadForGet payloadForGet);
+
+    /** Retrieves an exact record; the optional date is used only for fee resolution. */
+    ApplicationCodeGetDetailDto findById(Long id, LocalDate date);
 }

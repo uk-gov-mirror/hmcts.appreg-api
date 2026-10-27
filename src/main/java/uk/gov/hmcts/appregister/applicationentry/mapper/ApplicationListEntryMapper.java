@@ -440,6 +440,7 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(
             target = "standardApplicantCode",
             source = "applicationListEntry.standardApplicant.applicantCode")
+    @Mapping(target = "applicationCodeId", source = "applicationListEntry.applicationCode.id")
     @Mapping(target = "applicationCode", source = "applicationListEntry.applicationCode.code")
     @Mapping(
             target = "applicant",
@@ -483,6 +484,7 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(
             target = "standardApplicantCode",
             source = "applicationListEntry.standardApplicant.applicantCode")
+    @Mapping(target = "applicationCodeId", source = "applicationListEntry.applicationCode.id")
     @Mapping(target = "applicationCode", source = "applicationListEntry.applicationCode.code")
     @Mapping(
             target = "applicant",

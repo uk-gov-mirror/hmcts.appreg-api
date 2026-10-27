@@ -4,6 +4,7 @@ required:
   - id
   - listId
   - applicationCode
+  - applicationCodeId
   - numberOfRespondents
   - lodgementDate
 
@@ -25,6 +26,11 @@ properties:
     type: string
     description: Code that identifies the Standard Applicant.
     example: "APP001"
+
+  applicationCodeId:
+    type: integer
+    format: int64
+    description: ID of the exact persisted Application Code association, including historical versions.
 
   applicationCode:
     type: string

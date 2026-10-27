@@ -64,6 +64,7 @@ paths:
   /admin/csds/trigger:                                              { $ref: './paths/admin/csds-trigger.yaml' }
   # APPLICATION CODES
   /application-codes:                                               { $ref: './paths/application-codes/application-codes.yaml' }
+  /application-codes/by-id/{id}:                                    { $ref: './paths/application-codes/application-codes-by-id.yaml' }
   /application-codes/{code}:                                        { $ref: './paths/application-codes/application-codes-by-code.yaml' }
   # APPLICATION LISTS
   /application-lists:                                               { $ref: './paths/application-lists/application-lists.yaml' }

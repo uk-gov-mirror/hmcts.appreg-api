@@ -58,6 +58,13 @@ public class ApplicationCodeController implements ApplicationCodesApi {
 
     @Override
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
+    public ResponseEntity<ApplicationCodeGetDetailDto> getApplicationCodeById(
+            Long id, LocalDate date) {
+        return ResponseEntity.ok(service.findById(id, date));
+    }
+
+    @Override
+    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<ApplicationCodeGetDetailDto> getApplicationCodeByCodeAndDate(
             String code, LocalDate date) {
         PayloadForGet payloadForGet = PayloadForGet.builder().code(code).date(date).build();

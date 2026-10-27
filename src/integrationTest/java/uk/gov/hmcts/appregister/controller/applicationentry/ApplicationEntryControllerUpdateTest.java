@@ -37,6 +37,7 @@ import uk.gov.hmcts.appregister.common.enumeration.YesOrNo;
 import uk.gov.hmcts.appregister.common.exception.CommonAppError;
 import uk.gov.hmcts.appregister.common.security.RoleEnum;
 import uk.gov.hmcts.appregister.data.ApplicationCodeTestData;
+import uk.gov.hmcts.appregister.generated.model.ApplicationCodeGetDetailDto;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListStatus;
 import uk.gov.hmcts.appregister.generated.model.ApplicationListUpdateDto;
 import uk.gov.hmcts.appregister.generated.model.EntryCreateDto;
@@ -62,6 +63,87 @@ import uk.gov.hmcts.appregister.util.CreateEntryDtoUtil;
 class ApplicationEntryControllerUpdateTest extends AbstractApplicationEntryCrudTest {
     @Autowired private DataAuditRepository dataAuditRepository;
     @Autowired private NameAddressRepository nameAddressRepository;
+
+    @Test
+    void givenSameCodeAndStartDate_whenReadingAndUpdating_thenRetainsOriginalRecord()
+            throws Exception {
+        var createdResponse = createListEntryWithAllData();
+        var created = createdResponse.as(EntryGetDetailDto.class);
+        var original =
+                unitOfWork.inTransaction(
+                        () ->
+                                applicationCodeRepository
+                                        .findById(created.getApplicationCodeId())
+                                        .orElseThrow());
+        var replacement = new ApplicationCodeTestData().someComplete();
+        var replacementId =
+                unitOfWork.inTransaction(
+                        () ->
+                                applicationCodeRepository.findAll().stream()
+                                                .mapToLong(ApplicationCode::getId)
+                                                .max()
+                                                .orElseThrow()
+                                        + 1);
+        replacement.setId(replacementId);
+        replacement.setCode(original.getCode());
+        replacement.setStartDate(original.getStartDate());
+        replacement.setTitle("Replacement application title");
+        replacement.setWording("Replacement wording");
+        replacement.setEndDate(null);
+        var saved = persistance.save(replacement);
+        try {
+            assertThat(saved.getId()).isGreaterThan(original.getId());
+            var token = createAdminToken().fetchTokenForRole();
+            var detailUrl =
+                    getLocalUrl(
+                            "application-codes/by-id/"
+                                    + original.getId()
+                                    + "?date="
+                                    + created.getLodgementDate());
+            var detailResponse = restAssuredClient.executeGetRequest(detailUrl, token);
+            detailResponse.then().statusCode(200);
+            var detail = detailResponse.as(ApplicationCodeGetDetailDto.class);
+            assertThat(detail.getTitle()).isEqualTo(original.getTitle());
+            assertThat(detail.getApplicationCode()).isEqualTo(original.getCode());
+
+            var selected =
+                    unitOfWork.inTransaction(
+                            () ->
+                                    applicationCodeRepository
+                                            .findByCodeAndDate(original.getCode(), TEST_DATE)
+                                            .orElseThrow()
+                                            .getId());
+            assertThat(selected).isEqualTo(saved.getId());
+
+            var update = getCorrectUpdateDataDto();
+            update.setApplicationCode(created.getApplicationCode());
+            update.setNumberOfRespondents(null);
+            update.setNotes("Updated notes retaining the saved application code");
+            var updatedResponse =
+                    restAssuredClient.executePutRequest(
+                            HeaderUtil.getLocation(createdResponse), token, update);
+            updatedResponse.then().statusCode(200);
+            assertThat(updatedResponse.as(EntryGetDetailDto.class).getApplicationCodeId())
+                    .isEqualTo(original.getId());
+            assertThat(getSelectedApplicationCodeId(created.getId())).isEqualTo(original.getId());
+            var readResponse =
+                    restAssuredClient.executeGetRequest(
+                            HeaderUtil.getLocation(createdResponse), token);
+            readResponse.then().statusCode(200);
+            assertThat(readResponse.as(EntryGetDetailDto.class).getApplicationCodeId())
+                    .isEqualTo(original.getId());
+            restAssuredClient
+                    .executeGetRequest(getLocalUrl("application-codes/by-id/-1"), token)
+                    .then()
+                    .statusCode(404);
+        } finally {
+            unitOfWork.inTransaction(
+                    () -> {
+                        applicationCodeRepository.deleteById(saved.getId());
+                        return null;
+                    });
+        }
+    }
 
     @Test
     void givenExpiredAssociatedCode_whenUpdating_thenRetainsCodeAndFees() throws Exception {
@@ -103,7 +185,14 @@ class ApplicationEntryControllerUpdateTest extends AbstractApplicationEntryCrudT
             Assertions.assertEquals(
                     createdEntry.getApplicationCode(), updated.getApplicationCode());
             Assertions.assertEquals(updateDto.getNotes(), updated.getNotes());
+            Assertions.assertEquals(codeId, updated.getApplicationCodeId());
             Assertions.assertEquals(codeId, getSelectedApplicationCodeId(createdEntry.getId()));
+            restAssuredClient
+                    .executeGetRequest(
+                            getLocalUrl("application-codes/by-id/" + codeId),
+                            createAdminToken().fetchTokenForRole())
+                    .then()
+                    .statusCode(200);
             Assertions.assertEquals(
                     originalFees.stream().map(fee -> fee.getId()).sorted().toList(),
                     getSelectedFees(createdEntry.getId()).stream()

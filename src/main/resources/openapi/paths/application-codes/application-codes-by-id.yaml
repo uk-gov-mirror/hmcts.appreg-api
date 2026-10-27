@@ -1,0 +1,38 @@
+parameters:
+  - in: path
+    name: id
+    required: true
+    description: Primary key of the saved Application Code record.
+    schema: { type: integer, format: int64 }
+  - in: query
+    name: date
+    required: false
+    schema: { type: string, format: date, x-field-extra-annotation: '@uk.gov.hmcts.appregister.common.validator.DateValidator' }
+    description: >
+      Date used only to resolve fee metadata through the existing fee-reference relationship.
+      Defaults to the current UK business date. Does not filter the Application Code record.
+get:
+  operationId: getApplicationCodeById
+  tags: [application-codes]
+  summary: Get the exact saved Application Code by ID
+  description: >
+    Returns the requested record, including historical or inactive versions.
+    Unknown IDs return 404 without falling back to a code/date search.
+    Fee metadata may be null when no matching fee exists.
+  responses:
+    "200":
+      description: Application Code found
+      headers:
+        Vary:
+          description: Response varies by Accept for media-type versioning.
+          schema: { type: string, example: Accept }
+      content:
+        application/vnd.hmcts.appreg.v1+json:
+          schema:
+            $ref: "../../components/schemas/application-codes/application-code-get-detail-dto.yaml"
+    "400": { $ref: "../../components/responses/bad-request-error.yaml" }
+    "401": { $ref: "../../components/responses/unauthorized-error.yaml" }
+    "403": { $ref: "../../components/responses/forbidden-error.yaml" }
+    "404": { $ref: "../../components/responses/not-found-error.yaml" }
+    "406": { $ref: "../../components/responses/not-acceptable-error.yaml" }
+    "500": { $ref: "../../components/responses/internal-server-error.yaml" }

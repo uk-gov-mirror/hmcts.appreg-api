@@ -3,6 +3,7 @@ package uk.gov.hmcts.appregister.applicationcode.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,6 +17,7 @@ import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import uk.gov.hmcts.appregister.applicationcode.exception.ApplicationCodeError;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapper;
 import uk.gov.hmcts.appregister.applicationcode.mapper.ApplicationCodeMapperImpl;
 import uk.gov.hmcts.appregister.applicationcode.validator.GetApplicationCodeValidationSuccess;
@@ -42,6 +45,7 @@ import uk.gov.hmcts.appregister.common.entity.ApplicationCode;
 import uk.gov.hmcts.appregister.common.entity.Fee;
 import uk.gov.hmcts.appregister.common.entity.FeePair;
 import uk.gov.hmcts.appregister.common.entity.repository.ApplicationCodeRepository;
+import uk.gov.hmcts.appregister.common.exception.AppRegistryException;
 import uk.gov.hmcts.appregister.common.mapper.PageMapper;
 import uk.gov.hmcts.appregister.common.mapper.WordingTemplateMapper;
 import uk.gov.hmcts.appregister.common.model.PayloadForGet;
@@ -93,6 +97,56 @@ class ApplicationCodeServiceImplTest {
                         fixedClock,
                         ukZone,
                         dummyGetApplicationCodeValidator);
+    }
+
+    @Test
+    void givenExpiredCode_whenFindById_thenReturnsSavedDetailsAndResolvesFeesForRequestedDate() {
+        var code = new ApplicationCodeTestData().someComplete();
+        code.setEndDate(REQUEST_DATE.minusDays(1));
+        var fee = new FeeTestData().someComplete();
+        applicationCodeMapper.setWordingTemplateMapper(new WordingTemplateMapper());
+        when(repository.findById(code.getId())).thenReturn(Optional.of(code));
+        when(feeService.resolveFeePair(code.getFeeReference(), REQUEST_DATE))
+                .thenReturn(new FeePair(fee, null));
+
+        var result = applicationCodeService.findById(code.getId(), REQUEST_DATE);
+
+        assertEquals(code.getTitle(), result.getTitle());
+        assertEquals(code.getEndDate(), result.getEndDate().get());
+        assertEquals(code.getFeeDue().isYes(), result.getIsFeeDue());
+        assertEquals(code.getRequiresRespondent().isYes(), result.getRequiresRespondent());
+        assertEquals(code.getBulkRespondentAllowed().isYes(), result.getBulkRespondentAllowed());
+        assertEquals(fee.getDescription(), result.getFeeDescription().get());
+        assertNotNull(result.getWording());
+        verify(repository, never()).findByCodeAndDate(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void givenNoFeeDate_whenFindById_thenDelegatesToDefaultFeeResolution() {
+        var code = new ApplicationCodeTestData().someComplete();
+        applicationCodeMapper.setWordingTemplateMapper(new WordingTemplateMapper());
+        when(repository.findById(code.getId())).thenReturn(Optional.of(code));
+        when(feeService.resolveFeePair(code.getFeeReference(), null))
+                .thenReturn(new FeePair(null, null));
+
+        assertEquals(
+                code.getTitle(), applicationCodeService.findById(code.getId(), null).getTitle());
+
+        verify(feeService).resolveFeePair(code.getFeeReference(), null);
+    }
+
+    @Test
+    void givenUnknownId_whenFindById_thenReturnsNotFoundWithoutFallback() {
+        when(repository.findById(-1L)).thenReturn(Optional.empty());
+
+        var exception =
+                assertThrows(
+                        AppRegistryException.class,
+                        () -> applicationCodeService.findById(-1L, REQUEST_DATE));
+
+        assertEquals(ApplicationCodeError.CODE_NOT_FOUND, exception.getCode());
+        verify(repository, never()).findByCodeAndDate(Mockito.any(), Mockito.any());
+        Mockito.verifyNoInteractions(feeService);
     }
 
     @Test
