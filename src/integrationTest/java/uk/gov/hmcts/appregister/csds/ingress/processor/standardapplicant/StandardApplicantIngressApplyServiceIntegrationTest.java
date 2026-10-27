@@ -30,7 +30,10 @@ class StandardApplicantIngressApplyServiceIntegrationTest extends BaseRepository
         insertOpenStagingApplicant(1L, "OLD");
         var incoming = record(2L, "County Hall");
 
-        applyService.reconcileAndUpsert("standard_applicants_staging", "sa_id", diffFor(incoming));
+        assertThat(
+                        applyService.reconcileAndUpsert(
+                                "standard_applicants_staging", "sa_id", diffFor(incoming)))
+                .isEqualTo(1);
 
         assertThat(endDate(1L)).isEqualTo(LocalDate.now());
         assertThat(
@@ -52,7 +55,8 @@ class StandardApplicantIngressApplyServiceIntegrationTest extends BaseRepository
                 new StandardApplicantDiffResult(
                         Map.of(incoming.id(), incoming), Map.of(), List.of(), Set.of("fUtUrE"));
 
-        applyService.reconcileAndUpsert("standard_applicants_staging", "sa_id", diff);
+        assertThat(applyService.reconcileAndUpsert("standard_applicants_staging", "sa_id", diff))
+                .isEqualTo(1);
 
         assertThat(endDate(1L)).isNull();
         assertThat(endDate(2L)).isNull();

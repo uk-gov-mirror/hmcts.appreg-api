@@ -391,7 +391,7 @@ paths:
   /admin/csds/trigger:
     post:
       description: |
-        Runs all enabled CSDS ingress processors synchronously using the same retrieval and apply flow as the scheduled CSDS job. Processing continues if an individual processor fails, but the request returns an error after all processors have been attempted. Invalid record data returned by CSDS results in `502 Bad Gateway`; unexpected AppReg failures result in `500 Internal Server Error`. The endpoint does not update the scheduled-run execution log and therefore does not suppress a subsequent scheduled run. Only callers with the admin role can trigger the operation.
+        Runs all enabled CSDS ingress processors synchronously using the same retrieval and apply flow as the scheduled CSDS job. Processing continues if an individual processor fails, but the request returns an error after all processors have been attempted. If all failures are invalid record data returned by CSDS (including missing fields, invalid IDs and malformed dates), the response is `502 Bad Gateway`. Unexpected AppReg failures, including a mixture of upstream validation and internal failures, result in `500 Internal Server Error`. Successful processors' changes are not rolled back when another processor fails. The endpoint does not update the scheduled-run execution log and therefore does not suppress a subsequent scheduled run. Only callers with the admin role can trigger the operation.
       operationId: triggerCsdsIngress
       responses:
         "200":

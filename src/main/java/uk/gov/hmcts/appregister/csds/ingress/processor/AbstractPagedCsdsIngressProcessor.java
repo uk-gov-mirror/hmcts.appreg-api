@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToLongFunction;
 import lombok.RequiredArgsConstructor;
@@ -337,8 +338,7 @@ public abstract class AbstractPagedCsdsIngressProcessor<D, R> implements IDataIn
             }
             return null;
         } catch (NumberFormatException ex) {
-            throw new AppRegistryException(
-                    CommonAppError.INTERNAL_SERVER_ERROR,
+            throw new CsdsPayloadValidationException(
                     "CSDS field "
                             + fieldName
                             + " contained an invalid decimal value for "
@@ -358,8 +358,7 @@ public abstract class AbstractPagedCsdsIngressProcessor<D, R> implements IDataIn
         try {
             return YesOrNo.fromValue(value);
         } catch (IllegalArgumentException ex) {
-            throw new AppRegistryException(
-                    CommonAppError.INTERNAL_SERVER_ERROR,
+            throw new CsdsPayloadValidationException(
                     "CSDS field "
                             + fieldName
                             + " contained an unknown YesOrNo value for "
@@ -388,8 +387,7 @@ public abstract class AbstractPagedCsdsIngressProcessor<D, R> implements IDataIn
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException ex) {
-            throw new AppRegistryException(
-                    CommonAppError.INTERNAL_SERVER_ERROR,
+            throw new CsdsPayloadValidationException(
                     "CSDS field "
                             + fieldName
                             + " contained an invalid date for "
@@ -400,15 +398,13 @@ public abstract class AbstractPagedCsdsIngressProcessor<D, R> implements IDataIn
         }
     }
 
-    protected final AppRegistryException invalidField(String fieldName) {
-        return new AppRegistryException(
-                CommonAppError.INTERNAL_SERVER_ERROR,
+    protected final CsdsPayloadValidationException invalidField(String fieldName) {
+        return new CsdsPayloadValidationException(
                 "CSDS field " + fieldName + " was missing or invalid for " + datasetName());
     }
 
-    protected final AppRegistryException invalidField(JsonNode node, String fieldName) {
-        return new AppRegistryException(
-                CommonAppError.INTERNAL_SERVER_ERROR,
+    protected final CsdsPayloadValidationException invalidField(JsonNode node, String fieldName) {
+        return new CsdsPayloadValidationException(
                 "CSDS field "
                         + fieldName
                         + " was missing or invalid for "
@@ -435,6 +431,10 @@ public abstract class AbstractPagedCsdsIngressProcessor<D, R> implements IDataIn
     }
 
     protected final R applyWithAuditing(D processedData) {
+        return applyWithAuditing(processedData, this::applyDiff);
+    }
+
+    protected final R applyWithAuditing(D processedData, Consumer<R> applyAction) {
         return csdsIngressTransactionRunner.execute(
                 () -> {
                     val diff = diff(processedData);
@@ -442,7 +442,7 @@ public abstract class AbstractPagedCsdsIngressProcessor<D, R> implements IDataIn
                     report(processedData, diff);
                     var level = csdsAuditService.auditLevel();
                     try {
-                        applyDiff(diff);
+                        applyAction.accept(diff);
                         csdsAuditService.persistSuccessAudits(
                                 level, buildSuccessAudits(processedData, diff));
                         return diff;

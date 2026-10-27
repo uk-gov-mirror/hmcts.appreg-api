@@ -260,6 +260,22 @@ needs to be used in order to populate the baseline data:-
 The postman file can be located here [App Registration.postman_collection.json](App Registration.postman_collection.json). Import this
 and set the environment variables to match your local setup. The postman suite can then be used to drive the application registration API.
 
+### Manual CSDS ingress
+
+`POST /admin/csds/ingest?processor=standard_applicants` accepts a JSON file in the multipart
+`file` field and returns counts such as `{"inserted":10,"updated":5,"endDated":42}`.
+`endDated` counts previously open standard applicant records end-dated to the current UK
+business date because their codes are absent from the incoming batch. It counts records,
+not distinct codes, and is zero for other processors. The same count is logged for both
+uploaded and scheduled standard applicant ingress. This upload endpoint is not currently
+included in the static OpenAPI specification.
+
+`POST /admin/csds/trigger` instead retrieves data from CSDS and attempts all enabled
+processors. It returns 200 with no response body only when all succeed. If all failures
+are upstream validation failures (including invalid IDs or dates), it returns 502;
+internal failures or mixed upstream/internal failures return 500. Successful processors'
+changes remain applied. Invalid data in a manually uploaded file remains a 400 response.
+
 ## License
 
 This project is licensed under the MIT License — see [LICENSE](LICENSE).

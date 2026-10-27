@@ -111,6 +111,8 @@ class StandardApplicantDataIngressProcessorTest {
         withoutPssId.putArray("Address");
         when(tableReadService.loadAll(eq("standard_applicants_staging"), any()))
                 .thenReturn(List.of());
+        when(applyService.reconcileAndUpsert(eq("standard_applicants_staging"), eq("sa_id"), any()))
+                .thenReturn(3);
 
         var response = processor.ingest(List.of(createPage(withPssId, withoutPssId)));
 
@@ -120,6 +122,7 @@ class StandardApplicantDataIngressProcessorTest {
                         eq("standard_applicants_staging"), eq("sa_id"), diffCaptor.capture());
         assertThat(response.getInserted()).isEqualTo(2);
         assertThat(response.getUpdated()).isZero();
+        assertThat(response.getEndDated()).isEqualTo(3);
         assertThat(diffCaptor.getValue().incomingById()).containsKeys(9659L, 9660L);
         var fallbackIdRecord = diffCaptor.getValue().incomingById().get(9660L);
         assertThat(fallbackIdRecord.addressLine1()).isEqualTo("<missing>");

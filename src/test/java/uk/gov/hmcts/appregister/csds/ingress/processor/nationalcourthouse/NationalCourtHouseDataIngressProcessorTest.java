@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -304,16 +305,30 @@ class NationalCourtHouseDataIngressProcessorTest {
     @Test
     void rejectsInvalidIdentifiersEvenWithSpoofedLocalId() throws Exception {
         for (var field : List.of("CourtID", "PSSNationalCourthouseID")) {
-            for (var json : List.of("0", "-1", "1.5", "\"3802\"", "true", "9223372036854775808")) {
+            for (var json :
+                    List.of("0", "-9999", "1.5", "\"3802\"", "true", "9223372036854775808")) {
                 var source = sourceRecord(3802L, 3106L, "Court", 1L).put("NCH_ID", 1);
                 source.set(field, OBJECT_MAPPER.readTree(json));
                 assertThatThrownBy(() -> processor.ingest(List.of(page(source))))
+                        .isInstanceOf(CsdsPayloadValidationException.class)
                         .hasMessageContaining(field);
             }
         }
         var source = sourceRecord(2147483648L, 3106L, "Court", 1L);
         assertThatThrownBy(() -> processor.ingest(List.of(page(source))))
                 .hasMessageContaining("CourtID");
+        verifyNoInteractions(tableReadService, bulkUpsertService);
+    }
+
+    @Test
+    void rejectsInvalidUpstreamDateAsPayloadValidationFailure() {
+        var source = sourceRecord(3802L, 3106L, "Court", 1L);
+        source.put("StartDate", "not-a-date");
+
+        assertThatThrownBy(() -> processor.ingest(List.of(page(source))))
+                .isInstanceOf(CsdsPayloadValidationException.class)
+                .hasMessageContaining("StartDate")
+                .hasCauseInstanceOf(DateTimeParseException.class);
         verifyNoInteractions(tableReadService, bulkUpsertService);
     }
 

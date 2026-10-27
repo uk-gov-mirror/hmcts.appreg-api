@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -17,6 +18,7 @@ import uk.gov.hmcts.appregister.csds.ingress.database.StandardApplicantIngressDa
 import uk.gov.hmcts.appregister.csds.ingress.diff.IngressDiffRecord;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @SuppressWarnings("java:S2077") // SQL identifiers are restricted to lowercase letters, digits and
 // underscores.
@@ -30,7 +32,7 @@ public class StandardApplicantIngressApplyService {
     private String schema;
 
     @Transactional
-    public void reconcileAndUpsert(
+    public int reconcileAndUpsert(
             String targetTable, String targetKeyField, StandardApplicantDiffResult diff) {
         val validatedTableName = CsdsSqlIdentifierValidator.requireValid(targetTable, "tableName");
         val validatedPrimaryKey =
@@ -43,7 +45,7 @@ public class StandardApplicantIngressApplyService {
                         .map(code -> code.toUpperCase(Locale.ROOT))
                         .distinct()
                         .toList();
-        endDateMissingApplicants(validatedTableName, incomingCodes);
+        val endDated = endDateMissingApplicants(validatedTableName, incomingCodes);
         val rows = diff.diffRecords().stream().map(IngressDiffRecord::intended).toList();
         bulkUpsertService.upsertBatch(
                 validatedTableName,
@@ -51,9 +53,13 @@ public class StandardApplicantIngressApplyService {
                 rows,
                 rowMapper,
                 StandardApplicantIngressRecord::id);
+        log.info(
+                "CSDS ingress end-dated {} standard applicant records absent from the incoming batch",
+                endDated);
+        return endDated;
     }
 
-    private void endDateMissingApplicants(String targetTable, List<String> incomingCodes) {
+    private int endDateMissingApplicants(String targetTable, List<String> incomingCodes) {
         val validatedSchema = CsdsSqlIdentifierValidator.requireValid(schema, "schema");
         var sql =
                 """
@@ -74,6 +80,6 @@ public class StandardApplicantIngressApplyService {
             sql += " AND UPPER(standard_applicant_code) NOT IN (:incomingCodes)";
             parameters.put("incomingCodes", incomingCodes);
         }
-        jdbcTemplate.update(sql, parameters);
+        return jdbcTemplate.update(sql, parameters);
     }
 }

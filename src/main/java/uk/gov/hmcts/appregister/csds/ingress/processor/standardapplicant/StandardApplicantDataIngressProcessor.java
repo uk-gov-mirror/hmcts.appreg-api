@@ -184,9 +184,15 @@ public class StandardApplicantDataIngressProcessor
     @Override
     public CsdsIngestResponse ingest(List<JsonNode> rawJson) {
         val processedData = preProcess(rawJson);
-        val diff = applyWithAuditing(processedData);
-        return new CsdsIngestResponse()
-                .inserted(countByOperation(diff, IngressOperation.INSERT))
+        val response = new CsdsIngestResponse();
+        val diff =
+                applyWithAuditing(
+                        processedData,
+                        result ->
+                                response.endDated(
+                                        applyService.reconcileAndUpsert(
+                                                targetTable(), targetKeyField(), result)));
+        return response.inserted(countByOperation(diff, IngressOperation.INSERT))
                 .updated(countByOperation(diff, IngressOperation.UPDATE));
     }
 

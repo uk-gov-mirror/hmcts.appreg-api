@@ -12,6 +12,7 @@ import lombok.Setter;
 public class CsdsIngestResponse {
     private Integer inserted;
     private Integer updated;
+    private Integer endDated = 0;
 
     public CsdsIngestResponse inserted(Integer inserted) {
         this.inserted = inserted;
@@ -20,6 +21,11 @@ public class CsdsIngestResponse {
 
     public CsdsIngestResponse updated(Integer updated) {
         this.updated = updated;
+        return this;
+    }
+
+    public CsdsIngestResponse endDated(Integer endDated) {
+        this.endDated = endDated;
         return this;
     }
 }

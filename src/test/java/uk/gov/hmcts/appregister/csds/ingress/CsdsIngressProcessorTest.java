@@ -452,6 +452,49 @@ class CsdsIngressProcessorTest {
     }
 
     @Test
+    void given_mixedFailures_when_runManualIngress_then_reportsInternalServerError() {
+        var properties = new CsdsIngressProperties();
+        @SuppressWarnings("unchecked")
+        IDataIngressProcessor<String> secondProcessor = mock(IDataIngressProcessor.class);
+        var processor =
+                new CsdsIngressProcessor(
+                        properties,
+                        ingressClient,
+                        csdsExecutionLogService,
+                        distributedJobLockService,
+                        List.of(dataIngressProcessor, secondProcessor));
+        var lock =
+                new DistributedJobLock(
+                        CsdsIngressProcessor.DATABASE_JOB_NAME,
+                        "token",
+                        properties.getLeaseDuration());
+        when(distributedJobLockService.tryAcquire(
+                        CsdsIngressProcessor.DATABASE_JOB_NAME, properties.getLeaseDuration()))
+                .thenReturn(Optional.of(lock));
+        when(distributedJobLockService.renew(lock)).thenReturn(true);
+        when(distributedJobLockService.release(lock)).thenReturn(true);
+        when(dataIngressProcessor.enabled()).thenReturn(true);
+        when(dataIngressProcessor.datasetName()).thenReturn("invalid-upstream");
+        when(dataIngressProcessor.retrieve(ingressClient))
+                .thenThrow(new CsdsPayloadValidationException("invalid ID"));
+        when(secondProcessor.enabled()).thenReturn(true);
+        when(secondProcessor.datasetName()).thenReturn("internal-failure");
+        when(secondProcessor.retrieve(ingressClient))
+                .thenThrow(new IllegalStateException("database failure"));
+
+        assertThatThrownBy(processor::runManualIngress)
+                .isInstanceOfSatisfying(
+                        AppRegistryException.class,
+                        ex ->
+                                assertThat(ex.getCode())
+                                        .isEqualTo(CommonAppError.INTERNAL_SERVER_ERROR))
+                .hasMessageContaining("invalid-upstream")
+                .hasMessageContaining("internal-failure");
+        verify(secondProcessor).retrieve(ingressClient);
+        verify(distributedJobLockService).release(lock);
+    }
+
+    @Test
     void given_registeredProcessor_when_runManualIngress_then_executesWithoutScheduledLog() {
         var properties = new CsdsIngressProperties();
         properties.setLeaseDuration(Duration.ofMinutes(3));

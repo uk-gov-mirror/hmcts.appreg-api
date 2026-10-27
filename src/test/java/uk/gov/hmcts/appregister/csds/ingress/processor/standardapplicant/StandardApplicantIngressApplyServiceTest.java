@@ -47,6 +47,7 @@ class StandardApplicantIngressApplyServiceTest {
 
     @Test
     void given_incomingIds_when_reconcileAndUpsert_then_endDatesOnlyMissingRowsInConfiguredTable() {
+        when(jdbcTemplate.update(any(String.class), any(Map.class))).thenReturn(3);
         var record = record(6278L);
         var diff =
                 new StandardApplicantDiffResult(
@@ -61,7 +62,8 @@ class StandardApplicantIngressApplyServiceTest {
                                         "no existing sa_id match")),
                         Set.of());
 
-        service.reconcileAndUpsert("standard_applicants_staging", "sa_id", diff);
+        assertThat(service.reconcileAndUpsert("standard_applicants_staging", "sa_id", diff))
+                .isEqualTo(3);
 
         var sqlCaptor = ArgumentCaptor.forClass(String.class);
         verify(jdbcTemplate).update(sqlCaptor.capture(), parametersCaptor.capture());
@@ -95,7 +97,8 @@ class StandardApplicantIngressApplyServiceTest {
     void given_noIncomingOrRejectedCodes_when_reconcileAndUpsert_then_endDatesAllOpenRows() {
         var diff = new StandardApplicantDiffResult(Map.of(), Map.of(), List.of(), Set.of());
 
-        service.reconcileAndUpsert("standard_applicants_staging", "sa_id", diff);
+        assertThat(service.reconcileAndUpsert("standard_applicants_staging", "sa_id", diff))
+                .isZero();
 
         var sql = ArgumentCaptor.forClass(String.class);
         verify(jdbcTemplate).update(sql.capture(), parametersCaptor.capture());
