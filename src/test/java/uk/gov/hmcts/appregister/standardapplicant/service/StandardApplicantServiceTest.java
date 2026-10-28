@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import lombok.Setter;
@@ -209,6 +210,61 @@ class StandardApplicantServiceTest {
                         isNull(),
                         eq(StandardApplicantOperation.GET_STANDARD_APPLICANT_BY_CODE),
                         notNull());
+    }
+
+    @Test
+    void givenHistoricalApplicantId_whenFindById_thenReturnsThatExactRecord() {
+        var historical = new StandardApplicant();
+        historical.setId(42L);
+        historical.setApplicantCode("APP001");
+        historical.setName("Previous name");
+        historical.setApplicantStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+        historical.setApplicantEndDate(LocalDate.of(2021, Month.DECEMBER, 31));
+        when(repository.findById(42L)).thenReturn(Optional.of(historical));
+
+        var listener = new CapturingAuditListener();
+        var localService =
+                new StandardApplicationServiceImpl(
+                        repository,
+                        standardApplicantMapper,
+                        clock,
+                        ukZone,
+                        pageMapper,
+                        validator,
+                        new AuditOperationServiceImpl(List.of(listener)),
+                        new ApplicantMapperImpl());
+
+        var result = localService.findById(42L);
+
+        Assertions.assertEquals("Previous name", result.getName());
+        Assertions.assertEquals(historical.getApplicantStartDate(), result.getStartDate());
+        verify(repository).findById(42L);
+        Assertions.assertNotNull(listener.getCompleteEvent());
+        var audited = (StandardApplicant) listener.getCompleteEvent().getNewValue();
+        Assertions.assertEquals(42L, audited.getId());
+        Assertions.assertEquals("APP001", audited.getApplicantCode());
+        Assertions.assertEquals(
+                historical.getApplicantStartDate(), audited.getApplicantStartDate());
+        Assertions.assertEquals(historical.getApplicantEndDate(), audited.getApplicantEndDate());
+        Assertions.assertNull(audited.getName());
+    }
+
+    @Test
+    void givenUnknownApplicantId_whenFindById_thenThrowsNotFound() {
+        when(repository.findById(42L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> standardApplicantService.findById(42L))
+                .isInstanceOf(AppRegistryException.class)
+                .satisfies(
+                        error ->
+                                Assertions.assertEquals(
+                                        StandardApplicantCodeError.STANDARD_APPLICANT_NOT_FOUND
+                                                .getCode()
+                                                .getAppCode(),
+                                        ((AppRegistryException) error)
+                                                .getCode()
+                                                .getCode()
+                                                .getAppCode()));
     }
 
     @Test

@@ -1,0 +1,29 @@
+parameters:
+  - in: path
+    name: id
+    required: true
+    description: ID of the Standard Applicant record in standard_applicants.
+    schema: { type: integer, format: int64 }
+get:
+  operationId: getStandardApplicantById
+  tags: [standard-applicants]
+  summary: Get the exact Standard Applicant record by ID
+  description: >
+    Returns the record identified by its ID, including historical or inactive versions.
+    Unknown IDs return 404 without selecting another record with the same code.
+  responses:
+    "200":
+      description: Standard Applicant found
+      headers:
+        Vary:
+          description: Response varies by Accept for media-type versioning.
+          schema: { type: string, example: Accept }
+      content:
+        application/vnd.hmcts.appreg.v1+json:
+          schema: { $ref: "../../components/schemas/standard-applicants/standard-applicant-get-detail-dto.yaml" }
+    "400": { $ref: "../../components/responses/bad-request-error.yaml" }
+    "401": { $ref: "../../components/responses/unauthorized-error.yaml" }
+    "403": { $ref: "../../components/responses/forbidden-error.yaml" }
+    "404": { $ref: "../../components/responses/not-found-error.yaml" }
+    "406": { $ref: "../../components/responses/not-acceptable-error.yaml" }
+    "500": { $ref: "../../components/responses/internal-server-error.yaml" }

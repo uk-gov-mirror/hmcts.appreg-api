@@ -152,6 +152,11 @@ public abstract class ApplicationListEntryMapper {
                 numberOfBulkRespondents == null ? null : numberOfBulkRespondents.intValue());
     }
 
+    public JsonNullable<Long> toStandardApplicantId(ApplicationListEntry entry) {
+        return JsonNullable.of(
+                entry.getStandardApplicant() == null ? null : entry.getStandardApplicant().getId());
+    }
+
     /**
      * Utility mapping method to maps contact details from the provided {@link
      * ApplicationListEntryPrintProjection} object to a new {@link ContactDetails} instance based on
@@ -433,6 +438,30 @@ public abstract class ApplicationListEntryMapper {
      * @param applicationListEntry The application list entry
      * @return The entry get detail dto
      */
+    public EntryGetDetailDto toEntryGetDetailDto(
+            ApplicationListEntry applicationListEntry,
+            List<AppListEntryFeeStatus> statusList,
+            FeePair fee,
+            List<AppListEntryOfficial> officials,
+            StandardApplicant applicant) {
+        return mapEntryGetDetailDto(
+                applicationListEntry,
+                statusList,
+                officials,
+                applicant,
+                fee != null && fee.offsiteFee() != null);
+    }
+
+    public EntryGetDetailDto toEntryGetDetailDto(
+            ApplicationListEntry applicationListEntry, boolean hasOffsiteFee) {
+        return mapEntryGetDetailDto(
+                applicationListEntry,
+                applicationListEntry.getEntryFeeStatuses(),
+                applicationListEntry.getOfficials(),
+                applicationListEntry.getStandardApplicant(),
+                hasOffsiteFee);
+    }
+
     @Mapping(target = "id", expression = "java(applicationListEntry.getUuid())")
     @Mapping(
             target = "listId",
@@ -440,6 +469,9 @@ public abstract class ApplicationListEntryMapper {
     @Mapping(
             target = "standardApplicantCode",
             source = "applicationListEntry.standardApplicant.applicantCode")
+    @Mapping(
+            target = "standardApplicantId",
+            expression = "java(toStandardApplicantId(applicationListEntry))")
     @Mapping(target = "applicationCodeId", source = "applicationListEntry.applicationCode.id")
     @Mapping(target = "applicationCode", source = "applicationListEntry.applicationCode.code")
     @Mapping(
@@ -458,63 +490,18 @@ public abstract class ApplicationListEntryMapper {
                             + "() -> applicationListEntry.getApplicationCode().getWording(),"
                             + "() -> applicationListEntry.getApplicationListEntryWording()))")
     @Mapping(target = "feeStatuses", expression = "java(getFeeStatusList(statusList))")
-    @Mapping(target = "hasOffsiteFee", expression = "java(fee != null && fee.offsiteFee() != null)")
+    @Mapping(target = "hasOffsiteFee", source = "hasOffsiteFee")
     @Mapping(target = "caseReference", source = "applicationListEntry.caseReference")
     @Mapping(target = "accountNumber", source = "applicationListEntry.accountNumber")
     @Mapping(target = "notes", source = "applicationListEntry.notes")
     @Mapping(target = "officials", expression = "java(toOfficial(officials))")
     @Mapping(target = "lodgementDate", source = "applicationListEntry.lodgementDate")
-    public abstract EntryGetDetailDto toEntryGetDetailDto(
+    protected abstract EntryGetDetailDto mapEntryGetDetailDto(
             ApplicationListEntry applicationListEntry,
             List<AppListEntryFeeStatus> statusList,
-            FeePair fee,
             List<AppListEntryOfficial> officials,
-            StandardApplicant applicant);
-
-    /**
-     * gets the entry detail dto from application list entry.
-     *
-     * @param applicationListEntry The application list entry
-     * @return The entry get detail dto
-     */
-    @Mapping(target = "id", expression = "java(applicationListEntry.getUuid())")
-    @Mapping(
-            target = "listId",
-            expression = "java(applicationListEntry.getApplicationList().getUuid())")
-    @Mapping(
-            target = "standardApplicantCode",
-            source = "applicationListEntry.standardApplicant.applicantCode")
-    @Mapping(target = "applicationCodeId", source = "applicationListEntry.applicationCode.id")
-    @Mapping(target = "applicationCode", source = "applicationListEntry.applicationCode.code")
-    @Mapping(
-            target = "applicant",
-            expression =
-                    "java(toApplicant(applicationListEntry, applicationListEntry.getStandardApplicant()))")
-    @Mapping(
-            target = "respondent",
-            expression = "java(toRespondent(applicationListEntry.getRnameaddress()))")
-    @Mapping(
-            target = "numberOfRespondents",
-            source = "applicationListEntry.numberOfBulkRespondents")
-    @Mapping(
-            target = "wording",
-            expression =
-                    "java(getWordingTemplateMapper().getStoredTemplateDetail("
-                            + "() -> applicationListEntry.getApplicationCode().getWording(),"
-                            + "() -> applicationListEntry.getApplicationListEntryWording()))")
-    @Mapping(
-            target = "feeStatuses",
-            expression = "java(getFeeStatusList(applicationListEntry.getEntryFeeStatuses()))")
-    @Mapping(target = "hasOffsiteFee", source = "hasOffsiteFee")
-    @Mapping(target = "caseReference", source = "applicationListEntry.caseReference")
-    @Mapping(target = "accountNumber", source = "applicationListEntry.accountNumber")
-    @Mapping(target = "notes", source = "applicationListEntry.notes")
-    @Mapping(
-            target = "officials",
-            expression = "java(toOfficial(applicationListEntry.getOfficials()))")
-    @Mapping(target = "lodgementDate", source = "applicationListEntry.lodgementDate")
-    public abstract EntryGetDetailDto toEntryGetDetailDto(
-            ApplicationListEntry applicationListEntry, boolean hasOffsiteFee);
+            StandardApplicant applicant,
+            boolean hasOffsiteFee);
 
     @AfterMapping
     protected void sanitizeEntryDetail(@MappingTarget EntryGetDetailDto target) {

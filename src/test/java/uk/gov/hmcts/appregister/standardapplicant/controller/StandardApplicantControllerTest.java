@@ -85,6 +85,20 @@ class StandardApplicantControllerTest {
                 .hasToString("application/vnd.hmcts.appreg.v1+json");
     }
 
+    @Test
+    void givenId_whenGetStandardApplicantById_thenReturnsVersionedDetail() {
+        var body = new StandardApplicantGetDetailDto().code("CODE");
+        when(service.findById(42L)).thenReturn(body);
+
+        var actual = controller.getStandardApplicantById(42L);
+
+        verify(service).findById(42L);
+        assertThat(actual.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(actual.getBody()).isSameAs(body);
+        assertThat(actual.getHeaders().getContentType())
+                .hasToString("application/vnd.hmcts.appreg.v1+json");
+    }
+
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"", "name,desc"})

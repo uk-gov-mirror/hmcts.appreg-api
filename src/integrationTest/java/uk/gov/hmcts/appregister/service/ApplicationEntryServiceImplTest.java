@@ -1046,16 +1046,16 @@ class ApplicationEntryServiceImplTest extends BaseIntegration {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(
-                        applicationEntryService
-                                .getApplicationListEntryDetail(
-                                        PayloadGetEntryInList.builder()
-                                                .listId(list.getUuid())
-                                                .entryId(entryId)
-                                                .build())
-                                .getPayload()
-                                .getStandardApplicantCode())
-                .isEqualTo("APP001");
+        val detail =
+                applicationEntryService
+                        .getApplicationListEntryDetail(
+                                PayloadGetEntryInList.builder()
+                                        .listId(list.getUuid())
+                                        .entryId(entryId)
+                                        .build())
+                        .getPayload();
+        assertThat(detail.getStandardApplicantCode()).isEqualTo("APP001");
+        assertThat(detail.getStandardApplicantId()).isEqualTo(JsonNullable.of(applicantId));
 
         val updateDto = new EntryUpdateDto();
         BeanUtils.copyProperties(createDto, updateDto);
@@ -1082,6 +1082,8 @@ class ApplicationEntryServiceImplTest extends BaseIntegration {
                 .extracting(AppListEntryFeeStatus::getAlefsFeeStatus)
                 .containsExactly(FeeStatusType.PAID);
         assertThat(updated.getPayload().getStandardApplicantCode()).isEqualTo("APP001");
+        assertThat(updated.getPayload().getStandardApplicantId())
+                .isEqualTo(JsonNullable.of(applicantId));
         assertThat(updated.getPayload().getOfficials()).isEqualTo(updateDto.getOfficials());
         assertThat(updated.getPayload().getFeeStatuses()).isEqualTo(updateDto.getFeeStatuses());
     }

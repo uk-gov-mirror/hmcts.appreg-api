@@ -115,3 +115,4 @@ paths:
   /standard-applicants/reports/print:                               { $ref: './paths/standard-applicants/standard-applicants-print.yaml' }
   /standard-applicants/{code}:                                      { $ref: './paths/standard-applicants/standard-applicants-by-code.yaml' }
   /standard-applicants/export:                                      { $ref: './paths/standard-applicants/standard-applicants-export.yaml' }
+  /standard-applicants/by-id/{id}:                                  { $ref: './paths/standard-applicants/standard-applicants-by-id.yaml' }

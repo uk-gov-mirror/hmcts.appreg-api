@@ -27,6 +27,12 @@ properties:
     description: Code that identifies the Standard Applicant.
     example: "APP001"
 
+  standardApplicantId:
+    type: integer
+    nullable: true # If entry is not a standard applicant
+    format: int64
+    description: ID that identifies the Standard Applicant.
+
   applicationCodeId:
     type: integer
     format: int64

@@ -133,6 +133,32 @@ public class StandardApplicationServiceImpl implements StandardApplicantService 
     }
 
     @Override
+    public StandardApplicantGetDetailDto findById(Long id) {
+        return auditService.processAudit(
+                null,
+                StandardApplicantOperation.GET_STANDARD_APPLICANT_BY_ID,
+                req -> {
+                    var applicant =
+                            repository
+                                    .findById(id)
+                                    .orElseThrow(
+                                            () ->
+                                                    new AppRegistryException(
+                                                            StandardApplicantCodeError
+                                                                    .STANDARD_APPLICANT_NOT_FOUND,
+                                                            "No standard applicant found for ID '%s'"
+                                                                    .formatted(id)));
+                    var criteria = new StandardApplicant();
+                    criteria.setId(id);
+                    criteria.setApplicantCode(applicant.getApplicantCode());
+                    criteria.setApplicantStartDate(applicant.getApplicantStartDate());
+                    criteria.setApplicantEndDate(applicant.getApplicantEndDate());
+                    return Optional.of(
+                            new AuditableResult<>(mapper.toReadGetDto(applicant), criteria));
+                });
+    }
+
+    @Override
     public StandardApplicantPrintDto print(
             String code,
             String name,

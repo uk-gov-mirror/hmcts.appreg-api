@@ -39,6 +39,9 @@ public interface StandardApplicantService {
      */
     StandardApplicantGetDetailDto findByCode(String code);
 
+    /** Returns the exact Standard Applicant record with the given ID. */
+    StandardApplicantGetDetailDto findById(Long id);
+
     StandardApplicantPrintDto print(
             String code,
             String name,

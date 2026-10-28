@@ -796,6 +796,9 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(
                 appListEntry.getStandardApplicant().getApplicantCode(),
                 entryGetDetailDto.getStandardApplicantCode());
+        Assertions.assertEquals(
+                JsonNullable.of(appListEntry.getStandardApplicant().getId()),
+                entryGetDetailDto.getStandardApplicantId());
 
         validateApplicantPerson(applicant, entryGetDetailDto.getApplicant());
         validateRespondentOrganisation(respondent, entryGetDetailDto.getRespondent());
@@ -810,6 +813,16 @@ class ApplicationListEntryMapperTest {
         assertFeeStatuses(
                 entryGetDetailDto.getFeeStatuses(),
                 List.of(applicationListStatus, applicationListStatus2));
+
+        appListEntry.setStandardApplicant(null);
+        EntryGetDetailDto namedApplicantDto =
+                mapper.toEntryGetDetailDto(
+                        appListEntry,
+                        List.of(applicationListStatus, applicationListStatus2),
+                        feePair,
+                        List.of(appListEntryOfficial, appListEntryOfficial2),
+                        null);
+        Assertions.assertEquals(JsonNullable.of(null), namedApplicantDto.getStandardApplicantId());
     }
 
     @Test
@@ -839,6 +852,7 @@ class ApplicationListEntryMapperTest {
         Assertions.assertEquals(entryId, dto.getId());
         Assertions.assertEquals(listId, dto.getListId());
         Assertions.assertEquals("AD99002", dto.getApplicationCode());
+        Assertions.assertEquals(JsonNullable.of(null), dto.getStandardApplicantId());
         Assertions.assertEquals("Existing notes for closed update journey", dto.getNotes());
         Assertions.assertFalse(dto.getHasOffsiteFee());
         validateApplicantPerson(applicant, dto.getApplicant());
@@ -1040,6 +1054,9 @@ class ApplicationListEntryMapperTest {
                 appListEntry.getApplicationCode().getCode(),
                 entryGetDetailDto.getApplicationCode());
         Assertions.assertNotNull(entryGetDetailDto.getStandardApplicantCode());
+        Assertions.assertEquals(
+                JsonNullable.of(appListEntry.getStandardApplicant().getId()),
+                entryGetDetailDto.getStandardApplicantId());
         Assertions.assertEquals(
                 appListEntry.getLodgementDate(), entryGetDetailDto.getLodgementDate());
 

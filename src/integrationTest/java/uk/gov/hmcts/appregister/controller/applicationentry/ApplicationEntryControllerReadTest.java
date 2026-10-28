@@ -23,6 +23,7 @@ import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -87,6 +88,14 @@ class ApplicationEntryControllerReadTest extends AbstractApplicationEntryCrudTes
         EntryGetDetailDto entryGetDetailDto = responseSpec.as(EntryGetDetailDto.class);
         Assertions.assertEquals(200, responseSpec.getStatusCode());
         Assertions.assertEquals("APP002", entryGetDetailDto.getStandardApplicantCode());
+        Assertions.assertEquals(
+                JsonNullable.of(
+                        applicationListEntryRepository
+                                .findById(VALID_ENTRY_PK)
+                                .orElseThrow()
+                                .getStandardApplicant()
+                                .getId()),
+                entryGetDetailDto.getStandardApplicantId());
         Assertions.assertEquals("AD99002", entryGetDetailDto.getApplicationCode());
         Assertions.assertEquals("Rescheduled due to missing docs", entryGetDetailDto.getNotes());
         Assertions.assertEquals("CASE123457", entryGetDetailDto.getCaseReference());
@@ -160,6 +169,7 @@ class ApplicationEntryControllerReadTest extends AbstractApplicationEntryCrudTes
         Assertions.assertEquals(list.getUuid().toString(), responseBody.path("listId").asText());
         Assertions.assertEquals("APPNULLS", responseBody.path("applicationCode").asText());
         assertExplicitNull(responseBody, "standardApplicantCode");
+        assertExplicitNull(responseBody, "standardApplicantId");
         assertExplicitNull(responseBody, "caseReference");
         assertExplicitNull(responseBody, "accountNumber");
         assertExplicitNull(responseBody, "notes");

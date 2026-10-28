@@ -46,4 +46,16 @@ class StandardApplicantsApiContractTest {
                                         method.getName()
                                                 .equals("getStandardApplicantByCodeAndDate")));
     }
+
+    @Test
+    void generatedStandardApplicantsApiHasPrimaryKeyLookupMethod() {
+        Assertions.assertTrue(
+                Arrays.stream(StandardApplicantsApi.class.getMethods())
+                        .anyMatch(
+                                method ->
+                                        method.getName().equals("getStandardApplicantById")
+                                                && method.getParameterCount() == 1
+                                                && method.getParameterTypes()[0].equals(
+                                                        Long.class)));
+    }
 }

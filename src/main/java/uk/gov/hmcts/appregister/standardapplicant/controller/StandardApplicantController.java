@@ -76,6 +76,15 @@ public class StandardApplicantController implements StandardApplicantsApi {
 
     @Override
     @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
+    public ResponseEntity<StandardApplicantGetDetailDto> getStandardApplicantById(Long id) {
+        return ResponseEntity.status(OK)
+                .varyBy("Accept")
+                .contentType(VND_JSON_V1)
+                .body(service.findById(id));
+    }
+
+    @Override
+    @PreAuthorize(RoleNames.USER_ROLE_OR_ADMIN_ROLE_RESTRICTION)
     public ResponseEntity<StandardApplicantPrintDto> printStandardApplicants(
             String code,
             String name,
